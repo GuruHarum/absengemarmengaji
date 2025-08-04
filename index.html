@@ -2746,6 +2746,8 @@ function exportAttendanceToPDF() {
             if (pageNumber === 1) {
                 page1.classList.remove('hidden');
                 page1.classList.add('fade-in');
+
+                fetchTeachers();
                 
                 // Clear auto-submit timer when leaving page 2
                 if (autoSubmitTimer) {
