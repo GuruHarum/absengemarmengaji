@@ -717,12 +717,12 @@
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <button id="refreshStudentsBtn" class="refresh-button mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <a href="https://desty.page/sditharapanummahkrw/materitahsintahfidz" target="_blank" id= "materiLinkBtn" class="refresh-button mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 refresh-icon" fill= "none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v4a1 1 0 001 1h4m-5 10l6-6m0 01-6-6m6 6H3" />
                         </svg>
-                        Refresh
-                    </button>
+                        Link Materi
+                    </a>
                     <button id="backToHome" class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
@@ -1795,47 +1795,15 @@ document.querySelectorAll('.attendance-option').forEach(button => {
         // Show note input with appropriate placeholder
         noteContainer.style.display = 'block';
         if (status === 'hadir') {
-            noteInput.placeholder = 'Contoh: Buku 1 Halaman 1, Tahfidz Surah Al-Fatihah';
+            noteInput.placeholder = 'Contoh: Buku 1 Halaman 1, Tahfidz Surah Al-Fatihah (Jangan Gunakan Enter)';
         } else if (status === 'sakit') {
             noteInput.placeholder = 'Contoh: Demam';
         } else if (status === 'izin') {
             noteInput.placeholder = 'Contoh: Acara Keluarga';
-        } else {
-            noteContainer.style.display = 'none'; // Hide for alpha
-
-            // Untuk alpha, cari index siswa agar dapat nama kelas lengkap
-            const idx = parseInt(card.querySelector('.save-btn').getAttribute('data-student-index'));
-            const studentData = filteredStudents[idx];
-
-            saveAttendanceXHR(studentName, status, "", studentData.kelas).then(success => {
-                if (success) {
-                    const studentContent = card.querySelector('.student-content');
-                    studentContent.innerHTML = `
-                        <div class="flex flex-col">
-                            <div class="flex items-center justify-center mb-3">
-                                <span class="attendance-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                                    ❌ Alpha
-                                </span>
-                            </div>
-                            <div class="note-container">
-                                <p class="text-sm text-gray-600 mb-1">Catatan:</p>
-                                <p class="text-gray-800">-</p>
-                            </div>
-                        </div>
-                    `;
-                    showThankYouModal();
-                    setTimeout(() => {
-                        hideThankYouModal();
-                        setTimeout(() => {
-                            showPage(1);
-                        }, 500);
-                    }, 3000);
-                } else {
-                    showNotification('error', 'Gagal menyimpan absensi. Silakan coba lagi.');
-                }
-            });
-            return; // jangan lanjut ke bawah
+        } else if (status === 'alpha') {
+            noteInput.placeholder = 'Tidak Perlu Diisi';
         }
+            noteContainer.style.display = 'block'; // Semua Box Catatan Muncul, Jika Ingin Alpha diHide, Gunakan None
     });
 });
 
@@ -1863,18 +1831,20 @@ document.querySelectorAll('.save-btn').forEach((saveBtn) => {
                             <span class="attendance-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${
                                 status === 'hadir' ? 'bg-green-100 text-green-800' : 
                                 status === 'sakit' ? 'bg-yellow-100 text-yellow-800' : 
-                                'bg-blue-100 text-blue-800'
+                                status === 'izin' ? 'bg-blue-100 text-blue-800' :
+                                'bg-red-100 text-red-800'
                             }">
                                 ${
                                     status === 'hadir' ? '✅ Hadir' : 
                                     status === 'sakit' ? '🤒 Sakit' : 
-                                    '📝 Izin'
+                                    status === 'izin' ? '📝 Izin' :
+                                    '❌ Alpha'
                                 }
                             </span>
                         </div>
                         <div class="note-container">
                             <p class="text-sm text-gray-600 mb-1">Catatan:</p>
-                            <p class="text-gray-800">${note}</p>
+                            <p class="text-gray-800">${note || '-'}</p>
                         </div>
                     </div>
                 `;
@@ -2757,7 +2727,12 @@ function exportAttendanceToPDF() {
             } else if (pageNumber === 2) {
                 page2.classList.remove('hidden');
                 page2.classList.add('fade-in');
-                
+
+                // selalu ambil data absen terbaru
+                fetchAttendanceData().then(() => {
+                    renderStudents();
+                });
+            
                 // Setup auto-submit timer for alpha attendance
             } else if (pageNumber === 3) {
                 page3.classList.remove('hidden');
