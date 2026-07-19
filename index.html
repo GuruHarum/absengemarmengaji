@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SDIT Harapan Umat Karawang - Maintenance</title>
+    <!-- Menggunakan Font Poppins agar serupa dengan desain visual asli -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,6 +25,7 @@
             min-height: 100vh;
         }
 
+        /* Header dengan gradasi biru sesuai screenshot */
         header {
             background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
             color: white;
@@ -41,14 +43,17 @@
             max-width: 75%;
         }
 
+        /* Pembungkus Lingkaran untuk memotong kotak putih pada logo */
         .logo-circle {
             border-radius: 50%;
             overflow: hidden;
-            width: 64px;
-            height: 64px;
+            width: 60px; /* Disesuaikan sedikit ukurannya agar proporsional di header */
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0; /* Mencegah logo gepeng di layar kecil */
+            background-color: white; /* Memberi dasar putih bersih di dalam lingkaran */
         }
         
         .logo-circle img {
@@ -71,6 +76,7 @@
             line-height: 1.4;
         }
 
+        /* Tombol Login Admin di kanan atas */
         .btn-admin {
             background-color: white;
             color: #1e40af;
@@ -89,6 +95,7 @@
             background-color: #f3f4f6;
         }
 
+        /* Area Konten Utama */
         main {
             flex: 1;
             display: flex;
@@ -97,6 +104,7 @@
             padding: 24px 16px;
         }
 
+        /* Card Pesan Pembaruan */
         .maintenance-card {
             background: white;
             width: 100%;
@@ -127,7 +135,9 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* Responsif untuk layar hp berukuran kecil */
         @media (max-width: 360px) {
+            .logo-circle { width: 50px; height: 50px; }
             .school-info h1 { font-size: 0.95rem; }
             .school-info p { font-size: 0.7rem; }
             .btn-admin { padding: 8px 12px; font-size: 0.8rem; }
@@ -139,7 +149,10 @@
 
     <header>
         <div class="header-left">
-            <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT Harapan Umat" class="logo">
+            <!-- Struktur pembungkus lingkaran diterapkan kembali di sini -->
+            <div class="logo-circle">
+                <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT Harapan Umat">
+            </div>
             <div class="school-info">
                 <h1>SDIT Harapan Umat Karawang</h1>
                 <p>Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur</p>
