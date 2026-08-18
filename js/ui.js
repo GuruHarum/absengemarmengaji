@@ -196,9 +196,12 @@ renderClassOptions(Array.from(teacherClassNumbers));
                     selectedClass = this.getAttribute('data-class');
                     closeClassModal();
                     showPage(2);
-                    fetchAttendanceData().then(() => {
+                    fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, class: selectedClass }).then(() => {
                         renderStudents();
                         populateYearFilter();
+                    }).catch(error => {
+                        console.error('Gagal memuat absensi kelas:', error);
+                        showNotification('error', 'Gagal memuat data absensi. Silakan coba lagi.');
                     });
                 });
             });

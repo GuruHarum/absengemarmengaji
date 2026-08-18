@@ -1,21 +1,35 @@
-async function getTeachers() {
-    const { data, error } = await supabase
-        .from("teachers")
-        .select("*")
-        .order("nama");
+// Ambil data master secara bertahap agar data di atas 1.000 baris tidak terpotong oleh limit REST.
+async function fetchAllRows(queryFactory, batchSize = 500) {
+    const all = [];
+    let from = 0;
 
-    if (error) throw error;
-    return data;
+    while (true) {
+        const to = from + batchSize - 1;
+        const { data, error } = await queryFactory().range(from, to);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        all.push(...data);
+        if (data.length < batchSize) break;
+        from += batchSize;
+    }
+
+    return all;
+}
+
+async function getTeachers() {
+    return fetchAllRows(
+        () => supabase.from("teachers").select("*").order("nama"),
+        500
+    );
 }
 
 async function getStudents() {
-    const { data, error } = await supabase
-        .from("students")
-        .select("*")
-        .order("kelas");
-
-    if (error) throw error;
-    return data;
+    return fetchAllRows(
+        () => supabase.from("students").select("*").order("kelas").order("nama siswa"),
+        500
+    );
 }
 
 async function getAttendance(filters = {}) {
@@ -477,17 +491,14 @@ async function getTeacherByName(name) {
 }
 
 async function getStudentsByClass(kelas) {
-
-    const { data, error } = await supabase
-        .from("students")
-        .select("*")
-        .eq("kelas", kelas)
-        .order("nama siswa");
-
-    if (error)
-        throw error;
-
-    return data;
+    return fetchAllRows(
+        () => supabase
+            .from("students")
+            .select("*")
+            .eq("kelas", kelas)
+            .order("nama siswa"),
+        500
+    );
 }
 
 async function getAttendanceByDate(date) {
