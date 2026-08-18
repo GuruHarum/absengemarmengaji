@@ -1106,7 +1106,8 @@
                 await Promise.all([
                     fetchTeachers(),
                     fetchStudents(),
-                    fetchAttendanceData()
+                    // Halaman utama hanya membutuhkan status absensi hari ini.
+                    fetchAttendanceData({ date: formatDateForStorage() })
                 ]);
 
                 populateClassFilters();
