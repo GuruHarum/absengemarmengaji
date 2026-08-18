@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Hadir Gemar Mengaji - SDIT Harapan Umat Karawang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .page-transition {
+            transition: all 0.5s ease-in-out;
+        }
+        
+        .modal {
+            backdrop-filter: blur(8px);
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        
+        .modal-content {
+            transform: scale(0.7);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .teacher-card {
+            transition: all 0.3s ease;
+        }
+        
+        .teacher-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .attendance-option {
+            transition: all 0.2s ease;
+        }
+        
+        .attendance-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            transform: translateX(150%);
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .student-row {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .student-row:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .attendance-badge {
+            transition: all 0.3s ease;
+        }
+        
+        .attendance-badge:hover {
+            transform: scale(1.05);
+        }
+        
+        .thank-you-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        .thank-you-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .thank-you-content {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            max-width: 90%;
+            width: 400px;
+        }
+        
+        .thank-you-modal.show .thank-you-content {
+            transform: translateY(0);
+        }
+        
+        .logo-circle {
+            border-radius: 50%;
+            overflow: hidden;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .admin-panel {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.hadir {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.sakit {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.izin {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.alpha {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .student-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .student-header {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .student-content {
+            padding: 16px;
+        }
+        
+        .note-container {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        
+        .attendance-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .attendance-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .attendance-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .attendance-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .attendance-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .attendance-table tr:hover td {
+            background-color: #f8fafc;
+        }
+        
+        .filter-container {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .filter-group {
+            margin-bottom: 16px;
+        }
+        
+        .filter-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 0.875rem;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .filter-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-button:hover {
+            background-color: #2563eb;
+        }
+        
+        .filter-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .monthly-report-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+        
+        .monthly-report-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .monthly-report-table td {
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        .monthly-report-table .student-name {
+            text-align: left;
+            font-weight: 500;
+            background-color: #f8fafc;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+        
+        .monthly-report-table .date-header {
+            min-width: 40px;
+            font-size: 0.875rem;
+        }
+        
+        .monthly-report-table .summary-header {
+            background-color: #e0f2fe;
+        }
+        
+        .monthly-report-table .summary-cell {
+            background-color: #f0f9ff;
+            font-weight: 500;
+        }
+        
+        .monthly-report-table .percentage-cell {
+            background-color: #dbeafe;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .monthly-report-table .status-H {
+            background-color: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+        }
+        
+        .monthly-report-table .status-S {
+            background-color: #fef3c7;
+            color: #92400e;
+            font-weight: 600;
+        }
+        
+        .monthly-report-table .status-I {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        
+        .monthly-report-table .status-- {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            font-weight: 600;
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .report-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .report-info {
+            margin-bottom: 16px;
+        }
+        
+        .report-info-item {
+            margin-bottom: 4px;
+        }
+        
+        .report-info-label {
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .print-button {
+            background-color: #4ade80;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .print-button:hover {
+            background-color: #22c55e;
+        }
+        
+        .print-button svg {
+            margin-right: 8px;
+        }
+        
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #reportContainer, #reportContainer * {
+    visibility: visible !important;
+  }
+  #reportContainer {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 297mm !important; /* A4 landscape width */
+    min-height: 210mm !important; /* A4 landscape height */
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    font-size: 11pt !important;
+    page-break-before: auto !important;
+    page-break-after: auto !important;
+    page-break-inside: avoid !important;
+  }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .monthly-report-table {
+    width: 100% !important;
+    font-size: 10pt !important;
+    border: 1px solid #000 !important;
+    page-break-inside: avoid !important;
+  }
+  .header-gradient, .footer, .no-print {
+    display: none !important;
+  }
+  .admin-panel {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+        
+        .selected-option {
+            position: relative;
+        }
+        
+        .selected-option::after {
+            content: '✓';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #3b82f6;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .inline-loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .content-placeholder {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .refresh-button {
+            background-color: #e0f2fe;
+            color: #1e40af;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .refresh-button:hover {
+            background-color: #bae6fd;
+        }
+        
+        .refresh-button svg {
+            margin-right: 6px;
+        }
+        
+        .refresh-icon {
+            display: inline-block;
+            animation: none;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-indicator.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .pdf-button {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .pdf-button:hover {
+            background-color: #dc2626;
+        }
+        
+        .pdf-button svg {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-indicator">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header-gradient shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="logo-circle mr-4">
+                    <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT Harapan Umat" class="h-full w-full object-cover">
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white">SDIT Harapan Umat Karawang</h1>
+                    <p class="text-sm text-blue-100">Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur</p>
+                </div>
+            </div>
+            <div id="adminHeaderActions" class="flex items-center gap-2">
+                <a id="loginBtn" href="login.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Admin</a>
+            </div>
+        </div>
+    </header>
+
+    <script>
+        // Periksa mode maintenance yang diset lewat panel admin (disimpan di localStorage)
+        (function(){
+            try {
+                const isMaintenance = localStorage.getItem('maintenanceMode') === '1';
+                if (isMaintenance) {
+                    const mainEl = document.querySelector('main.container');
+                    if (mainEl) {
+                        mainEl.innerHTML = `
+                            <div class="container mx-auto px-4 py-20 text-center">
+                                <h2 class="text-3xl font-bold text-gray-800 mb-4">Maintenance sedang berlangsung</h2>
+                                <p class="text-gray-600 mb-6">Website sedang dalam pemeliharaan. Silakan coba kembali nanti.</p>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (e) { console.error('Maintenance check error', e); }
+        })();
+    </script>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Page 1: Teacher Selection -->
+        <div id="page1" class="page-transition">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-blue-800 mb-2">Daftar Hadir Kegiatan Gemar Mengaji</h2>
+                <p class="text-gray-600">Silakan pilih guru untuk melanjutkan</p>
+            </div>
+            
+            <div id="teacherGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Teachers will be loaded here -->
+                <div class="col-span-full flex justify-center">
+                    <div class="w-full h-32 max-w-sm rounded-lg shimmer"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page 2: Student Attendance -->
+        <div id="page2" class="page-transition hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-800" id="classTitle"></h2>
+                    <div class="flex items-center text-gray-600 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span id="currentDate"></span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <a href="https://desty.page/sditharapanummahkrw/materitahsintahfidz" target="_blank" id= "materiLinkBtn" class="refresh-button mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 refresh-icon" fill= "none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v4a1 1 0 001 1h4m-5 10l6-6m0 01-6-6m6 6H3" />
+                        </svg>
+                        Link Materi
+                    </a>
+                    <button id="backToHome" class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Kembali
+                    </button>
+                </div>
+            </div>
+            
+            <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Students will be loaded here -->
+                <div class="col-span-full">
+                    <div class="w-full h-32 rounded shimmer mb-2"></div>
+                    <div class="w-full h-32 rounded shimmer mb-2"></div>
+                    <div class="w-full h-32 rounded shimmer"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page 3: Admin Panel -->
+        <div id="page3" class="page-transition hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-blue-800">Panel Admin</h2>
+                <div class="flex items-center">
+                    <button id="refreshAdminDataBtn" class="refresh-button mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh Data
+                    </button>
+                    <button id="logoutBtn" class="bg-red-100 hover:bg-red-200 text-red-800 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7z" clip-rule="evenodd" />
+                            <path d="M4 7a1 1 0 011-1h4a1 1 0 110 2H5a1 1 0 01-1-1z" />
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+            
+            <div class="admin-panel mb-8">
+                <h3 class="text-xl font-semibold text-blue-800 mb-4">Filter Data Absensi</h3>
+                
+                <div class="filter-container">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div id="filterYearContainer">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Tahun
+                            </label>
+
+                            <select id="filterYear"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                <option value="">Semua Tahun</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterMonth" class="filter-label">Bulan</label>
+                            <select id="filterMonth" class="filter-select">
+                                <option value="">Pilih Bulan</option>
+                                <option value="01">Januari</option>
+                                <option value="02">Februari</option>
+                                <option value="03">Maret</option>
+                                <option value="04">April</option>
+                                <option value="05">Mei</option>
+                                <option value="06">Juni</option>
+                                <option value="07">Juli</option>
+                                <option value="08">Agustus</option>
+                                <option value="09">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterTeacher" class="filter-label">Guru</label>
+                            <select id="filterTeacher" class="filter-select">
+                                <option value="">Semua Guru</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterClassNumber" class="filter-label">Tingkat Kelas</label>
+                            <select id="filterClassNumber" class="filter-select">
+                                <option value="">Semua Tingkat</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group" id="filterClassNameContainer">
+                        <label for="filterClassName" class="filter-label">Nama Kelas</label>
+                        <select id="filterClassName" class="filter-select">
+                            <option value="">Semua Nama Kelas</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 mt-4">
+                        <button id="filterBtn" class="filter-button bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                            </svg>
+                            Terapkan Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Attendance Report -->
+            <div id="reportContainer" class="admin-panel mb-8" style="display: none;">
+                <div class="report-header">
+                    <div>
+                        <h3 class="text-xl font-semibold text-blue-800 mb-2">Rekap Absensi Bulanan</h3>
+                        <div class="report-info">
+                            <div class="report-info-item">
+                                <span class="report-info-label">Guru:</span>
+                                <span id="reportTeacher">-</span>
+                            </div>
+                            <div class="report-info-item">
+                                <span class="report-info-label">Kelas:</span>
+                                <span id="reportClass">-</span>
+                            </div>
+                            <div class="report-info-item">
+                                <span class="report-info-label">Bulan:</span>
+                                <span id="reportMonth">-</span>
+                            </div>
+                            <div class="report-info-item">
+                                <span class="report-info-label">Rata-rata Kehadiran:</span>
+                                <span id="reportAverage">--%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="printReportBtn" class="print-button no-print">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+                            </svg>
+                            Cetak Laporan
+                        </button>
+                        <button id="exportPdfBtn" class="pdf-button no-print">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                            </svg>
+                            Download PDF
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table id="monthlyReportTable" class="monthly-report-table">
+                        <!-- Monthly report will be generated here -->
+                        <tr>
+                            <td colspan="32" class="py-8 text-center">
+                                <div class="w-full h-12 rounded shimmer mb-2"></div>
+                                <div class="w-full h-12 rounded shimmer mb-2"></div>
+                                <div class="w-full h-12 rounded shimmer"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="admin-panel mb-8">
+                <h3 class="text-xl font-semibold text-blue-800 mb-4">Data Absensi</h3>
+                <div class="overflow-x-auto">
+                    <table class="attendance-table">
+                        <thead>
+                            <tr>
+                                <th class="rounded-tl-lg">Tanggal</th>
+                                <th>Guru</th>
+                                <th>Kelas</th>
+                                <th>Nama Siswa</th>
+                                <th>Status</th>
+                                <th class="rounded-tr-lg">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDataList">
+                            <!-- Admin data will be loaded here -->
+                            <tr>
+                                <td colspan="6" class="py-8 text-center">
+                                    <div class="w-full h-12 rounded shimmer mb-2"></div>
+                                    <div class="w-full h-12 rounded shimmer mb-2"></div>
+                                    <div class="w-full h-12 rounded shimmer"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        Menampilkan <span id="recordCount">0</span> data
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="prevPage" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <span id="pageIndicator" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-md">1</span>
+                        <button id="nextPage" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-800 text-white py-4 footer">
+        <div class="container mx-auto px-4 text-center">
+            <p>Hak Cipta SDIT Harapan Umat Karawang</p>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content bg-white w-full max-w-md mx-auto mt-20 rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-blue-800">Login Admin</h3>
+                <button id="closeLoginModal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="attendanceEditModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-800">Ubah Absensi Siswa</h3><button id="closeAttendanceEdit" type="button" class="text-slate-400 hover:text-slate-700">✕</button></div>
+            <p id="attendanceEditStudent" class="mt-2 text-sm text-slate-500"></p>
+            <form id="attendanceEditForm" class="mt-5 space-y-4">
+                <input id="attendanceEditId" type="hidden">
+                <div><label class="mb-1 block text-sm font-medium text-slate-700">Status Kehadiran</label><select id="attendanceEditStatus" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"><option value="hadir">Hadir</option><option value="sakit">Sakit</option><option value="izin">Izin</option><option value="alpha">Alpha</option></select></div>
+                <div><label class="mb-1 block text-sm font-medium text-slate-700">Catatan</label><textarea id="attendanceEditNote" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"></textarea></div>
+                <div class="flex gap-3 pt-2">
+                    <div id="attendanceEditActions" class="flex items-center gap-3 w-full">
+                        <button type="button" id="deleteAttendanceBtn" class="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100">Hapus Absensi</button>
+                        <button type="submit" class="ml-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Simpan Perubahan</button>
+                    </div>
+                </div>
+                <div id="attendanceDeleteConfirm" class="hidden mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                    <p class="text-sm text-red-700 mb-3">Yakin ingin menghapus data absensi ini? Tindakan ini tidak dapat dibatalkan.</p>
+                    <div class="flex gap-2 justify-end">
+                        <button type="button" id="cancelDeleteBtn" class="rounded-lg bg-white border border-gray-200 px-4 py-2 text-sm font-medium">Batal</button>
+                        <button type="button" id="confirmDeleteBtn" class="rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-semibold">Hapus</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Class Selection Modal -->
+    <div id="classModal" class="modal">
+        <div class="modal-content bg-white w-full max-w-md mx-auto mt-20 rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-blue-800">Pilih Kelas</h3>
+                <button id="closeClassModal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="classOptions" class="grid grid-cols-2 gap-4">
+                <!-- Class options will be dynamically generated -->
+                <div class="col-span-2 flex justify-center">
+                    <div class="w-full h-32 rounded shimmer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification bg-white rounded-lg shadow-lg p-4 max-w-md">
+        <div id="notificationContent" class="flex items-center">
+            <!-- Notification content will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Thank You Modal -->
+    <div id="thankYouModal" class="thank-you-modal">
+        <div class="thank-you-content">
+            <div class="mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Terimakasih Ayah/Bunda</h3>
+            <p class="text-white text-opacity-90 mb-4">Absensi berhasil disimpan!</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/report.js"></script>
+    <script src="js/admin.js"></script>
+    <script>
+        let teachersData = [];
+        let studentsData = [];
+        let attendanceData = [];
+        let selectedTeacher = null;
+        let selectedClass = null;
+        let isAdmin = false;
+        let currentPage = 1;
+        let recordsPerPage = 10;
+        let filteredAttendanceData = [];
+        let classesData = new Map();
+        let classNamesByNumber = new Map();
+        let attendanceChartInstance = null;
+        let statusChartInstance = null;
+        let selectedStudentStatus = {};
+        let adminDataFetched = false;
+        let studentsLoaded = false;
+        let teachersLoaded = false;
+        let attendanceIndex = new Map();
+        const page1 = document.getElementById('page1');
+        const page2 = document.getElementById('page2');
+        const page3 = document.getElementById('page3');
+        const teacherGrid = document.getElementById('teacherGrid');
+        const adminDataList = document.getElementById('adminDataList');
+        const loginModal = document.getElementById('loginModal');
+        const classModal = document.getElementById('classModal');
+        const notification = document.getElementById('notification');
+        const thankYouModal = document.getElementById('thankYouModal');
+        const classOptions = document.getElementById('classOptions');
+        const filterMonth = document.getElementById('filterMonth');
+        const filterTeacher = document.getElementById('filterTeacher');
+        const filterClassNumber = document.getElementById('filterClassNumber');
+        const filterClassName = document.getElementById('filterClassName');
+        const filterClassNameContainer = document.getElementById('filterClassNameContainer');
+        const recordCount = document.getElementById('recordCount');
+        const pageIndicator = document.getElementById('pageIndicator');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const reportContainer = document.getElementById('reportContainer');
+        const monthlyReportTable = document.getElementById('monthlyReportTable');
+        const reportTeacher = document.getElementById('reportTeacher');
+        const reportClass = document.getElementById('reportClass');
+        const reportMonth = document.getElementById('reportMonth');
+        const printReportBtn = document.getElementById('printReportBtn');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const filterYear = document.getElementById('filterYear');
+
+        async function initApp() {
+            try {
+                await Promise.all([
+                    fetchTeachers(),
+                    fetchStudents(),
+                    fetchAttendanceData()
+                ]);
+
+                populateClassFilters();
+                populateYearFilter();
+
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showNotification('error', 'Terjadi kesalahan saat memuat aplikasi. Silakan refresh halaman.');
+            }
+        }
+
+        filterYear.addEventListener("change", function () {
+
+            filterAttendanceData();
+
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+
+            // Status login disimpan di browser, sehingga admin tidak perlu
+            // memasukkan kredensial lagi saat kembali membuka halaman ini.
+            isAdmin = localStorage.getItem('isAdminLoggedIn') === 'true';
+
+            const loginBtnEl = document.getElementById('loginBtn');
+            if (isAdmin && loginBtnEl) {
+                document.getElementById('adminHeaderActions').innerHTML = `
+                    <a href="admin.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Panel Admin</a>
+                    <button id="headerLogoutBtn" type="button" class="flex items-center gap-2 bg-red-500/90 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Logout</button>`;
+                document.getElementById('headerLogoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('isAdminLoggedIn');
+                    isAdmin = false;
+                    window.location.reload();
+                });
+            }
+            if (loginBtnEl) {
+                loginBtnEl.addEventListener('click', function() {
+                    if (isAdmin) { showPage(3); } else { openLoginModal(); }
+                });
+            }
+
+            const closeLoginModalEl = document.getElementById('closeLoginModal');
+            if (closeLoginModalEl) closeLoginModalEl.addEventListener('click', closeLoginModal);
+
+            const loginFormEl = document.getElementById('loginForm');
+            if (loginFormEl) {
+                loginFormEl.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const usernameEl = document.getElementById('username');
+                    const passwordEl = document.getElementById('password');
+                    const username = usernameEl ? usernameEl.value : '';
+                    const password = passwordEl ? passwordEl.value : '';
+                    
+                    if (username === 'admin' && password === 'gurutahta') {
+                        isAdmin = true;
+                        localStorage.setItem('isAdminLoggedIn', 'true');
+                        showNotification('success', 'Login berhasil!');
+                        closeLoginModal();
+                        showPage(3);
+
+                        if (loginBtnEl) loginBtnEl.textContent = 'Panel Admin';
+                    } else {
+                        showNotification('error', 'Username atau password salah!');
+                    }
+                });
+            }
+
+            const closeClassModalEl = document.getElementById('closeClassModal');
+            if (closeClassModalEl) closeClassModalEl.addEventListener('click', closeClassModal);
+
+            const backToHomeEl = document.getElementById('backToHome');
+            if (backToHomeEl) backToHomeEl.addEventListener('click', function() { showPage(1); });
+
+            const logoutBtnEl = document.getElementById('logoutBtn');
+            if (logoutBtnEl) {
+                logoutBtnEl.addEventListener('click', function() {
+                    isAdmin = false;
+                    localStorage.removeItem('isAdminLoggedIn');
+                    adminDataFetched = false;
+                    if (loginBtnEl) loginBtnEl.textContent = 'Login Admin';
+                    showPage(1);
+                    showNotification('success', 'Logout berhasil!');
+                });
+            }
+
+            const filterBtnEl = document.getElementById('filterBtn');
+            if (filterBtnEl) filterBtnEl.addEventListener('click', filterAttendanceData);
+
+            const exportPdfBtnEl = document.getElementById('exportPdfBtn');
+            if (exportPdfBtnEl) exportPdfBtnEl.addEventListener('click', exportAttendanceToPDF);
+
+            const printReportBtnEl = document.getElementById('printReportBtn');
+            if (printReportBtnEl) printReportBtnEl.addEventListener('click', function() { printAttendanceReport(); });
+
+            const prevPageEl = document.getElementById('prevPage');
+            if (prevPageEl) prevPageEl.addEventListener('click', function() {
+                if (currentPage > 1) { currentPage--; renderAdminData(); }
+            });
+            
+            const nextPageEl = document.getElementById('nextPage');
+            if (nextPageEl) nextPageEl.addEventListener('click', function() {
+                if ((currentPage * recordsPerPage) < filteredAttendanceData.length) { currentPage++; renderAdminData(); }
+            });
+
+            window.addEventListener('click', function(e) {
+                if (e.target === loginModal) { closeLoginModal(); }
+                if (e.target === classModal) { closeClassModal(); }
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966457682771ea76',t:'MTc1MzcwNTM0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
+
