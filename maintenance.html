@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance - Gemar Mengaji</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+    <main class="w-full max-w-xl text-center">
+        <div class="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-400 text-4xl font-bold text-slate-950 shadow-lg shadow-amber-400/20">!</div>
+        <p class="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">Gemar Mengaji</p>
+        <h1 class="mb-5 text-4xl font-bold tracking-tight sm:text-5xl">Sedang dalam perbaikan</h1>
+        <p class="mx-auto max-w-md text-base leading-7 text-slate-300">Website sedang dipersiapkan agar dapat digunakan kembali. Silakan kembali beberapa saat lagi.</p>
+        <div class="mt-10 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
+            <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-300"></span>
+            Status diperbarui otomatis
+        </div>
+        <div class="mt-8">
+            <a href="login.html" class="text-sm font-semibold text-amber-300 underline underline-offset-4 hover:text-amber-200">Masuk ke panel admin</a>
+        </div>
+    </main>
+    <script src="js/config.js"></script>
+    <script src="js/database.js"></script>
+    <script>
+        window.handleMaintenanceRealtime = function(enabled) {
+            if (!enabled) window.location.replace('index.html');
+        };
+
+        getMaintenanceMode()
+            .then(enabled => { if (!enabled) window.location.replace('index.html'); })
+            .catch(error => console.error('Gagal memeriksa status maintenance:', error));
+    </script>
+</body>
+</html>

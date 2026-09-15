@@ -356,7 +356,8 @@
                 <select id="infoYear" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Pilih tahun</option></select>
                 <select id="infoMonth" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Pilih bulan</option><option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option><option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option><option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
                 <select id="infoTeacher" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua guru</option></select>
-                <select id="infoClass" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua kelas / tingkat</option></select>
+                <select id="infoLevel" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua tingkat</option></select>
+                <select id="infoClass" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua nama kelas</option></select>
             </div>
             <button id="showInfographicBtn" class="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">Tampilkan Infografik</button>
         </section>
@@ -442,10 +443,15 @@
     
     <!-- EMBED LOGIKA OPERASIONAL ADMIN -->
     <script>
-        // Validasi Proteksi Sesi Panel
-        if (localStorage.getItem('isAdminLoggedIn') !== 'true') {
-            window.location.href = 'login.html';
-        }
+        // Panel admin tetap dapat dibuka saat maintenance, tetapi wajib memakai session Supabase.
+        document.documentElement.style.visibility = 'hidden';
+        supabase.auth.getSession().then(({ data }) => {
+            if (!data.session) {
+                window.location.replace('login.html');
+                return;
+            }
+            document.documentElement.style.visibility = 'visible';
+        }).catch(() => window.location.replace('login.html'));
 
         let currentPage = 1;
         let recordsPerPage = 10;
@@ -591,8 +597,8 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
 
         let bodyHtml = `<tbody class="divide-y divide-slate-200 bg-white text-slate-800">`;
         
-        let totalHadirKelas = 0;
-        let totalInputAbsenKelas = 0;
+        let totalPercent = 0;
+        let totalPercentStudents = 0;
 
         // Indeks dibuat sekali. Sebelumnya setiap sel tabel menjalankan
         // Array.find() terhadap seluruh absensi, yang sangat lambat pada data besar.
@@ -649,12 +655,9 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
 
                 if (record) {
                     const status = safeLowerCase(record.status);
-                    totalInputAbsenKelas++; // Hitung sebagai record hari yang aktif
-
                     if (status === 'hadir' || status === 'h') { 
                         statusCode = 'H'; 
                         hadirCount++; 
-                        totalHadirKelas++;
                         bgClass = 'bg-emerald-100 text-emerald-800 font-bold'; 
                     } else if (status === 'sakit' || status === 's') { 
                         statusCode = 'S'; 
@@ -670,11 +673,10 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
                         bgClass = 'bg-red-100 text-red-800 font-bold';
                     }
                 } else {
-                    // 2. LOGIKA ALFA OTOMATIS UNTUK TANGGAL SEBELUM HARI INI
-                    if (dateStr < todayStr) {
+                    // 2. LOGIKA ALFA OTOMATIS UNTUK TANGGAL YANG SUDAH BERJALAN
+                    if (dateStr <= todayStr) {
                         statusCode = '-';
                         alphaCount++;     // Masukkan ke dalam hitungan Alfa siswa
-                        totalInputAbsenKelas++; // Terhitung sebagai slot absen yang valid tapi bolos
                         bgClass = 'bg-red-50 text-red-500 font-medium'; // Beri warna merah soft khas Alfa otomatis
                     }
                 }
@@ -686,6 +688,8 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
             // Hitung Persentase Kehadiran Siswa secara Real-time
             const totalAbsenSiswa = hadirCount + sakitCount + izinCount + alphaCount;
             const persentaseSiswa = totalAbsenSiswa > 0 ? Math.round((hadirCount / totalAbsenSiswa) * 100) : 0;
+            totalPercent += persentaseSiswa;
+            totalPercentStudents++;
 
             // Gabungkan cell data siswa dengan kolom rekap H, S, I, A, dan % di akhir baris
             studentRow += cellsHtml;
@@ -704,8 +708,8 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
         monthlyReportTable.innerHTML = headerHtml + bodyHtml;
 
         // Hitung Tingkat Kehadiran Rata-rata Kelas
-        const rateRataRata = totalInputAbsenKelas > 0 
-            ? ((totalHadirKelas / totalInputAbsenKelas) * 100).toFixed(2) 
+        const rateRataRata = totalPercentStudents > 0
+            ? (totalPercent / totalPercentStudents).toFixed(2)
             : "0.00";
         
         if (avgAttendanceRate) {
@@ -867,13 +871,13 @@ function extractClassNumber(className) {
 
 // Fungsi Cetak Utama
 function printAttendanceReport() {
-    const month = (typeof filterMonth !== 'undefined' && filterMonth) ? filterMonth.value : '01';
+    const month = (typeof filterMonth !== 'undefined' && filterMonth && filterMonth.value) ? filterMonth.value : String(new Date().getMonth() + 1).padStart(2, '0');
     const teacher = (typeof filterTeacher !== 'undefined' && filterTeacher) ? filterTeacher.value : '';
     const classNumber = (typeof filterClassNumber !== 'undefined' && filterClassNumber) ? filterClassNumber.value : '';
     const className = (typeof filterClassName !== 'undefined' && filterClassName) ? filterClassName.value : '';
     
     const monthName = getMonthName(month);
-    const year = new Date().getFullYear();
+    const year = parseInt((typeof filterYear !== 'undefined' && filterYear && filterYear.value) ? filterYear.value : '', 10) || new Date().getFullYear();
     const now = new Date();
     const tanggalCetak = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
     
@@ -1078,39 +1082,33 @@ async function exportAttendanceToPDF() {
         };
 
         // AMBIL VALUE FILTER SECARA AMAN
-        const month = (typeof filterMonth !== 'undefined' && filterMonth && filterMonth.value) ? filterMonth.value : '01';
+        const month = (typeof filterMonth !== 'undefined' && filterMonth && filterMonth.value) ? filterMonth.value : String(new Date().getMonth() + 1).padStart(2, '0');
         const teacher = (typeof filterTeacher !== 'undefined' && filterTeacher && filterTeacher.value) ? filterTeacher.value : '';
         const classNumber = (typeof filterClassNumber !== 'undefined' && filterClassNumber && filterClassNumber.value) ? filterClassNumber.value : '';
         const className = (typeof filterClassName !== 'undefined' && filterClassName && filterClassName.value) ? filterClassName.value : '';
 
         const monthName = localGetMonthName(month);
-        const year = new Date().getFullYear();
+        const year = parseInt((typeof filterYear !== 'undefined' && filterYear && filterYear.value) ? filterYear.value : '', 10) || new Date().getFullYear();
         const now = new Date();
         const tanggalCetak = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
         
         const reportTeacherText = teacher || 'Semua Guru';
         const reportClassText = className || (classNumber ? `Kelas ${classNumber}` : 'Semua Kelas');
 
-        // 1. AMBIL DATA SISWA LANGSUNG DARI SUPABASE
-        const { data: dbStudents, error: studentErr } = await supabase
-            .from('students') 
-            .select('*');
+        // Gunakan state data yang sama dengan rekap web agar normalisasi dan
+        // pencocokan status tidak menghasilkan angka yang berbeda.
+        if (!Array.isArray(studentsData) || studentsData.length === 0) {
+            await fetchStudents();
+        }
 
-        if (studentErr) throw studentErr;
-        let dbStudentsList = dbStudents || [];
-
-        // 2. AMBIL DATA ABSENSI LANGSUNG DARI SUPABASE (Hanya memfilter kolom 'date' yang pasti ada)
+        // Ambil rentang bulan aktif agar PDF tidak bergantung pada data lama
+        // yang kebetulan sedang tersimpan di state halaman.
         const startDate = `${year}-${month}-01`;
         const endDate = `${year}-${month}-${new Date(year, parseInt(month), 0).getDate()}`;
-        
-        const { data: dbAttendance, error: attendErr } = await supabase
-            .from('attendance')
-            .select('*')
-            .gte('date', startDate)
-            .lte('date', endDate);
 
-        if (attendErr) throw attendErr;
-        const listAbsensi = dbAttendance || [];
+        await fetchAttendanceData({ date_from: startDate, date_to: endDate });
+        const dbStudentsList = Array.isArray(studentsData) ? studentsData : [];
+        const listAbsensi = Array.isArray(attendanceData) ? attendanceData : [];
 
         // 3. FILTER DATA SISWA SECARA LOKAL
         let filteredStudents = [...dbStudentsList];
@@ -1382,7 +1380,19 @@ async function exportAttendanceToPDF() {
         // ==========================================
         // ACTION CLICK PADA TOMBOL FILTER (DI-PERBAIKI)
         // ==========================================
-        document.getElementById('filterBtn').addEventListener('click', () => {
+        document.getElementById('filterBtn').addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            const originalButtonHtml = button.innerHTML;
+            button.disabled = true;
+            button.classList.add('opacity-75', 'cursor-wait');
+            button.innerHTML = `
+                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                Memuat data...
+            `;
+
             const y = document.getElementById('filterYear').value || "";
             const m = document.getElementById('filterMonth').value || "";
             const t = document.getElementById('filterTeacher').value || "";
@@ -1391,24 +1401,27 @@ async function exportAttendanceToPDF() {
             const c = document.getElementById('filterClassName').value || document.getElementById('filterClassNumber').value || "";
             
             // 1. Jalankan render rekap bulanan berdasarkan filter (bukan initial load lagi, jadi isInitialLoad = false)
-            renderMonthlyReportTable(m, y, t, c, false);
-
-            // 2. Jalankan filter untuk Tabel Log Riwayat di bagian bawah (isInitialLoad = false)
             try {
+                await renderMonthlyReportTable(m, y, t, c, false);
+
+                // Jalankan filter untuk tabel log riwayat setelah rekap selesai.
                 if (typeof renderAdminTable === 'function') {
-                    renderAdminTable();
+                    await renderAdminTable();
                 } else {
                     renderLocalAdminLogTable(t, c, false);
                 }
             } catch (err) {
                 renderLocalAdminLogTable(t, c, false);
+            } finally {
+                button.disabled = false;
+                button.classList.remove('opacity-75', 'cursor-wait');
+                button.innerHTML = originalButtonHtml;
             }
         });
 
         // Logout Panel
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('isAdminLoggedIn');
-            window.location.href = 'login.html';
+            supabase.auth.signOut().finally(() => window.location.href = 'login.html');
         });
 
         // Toggle Sidebar
@@ -1435,11 +1448,13 @@ async function exportAttendanceToPDF() {
             });
         }
 
-        // ==================== MODE MAINTENANCE (Penyimpanan di localStorage) ====================
+        // ==================== MODE MAINTENANCE ====================
+        let maintenanceMode = false;
+
         function updateMaintenanceStatusUI() {
             const statusEl = document.getElementById('maintenanceStatus');
             if (!statusEl) return;
-            if (localStorage.getItem('maintenanceMode') === '1') {
+            if (maintenanceMode) {
                 statusEl.classList.remove('hidden');
                 statusEl.innerText = 'ON';
                 statusEl.classList.remove('text-green-400');
@@ -1450,21 +1465,32 @@ async function exportAttendanceToPDF() {
             }
         }
 
-        function toggleMaintenance() {
-            const isOn = localStorage.getItem('maintenanceMode') === '1';
-            if (!isOn) {
-                localStorage.setItem('maintenanceMode', '1');
-            } else {
-                localStorage.removeItem('maintenanceMode');
-            }
+        window.handleMaintenanceRealtime = function(enabled) {
+            maintenanceMode = enabled;
             updateMaintenanceStatusUI();
-            // Beri tahu admin perubahan berhasil
-            const msg = localStorage.getItem('maintenanceMode') === '1' ? 'diaktifkan' : 'dinonaktifkan';
-            alert('Mode maintenance ' + msg + '. Halaman utama akan menampilkan status sesuai pengaturan.');
+        };
+
+        async function toggleMaintenance() {
+            try {
+                maintenanceMode = await setMaintenanceMode(!maintenanceMode);
+                updateMaintenanceStatusUI();
+                alert('Mode maintenance ' + (maintenanceMode ? 'diaktifkan' : 'dinonaktifkan') + '.');
+            } catch (error) {
+                console.error('Gagal mengubah mode maintenance:', error);
+                alert('Mode maintenance gagal diubah. Jalankan maintenance.sql terlebih dahulu.');
+            }
         }
 
-        // Pastikan menampilkan status pada muat halaman
-        try { updateMaintenanceStatusUI(); } catch (e) { /* ignore */ }
+        async function loadMaintenanceMode() {
+            try {
+                maintenanceMode = await getMaintenanceMode();
+                updateMaintenanceStatusUI();
+            } catch (error) {
+                console.error('Gagal memuat mode maintenance:', error);
+            }
+        }
+
+        loadMaintenanceMode();
 
 
     // ==================== STATE MANAJEMEN LOKAL ====================
@@ -2002,12 +2028,11 @@ function renderManageTable() {
     const level = document.getElementById('manageLevelFilter')?.value || '';
     const mode = document.getElementById('manageStudentFilterMode')?.value || '';
     const detail = document.getElementById('manageStudentDetailFilter')?.value || '';
-    const waitingForStudentFilter = currentManageTab === 'siswa' && (!level || !mode || !detail);
     const rows = getManageData().filter(item => {
         if (currentManageTab === 'siswa') {
-            if (getManageLevel(item.kelas) !== level) return false;
-            if (mode === 'guru' && String(item['nama guru'] || item.nama_guru || '') !== detail) return false;
-            if (mode === 'kelas' && String(item.kelas || '') !== detail) return false;
+            if (level && getManageLevel(item.kelas) !== level) return false;
+            if (mode === 'guru' && detail && String(item['nama guru'] || item.nama_guru || '') !== detail) return false;
+            if (mode === 'kelas' && detail && String(item.kelas || '') !== detail) return false;
         }
         const studentSearch = `${item['nama siswa'] || item.nama_siswa || ''} ${item['nama guru'] || item.nama_guru || ''} ${item.kelas || ''}`;
         const teacherSearch = `${item.nama || item.nama_guru || ''} ${item.foto || ''}`;
@@ -2028,8 +2053,7 @@ function renderManageTable() {
         : '<tr><th class="px-6 py-4">No</th><th class="px-6 py-4">Nama Siswa</th><th class="px-6 py-4">Nama Guru</th><th class="px-6 py-4">Kelas</th><th class="px-6 py-4 text-center w-36">Aksi</th></tr>';
 
     if (!pageRows.length) {
-        const message = waitingForStudentFilter ? 'Pilih tingkat kelas, lalu pilih nama guru atau nama kelas untuk menampilkan siswa.' : 'Data tidak ditemukan.';
-        body.innerHTML = `<tr><td colspan="${currentManageTab === 'guru' ? 4 : 5}" class="p-8 text-center text-slate-400">${message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="${currentManageTab === 'guru' ? 4 : 5}" class="p-8 text-center text-slate-400">Data tidak ditemukan.</td></tr>`;
     } else {
         let lastClass = null;
         const startNumber = (managePage - 1) * manageRowsPerPage;
@@ -2174,44 +2198,91 @@ function normalizeAttendanceStatus(value) {
 function populateInfographicFilters() {
     const year = document.getElementById('infoYear');
     const teacher = document.getElementById('infoTeacher');
+    const level = document.getElementById('infoLevel');
     const kelas = document.getElementById('infoClass');
     const years = [...new Set((attendanceData || []).map(row => String(row.date || '').slice(0, 4)).filter(Boolean))].sort().reverse();
     if (!years.includes(String(new Date().getFullYear()))) years.unshift(String(new Date().getFullYear()));
     year.innerHTML = '<option value="">Pilih tahun</option>' + years.map(value => `<option value="${value}">${value}</option>`).join('');
     teacher.innerHTML = '<option value="">Semua guru</option>' + [...new Set((studentsData || []).map(row => row['nama guru'] || row.nama_guru).filter(Boolean))].sort().map(value => `<option value="${manageEscape(value)}">${manageEscape(value)}</option>`).join('');
-    const classValues = [...new Set((studentsData || []).map(row => row.kelas).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id'));
-    kelas.innerHTML = '<option value="">Semua kelas / tingkat</option>' + classValues.map(value => `<option value="${manageEscape(value)}">${manageEscape(value)}</option>`).join('');
+    const levelValues = [...new Set((studentsData || []).map(row => getManageLevel(row.kelas || row.kelas_nama).trim()).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
+    level.innerHTML = '<option value="">Semua tingkat</option>' + levelValues.map(value => `<option value="${manageEscape(value)}">Tingkat ${manageEscape(value)}</option>`).join('');
+    const classValues = [...new Set((studentsData || []).map(row => row.kelas || row.kelas_nama).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id'));
+    kelas.innerHTML = '<option value="">Semua nama kelas</option>' + classValues.map(value => `<option value="${manageEscape(value)}">${manageEscape(value)}</option>`).join('');
 }
 
-function showInfographic() {
+async function showInfographic() {
     const year = document.getElementById('infoYear').value;
     const month = document.getElementById('infoMonth').value;
     const teacher = safeLowerCase(document.getElementById('infoTeacher').value);
+    const levelFilter = document.getElementById('infoLevel').value;
     const classFilter = document.getElementById('infoClass').value;
     if (!year || !month) return alert('Pilih tahun dan bulan terlebih dahulu.');
-    const classLevel = getManageLevel(classFilter);
-    const matchingStudents = (studentsData || []).filter(student => {
-        const studentTeacher = safeLowerCase(student['nama guru'] || student.nama_guru);
-        const matchesTeacher = !teacher || studentTeacher === teacher;
-        const matchesClass = !classFilter || String(student.kelas || '') === classFilter || getManageLevel(student.kelas) === classFilter;
-        return matchesTeacher && matchesClass;
-    });
-    const allowedNames = new Set(matchingStudents.map(student => safeLowerCase(student['nama siswa'] || student.nama_siswa || student.nama)));
-    const counts = { hadir: 0, sakit: 0, izin: 0, alpha: 0 };
-    const classCounts = new Map();
-    (attendanceData || []).forEach(record => {
-        const date = String(record.date || '').slice(0, 10);
-        const studentName = safeLowerCase(record.student || record.nama_siswa || record.student_name);
-        const recordTeacher = safeLowerCase(record.teacher || record.nama_guru || record.teacher_name);
-        if (!date.startsWith(`${year}-${month}`) || !allowedNames.has(studentName) || (teacher && recordTeacher && recordTeacher !== teacher)) return;
-        const status = normalizeAttendanceStatus(record.status);
-        counts[status]++;
-        const student = matchingStudents.find(item => safeLowerCase(item['nama siswa'] || item.nama_siswa || item.nama) === studentName);
-        const className = student?.kelas || record.class || record.kelas || 'Tanpa kelas';
-        if (!classCounts.has(className)) classCounts.set(className, { hadir: 0, total: 0 });
-        classCounts.get(className).total++;
-        if (status === 'hadir') classCounts.get(className).hadir++;
-    });
+    const firstDate = `${year}-${month}-01`;
+    const lastDate = `${year}-${month}-${String(new Date(Number(year), Number(month), 0).getDate()).padStart(2, '0')}`;
+    const button = document.getElementById('showInfographicBtn');
+
+    try {
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Memuat data...';
+        }
+        if (!studentsData?.length) await fetchStudents();
+        await fetchAttendanceData({ date_from: firstDate, date_to: lastDate });
+
+        const matchingStudents = (studentsData || []).filter(student => {
+            const studentTeacher = safeLowerCase(student['nama guru'] || student.nama_guru);
+            const studentClass = String(student.kelas || student.class_name || student.kelas_nama || '').trim();
+            const matchesTeacher = !teacher || studentTeacher === teacher;
+            const matchesLevel = !levelFilter || getManageLevel(studentClass) === levelFilter;
+            const matchesClass = !classFilter || studentClass === classFilter;
+            return matchesTeacher && matchesLevel && matchesClass;
+        });
+        const studentsByName = new Map(matchingStudents.map(student => [
+            safeLowerCase(student['nama siswa'] || student.nama_siswa || student.nama), student
+        ]));
+        const counts = { hadir: 0, sakit: 0, izin: 0, alpha: 0 };
+        const classCounts = new Map();
+        const activeDates = new Set();
+        const recordedByStudentDate = new Set();
+
+        (attendanceData || []).forEach(record => {
+            const date = String(record.date || '').slice(0, 10);
+            const studentName = safeLowerCase(record.student || record.nama_siswa || record.student_name);
+            const student = studentsByName.get(studentName);
+            if (!student) return;
+            const recordTeacher = safeLowerCase(record.teacher || record.nama_guru || record.teacher_name);
+            if (teacher && recordTeacher && recordTeacher !== teacher) return;
+
+            activeDates.add(date);
+            recordedByStudentDate.add(`${date}|${studentName}`);
+            const status = normalizeAttendanceStatus(record.status);
+            counts[status]++;
+            const className = student.kelas || record.class || record.kelas || 'Tanpa kelas';
+            if (!classCounts.has(className)) classCounts.set(className, { hadir: 0, total: 0 });
+            classCounts.get(className).total++;
+            if (status === 'hadir') classCounts.get(className).hadir++;
+        });
+
+        // Hari aktif ditentukan dari tanggal yang memiliki setidaknya satu record.
+        // Siswa tanpa record pada hari kegiatan dihitung sebagai alfa.
+        matchingStudents.forEach(student => {
+            const studentName = safeLowerCase(student['nama siswa'] || student.nama_siswa || student.nama);
+            const className = student.kelas || student.kelas_nama || 'Tanpa kelas';
+            if (!classCounts.has(className)) classCounts.set(className, { hadir: 0, total: 0 });
+            activeDates.forEach(date => {
+                if (recordedByStudentDate.has(`${date}|${studentName}`)) return;
+                counts.alpha++;
+                classCounts.get(className).total++;
+            });
+        });
+
+        const totalRecords = Object.values(counts).reduce((sum, value) => sum + value, 0);
+        if (!totalRecords) {
+            document.getElementById('infoEmptyState').textContent = 'Tidak ada data absensi pada filter yang dipilih.';
+            document.getElementById('infoEmptyState').classList.remove('hidden');
+            document.getElementById('infoContent').classList.add('hidden');
+            return;
+        }
     document.getElementById('infoHadir').textContent = counts.hadir;
     document.getElementById('infoSakit').textContent = counts.sakit;
     document.getElementById('infoIzin').textContent = counts.izin;
@@ -2221,7 +2292,16 @@ function showInfographic() {
     attendanceDonutChart?.destroy(); classComparisonChart?.destroy();
     attendanceDonutChart = new Chart(document.getElementById('attendanceDonut'), { type: 'doughnut', data: { labels: ['Hadir', 'Sakit', 'Izin', 'Alfa'], datasets: [{ data: [counts.hadir, counts.sakit, counts.izin, counts.alpha], backgroundColor: ['#10b981', '#f59e0b', '#0ea5e9', '#f43f5e'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '65%' } });
     const entries = [...classCounts.entries()];
-    classComparisonChart = new Chart(document.getElementById('classComparisonChart'), { type: 'bar', data: { labels: entries.map(([name]) => name), datasets: [{ label: 'Kehadiran (%)', data: entries.map(([, value]) => value.total ? Math.round(value.hadir / value.total * 100) : 0), backgroundColor: '#4f46e5', borderRadius: 8 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: value => `${value}%` } } }, plugins: { legend: { display: false } } } });
+        classComparisonChart = new Chart(document.getElementById('classComparisonChart'), { type: 'bar', data: { labels: entries.map(([name]) => name), datasets: [{ label: 'Kehadiran (%)', data: entries.map(([, value]) => value.total ? Math.round(value.hadir / value.total * 100) : 0), backgroundColor: '#4f46e5', borderRadius: 8 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100, ticks: { callback: value => `${value}%` } } }, plugins: { legend: { display: false } } } });
+    } catch (error) {
+        console.error('Gagal memuat infografik:', error);
+        alert('Infografik gagal dimuat. Periksa koneksi database lalu coba lagi.');
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Tampilkan Infografik';
+        }
+    }
 }
 
 function switchPage(pageId) {
@@ -2236,6 +2316,9 @@ function switchPage(pageId) {
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('showInfographicBtn').addEventListener('click', showInfographic);
+    document.getElementById('infoLevel').addEventListener('change', () => {
+        document.getElementById('infoClass').value = '';
+    });
     document.getElementById('topLogoutBtn').addEventListener('click', () => document.getElementById('logoutBtn').click());
 });
     </script>

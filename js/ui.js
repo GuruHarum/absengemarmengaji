@@ -196,7 +196,7 @@ renderClassOptions(Array.from(teacherClassNumbers));
                     selectedClass = this.getAttribute('data-class');
                     closeClassModal();
                     showPage(2);
-                    fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, class: selectedClass }).then(() => {
+                    fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher }).then(() => {
                         renderStudents();
                         populateYearFilter();
                     }).catch(error => {
@@ -322,27 +322,21 @@ async function renderStudents() {
                                             normalizedRecordedStatus === 'izin' ? 'bg-blue-100 text-blue-800' : 
                                             'bg-red-100 text-red-800'
                                         }">
-                                            ${
-                                                recordedData.status === 'hadir' ? '✅ Hadir' : 
-                                                recordedData.status === 'sakit' ? '🤒 Sakit' : 
-                                                recordedData.status === 'izin' ? '📝 Izin' : 
-                                                '❌ Alpha'
-                                            }
+                                            ${getAttendanceBadge(normalizedRecordedStatus).icon}
                                         </span>
                                     </div>
                                      <div class="note-container">
                                          <p class="text-sm text-gray-600 mb-1">Catatan:</p>
                                          <p class="text-gray-800">${recordedData.note || '-'}</p>
                                      </div>
-                                      ${(typeof isAdmin !== 'undefined' && isAdmin) || localStorage.getItem('isAdminLoggedIn') === 'true' ? `
-                                        <div class="flex gap-2 mt-3">
-                                            <button type="button" class="edit-attendance-btn p-2 rounded-md text-blue-700 hover:bg-blue-50" data-attendance-id="${recordedData.id}" title="Edit">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                                    <path fill-rule="evenodd" d="M2 15.25V18h2.75l8.447-8.447-2.75-2.75L2 15.25z" clip-rule="evenodd" />
-                                                </svg>
-                                            </button>
-                                        </div>` : ''}
+                                      <div class="flex gap-2 mt-3">
+                                          <button type="button" class="edit-attendance-btn p-2 rounded-md text-blue-700 hover:bg-blue-50" data-attendance-id="${recordedData.id}" title="Edit absensi">
+                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                                  <path fill-rule="evenodd" d="M2 15.25V18h2.75l8.447-8.447-2.75-2.75L2 15.25z" clip-rule="evenodd" />
+                                              </svg>
+                                          </button>
+                                      </div>
                                  </div>` :
                                 `<div class="flex flex-col">
                                     <div class="attendance-options">
@@ -392,7 +386,6 @@ function bindAttendanceEditEvents() {
     // Buka modal edit saat ikon edit diklik
     document.querySelectorAll('.edit-attendance-btn').forEach(button => {
         button.addEventListener('click', function() {
-            if ((typeof isAdmin === 'undefined' || !isAdmin) && localStorage.getItem('isAdminLoggedIn') !== 'true') return;
             const record = (typeof attendanceData !== 'undefined' ? attendanceData : []).find(item => String(item.id) === this.dataset.attendanceId);
             if (!record) return showNotification('error', 'Data absensi tidak ditemukan. Silakan muat ulang halaman.');
 
@@ -427,8 +420,6 @@ function bindAttendanceEditEvents() {
     if (form && !form.dataset.bound) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            if ((typeof isAdmin === 'undefined' || !isAdmin) && localStorage.getItem('isAdminLoggedIn') !== 'true') return;
-
             const id = document.getElementById('attendanceEditId').value;
             const status = document.getElementById('attendanceEditStatus').value;
             const note = document.getElementById('attendanceEditNote').value || '';
@@ -446,7 +437,7 @@ function bindAttendanceEditEvents() {
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
                 }
-                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, class: selectedClass });
+                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher });
                 await renderStudents();
             } catch (err) {
                 console.error(err);
@@ -462,7 +453,6 @@ function bindAttendanceEditEvents() {
     const modalDeleteBtn = document.getElementById('deleteAttendanceBtn');
     if (modalDeleteBtn && !modalDeleteBtn.dataset.bound) {
         modalDeleteBtn.addEventListener('click', function() {
-            if ((typeof isAdmin === 'undefined' || !isAdmin) && localStorage.getItem('isAdminLoggedIn') !== 'true') return;
             const id = document.getElementById('attendanceEditId').value;
             if (!id) return showNotification('error', 'ID absensi tidak ditemukan.');
 
@@ -494,7 +484,6 @@ function bindAttendanceEditEvents() {
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     if (confirmDeleteBtn && !confirmDeleteBtn.dataset.bound) {
         confirmDeleteBtn.addEventListener('click', async function() {
-            if ((typeof isAdmin === 'undefined' || !isAdmin) && localStorage.getItem('isAdminLoggedIn') !== 'true') return;
             const id = document.getElementById('attendanceEditId').value;
             if (!id) return showNotification('error', 'ID absensi tidak ditemukan.');
 
@@ -515,7 +504,7 @@ function bindAttendanceEditEvents() {
                     confirmContainer.classList.add('hidden');
                     actions.classList.remove('hidden');
                 }
-                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, class: selectedClass });
+                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher });
                 await renderStudents();
             } catch (err) {
                 console.error(err);
@@ -593,7 +582,7 @@ function bindSaveButtonEvents(filteredStudents) {
                 page1.classList.add('fade-in');
                 fetchTeachers();
 
-                if (autoSubmitTimer) {
+                if (typeof autoSubmitTimer !== 'undefined' && autoSubmitTimer) {
                     clearTimeout(autoSubmitTimer);
                     autoSubmitTimer = null;
                 }
@@ -601,7 +590,7 @@ function bindSaveButtonEvents(filteredStudents) {
                 page2.classList.remove('hidden');
                 page2.classList.add('fade-in');
                 // Ambil data absensi hanya untuk guru/kelas/tanggal yang relevan sehingga tidak mengambil seluruh tabel
-                    Promise.all([fetchStudents(), fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, class: selectedClass })]).then(() => {
+                    Promise.all([fetchStudents(), fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher })]).then(() => {
                         populateClassFilters();
                         renderStudents();
                     });

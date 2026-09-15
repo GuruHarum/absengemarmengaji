@@ -240,6 +240,28 @@ async function getAttendance(filters = {}) {
     }
 }
 
+async function getMaintenanceMode() {
+    const { data, error } = await supabase
+        .from('maintenance_settings')
+        .select('enabled')
+        .eq('id', true)
+        .maybeSingle();
+
+    if (error) throw error;
+    return data?.enabled === true;
+}
+
+async function setMaintenanceMode(enabled) {
+    const { data, error } = await supabase
+        .from('maintenance_settings')
+        .upsert({ id: true, enabled: Boolean(enabled), updated_at: new Date().toISOString() }, { onConflict: 'id' })
+        .select('enabled')
+        .single();
+
+    if (error) throw error;
+    return data.enabled === true;
+}
+
 async function saveAttendance(record) {
 
     const exists = await attendanceExists(
@@ -424,6 +446,20 @@ async function fetchAttendanceData(filters = {}) {
     }
 }
 
+function syncAttendanceIndex(record, previousRecord = null) {
+    if (previousRecord && typeof attendanceIndex !== 'undefined' && attendanceIndex instanceof Map) {
+        const previousDate = String(previousRecord.date || '').slice(0, 10);
+        attendanceIndex.delete(`${previousDate}|${previousRecord.teacher}|${previousRecord.student}`);
+    }
+
+    if (record && typeof attendanceIndex !== 'undefined' && attendanceIndex instanceof Map) {
+        const date = String(record.date || '').slice(0, 10);
+        if (date && record.teacher && record.student) {
+            attendanceIndex.set(`${date}|${record.teacher}|${record.student}`, record);
+        }
+    }
+}
+
 async function saveAttendanceRecord(
     studentName,
     status,
@@ -577,73 +613,97 @@ async function updateTeacherPhoto(teacherId, photoUrl) {
     return data;
 }
 
-window.supabase
-    .channel("attendance-channel")
-    .on(
-        "postgres_changes",
-        {
-            event: "*",
-            schema: "public",
-            table: "attendance"
-        },
-        async (payload) => {
-            console.log("Perubahan Attendance diterima secara Real-time:", payload);
-            
-            if (payload.eventType === "INSERT") {
-                const newRecord = payload.new;
-                const cleanDate = newRecord.date.includes('T') ? newRecord.date.split('T')[0] : newRecord.date;
-                const key = `${cleanDate}|${newRecord.teacher}|${newRecord.student}`;
-                
-                if (typeof attendanceIndex !== 'undefined') {
-                    attendanceIndex.set(key, newRecord);
-                }
-                
-                if (window.attendanceData) {
-                    const exists = window.attendanceData.some(r => r.id === newRecord.id);
-                    if (!exists) window.attendanceData.push(newRecord);
-                }
-            } 
-            
-            else if (payload.eventType === "UPDATE") {
-                const updatedRecord = payload.new;
-                const cleanDate = updatedRecord.date.includes('T') ? updatedRecord.date.split('T')[0] : updatedRecord.date;
-                const key = `${cleanDate}|${updatedRecord.teacher}|${updatedRecord.student}`;
-                
-                if (typeof attendanceIndex !== 'undefined') {
-                    attendanceIndex.set(key, updatedRecord);
-                }
-                
-                if (window.attendanceData) {
-                    const idx = window.attendanceData.findIndex(r => r.id === updatedRecord.id);
-                    if (idx !== -1) window.attendanceData[idx] = updatedRecord;
-                }
-            }
-            
-            else if (payload.eventType === "DELETE") {
-                const oldRecord = payload.old;
-                
-                if (window.attendanceData) {
-                    const foundIndex = window.attendanceData.findIndex(r => r.id === oldRecord.id);
-                    if (foundIndex !== -1) {
-                        const targetData = window.attendanceData[foundIndex];
-                        const cleanDate = targetData.date.includes('T') ? targetData.date.split('T')[0] : targetData.date;
-                        const key = `${cleanDate}|${targetData.teacher}|${targetData.student}`;
-                        
-                        if (typeof attendanceIndex !== 'undefined') {
-                            attendanceIndex.delete(key);
-                        }
-                        
-                        window.attendanceData.splice(foundIndex, 1);
-                    }
-                }
+if (!window.__gemarMengajiRealtimeChannel) {
+    const realtimeChannel = window.supabase.channel('gemar-mengaji-realtime');
+
+    const refreshVisibleViews = async (table) => {
+        if (table === 'students' || table === 'teachers') {
+            if (table === 'students') {
+                const freshStudents = await getStudents();
+                if (typeof studentsData !== 'undefined') studentsData = freshStudents;
+                window.studentsData = freshStudents;
+            } else {
+                const freshTeachers = await getTeachers();
+                if (typeof teachersData !== 'undefined') teachersData = freshTeachers;
+                window.teachersData = freshTeachers;
             }
 
-            if (typeof renderStudents === 'function') {
-                await renderStudents();
+            if (typeof populateAdminDropdowns === 'function') populateAdminDropdowns();
+            if (typeof populateTeacherDropdown === 'function') populateTeacherDropdown();
+            if (typeof renderManageTable === 'function') renderManageTable();
+        }
+
+        if (typeof renderStudents === 'function') await renderStudents();
+
+        if (typeof renderMonthlyReportTable === 'function') {
+            const month = document.getElementById('filterMonth')?.value;
+            if (month) {
+                await renderMonthlyReportTable(
+                    month,
+                    document.getElementById('filterYear')?.value || new Date().getFullYear().toString(),
+                    document.getElementById('filterTeacher')?.value || '',
+                    document.getElementById('filterClassName')?.value || document.getElementById('filterClassNumber')?.value || '',
+                    false
+                );
             }
         }
-    )
-    .subscribe();
+    };
+
+    const handleRealtimeChange = async (payload) => {
+        const table = payload.table;
+        console.log(`[Realtime] ${table} ${payload.eventType}`, payload);
+
+        if (table === 'maintenance_settings') {
+            const enabled = payload.eventType !== 'DELETE' && payload.new?.enabled === true;
+            if (typeof window.handleMaintenanceRealtime === 'function') {
+                window.handleMaintenanceRealtime(enabled);
+            }
+            return;
+        }
+
+        if (table === 'attendance') {
+            const changedRecord = payload.eventType === 'DELETE' ? payload.old : payload.new;
+            const currentAttendance = typeof attendanceData !== 'undefined'
+                ? attendanceData
+                : (window.attendanceData || []);
+            if (payload.eventType === 'DELETE') {
+                const index = currentAttendance.findIndex(record => record.id === changedRecord.id);
+                if (index !== -1) {
+                    const previousRecord = currentAttendance[index];
+                    currentAttendance.splice(index, 1);
+                    syncAttendanceIndex(null, previousRecord);
+                }
+            } else {
+                const index = currentAttendance.findIndex(record => record.id === changedRecord.id);
+                const previousRecord = index === -1 ? null : currentAttendance[index];
+                if (index === -1) currentAttendance.push(changedRecord);
+                else currentAttendance[index] = changedRecord;
+                syncAttendanceIndex(changedRecord, previousRecord);
+            }
+            if (typeof renderAdminData === 'function') {
+                if (typeof filteredAttendanceData !== 'undefined') filteredAttendanceData = [...currentAttendance];
+                window.filteredAttendanceData = [...currentAttendance];
+                renderAdminData();
+            }
+        }
+
+        await refreshVisibleViews(table);
+    };
+
+    ['attendance', 'students', 'teachers', 'maintenance_settings'].forEach(table => {
+        realtimeChannel.on('postgres_changes', {
+            event: '*', schema: 'public', table
+        }, handleRealtimeChange);
+    });
+
+    window.__gemarMengajiRealtimeChannel = realtimeChannel;
+    realtimeChannel.subscribe((status, error) => {
+        console.log('[Realtime] status:', status, error || '');
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('[Realtime] Gagal berlangganan perubahan Supabase.', error || status);
+        }
+    });
+}
 
 // Ambil Data Profil Sekolah saat Web dimuat
 async function getSchoolProfile() {

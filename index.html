@@ -686,26 +686,6 @@
         </div>
     </header>
 
-    <script>
-        // Periksa mode maintenance yang diset lewat panel admin (disimpan di localStorage)
-        (function(){
-            try {
-                const isMaintenance = localStorage.getItem('maintenanceMode') === '1';
-                if (isMaintenance) {
-                    const mainEl = document.querySelector('main.container');
-                    if (mainEl) {
-                        mainEl.innerHTML = `
-                            <div class="container mx-auto px-4 py-20 text-center">
-                                <h2 class="text-3xl font-bold text-gray-800 mb-4">Maintenance sedang berlangsung</h2>
-                                <p class="text-gray-600 mb-6">Website sedang dalam pemeliharaan. Silakan coba kembali nanti.</p>
-                            </div>
-                        `;
-                    }
-                }
-            } catch (e) { console.error('Maintenance check error', e); }
-        })();
-    </script>
-
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
         <!-- Page 1: Teacher Selection -->
@@ -969,8 +949,8 @@
             </div>
             <form id="loginForm" class="space-y-4">
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <input type="text" id="username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Email Admin</label>
+                    <input type="email" id="username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
@@ -1103,6 +1083,10 @@
 
         async function initApp() {
             try {
+                if (await getMaintenanceMode()) {
+                    window.location.replace('maintenance.html');
+                    return;
+                }
                 await Promise.all([
                     fetchTeachers(),
                     fetchStudents(),
@@ -1119,6 +1103,12 @@
             }
         }
 
+        window.handleMaintenanceRealtime = function(enabled) {
+            if (enabled && !window.location.pathname.endsWith('maintenance.html')) {
+                window.location.replace('maintenance.html');
+            }
+        };
+
         filterYear.addEventListener("change", function () {
 
             filterAttendanceData();
@@ -1128,24 +1118,25 @@
         document.addEventListener('DOMContentLoaded', function() {
             initApp();
 
-            // Status login disimpan di browser, sehingga admin tidak perlu
-            // memasukkan kredensial lagi saat kembali membuka halaman ini.
-            isAdmin = localStorage.getItem('isAdminLoggedIn') === 'true';
-
             const loginBtnEl = document.getElementById('loginBtn');
-            if (isAdmin && loginBtnEl) {
+            supabase.auth.getSession().then(({ data }) => {
+                isAdmin = Boolean(data.session);
+                if (!isAdmin || !loginBtnEl) return;
                 document.getElementById('adminHeaderActions').innerHTML = `
                     <a href="admin.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Panel Admin</a>
                     <button id="headerLogoutBtn" type="button" class="flex items-center gap-2 bg-red-500/90 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Logout</button>`;
-                document.getElementById('headerLogoutBtn').addEventListener('click', () => {
-                    localStorage.removeItem('isAdminLoggedIn');
+                document.getElementById('headerLogoutBtn').addEventListener('click', async () => {
+                    await supabase.auth.signOut();
                     isAdmin = false;
                     window.location.reload();
                 });
-            }
+            });
             if (loginBtnEl) {
-                loginBtnEl.addEventListener('click', function() {
-                    if (isAdmin) { showPage(3); } else { openLoginModal(); }
+                loginBtnEl.addEventListener('click', function(event) {
+                    if (isAdmin) {
+                        event.preventDefault();
+                        window.location.href = 'admin.html';
+                    }
                 });
             }
 
@@ -1154,23 +1145,23 @@
 
             const loginFormEl = document.getElementById('loginForm');
             if (loginFormEl) {
-                loginFormEl.addEventListener('submit', function(e) {
+                loginFormEl.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     const usernameEl = document.getElementById('username');
                     const passwordEl = document.getElementById('password');
-                    const username = usernameEl ? usernameEl.value : '';
+                    const email = usernameEl ? usernameEl.value.trim() : '';
                     const password = passwordEl ? passwordEl.value : '';
-                    
-                    if (username === 'admin' && password === 'gurutahta') {
+
+                    const { error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (!error) {
                         isAdmin = true;
-                        localStorage.setItem('isAdminLoggedIn', 'true');
                         showNotification('success', 'Login berhasil!');
                         closeLoginModal();
                         showPage(3);
 
                         if (loginBtnEl) loginBtnEl.textContent = 'Panel Admin';
                     } else {
-                        showNotification('error', 'Username atau password salah!');
+                        showNotification('error', 'Email atau password salah!');
                     }
                 });
             }
@@ -1184,12 +1175,13 @@
             const logoutBtnEl = document.getElementById('logoutBtn');
             if (logoutBtnEl) {
                 logoutBtnEl.addEventListener('click', function() {
-                    isAdmin = false;
-                    localStorage.removeItem('isAdminLoggedIn');
-                    adminDataFetched = false;
-                    if (loginBtnEl) loginBtnEl.textContent = 'Login Admin';
-                    showPage(1);
-                    showNotification('success', 'Logout berhasil!');
+                    supabase.auth.signOut().then(() => {
+                        isAdmin = false;
+                        adminDataFetched = false;
+                        if (loginBtnEl) loginBtnEl.textContent = 'Login Admin';
+                        showPage(1);
+                        showNotification('success', 'Logout berhasil!');
+                    });
                 });
             }
 

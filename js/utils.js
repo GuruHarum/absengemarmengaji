@@ -60,7 +60,24 @@ const record = attendanceMap.get(key);
 
             const key = `${checkDate}|${selectedTeacher}|${studentName}`;
 
-            return attendanceIndex.get(key);
+            const indexedRecord = attendanceIndex.get(key);
+            if (indexedRecord) return indexedRecord;
+
+            // Fallback menjaga kartu tetap responsif jika event realtime masuk
+            // sebelum indeks selesai dibangun ulang.
+            const normalizedStudent = String(studentName || '').trim().toLowerCase();
+            const normalizedTeacher = String(selectedTeacher || '').trim().toLowerCase();
+            const record = (Array.isArray(attendanceData) ? attendanceData : []).find(item => {
+                const itemDate = String(item.date || item.tanggal || '').slice(0, 10);
+                const itemStudent = String(item.student || item.nama_siswa || '').trim().toLowerCase();
+                const itemTeacher = String(item.teacher || item.nama_guru || '').trim().toLowerCase();
+                return itemDate === checkDate && itemStudent === normalizedStudent && itemTeacher === normalizedTeacher;
+            });
+
+            if (record && typeof syncAttendanceIndex === 'function') {
+                syncAttendanceIndex(record);
+            }
+            return record;
 
         }
 
