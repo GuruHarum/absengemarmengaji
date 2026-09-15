@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/responsive.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
@@ -17,7 +18,7 @@
         }
         
         .header-gradient {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-color) 100%);
         }
         
         .fade-in {
@@ -662,22 +663,25 @@
         }
     </style>
 </head>
-<body>
-    <!-- Loading Indicator -->
-    <div id="loadingIndicator" class="loading-indicator">
-        <div class="loading-spinner"></div>
+<body class="public-page">
+    <div id="loadingIndicator" class="islamic-loader" aria-live="polite">
+        <div class="islamic-loader-card">
+            <div class="islamic-loader-symbol" aria-hidden="true"></div>
+            <div id="loaderSchoolName" class="islamic-loader-title">Gemar Mengaji</div>
+            <div class="islamic-loader-text">Menyiapkan daftar guru dan absensi</div>
+            <div class="islamic-loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
     </div>
 
-    <!-- Header -->
     <header class="header-gradient shadow-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center">
                 <div class="logo-circle mr-4">
-                    <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT Harapan Umat" class="h-full w-full object-cover">
+                    <img id="schoolLogo" src="https://iili.io/FjF61ou.png" alt="Logo sekolah" class="h-full w-full object-cover">
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-white">SDIT Harapan Umat Karawang</h1>
-                    <p class="text-sm text-blue-100">Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur</p>
+                    <h1 id="schoolName" class="text-xl font-bold text-white">SDIT Harapan Umat Karawang</h1>
+                    <p id="schoolAddress" class="text-sm text-blue-100">Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur</p>
                 </div>
             </div>
             <div id="adminHeaderActions" class="flex items-center gap-2">
@@ -686,9 +690,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="container mx-auto px-4 py-8">
-        <!-- Page 1: Teacher Selection -->
         <div id="page1" class="page-transition">
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold text-blue-800 mb-2">Daftar Hadir Kegiatan Gemar Mengaji</h2>
@@ -696,14 +698,12 @@
             </div>
             
             <div id="teacherGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Teachers will be loaded here -->
                 <div class="col-span-full flex justify-center">
                     <div class="w-full h-32 max-w-sm rounded-lg shimmer"></div>
                 </div>
             </div>
         </div>
         
-        <!-- Page 2: Student Attendance -->
         <div id="page2" class="page-transition hidden">
             <div class="flex justify-between items-center mb-6">
                 <div>
@@ -732,7 +732,6 @@
             </div>
             
             <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Students will be loaded here -->
                 <div class="col-span-full">
                     <div class="w-full h-32 rounded shimmer mb-2"></div>
                     <div class="w-full h-32 rounded shimmer mb-2"></div>
@@ -741,7 +740,6 @@
             </div>
         </div>
         
-        <!-- Page 3: Admin Panel -->
         <div id="page3" class="page-transition hidden">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-blue-800">Panel Admin</h2>
@@ -827,7 +825,6 @@
                 </div>
             </div>
             
-            <!-- Monthly Attendance Report -->
             <div id="reportContainer" class="admin-panel mb-8" style="display: none;">
                 <div class="report-header">
                     <div>
@@ -869,7 +866,6 @@
                 
                 <div class="overflow-x-auto">
                     <table id="monthlyReportTable" class="monthly-report-table">
-                        <!-- Monthly report will be generated here -->
                         <tr>
                             <td colspan="32" class="py-8 text-center">
                                 <div class="w-full h-12 rounded shimmer mb-2"></div>
@@ -896,7 +892,6 @@
                             </tr>
                         </thead>
                         <tbody id="adminDataList">
-                            <!-- Admin data will be loaded here -->
                             <tr>
                                 <td colspan="6" class="py-8 text-center">
                                     <div class="w-full h-12 rounded shimmer mb-2"></div>
@@ -929,14 +924,12 @@
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="bg-blue-800 text-white py-4 footer">
         <div class="container mx-auto px-4 text-center">
             <p>Hak Cipta SDIT Harapan Umat Karawang</p>
         </div>
     </footer>
 
-    <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content bg-white w-full max-w-md mx-auto mt-20 rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-4">
@@ -986,7 +979,6 @@
         </div>
     </div>
 
-    <!-- Class Selection Modal -->
     <div id="classModal" class="modal">
         <div class="modal-content bg-white w-full max-w-md mx-auto mt-20 rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-4">
@@ -998,7 +990,6 @@
                 </button>
             </div>
             <div id="classOptions" class="grid grid-cols-2 gap-4">
-                <!-- Class options will be dynamically generated -->
                 <div class="col-span-2 flex justify-center">
                     <div class="w-full h-32 rounded shimmer"></div>
                 </div>
@@ -1006,14 +997,11 @@
         </div>
     </div>
 
-    <!-- Notification -->
     <div id="notification" class="notification bg-white rounded-lg shadow-lg p-4 max-w-md">
         <div id="notificationContent" class="flex items-center">
-            <!-- Notification content will be inserted here -->
         </div>
     </div>
 
-    <!-- Thank You Modal -->
     <div id="thankYouModal" class="thank-you-modal">
         <div class="thank-you-content">
             <div class="mb-4">
@@ -1079,10 +1067,34 @@
         const printReportBtn = document.getElementById('printReportBtn');
         const exportPdfBtn = document.getElementById('exportPdfBtn');
         const loadingIndicator = document.getElementById('loadingIndicator');
+
+        window.applySchoolProfile = function(profile) {
+            if (!profile) return;
+            const name = profile.name || 'Gemar Mengaji';
+            const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
+            const nameElement = document.getElementById('schoolName');
+            const addressElement = document.getElementById('schoolAddress');
+            const logoElement = document.getElementById('schoolLogo');
+            const loaderName = document.getElementById('loaderSchoolName');
+            if (nameElement) nameElement.textContent = name;
+            if (addressElement) addressElement.textContent = profile.address || '';
+            if (logoElement) logoElement.src = logo;
+            if (loaderName) loaderName.textContent = name;
+            if (profile.theme_color) document.documentElement.style.setProperty('--brand-color', profile.theme_color);
+        };
+
+        function hideIslamicLoader() {
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                document.body.classList.add('page-ready');
+                document.getElementById('loadingIndicator')?.classList.add('is-hidden');
+            }));
+        }
         const filterYear = document.getElementById('filterYear');
 
         async function initApp() {
             try {
+                const profile = await getSchoolProfile();
+                window.applySchoolProfile(profile);
                 if (await getMaintenanceMode()) {
                     window.location.replace('maintenance.html');
                     return;
@@ -1100,6 +1112,8 @@
             } catch (error) {
                 console.error('Error initializing app:', error);
                 showNotification('error', 'Terjadi kesalahan saat memuat aplikasi. Silakan refresh halaman.');
+            } finally {
+                hideIslamicLoader();
             }
         }
 

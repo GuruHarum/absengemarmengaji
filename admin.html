@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin - SDIT Harapan Umat Karawang</title>
     
-    <!-- Google Fonts Preconnect & Stylesheet Link (Format yang benar untuk menghindari MIME type error) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/responsive.css">
 
-    <!-- Tailwind Play CDN (Abaikan warning warning produksi untuk tahap development) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -43,29 +42,23 @@
         }
     </style>
 </head>
-<body class="flex min-h-screen overflow-x-hidden">
+<body class="admin-page flex min-h-screen overflow-x-hidden">
 
-    <!-- Loading Indicator -->
     <div id="loadingIndicator" class="fixed inset-0 bg-white/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
     </div>
 
-    <!-- SIDEBAR NAVIGATION -->
     <aside id="sidebar" class="relative w-64 bg-slate-900 text-slate-300 flex flex-col shadow-xl transition-all duration-300 ease-in-out z-40 overflow-visible">
-        <!-- Wrapper Konten Internal Sidebar -->
         <div class="flex-1 flex flex-col w-full overflow-hidden h-full">
-            <!-- Header Sidebar -->
             <div class="p-5 flex items-center gap-3 border-b border-slate-800 bg-slate-950 whitespace-nowrap">
-                <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT" class="w-10 h-10 object-contain bg-white rounded-full p-1">
+                <img id="adminSchoolLogo" src="https://iili.io/FjF61ou.png" alt="Logo sekolah" class="w-10 h-10 object-contain bg-white rounded-full p-1">
                 <div class="sidebar-text transition-opacity duration-300">
-                    <h1 class="text-sm font-bold text-white tracking-wide">SDIT HARAPAN UMAT</h1>
-                    <p class="text-[10px] text-slate-400">Karawang</p>
+                    <h1 id="adminSchoolName" class="text-sm font-bold text-white tracking-wide">SDIT HARAPAN UMAT</h1>
+                    <p id="adminSchoolAddress" class="text-[10px] text-slate-400">Karawang</p>
                 </div>
             </div>
             
-            <!-- NAVIGASI SIDEBAR -->
 <nav class="space-y-2 px-4 mt-6">
-  <!-- Menu 1: Data Absensi -->
   <button id="menu-absensi" onclick="switchPage('absensi')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-white bg-indigo-600 rounded-xl transition-all duration-300">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
@@ -73,7 +66,6 @@
     Data Absensi
   </button>
 
-  <!-- Menu Baru: Kelola Data -->
   <button id="menu-kelola" onclick="switchPage('kelola')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all duration-100">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -82,7 +74,6 @@
     Kelola Data
   </button>
 
-  <!-- Menu 3: Halaman Utama Absen -->
   <a href="index.html" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -95,13 +86,15 @@
   <button id="menu-infografik" onclick="switchPage('infografik')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
     <span class="w-5 text-center">◔</span> Infografik Absensi
   </button>
+    <button id="menu-pengaturan" onclick="switchPage('pengaturan')" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
+        <span class="w-5 text-center">⚙</span> Pengaturan Sistem
+    </button>
   <button id="menu-maintenance" onclick="toggleMaintenance()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
     <span class="w-5 text-center">🛠</span> Mode Maintenance
     <span id="maintenanceStatus" class="ml-auto text-xs font-semibold text-red-400 hidden">ON</span>
   </button>
 </nav>
 
-            <!-- Footer / Tombol Logout -->
             <div class="p-4 border-t border-slate-800 whitespace-nowrap">
                 <button id="logoutBtn" class="w-full bg-red-950/40 text-red-400 hover:bg-red-900 hover:text-white transition-all py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -110,7 +103,6 @@
             </div>
         </div>
 
-        <!-- TOMBOL TOGGLE -->
         <button id="toggleSidebar" class="absolute top-6 right-0 translate-x-1/2 z-[60] bg-white border border-slate-200 text-slate-500 hover:text-slate-800 w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110 focus:outline-none">
             <div id="toggleIcon" class="w-4 h-4 transition-transform duration-300 transform">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
@@ -120,9 +112,7 @@
         </button>
     </aside>
 
-    <!-- MAIN CONTENT CONTAINER -->
     <main class="flex-1 flex flex-col min-w-0 overflow-y-auto transition-all duration-300 ease-in-out">
-        <!-- Top Navbar -->
         <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shadow-sm shrink-0">
             <h2 class="text-xl font-bold text-slate-800">Panel Administrasi Absensi</h2>
             <button id="topLogoutBtn" class="flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 transition-all font-semibold text-sm px-4 py-2 rounded-xl border border-red-100">
@@ -130,15 +120,10 @@
             </button>
         </header>
 
-        <!-- Dynamic Content Body -->
 <div class="p-8 space-y-6 max-w-[1600px] w-full mx-auto">
     
-    <!-- ======================================================== -->
-    <!-- 1. HALAMAN DATA ABSENSI (Tampil Default)                 -->
-    <!-- ======================================================== -->
     <div id="page-absensi" class="block space-y-6">
         
-        <!-- SECTION FILTER -->
         <section class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-blue-600 rounded-full inline-block"></span>
@@ -187,9 +172,7 @@
             </button>
         </section>
 
-        <!-- SECTION BULANAN (REKAP GRID) -->
         <section id="reportContainer" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm" style="display: none;">
-            <!-- Header Laporan & Ekspor -->
             <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 border-b border-slate-100 pb-5 mb-5">
                 <div>
                     <h3 class="text-lg font-bold text-slate-800">Rekap Absensi Bulanan</h3>
@@ -200,7 +183,6 @@
                     </div>
                 </div>
                 
-                <!-- Kartu Statistik Kehadiran -->
                 <div class="flex items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4 rounded-2xl shadow-sm self-start lg:self-center">
                     <div class="p-3 bg-blue-600 text-white rounded-xl shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -225,15 +207,12 @@
                 </div>
             </div>
 
-            <!-- Table Container with Horizontal Scroll -->
             <div class="overflow-x-auto rounded-xl border border-slate-200 custom-scrollbar">
                 <table id="monthlyReportTable" class="w-full text-xs text-left border-collapse min-w-[1000px]">
-                    <!-- Digenerate oleh JS -->
                 </table>
             </div>
         </section>
 
-        <!-- SECTION LOG RIWAYAT ABSENSI (Hanya Satu) -->
         <section class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-indigo-600 rounded-full inline-block"></span>
@@ -252,12 +231,10 @@
                         </tr>
                     </thead>
                     <tbody id="adminDataList" class="divide-y divide-slate-100 text-slate-700">
-                        <!-- Data log absensi diisi via script -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- Pagination -->
             <div class="mt-5 flex items-center justify-between pt-2">
                 <div class="text-xs text-slate-400 font-medium">
                     Menampilkan <span id="recordCount" class="text-slate-700 font-bold">0</span> arsip data
@@ -274,17 +251,12 @@
             </div>
         </section>
         
-    </div> <!-- /#page-absensi -->
+    </div>
 
 
-    <!-- ======================================================== -->
-    <!-- 2. HALAMAN KELOLA DATA (Sembunyi Default)                -->
-    <!-- ======================================================== -->
     <div id="page-kelola" class="hidden space-y-6">
         
-        <!-- SECTION KELOLA DATA UTAMA -->
         <section id="kelolaDataSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <!-- Header Section & Tab Navigasi -->
             <div class="p-6 border-b border-slate-200 bg-slate-50/50">
                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
@@ -301,7 +273,6 @@
                     <select id="manageStudentFilterMode" disabled class="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm"><option value="">Pilih filter guru atau nama kelas</option><option value="guru">Nama guru</option><option value="kelas">Nama kelas</option></select>
                     <select id="manageStudentDetailFilter" disabled class="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm"><option value="">Pilih tingkat dan filter terlebih dahulu</option></select>
                 </div>
-                    <!-- Tombol Tambah Data -->
                     <button onclick="openManageModal()" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -310,21 +281,17 @@
                     </button>
                 </div>
 
-                <!-- Tab Navigasi -->
                 <div class="flex gap-2 mt-6 border-b border-slate-200">
                     <button onclick="switchManageTab('siswa')" id="tab-siswa" class="px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 transition-all">Siswa</button>
                     <button onclick="switchManageTab('guru')" id="tab-guru" class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all">Guru</button>
                 </div>
             </div>
 
-            <!-- Area Tabel Konten Dinamis -->
              <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-100 text-slate-700 font-bold text-xs uppercase tracking-wider border-b border-slate-200" id="manageTableHeader">
-                        <!-- Diisi otomatis via JS -->
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm text-slate-800" id="manageTableBody">
-                        <!-- Diisi otomatis via JS -->
                     </tbody>
                 </table>
              </div>
@@ -343,7 +310,7 @@
              </div>
          </section>
 
-    </div> <!-- /#page-kelola -->
+    </div>
 
     <div id="page-infografik" class="hidden space-y-6">
         <section class="rounded-2xl bg-gradient-to-r from-indigo-700 via-blue-700 to-cyan-600 p-7 text-white shadow-lg">
@@ -373,15 +340,53 @@
         </div>
     </div>
 
-</div> <!-- /Dynamic Content Body -->
+    <div id="page-pengaturan" class="hidden space-y-6">
+        <section class="rounded-2xl bg-gradient-to-r from-slate-800 to-blue-800 p-7 text-white shadow-lg">
+            <p class="text-xs font-bold uppercase tracking-[.18em] text-blue-200">Konfigurasi Aplikasi</p>
+            <h2 class="mt-2 text-2xl font-extrabold">Pengaturan Sistem</h2>
+            <p class="mt-2 text-sm text-blue-100">Kelola identitas sekolah dan tampilan aplikasi dari satu tempat.</p>
+        </section>
+        <section class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6">
+            <form id="schoolSettingsForm" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+                <div>
+                    <label for="settingsSchoolName" class="block text-sm font-bold text-slate-700">Nama sekolah</label>
+                    <input id="settingsSchoolName" required class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                </div>
+                <div>
+                    <label for="settingsSchoolAddress" class="block text-sm font-bold text-slate-700">Alamat sekolah</label>
+                    <textarea id="settingsSchoolAddress" rows="3" class="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"></textarea>
+                </div>
+                <div>
+                    <label for="settingsSchoolLogo" class="block text-sm font-bold text-slate-700">Logo sekolah</label>
+                    <input id="settingsSchoolLogo" type="file" accept="image/png,image/jpeg,image/webp" class="mt-2 block w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                    <p class="mt-2 text-xs text-slate-400">Gunakan PNG, JPG, atau WEBP berukuran maksimal 2 MB.</p>
+                </div>
+                <div>
+                    <label for="settingsThemeColor" class="block text-sm font-bold text-slate-700">Warna tema utama</label>
+                    <div class="mt-2 flex items-center gap-3">
+                        <input id="settingsThemeColor" type="color" value="#1d4ed8" class="h-11 w-16 cursor-pointer rounded-lg border border-slate-200 bg-white p-1">
+                        <span id="settingsThemeColorValue" class="font-mono text-sm text-slate-500">#1d4ed8</span>
+                    </div>
+                </div>
+                <button id="saveSchoolSettings" type="submit" class="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-70">Simpan Pengaturan</button>
+            </form>
+            <aside class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Pratinjau</p>
+                <div class="mt-5 rounded-2xl bg-slate-900 p-5 text-white" id="settingsPreview">
+                    <img id="settingsLogoPreview" src="https://iili.io/FjF61ou.png" alt="Logo sekolah" class="h-16 w-16 rounded-2xl bg-white object-contain p-2">
+                    <h3 id="settingsNamePreview" class="mt-4 text-lg font-bold">SDIT Harapan Umat Karawang</h3>
+                    <p class="mt-1 text-sm text-slate-300">Tampilan identitas aplikasi</p>
+                    <div id="settingsColorPreview" class="mt-5 h-2 rounded-full bg-blue-600"></div>
+                </div>
+            </aside>
+        </section>
+    </div>
+
+</div>
 
 
-<!-- ======================================================== -->
-<!-- MODAL FORM (TAMBAH / EDIT DATA) - DI LUAR KONTEN UTAMA    -->
-<!-- ======================================================== -->
 <div id="manageModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="modalContent">
-        <!-- Header Modal -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-lg font-bold text-slate-800" id="modalTitle">Tambah Data</h3>
             <button onclick="closeManageModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all">
@@ -391,17 +396,12 @@
             </button>
         </div>
         
-        <!-- Form Modal -->
         <form id="manageForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
-            <!-- ID Hidden (Untuk penanda Edit Data) -->
             <input type="hidden" id="entityId">
 
-            <!-- Form Fields Wrapper (Renders dynamically via JS) -->
             <div id="formFields" class="space-y-4">
-                <!-- Diisi otomatis via JS -->
             </div>
 
-            <!-- Footer Modal Button -->
             <div class="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
                 <button type="button" onclick="closeManageModal()" class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
                 <button type="submit" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition-all shadow-sm" id="submitBtn">Simpan</button>
@@ -412,7 +412,6 @@
         </div>
     </main>
 
-    <!-- DEKLARASI GLOBAL SEBELUM MEMANGGIL SCRIPT EKSTERNAL -->
     <script>
         // Deklarasi variabel global yang dipersyaratkan oleh database.js agar tidak error
         let teachersData = [];
@@ -435,13 +434,11 @@
         const hideLoading = () => showLoading(false); // Map callback ke database.js
     </script>
 
-    <!-- MEMANGGIL CORE SCRIPTS INTERNAL -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/database.js"></script>
     <script src="js/report.js"></script>
     
-    <!-- EMBED LOGIKA OPERASIONAL ADMIN -->
     <script>
         // Panel admin tetap dapat dibuka saat maintenance, tetapi wajib memakai session Supabase.
         document.documentElement.style.visibility = 'hidden';
@@ -2187,6 +2184,67 @@ document.addEventListener('DOMContentLoaded', () => {
 let attendanceDonutChart = null;
 let classComparisonChart = null;
 
+function applySchoolProfile(profile) {
+    if (!profile) return;
+    const name = profile.name || 'Gemar Mengaji';
+    const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
+    document.getElementById('adminSchoolName')?.replaceChildren(document.createTextNode(name));
+    document.getElementById('adminSchoolAddress')?.replaceChildren(document.createTextNode(profile.address || ''));
+    const logoElement = document.getElementById('adminSchoolLogo');
+    if (logoElement) logoElement.src = logo;
+    const nameInput = document.getElementById('settingsSchoolName');
+    const addressInput = document.getElementById('settingsSchoolAddress');
+    const colorInput = document.getElementById('settingsThemeColor');
+    if (nameInput && document.activeElement !== nameInput) nameInput.value = name;
+    if (addressInput && document.activeElement !== addressInput) addressInput.value = profile.address || '';
+    if (colorInput && document.activeElement !== colorInput) colorInput.value = profile.theme_color || '#1d4ed8';
+    document.documentElement.style.setProperty('--brand-color', profile.theme_color || '#1d4ed8');
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.style.backgroundColor = profile.theme_color || '#0f172a';
+    document.getElementById('settingsNamePreview')?.replaceChildren(document.createTextNode(name));
+    const previewLogo = document.getElementById('settingsLogoPreview');
+    if (previewLogo) previewLogo.src = logo;
+    const colorText = document.getElementById('settingsThemeColorValue');
+    if (colorText) colorText.textContent = profile.theme_color || '#1d4ed8';
+    const colorPreview = document.getElementById('settingsColorPreview');
+    if (colorPreview) colorPreview.style.backgroundColor = profile.theme_color || '#1d4ed8';
+}
+
+async function loadSchoolSettings() {
+    try {
+        applySchoolProfile(await getSchoolProfile());
+    } catch (error) {
+        console.error('Gagal memuat pengaturan sekolah:', error);
+    }
+}
+
+async function saveSchoolSettings(event) {
+    event.preventDefault();
+    const button = document.getElementById('saveSchoolSettings');
+    const logoFile = document.getElementById('settingsSchoolLogo').files[0] || null;
+    if (logoFile && logoFile.size > 2 * 1024 * 1024) return alert('Ukuran logo maksimal 2 MB.');
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Menyimpan...';
+    try {
+        const profile = await updateSchoolProfile(
+            document.getElementById('settingsSchoolName').value.trim(),
+            document.getElementById('settingsSchoolAddress').value.trim(),
+            logoFile,
+            document.getElementById('settingsThemeColor').value
+        );
+        applySchoolProfile(profile);
+        document.getElementById('settingsSchoolLogo').value = '';
+        alert('Pengaturan sekolah berhasil disimpan.');
+    } catch (error) {
+        console.error('Gagal menyimpan pengaturan sekolah:', error);
+        alert(`Gagal menyimpan pengaturan: ${error.message}`);
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
 function normalizeAttendanceStatus(value) {
     const status = safeLowerCase(value);
     if (status === 'hadir' || status === 'h') return 'hadir';
@@ -2305,13 +2363,14 @@ async function showInfographic() {
 }
 
 function switchPage(pageId) {
-    const pages = ['absensi', 'kelola', 'infografik'];
+    const pages = ['absensi', 'kelola', 'infografik', 'pengaturan'];
     pages.forEach(name => document.getElementById(`page-${name}`)?.classList.toggle('hidden', name !== pageId));
     ['menu-absensi', 'menu-kelola', 'menu-infografik'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
     const active = document.getElementById(`menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
     if (pageId === 'kelola') renderManageTable();
     if (pageId === 'infografik') populateInfographicFilters();
+    if (pageId === 'pengaturan') loadSchoolSettings();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2320,13 +2379,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('infoClass').value = '';
     });
     document.getElementById('topLogoutBtn').addEventListener('click', () => document.getElementById('logoutBtn').click());
+    document.getElementById('schoolSettingsForm').addEventListener('submit', saveSchoolSettings);
+    document.getElementById('settingsThemeColor').addEventListener('input', event => {
+        document.getElementById('settingsThemeColorValue').textContent = event.target.value;
+        document.getElementById('settingsColorPreview').style.backgroundColor = event.target.value;
+    });
+    loadSchoolSettings();
 });
     </script>
     
-    <!-- MEMANGGIL CODE INTEGRASI TERAKHIR -->
     <script src="js/admin.js"></script>
     <script src="js/api.js"></script>
-    <!-- Dummy elements untuk mencegah error null pointer di admin.js -->
 <div class="hidden" style="display: none;">
     <button id="prevBtn"></button>
     <button id="nextBtn"></button>

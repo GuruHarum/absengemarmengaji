@@ -661,6 +661,11 @@ if (!window.__gemarMengajiRealtimeChannel) {
             return;
         }
 
+        if (table === 'school_profile' && payload.new && typeof window.applySchoolProfile === 'function') {
+            window.applySchoolProfile(payload.new);
+            return;
+        }
+
         if (table === 'attendance') {
             const changedRecord = payload.eventType === 'DELETE' ? payload.old : payload.new;
             const currentAttendance = typeof attendanceData !== 'undefined'
@@ -690,7 +695,7 @@ if (!window.__gemarMengajiRealtimeChannel) {
         await refreshVisibleViews(table);
     };
 
-    ['attendance', 'students', 'teachers', 'maintenance_settings'].forEach(table => {
+    ['attendance', 'students', 'teachers', 'maintenance_settings', 'school_profile'].forEach(table => {
         realtimeChannel.on('postgres_changes', {
             event: '*', schema: 'public', table
         }, handleRealtimeChange);
@@ -711,12 +716,18 @@ async function getSchoolProfile() {
         .from("school_profile")
         .select("*")
         .eq("id", 1)
-        .single();
+        .maybeSingle();
     if (error) throw error;
-    return data;
+    return data || {
+        id: 1,
+        name: 'SDIT Harapan Umat Karawang',
+        address: 'Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur',
+        logo_url: 'https://iili.io/FjF61ou.png',
+        theme_color: '#1d4ed8'
+    };
 }
 
-async function updateSchoolProfile(name, address, logoFile) {
+async function updateSchoolProfile(name, address, logoFile, themeColor) {
     let logoUrl = null;
 
     if (logoFile) {
@@ -733,13 +744,13 @@ async function updateSchoolProfile(name, address, logoFile) {
         logoUrl = data.publicUrl;
     }
 
-    const updateValues = { name, address };
+    const updateValues = { id: 1, name, address };
     if (logoUrl) updateValues.logo_url = logoUrl;
+    if (themeColor) updateValues.theme_color = themeColor;
 
     const { data, error } = await supabase
         .from("school_profile")
-        .update(updateValues)
-        .eq("id", 1)
+        .upsert(updateValues, { onConflict: 'id' })
         .select()
         .single();
 

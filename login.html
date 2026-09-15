@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin - SDIT Harapan Umat Karawang</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <style>
@@ -13,12 +14,12 @@
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #f8f9fa 0%, #e0f2fe 100%);
         }
+        .bg-gradient-to-r { background-image: linear-gradient(to right, var(--brand-dark), var(--brand-color)); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-blue-50/50 overflow-hidden transition-all duration-300 hover:shadow-2xl">
-        <!-- Header Banner Login -->
         <div class="bg-gradient-to-r from-blue-800 to-blue-600 px-6 py-8 text-center text-white relative">
             <div class="mx-auto w-16 h-16 bg-white rounded-full p-2 flex items-center justify-center shadow-md mb-3">
                 <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT" class="w-full h-full object-contain">
@@ -27,7 +28,6 @@
             <p class="text-xs text-blue-100 mt-1">SDIT Harapan Umat Karawang</p>
         </div>
 
-        <!-- Form Login -->
         <form id="loginForm" class="p-6 space-y-5">
             <div id="errorMessage" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm">
                 Username atau password salah!
@@ -73,6 +73,15 @@
     </div>
 
     <script>
+        supabase.from('school_profile').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
+            if (!data) return;
+            document.documentElement.style.setProperty('--brand-color', data.theme_color || '#1d4ed8');
+            const logo = document.querySelector('img[alt="Logo SDIT"]');
+            if (logo && data.logo_url) logo.src = data.logo_url;
+            const title = document.querySelector('.bg-gradient-to-r h3');
+            if (title && data.name) title.textContent = data.name;
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('username').value.trim();

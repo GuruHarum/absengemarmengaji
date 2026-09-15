@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maintenance - Gemar Mengaji</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
@@ -24,6 +25,13 @@
     <script src="js/config.js"></script>
     <script src="js/database.js"></script>
     <script>
+        supabase.from('school_profile').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
+            if (!data) return;
+            document.documentElement.style.setProperty('--brand-color', data.theme_color || '#1d4ed8');
+            const title = document.querySelector('h1');
+            if (title && data.name) title.textContent = data.name;
+        });
+
         window.handleMaintenanceRealtime = function(enabled) {
             if (!enabled) window.location.replace('index.html');
         };

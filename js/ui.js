@@ -148,7 +148,7 @@
             }
             
             teacherGrid.innerHTML = teachersData.map((teacher, index) => `
-                <div class="teacher-card bg-white rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-lg" data-index="${index}">
+                <div class="teacher-card bg-white rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-lg" style="animation-delay: ${Math.min(index * 45, 450)}ms" data-index="${index}">
                     <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-md transform transition-transform hover:scale-105">
                         <img src="${teacher.foto}" alt="${teacher.nama}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=${encodeURIComponent(teacher.nama)}'; this.onerror=null;">
                     </div>
