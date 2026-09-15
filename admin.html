@@ -112,9 +112,16 @@
         </button>
     </aside>
 
+    <div id="mobileSidebarOverlay" class="mobile-sidebar-overlay" aria-hidden="true"></div>
+
     <main class="flex-1 flex flex-col min-w-0 overflow-y-auto transition-all duration-300 ease-in-out">
         <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shadow-sm shrink-0">
-            <h2 class="text-xl font-bold text-slate-800">Panel Administrasi Absensi</h2>
+            <div class="flex items-center gap-3">
+                <button id="mobileMenuButton" type="button" class="mobile-menu-button" aria-label="Buka menu navigasi" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-800">Panel Administrasi Absensi</h2>
+            </div>
             <button id="topLogoutBtn" class="flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 transition-all font-semibold text-sm px-4 py-2 rounded-xl border border-red-100">
                 Keluar
             </button>
@@ -2362,18 +2369,43 @@ async function showInfographic() {
     }
 }
 
+function setMobileDrawer(open) {
+    document.body.classList.toggle('drawer-open', open);
+    const menuButton = document.getElementById('mobileMenuButton');
+    if (menuButton) menuButton.setAttribute('aria-expanded', String(open));
+    const overlay = document.getElementById('mobileSidebarOverlay');
+    if (overlay) overlay.setAttribute('aria-hidden', String(!open));
+}
+
 function switchPage(pageId) {
     const pages = ['absensi', 'kelola', 'infografik', 'pengaturan'];
-    pages.forEach(name => document.getElementById(`page-${name}`)?.classList.toggle('hidden', name !== pageId));
-    ['menu-absensi', 'menu-kelola', 'menu-infografik'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
+    pages.forEach(name => {
+        const page = document.getElementById(`page-${name}`);
+        if (!page) return;
+        page.classList.toggle('hidden', name !== pageId);
+        if (name === pageId) {
+            page.classList.remove('page-animate-in');
+            requestAnimationFrame(() => page.classList.add('page-animate-in'));
+        }
+    });
+    ['menu-absensi', 'menu-kelola', 'menu-infografik', 'menu-pengaturan'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
     const active = document.getElementById(`menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
     if (pageId === 'kelola') renderManageTable();
     if (pageId === 'infografik') populateInfographicFilters();
     if (pageId === 'pengaturan') loadSchoolSettings();
+    setMobileDrawer(false);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('mobileMenuButton').addEventListener('click', () => {
+        setMobileDrawer(!document.body.classList.contains('drawer-open'));
+    });
+    document.getElementById('mobileSidebarOverlay').addEventListener('click', () => setMobileDrawer(false));
+    document.querySelectorAll('#sidebar a').forEach(link => link.addEventListener('click', () => setMobileDrawer(false)));
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') setMobileDrawer(false);
+    });
     document.getElementById('showInfographicBtn').addEventListener('click', showInfographic);
     document.getElementById('infoLevel').addEventListener('change', () => {
         document.getElementById('infoClass').value = '';

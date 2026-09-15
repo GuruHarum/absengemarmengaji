@@ -158,6 +158,29 @@ textarea {
     -webkit-tap-highlight-color: transparent;
 }
 
+.mobile-menu-button,
+.mobile-sidebar-overlay {
+    display: none;
+}
+
+.page-animate-in {
+    animation: pageAnimateIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pageAnimateIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
 @media (max-width: 767px) {
     body.admin-page {
         display: block;
@@ -165,13 +188,20 @@ textarea {
     }
 
     body.admin-page #sidebar {
-        position: sticky;
-        top: 0;
-        width: 100%;
-        min-height: auto;
-        max-height: 72px;
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(82vw, 320px);
+        min-height: 100vh;
+        max-height: none;
         overflow: hidden;
-        z-index: 40;
+        z-index: 80;
+        transform: translateX(-105%);
+        transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.38s ease;
+    }
+
+    body.admin-page.drawer-open #sidebar {
+        transform: translateX(0);
+        box-shadow: 18px 0 48px rgba(15, 23, 42, 0.28);
     }
 
     body.admin-page #sidebar > div {
@@ -181,15 +211,59 @@ textarea {
     body.admin-page #sidebar nav,
     body.admin-page #sidebar > div > div:last-child,
     body.admin-page #toggleSidebar {
-        display: none;
+        display: block;
     }
 
     body.admin-page #sidebar > div > div:first-child {
         padding: 0.75rem 1rem;
     }
 
+    body.admin-page #sidebar > div > div:last-child {
+        display: block;
+    }
+
+    .mobile-menu-button {
+        display: inline-flex;
+        width: 42px;
+        height: 42px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        transition: transform 0.25s ease, background-color 0.25s ease;
+    }
+
+    .mobile-menu-button:active { transform: scale(0.94); }
+    .mobile-menu-button span { width: 18px; height: 2px; border-radius: 4px; background: #334155; transition: transform 0.3s ease, opacity 0.3s ease; }
+    body.admin-page.drawer-open .mobile-menu-button span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    body.admin-page.drawer-open .mobile-menu-button span:nth-child(2) { opacity: 0; }
+    body.admin-page.drawer-open .mobile-menu-button span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    .mobile-sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        display: block;
+        background: rgba(15, 23, 42, 0.48);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.35s ease, visibility 0.35s ease;
+        backdrop-filter: blur(3px);
+    }
+
+    body.admin-page.drawer-open .mobile-sidebar-overlay {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
     body.admin-page main {
-        min-height: calc(100vh - 72px);
+        width: 100%;
+        min-height: 100vh;
         overflow: visible;
     }
 
@@ -199,7 +273,8 @@ textarea {
 
     body.admin-page #page-absensi,
     body.admin-page #page-kelola,
-    body.admin-page #page-infografik {
+    body.admin-page #page-infografik,
+    body.admin-page #page-pengaturan {
         padding: 1rem;
     }
 
