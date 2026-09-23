@@ -35,7 +35,7 @@
                             <svg class="h-6 w-6 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                             </svg>
-                            <p>${message}</p>
+                            <p>${escapeHtml(message)}</p>
                         </div>
                     </div>
                 `;
@@ -46,7 +46,7 @@
                             <svg class="h-6 w-6 text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <p>${message}</p>
+                            <p>${escapeHtml(message)}</p>
                         </div>
                     </div>
                 `;
@@ -57,7 +57,7 @@
                             <svg class="h-6 w-6 text-red-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
-                            <p>${message}</p>
+                            <p>${escapeHtml(message)}</p>
                         </div>
                     </div>
                 `;
@@ -76,67 +76,6 @@
             thankYouModal.classList.remove('show');
         }
 
-        function populateTeacherDropdown() {
-            const dropdown = document.getElementById('filterTeacher');
-            while (dropdown.options.length > 1) {
-                dropdown.remove(1);
-            }
-            
-            teachersData.forEach(teacher => {
-                const option = document.createElement('option');
-                option.value = teacher.nama;
-                option.textContent = teacher.nama;
-                dropdown.appendChild(option);
-            });
-        }
-
-        function populateClassFilters() {
-    if (!filterTeacher) return;
-    filterTeacher.innerHTML = '<option value="">Semua Guru</option>';
-    
-    // Isi filter guru berdasarkan data dari database
-    teachersData.forEach(teacher => {
-        filterTeacher.innerHTML += `<option value="${teacher.id}">${teacher.nama}</option>`;
-    });
-
-    // Isi filter tingkat kelas (1-6)
-    if (filterClassNumber) {
-        filterClassNumber.innerHTML = '<option value="">Semua Tingkat</option>';
-        for(let i=1; i<=6; i++) {
-            filterClassNumber.innerHTML += `<option value="${i}">Kelas ${i}</option>`;
-        }
-    }
-}
-
-        function updateClassNameDropdown(classNumber) {
-            const classNameDropdown = document.getElementById('filterClassName');
-            while (classNameDropdown.options.length > 1) {
-                classNameDropdown.remove(1);
-            }
-            
-            if (!classNumber) {
-                filterClassNameContainer.style.display = 'none';
-                return;
-            }
-
-            const classNames = classNamesByNumber.get(classNumber);
-            
-            if (!classNames || classNames.size === 0) {
-                filterClassNameContainer.style.display = 'none';
-                return;
-            }
-
-            filterClassNameContainer.style.display = 'block';
-            Array.from(classNames)
-                .sort()
-                .forEach(className => {
-                    const option = document.createElement('option');
-                    option.value = className;
-                    option.textContent = className;
-                    classNameDropdown.appendChild(option);
-                });
-        }
-
         function renderTeachers() {
             if (teachersData.length === 0) {
                 teacherGrid.innerHTML = `
@@ -150,9 +89,9 @@
             teacherGrid.innerHTML = teachersData.map((teacher, index) => `
                 <div class="teacher-card bg-white rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-lg" style="animation-delay: ${Math.min(index * 45, 450)}ms" data-index="${index}">
                     <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-md transform transition-transform hover:scale-105">
-                        <img src="${teacher.foto}" alt="${teacher.nama}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/150?text=${encodeURIComponent(teacher.nama)}'; this.onerror=null;">
+                        <img src="${escapeHtml(teacher.foto)}" alt="${escapeHtml(teacher.nama)}" class="w-full h-full object-cover" data-fallback="https://via.placeholder.com/150?text=${escapeHtml(encodeURIComponent(teacher.nama))}" onerror="this.onerror=null; this.src=this.dataset.fallback;">
                     </div>
-                    <h3 class="text-lg font-semibold text-blue-800">${teacher.nama}</h3>
+                    <h3 class="text-lg font-semibold text-blue-800">${escapeHtml(teacher.nama)}</h3>
                 </div>
             `).join('');
             document.querySelectorAll('.teacher-card').forEach(card => {
@@ -196,13 +135,6 @@ renderClassOptions(Array.from(teacherClassNumbers));
                     selectedClass = this.getAttribute('data-class');
                     closeClassModal();
                     showPage(2);
-                    fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher }).then(() => {
-                        renderStudents();
-                        populateYearFilter();
-                    }).catch(error => {
-                        console.error('Gagal memuat absensi kelas:', error);
-                        showNotification('error', 'Gagal memuat data absensi. Silakan coba lagi.');
-                    });
                 });
             });
         }
@@ -282,6 +214,16 @@ function bindAttendanceOptionEvents() {
 async function renderStudents() {
 
     if (!selectedTeacher || !selectedClass) return;
+    const drafts = new Map();
+    const draftContext = JSON.stringify([selectedTeacher, selectedClass, formatDateForStorage()]);
+    const draftCards = studentList.dataset.draftContext === draftContext ? studentList.querySelectorAll('.student-card') : [];
+    draftCards.forEach(card => {
+        const selected = card.querySelector('.attendance-option.selected-option');
+        if (selected) drafts.set(selected.dataset.student, {
+            status: selected.dataset.status,
+            note: card.querySelector('.note-input')?.value || ''
+        });
+    });
     selectedStudentStatus = {};
 
     const filteredStudents = getFilteredStudents();
@@ -309,8 +251,8 @@ async function renderStudents() {
         html += `
            <div class="student-card">
                         <div class="student-header bg-blue-50">
-                            <h3 class="font-medium text-blue-800">${studentName}</h3>
-                            <p class="text-xs text-blue-600">${student.kelas}</p>
+                            <h3 class="font-medium text-blue-800">${escapeHtml(studentName)}</h3>
+                            <p class="text-xs text-blue-600">${escapeHtml(student.kelas)}</p>
                         </div>
                         <div class="student-content">
                             ${isRecorded ? 
@@ -327,10 +269,10 @@ async function renderStudents() {
                                     </div>
                                      <div class="note-container">
                                          <p class="text-sm text-gray-600 mb-1">Catatan:</p>
-                                         <p class="text-gray-800">${recordedData.note || '-'}</p>
+                                         <p class="text-gray-800">${escapeHtml(recordedData.note || '-')}</p>
                                      </div>
                                       <div class="flex gap-2 mt-3">
-                                          <button type="button" class="edit-attendance-btn p-2 rounded-md text-blue-700 hover:bg-blue-50" data-attendance-id="${recordedData.id}" title="Edit absensi">
+                                          <button type="button" class="edit-attendance-btn p-2 rounded-md text-blue-700 hover:bg-blue-50" data-attendance-id="${escapeHtml(recordedData.id)}" title="Edit absensi">
                                               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                                   <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                                                   <path fill-rule="evenodd" d="M2 15.25V18h2.75l8.447-8.447-2.75-2.75L2 15.25z" clip-rule="evenodd" />
@@ -340,20 +282,20 @@ async function renderStudents() {
                                  </div>` :
                                 `<div class="flex flex-col">
                                     <div class="attendance-options">
-                                        <button class="attendance-option bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${studentName}" data-status="hadir">
+                                        <button class="attendance-option bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="hadir">
                                             ✅ Hadir
                                         </button>
-                                        <button class="attendance-option bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${studentName}" data-status="sakit">
+                                        <button class="attendance-option bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="sakit">
                                             🤒 Sakit
                                         </button>
-                                        <button class="attendance-option bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${studentName}" data-status="izin">
+                                        <button class="attendance-option bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="izin">
                                             📝 Izin
                                         </button>
-                                        <button class="attendance-option bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${studentName}" data-status="alpha">
+                                        <button class="attendance-option bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="alpha">
                                             ❌ Alpha
                                         </button>
                                     </div>
-                                    <div class="note-container" data-student="${studentName}" style="display: none;">
+                                    <div class="note-container" data-student="${escapeHtml(studentName)}" style="display: none;">
                                         <div class="mb-2">
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Catatan:</label>
                                             <textarea class="note-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" rows="2" placeholder=""></textarea>
@@ -371,8 +313,18 @@ async function renderStudents() {
     }
 
     studentList.innerHTML = html;
+    studentList.dataset.draftContext = draftContext;
 
     bindAttendanceOptionEvents();
+    studentList.querySelectorAll('.student-card').forEach(card => {
+        const options = Array.from(card.querySelectorAll('.attendance-option'));
+        const draft = drafts.get(options[0]?.dataset.student);
+        if (!draft) return;
+        const selected = options.find(option => option.dataset.status === draft.status);
+        if (selected) selected.click();
+        const noteInput = card.querySelector('.note-input');
+        if (noteInput) noteInput.value = draft.note;
+    });
 
     bindSaveButtonEvents(filteredStudents);
     bindAttendanceEditEvents();
@@ -430,7 +382,6 @@ function bindAttendanceEditEvents() {
                 showLoading();
                 const updated = await updateAttendance(id, { status: status, note: note.trim() });
                 console.log('updateAttendance response:', updated);
-                // Jika supabase mengembalikan data kosong (maybeSingle), tetap treat sebagai sukses
                 showNotification('success', 'Absensi berhasil diperbarui.');
                 const modal = document.getElementById('attendanceEditModal');
                 if (modal) {
@@ -549,14 +500,7 @@ function bindSaveButtonEvents(filteredStudents) {
                 showLoading();
                 
                 const savedData = await saveAttendance(record);
-                const indexKey = `${today}|${selectedTeacher}|${studentName}`;
-                if (typeof attendanceIndex !== 'undefined') {
-                    attendanceIndex.set(indexKey, savedData);
-                }
-
-                if (window.attendanceData) {
-                    window.attendanceData.push(savedData);
-                }
+                cacheAttendanceRecord(savedData);
 
                 showNotification('success', `Berhasil menyimpan absensi ${studentName}`);
 
@@ -573,69 +517,22 @@ function bindSaveButtonEvents(filteredStudents) {
 }
 
         function showPage(pageNumber) {
-            page1.classList.add('hidden');
-            page2.classList.add('hidden');
-            page3.classList.add('hidden');
-            
+            if (![1, 2].includes(pageNumber)) return;
+            page1.classList.toggle('hidden', pageNumber !== 1);
+            page2.classList.toggle('hidden', pageNumber !== 2);
             if (pageNumber === 1) {
-                page1.classList.remove('hidden');
                 page1.classList.add('fade-in');
                 fetchTeachers();
-
-                if (typeof autoSubmitTimer !== 'undefined' && autoSubmitTimer) {
-                    clearTimeout(autoSubmitTimer);
-                    autoSubmitTimer = null;
-                }
-            } else if (pageNumber === 2) {
-                page2.classList.remove('hidden');
+            } else {
                 page2.classList.add('fade-in');
-                // Ambil data absensi hanya untuk guru/kelas/tanggal yang relevan sehingga tidak mengambil seluruh tabel
-                    Promise.all([fetchStudents(), fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher })]).then(() => {
-                        populateClassFilters();
-                        renderStudents();
-                    });
-            
-            } else if (pageNumber === 3) {
-                page3.classList.remove('hidden');
-                page3.classList.add('fade-in');
-
-                if (!filterMonth.value) {
-                    const today = new Date();
-                    const month = String(today.getMonth() + 1).padStart(2, '0');
-                    filterMonth.value = month;
-                }
-
-                if (!adminDataFetched) {
-                    Promise.all([
-                        fetchStudents(),
-                        populateClassFilters(),
-                        fetchTeachers(),
-                    ]).then(() => {
-                        populateYearFilter();
-                        adminDataFetched = true;
-                        filterAttendanceData();
-                    });
-                } else {
-                    filterAttendanceData();
-                }
+                Promise.all([
+                    fetchStudents(),
+                    fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher })
+                ]).then(renderStudents).catch(error => {
+                    console.error(error);
+                    showNotification('error', 'Gagal memuat data absensi. Silakan coba lagi.');
+                });
             }
-        }
-
-        function openLoginModal() {
-            loginModal.style.display = 'block';
-            setTimeout(() => {
-                loginModal.classList.add('show');
-                document.getElementById('username').focus();
-            }, 10);
-        }
-
-        function closeLoginModal() {
-            loginModal.classList.remove('show');
-            setTimeout(() => {
-                loginModal.style.display = 'none';
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            }, 300);
         }
 
         function openClassModal() {

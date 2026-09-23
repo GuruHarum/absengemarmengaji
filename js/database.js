@@ -19,20 +19,26 @@ async function fetchAllRows(queryFactory, batchSize = 500) {
 }
 
 async function getTeachers() {
+    if (window.AppAccess) await AppAccess.ready;
     return fetchAllRows(
-        () => supabase.from("teachers").select("*").order("nama"),
+        () => window.AppAccess ? AppAccess.scope(supabase.from("teachers").select("*").order("nama"), "teachers") : supabase.from("teachers").select("*").order("nama"),
         500
     );
 }
 
 async function getStudents() {
+    if (window.AppAccess) await AppAccess.ready;
     return fetchAllRows(
-        () => supabase.from("students").select("*").order("kelas").order("nama siswa"),
+        () => window.AppAccess ? AppAccess.scope(supabase.from("students").select("*").order("kelas").order("nama siswa"), "students") : supabase.from("students").select("*").order("kelas").order("nama siswa"),
         500
     );
 }
 
 async function getAttendance(filters = {}) {
+    if (window.AppAccess) {
+        await AppAccess.ready;
+        if (AppAccess.teacher()) filters = { ...filters, teacher: AppAccess.profile.teacherName };
+    }
     // Jika ada filter (date, teacher, class, student), ambil hanya yang cocok
     // filters contoh: { date: '2026-08-18', teacher: 'Nama Guru', class: '1A' }
     try {
@@ -286,7 +292,7 @@ async function saveAttendance(record) {
 }
 
 async function updateAttendance(id, values) {
-    // Use maybeSingle so a 0-row result doesn't throw "Cannot coerce the result to a single JSON object"
+    // A missing row is not a successful update.
     const { data, error } = await supabase
         .from("attendance")
         .update(values)
@@ -295,11 +301,12 @@ async function updateAttendance(id, values) {
         .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error("Data absensi tidak ditemukan atau tidak dapat diperbarui.");
     return data;
 }
 
 async function deleteAttendance(id) {
-    // Use maybeSingle for delete as well; returns deleted row or null
+    // Require confirmation of the deleted row.
     const { data, error } = await supabase
         .from("attendance")
         .delete()
@@ -308,6 +315,7 @@ async function deleteAttendance(id) {
         .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error("Data absensi tidak ditemukan atau tidak dapat dihapus.");
     return data;
 }
 
@@ -446,6 +454,15 @@ async function fetchAttendanceData(filters = {}) {
     }
 }
 
+// Use the same array as renderers and deduplicate realtime/save responses by ID.
+function cacheAttendanceRecord(record) {
+    const index = attendanceData.findIndex(item => String(item.id) === String(record.id));
+    const previous = index === -1 ? null : attendanceData[index];
+    if (index === -1) attendanceData.push(record);
+    else attendanceData[index] = record;
+    syncAttendanceIndex(record, previous);
+}
+
 function syncAttendanceIndex(record, previousRecord = null) {
     if (previousRecord && typeof attendanceIndex !== 'undefined' && attendanceIndex instanceof Map) {
         const previousDate = String(previousRecord.date || '').slice(0, 10);
@@ -487,9 +504,9 @@ async function saveAttendanceRecord(
 
         });
 
-        attendanceData.unshift(newRecord);
+        cacheAttendanceRecord(newRecord);
 
-        checkAndUpdateMonthlyReport();
+        if (typeof checkAndUpdateMonthlyReport === 'function') checkAndUpdateMonthlyReport();
 
         return true;
 
@@ -621,11 +638,11 @@ if (!window.__gemarMengajiRealtimeChannel) {
             if (table === 'students') {
                 const freshStudents = await getStudents();
                 if (typeof studentsData !== 'undefined') studentsData = freshStudents;
-                window.studentsData = freshStudents;
+
             } else {
                 const freshTeachers = await getTeachers();
                 if (typeof teachersData !== 'undefined') teachersData = freshTeachers;
-                window.teachersData = freshTeachers;
+
             }
 
             if (typeof populateAdminDropdowns === 'function') populateAdminDropdowns();
@@ -667,6 +684,10 @@ if (!window.__gemarMengajiRealtimeChannel) {
         }
 
         if (table === 'attendance') {
+            if (window.AppAccess) {
+                await AppAccess.ready;
+                if (AppAccess.teacher() && payload.eventType !== 'DELETE' && payload.new?.teacher !== AppAccess.profile.teacherName) return;
+            }
             const changedRecord = payload.eventType === 'DELETE' ? payload.old : payload.new;
             const currentAttendance = typeof attendanceData !== 'undefined'
                 ? attendanceData
@@ -686,8 +707,10 @@ if (!window.__gemarMengajiRealtimeChannel) {
                 syncAttendanceIndex(changedRecord, previousRecord);
             }
             if (typeof renderAdminData === 'function') {
-                if (typeof filteredAttendanceData !== 'undefined') filteredAttendanceData = [...currentAttendance];
-                window.filteredAttendanceData = [...currentAttendance];
+                if (typeof filteredAttendanceData !== 'undefined') {
+                    filteredAttendanceData = typeof getFilteredAttendanceRecords === 'function'
+                        ? getFilteredAttendanceRecords(currentAttendance) : [...currentAttendance];
+                }
                 renderAdminData();
             }
         }
@@ -723,7 +746,7 @@ async function getSchoolProfile() {
         name: 'SDIT Harapan Umat Karawang',
         address: 'Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur',
         logo_url: 'https://iili.io/FjF61ou.png',
-        theme_color: '#1d4ed8'
+        theme_color: '#216454'
     };
 }
 

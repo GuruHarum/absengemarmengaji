@@ -31,7 +31,7 @@ function buildAttendanceMap(records) {
     return map;
 }
 
-function generateMonthlyReport(month, teacher, classNumber, className) {
+function generateMonthlyReport(month, teacher, classNumber, className, selectedYear) {
     // Ambil elemen DOM lokal dengan aman
     const filterMonthEl = getElSafe('filterMonth', 'filterMonth');
     const filterTeacherEl = getElSafe('filterTeacher', 'filterTeacher');
@@ -50,7 +50,7 @@ function generateMonthlyReport(month, teacher, classNumber, className) {
     classNumber = classNumber || (filterClassNumberEl ? filterClassNumberEl.value : '');
     className = className || (filterClassNameEl ? filterClassNameEl.value : '');
 
-    const year = new Date().getFullYear();
+    const year = Number(selectedYear || getElSafe('filterYear', 'filterYear')?.value) || new Date().getFullYear();
     const daysInMonth = getDaysInMonth(year, parseInt(month, 10));
     const monthName = getMonthName(month);
 
@@ -58,7 +58,7 @@ function generateMonthlyReport(month, teacher, classNumber, className) {
     if (reportTeacherEl) reportTeacherEl.textContent = teacher || 'Semua Guru';
     if (reportClassEl) reportClassEl.textContent = className || (classNumber ? `Kelas ${classNumber}` : 'Semua Kelas');
 
-    let filteredStudents = studentsData;
+    let filteredStudents = [...studentsData];
 
     if (teacher) {
         filteredStudents = filteredStudents.filter(student => student['nama guru'] === teacher);
@@ -93,12 +93,12 @@ function generateMonthlyReport(month, teacher, classNumber, className) {
 
     let totalPercent = 0;
 
+    const attendanceMap = buildAttendanceMap(attendanceData);
     filteredStudents.forEach(student => {
-        const attendanceMap = buildAttendanceMap(attendanceData);
         const studentName = student['nama siswa'];
         const studentClass = student.kelas;
 
-        tableHTML += `<tr><td class="student-name">${studentName}</td>`;
+        tableHTML += `<tr><td class="student-name">${escapeHtml(studentName)}</td>`;
 
         let hadirCount = 0;
         let sakitCount = 0;
@@ -116,24 +116,9 @@ function generateMonthlyReport(month, teacher, classNumber, className) {
                 continue;
             }
 
-            let record = null;
-
-            if (className && className !== '') {
-                const key =
-    `${dateStr}|${studentName}|${teacher || record?.teacher}|${studentClass}`;
-
-const record = attendanceMap.get(key);
-            } else if (classNumber && classNumber !== '') {
-                const key =
-    `${dateStr}|${studentName}|${teacher || record?.teacher}|${studentClass}`;
-
-const record = attendanceMap.get(key);
-            } else {
-                const key =
-    `${dateStr}|${studentName}|${teacher || record?.teacher}|${studentClass}`;
-
-const record = attendanceMap.get(key);
-            }
+            const recordTeacher = String(teacher || student['nama guru'] || student.nama_guru || '').trim();
+            const key = `${dateStr}|${String(studentName).trim()}|${recordTeacher}|${String(studentClass).trim()}`;
+            const record = attendanceMap.get(key);
 
             let statusCode = '-';
             let statusClass = 'status--';

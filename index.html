@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Hadir Gemar Mengaji - SDIT Harapan Umat Karawang</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/responsive.css">
     <style>
@@ -662,15 +660,53 @@
             margin-right: 8px;
         }
     </style>
+    <link rel="stylesheet" href="css/theme.css">
 </head>
 <body class="public-page">
-    <div id="loadingIndicator" class="islamic-loader" aria-live="polite">
+    <div id="loadingIndicator" class="islamic-loader" role="status" aria-live="polite" aria-label="Memuat halaman Gemar Mengaji">
+        <div class="loader-pattern" aria-hidden="true"></div>
+        <div class="loader-corner loader-corner-top" aria-hidden="true"></div>
+        <div class="loader-corner loader-corner-bottom" aria-hidden="true"></div>
         <div class="islamic-loader-card">
-            <div class="islamic-loader-symbol" aria-hidden="true"></div>
-            <div id="loaderSchoolName" class="islamic-loader-title">Gemar Mengaji</div>
-            <div class="islamic-loader-text">Menyiapkan daftar guru dan absensi</div>
-            <div class="islamic-loader-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="loader-eyebrow">BERAWAL DARI NIAT YANG BAIK</div>
+            <div class="loader-art" aria-hidden="true">
+                <svg viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="loaderGold" x1="60" y1="30" x2="220" y2="250" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#f5dfac"/><stop offset="0.5" stop-color="#c8a568"/><stop offset="1" stop-color="#8c754b"/>
+                        </linearGradient>
+                        <radialGradient id="loaderGlow"><stop stop-color="#b8d7aa" stop-opacity=".12"/><stop offset="1" stop-color="#b8d7aa" stop-opacity="0"/></radialGradient>
+                    </defs>
+                    <circle cx="140" cy="140" r="134" fill="url(#loaderGlow)"/>
+                    <g class="loader-rosette" stroke="url(#loaderGold)" stroke-width=".7" opacity=".22">
+                        <path d="M140 8 178 48 233 47 232 102 272 140 232 178 233 233 178 232 140 272 102 232 47 233 48 178 8 140 48 102 47 47 102 48Z"/>
+                        <path d="M140 24 222 58 256 140 222 222 140 256 58 222 24 140 58 58Z"/>
+                        <rect x="58" y="58" width="164" height="164" rx="2"/>
+                        <rect x="58" y="58" width="164" height="164" rx="2" transform="rotate(45 140 140)"/>
+                    </g>
+                    <path d="M72 221V127C72 88 111 65 140 42C169 65 208 88 208 127V221" stroke="url(#loaderGold)" stroke-width="1.4"/>
+                    <path d="M81 220V128C81 94 115 74 140 53C165 74 199 94 199 128V220" stroke="#d1b581" stroke-opacity=".22"/>
+                    <path class="loader-crescent" d="M152 82A16 16 0 1 0 165 107A18 18 0 0 1 152 82Z" fill="url(#loaderGold)"/>
+                    <g class="loader-stars" fill="#efd7a1">
+                        <path d="m177 78 1.6 4.4 4.4 1.6-4.4 1.6L177 90l-1.6-4.4L171 84l4.4-1.6Z"/>
+                        <circle cx="105" cy="111" r="1.5"/><circle cx="178" cy="122" r="1"/>
+                    </g>
+                    <g stroke="url(#loaderGold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M112 179C112 158 132 156 140 140C148 156 168 158 168 179Z" fill="#d1b581" fill-opacity=".08"/>
+                        <path d="M140 134V141M110 184H170M114 184V217M166 184V217M130 217V199Q140 184 150 199V217"/>
+                        <path d="M94 217V164H102V217M92 164H104L98 151ZM98 146V151M178 217V164H186V217M176 164H188L182 151ZM182 146V151"/>
+                        <path d="M67 222H213" stroke-opacity=".65"/>
+                    </g>
+                    <path d="m140 240 3 5-3 5-3-5Z" fill="#d1b581"/>
+                </svg>
+            </div>
+            <div class="loader-bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            <h2 class="islamic-loader-title">Gemar Mengaji</h2>
+            <div id="loaderSchoolName" class="loader-school-name">SDIT Harapan Umat Karawang</div>
+            <div class="loader-progress" aria-hidden="true"><span></span></div>
+            <div class="islamic-loader-text">Menyiapkan ruang untuk belajar<span class="loader-ellipsis" aria-hidden="true">...</span></div>
         </div>
+        <div class="loader-footer" aria-hidden="true"><span></span> SETIAP HURUF, SELANGKAH KEBAIKAN <span></span></div>
     </div>
 
     <header class="header-gradient shadow-md">
@@ -705,7 +741,7 @@
         </div>
         
         <div id="page2" class="page-transition hidden">
-            <div class="flex justify-between items-center mb-6">
+            <div class="attendance-heading flex justify-between items-center mb-6">
                 <div>
                     <h2 class="text-2xl font-bold text-blue-800" id="classTitle"></h2>
                     <div class="flex items-center text-gray-600 mt-1">
@@ -716,9 +752,9 @@
                     </div>
                 </div>
                 <div class="flex items-center">
-                    <a href="https://desty.page/sditharapanummahkrw/materitahsintahfidz" target="_blank" id= "materiLinkBtn" class="refresh-button mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 refresh-icon" fill= "none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3v4a1 1 0 001 1h4m-5 10l6-6m0 01-6-6m6 6H3" />
+                    <a href="https://desty.page/sditharapanummahkrw/materitahsintahfidz" target="_blank" rel="noopener noreferrer" id="materiLinkBtn" class="refresh-button mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3h7v7 M21 3l-9 9 M10 5H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5" />
                         </svg>
                         Link Materi
                     </a>
@@ -740,188 +776,7 @@
             </div>
         </div>
         
-        <div id="page3" class="page-transition hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-blue-800">Panel Admin</h2>
-                <div class="flex items-center">
-                    <button id="refreshAdminDataBtn" class="refresh-button mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 refresh-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Refresh Data
-                    </button>
-                    <button id="logoutBtn" class="bg-red-100 hover:bg-red-200 text-red-800 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7z" clip-rule="evenodd" />
-                            <path d="M4 7a1 1 0 011-1h4a1 1 0 110 2H5a1 1 0 01-1-1z" />
-                        </svg>
-                        Logout
-                    </button>
-                </div>
-            </div>
-            
-            <div class="admin-panel mb-8">
-                <h3 class="text-xl font-semibold text-blue-800 mb-4">Filter Data Absensi</h3>
-                
-                <div class="filter-container">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div id="filterYearContainer">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Tahun
-                            </label>
-
-                            <select id="filterYear"
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                                <option value="">Semua Tahun</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterMonth" class="filter-label">Bulan</label>
-                            <select id="filterMonth" class="filter-select">
-                                <option value="">Pilih Bulan</option>
-                                <option value="01">Januari</option>
-                                <option value="02">Februari</option>
-                                <option value="03">Maret</option>
-                                <option value="04">April</option>
-                                <option value="05">Mei</option>
-                                <option value="06">Juni</option>
-                                <option value="07">Juli</option>
-                                <option value="08">Agustus</option>
-                                <option value="09">September</option>
-                                <option value="10">Oktober</option>
-                                <option value="11">November</option>
-                                <option value="12">Desember</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterTeacher" class="filter-label">Guru</label>
-                            <select id="filterTeacher" class="filter-select">
-                                <option value="">Semua Guru</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterClassNumber" class="filter-label">Tingkat Kelas</label>
-                            <select id="filterClassNumber" class="filter-select">
-                                <option value="">Semua Tingkat</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="filter-group" id="filterClassNameContainer">
-                        <label for="filterClassName" class="filter-label">Nama Kelas</label>
-                        <select id="filterClassName" class="filter-select">
-                            <option value="">Semua Nama Kelas</option>
-                        </select>
-                    </div>
-                    
-                    <div class="flex flex-col md:flex-row gap-4 mt-4">
-                        <button id="filterBtn" class="filter-button bg-blue-600 hover:bg-blue-700 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
-                            </svg>
-                            Terapkan Filter
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="reportContainer" class="admin-panel mb-8" style="display: none;">
-                <div class="report-header">
-                    <div>
-                        <h3 class="text-xl font-semibold text-blue-800 mb-2">Rekap Absensi Bulanan</h3>
-                        <div class="report-info">
-                            <div class="report-info-item">
-                                <span class="report-info-label">Guru:</span>
-                                <span id="reportTeacher">-</span>
-                            </div>
-                            <div class="report-info-item">
-                                <span class="report-info-label">Kelas:</span>
-                                <span id="reportClass">-</span>
-                            </div>
-                            <div class="report-info-item">
-                                <span class="report-info-label">Bulan:</span>
-                                <span id="reportMonth">-</span>
-                            </div>
-                            <div class="report-info-item">
-                                <span class="report-info-label">Rata-rata Kehadiran:</span>
-                                <span id="reportAverage">--%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button id="printReportBtn" class="print-button no-print">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
-                            </svg>
-                            Cetak Laporan
-                        </button>
-                        <button id="exportPdfBtn" class="pdf-button no-print">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
-                            </svg>
-                            Download PDF
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="overflow-x-auto">
-                    <table id="monthlyReportTable" class="monthly-report-table">
-                        <tr>
-                            <td colspan="32" class="py-8 text-center">
-                                <div class="w-full h-12 rounded shimmer mb-2"></div>
-                                <div class="w-full h-12 rounded shimmer mb-2"></div>
-                                <div class="w-full h-12 rounded shimmer"></div>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="admin-panel mb-8">
-                <h3 class="text-xl font-semibold text-blue-800 mb-4">Data Absensi</h3>
-                <div class="overflow-x-auto">
-                    <table class="attendance-table">
-                        <thead>
-                            <tr>
-                                <th class="rounded-tl-lg">Tanggal</th>
-                                <th>Guru</th>
-                                <th>Kelas</th>
-                                <th>Nama Siswa</th>
-                                <th>Status</th>
-                                <th class="rounded-tr-lg">Catatan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminDataList">
-                            <tr>
-                                <td colspan="6" class="py-8 text-center">
-                                    <div class="w-full h-12 rounded shimmer mb-2"></div>
-                                    <div class="w-full h-12 rounded shimmer mb-2"></div>
-                                    <div class="w-full h-12 rounded shimmer"></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-4 flex justify-between items-center">
-                    <div class="text-sm text-gray-600">
-                        Menampilkan <span id="recordCount">0</span> data
-                    </div>
-                    <div class="flex space-x-2">
-                        <button id="prevPage" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                        <span id="pageIndicator" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-md">1</span>
-                        <button id="nextPage" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
     </main>
 
     <footer class="bg-blue-800 text-white py-4 footer">
@@ -930,29 +785,7 @@
         </div>
     </footer>
 
-    <div id="loginModal" class="modal">
-        <div class="modal-content bg-white w-full max-w-md mx-auto mt-20 rounded-lg shadow-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-blue-800">Login Admin</h3>
-                <button id="closeLoginModal" class="text-gray-500 hover:text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Email Admin</label>
-                    <input type="email" id="username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300">Masuk</button>
-            </form>
-        </div>
-    </div>
+    
 
     <div id="attendanceEditModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
         <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
@@ -1013,217 +846,12 @@
             <p class="text-white text-opacity-90 mb-4">Absensi berhasil disimpan!</p>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/config.js"></script>
+    <script src="js/public-client.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/database.js"></script>
-    <script src="js/report.js"></script>
-    <script src="js/admin.js"></script>
-    <script>
-        let teachersData = [];
-        let studentsData = [];
-        let attendanceData = [];
-        let selectedTeacher = null;
-        let selectedClass = null;
-        let isAdmin = false;
-        let currentPage = 1;
-        let recordsPerPage = 10;
-        let filteredAttendanceData = [];
-        let classesData = new Map();
-        let classNamesByNumber = new Map();
-        let attendanceChartInstance = null;
-        let statusChartInstance = null;
-        let selectedStudentStatus = {};
-        let adminDataFetched = false;
-        let studentsLoaded = false;
-        let teachersLoaded = false;
-        let attendanceIndex = new Map();
-        const page1 = document.getElementById('page1');
-        const page2 = document.getElementById('page2');
-        const page3 = document.getElementById('page3');
-        const teacherGrid = document.getElementById('teacherGrid');
-        const adminDataList = document.getElementById('adminDataList');
-        const loginModal = document.getElementById('loginModal');
-        const classModal = document.getElementById('classModal');
-        const notification = document.getElementById('notification');
-        const thankYouModal = document.getElementById('thankYouModal');
-        const classOptions = document.getElementById('classOptions');
-        const filterMonth = document.getElementById('filterMonth');
-        const filterTeacher = document.getElementById('filterTeacher');
-        const filterClassNumber = document.getElementById('filterClassNumber');
-        const filterClassName = document.getElementById('filterClassName');
-        const filterClassNameContainer = document.getElementById('filterClassNameContainer');
-        const recordCount = document.getElementById('recordCount');
-        const pageIndicator = document.getElementById('pageIndicator');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
-        const reportContainer = document.getElementById('reportContainer');
-        const monthlyReportTable = document.getElementById('monthlyReportTable');
-        const reportTeacher = document.getElementById('reportTeacher');
-        const reportClass = document.getElementById('reportClass');
-        const reportMonth = document.getElementById('reportMonth');
-        const printReportBtn = document.getElementById('printReportBtn');
-        const exportPdfBtn = document.getElementById('exportPdfBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-
-        window.applySchoolProfile = function(profile) {
-            if (!profile) return;
-            const name = profile.name || 'Gemar Mengaji';
-            const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
-            const nameElement = document.getElementById('schoolName');
-            const addressElement = document.getElementById('schoolAddress');
-            const logoElement = document.getElementById('schoolLogo');
-            const loaderName = document.getElementById('loaderSchoolName');
-            if (nameElement) nameElement.textContent = name;
-            if (addressElement) addressElement.textContent = profile.address || '';
-            if (logoElement) logoElement.src = logo;
-            if (loaderName) loaderName.textContent = name;
-            if (profile.theme_color) document.documentElement.style.setProperty('--brand-color', profile.theme_color);
-        };
-
-        function hideIslamicLoader() {
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                document.body.classList.add('page-ready');
-                document.getElementById('loadingIndicator')?.classList.add('is-hidden');
-            }));
-        }
-        const filterYear = document.getElementById('filterYear');
-
-        async function initApp() {
-            try {
-                const profile = await getSchoolProfile();
-                window.applySchoolProfile(profile);
-                if (await getMaintenanceMode()) {
-                    window.location.replace('maintenance.html');
-                    return;
-                }
-                await Promise.all([
-                    fetchTeachers(),
-                    fetchStudents(),
-                    // Halaman utama hanya membutuhkan status absensi hari ini.
-                    fetchAttendanceData({ date: formatDateForStorage() })
-                ]);
-
-                populateClassFilters();
-                populateYearFilter();
-
-            } catch (error) {
-                console.error('Error initializing app:', error);
-                showNotification('error', 'Terjadi kesalahan saat memuat aplikasi. Silakan refresh halaman.');
-            } finally {
-                hideIslamicLoader();
-            }
-        }
-
-        window.handleMaintenanceRealtime = function(enabled) {
-            if (enabled && !window.location.pathname.endsWith('maintenance.html')) {
-                window.location.replace('maintenance.html');
-            }
-        };
-
-        filterYear.addEventListener("change", function () {
-
-            filterAttendanceData();
-
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initApp();
-
-            const loginBtnEl = document.getElementById('loginBtn');
-            supabase.auth.getSession().then(({ data }) => {
-                isAdmin = Boolean(data.session);
-                if (!isAdmin || !loginBtnEl) return;
-                document.getElementById('adminHeaderActions').innerHTML = `
-                    <a href="admin.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Panel Admin</a>
-                    <button id="headerLogoutBtn" type="button" class="flex items-center gap-2 bg-red-500/90 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Logout</button>`;
-                document.getElementById('headerLogoutBtn').addEventListener('click', async () => {
-                    await supabase.auth.signOut();
-                    isAdmin = false;
-                    window.location.reload();
-                });
-            });
-            if (loginBtnEl) {
-                loginBtnEl.addEventListener('click', function(event) {
-                    if (isAdmin) {
-                        event.preventDefault();
-                        window.location.href = 'admin.html';
-                    }
-                });
-            }
-
-            const closeLoginModalEl = document.getElementById('closeLoginModal');
-            if (closeLoginModalEl) closeLoginModalEl.addEventListener('click', closeLoginModal);
-
-            const loginFormEl = document.getElementById('loginForm');
-            if (loginFormEl) {
-                loginFormEl.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    const usernameEl = document.getElementById('username');
-                    const passwordEl = document.getElementById('password');
-                    const email = usernameEl ? usernameEl.value.trim() : '';
-                    const password = passwordEl ? passwordEl.value : '';
-
-                    const { error } = await supabase.auth.signInWithPassword({ email, password });
-                    if (!error) {
-                        isAdmin = true;
-                        showNotification('success', 'Login berhasil!');
-                        closeLoginModal();
-                        showPage(3);
-
-                        if (loginBtnEl) loginBtnEl.textContent = 'Panel Admin';
-                    } else {
-                        showNotification('error', 'Email atau password salah!');
-                    }
-                });
-            }
-
-            const closeClassModalEl = document.getElementById('closeClassModal');
-            if (closeClassModalEl) closeClassModalEl.addEventListener('click', closeClassModal);
-
-            const backToHomeEl = document.getElementById('backToHome');
-            if (backToHomeEl) backToHomeEl.addEventListener('click', function() { showPage(1); });
-
-            const logoutBtnEl = document.getElementById('logoutBtn');
-            if (logoutBtnEl) {
-                logoutBtnEl.addEventListener('click', function() {
-                    supabase.auth.signOut().then(() => {
-                        isAdmin = false;
-                        adminDataFetched = false;
-                        if (loginBtnEl) loginBtnEl.textContent = 'Login Admin';
-                        showPage(1);
-                        showNotification('success', 'Logout berhasil!');
-                    });
-                });
-            }
-
-            const filterBtnEl = document.getElementById('filterBtn');
-            if (filterBtnEl) filterBtnEl.addEventListener('click', filterAttendanceData);
-
-            const exportPdfBtnEl = document.getElementById('exportPdfBtn');
-            if (exportPdfBtnEl) exportPdfBtnEl.addEventListener('click', exportAttendanceToPDF);
-
-            const printReportBtnEl = document.getElementById('printReportBtn');
-            if (printReportBtnEl) printReportBtnEl.addEventListener('click', function() { printAttendanceReport(); });
-
-            const prevPageEl = document.getElementById('prevPage');
-            if (prevPageEl) prevPageEl.addEventListener('click', function() {
-                if (currentPage > 1) { currentPage--; renderAdminData(); }
-            });
-            
-            const nextPageEl = document.getElementById('nextPage');
-            if (nextPageEl) nextPageEl.addEventListener('click', function() {
-                if ((currentPage * recordsPerPage) < filteredAttendanceData.length) { currentPage++; renderAdminData(); }
-            });
-
-            window.addEventListener('click', function(e) {
-                if (e.target === loginModal) { closeLoginModal(); }
-                if (e.target === classModal) { closeClassModal(); }
-            });
-        });
-    </script>
+    <script src="js/public-app.js"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966457682771ea76',t:'MTc1MzcwNTM0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
 

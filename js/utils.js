@@ -44,14 +44,7 @@
         }
 
         function isAttendanceRecorded(studentName, date = null) {
-            const checkDate = date || formatDateForStorage();
-
-            const key =
-    `${dateStr}|${studentName}|${teacher || record?.teacher}|${studentClass}`;
-
-const record = attendanceMap.get(key);
-            
-            return record !== undefined;
+            return getAttendanceRecord(studentName, date) !== undefined;
         }
 
         function getAttendanceRecord(studentName, date) {
@@ -126,4 +119,10 @@ const record = attendanceMap.get(key);
     );
 
     return filteredStudents;
+}
+// Escape database/user text before placing it in HTML or quoted attributes.
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
 }

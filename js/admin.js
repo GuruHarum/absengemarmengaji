@@ -60,6 +60,28 @@ function formatDateForDisplay(dateVal) {
     return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function getFilteredAttendanceRecords(records) {
+    const value = id => document.getElementById(id)?.value || '';
+    const year = value('filterYear');
+    const month = value('filterMonth');
+    const teacher = value('filterTeacher');
+    const level = value('filterClassNumber');
+    const className = value('filterClassName');
+    const teacherRecord = typeof teachersData !== 'undefined'
+        ? teachersData.find(item => String(item.id) === teacher) : null;
+    return records.filter(item => {
+        const date = String(item.date || '').slice(0, 10);
+        const itemTeacher = item.teacher || item.nama_guru || '';
+        const itemClass = item.class || item.kelas || item.kelas_nama || '';
+        if (year && date.slice(0, 4) !== year) return false;
+        if (month && date.slice(5, 7) !== month.padStart(2, '0')) return false;
+        if (teacher && itemTeacher !== teacher && itemTeacher !== teacherRecord?.nama && String(item.guru_id ?? '') !== teacher) return false;
+        if (level && String(item.kelas_tingkat || extractClassNumber(itemClass)) !== level) return false;
+        if (className && itemClass !== className) return false;
+        return true;
+    });
+}
+
 async function filterAttendanceData() {
     const yearVal = filterYear ? filterYear.value : '';
     const monthVal = filterMonth ? filterMonth.value : '';
@@ -80,17 +102,7 @@ async function filterAttendanceData() {
         }
     }
 
-    filteredAttendanceData = attendanceData.filter(item => {
-        let match = true;
-        const itemDate = new Date(item.date);
-        
-        if (yearVal && itemDate.getFullYear().toString() !== yearVal) match = false;
-        if (monthVal && (itemDate.getMonth() + 1).toString().padStart(2, '0') !== monthVal) match = false;
-        if (teacherVal && item.guru_id?.toString() !== teacherVal) match = false;
-        if (classNumVal && item.kelas_tingkat?.toString() !== classNumVal) match = false;
-        
-        return match;
-    });
+    filteredAttendanceData = getFilteredAttendanceRecords(attendanceData);
 
     currentPage = 1;
     renderAdminData(); // Render data log reguler terlebih dahulu
@@ -139,9 +151,9 @@ function renderAdminData() {
     adminDataList.innerHTML = currentRecords.map(record => `
         <tr class="hover:bg-slate-50 transition-all border-b border-slate-100">
             <td class="px-6 py-3.5 font-medium text-slate-800">${formatDateForDisplay(record.date)}</td>
-            <td class="px-6 py-3.5 text-slate-600">${record.teacher || record.nama_guru || '-'}</td>
-            <td class="px-6 py-3.5 text-slate-600">${record.class || record.kelas_nama || '-'}</td>
-            <td class="px-6 py-3.5 font-semibold text-slate-700">${record.student || record.nama_siswa || '-'}</td>
+            <td class="px-6 py-3.5 text-slate-600">${escapeHtml(record.teacher || record.nama_guru || '-')}</td>
+            <td class="px-6 py-3.5 text-slate-600">${escapeHtml(record.class || record.kelas_nama || '-')}</td>
+            <td class="px-6 py-3.5 font-semibold text-slate-700">${escapeHtml(record.student || record.nama_siswa || '-')}</td>
             <td class="px-6 py-3.5">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1
                     ${
@@ -158,7 +170,7 @@ function renderAdminData() {
                     }
                 </span>
             </td>
-            <td class="px-6 py-3.5 text-slate-500 italic">${record.note || record.catatan || '-'}</td>
+            <td class="px-6 py-3.5 text-slate-500 italic">${escapeHtml(record.note || record.catatan || '-')}</td>
         </tr>
     `).join('');
 }
@@ -330,6 +342,10 @@ function populateAdminDropdowns() {
             option.value = name; option.textContent = name;
             dropdownGuru.appendChild(option);
         });
+        if (window.AppAccess?.teacher()) {
+            dropdownGuru.value = AppAccess.profile.teacherName;
+            dropdownGuru.disabled = true;
+        }
     }
 
     if (dropdownTingkat && typeof studentsData !== 'undefined' && Array.isArray(studentsData)) {
@@ -385,7 +401,7 @@ if (filterBtn) {
 }
 
 // Jalankan inisialisasi ketika data siap
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener(document.body.classList.contains('admin-page') ? 'panelready' : 'DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof attendanceData !== 'undefined' && attendanceData.length > 0) {
             filteredAttendanceData = [...attendanceData];
