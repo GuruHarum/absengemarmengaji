@@ -1,0 +1,76 @@
+window.ClassPicker = (() => {
+    let source, wrapper, trigger, popup;
+    let signature = '';
+    function refresh() {
+        if (!source)
+            return;
+        const options = Array.from(source.options).filter(option => option.value);
+        const chosen = options.filter(option => option.selected);
+        trigger.textContent = chosen.length ? chosen.map(option => option.textContent).join(', ') : 'Pilih satu atau beberapa kelas';
+        const nextSignature = JSON.stringify(options.map(option => [option.value, option.textContent]));
+        if (nextSignature === signature && popup.children.length) {
+            popup.querySelectorAll('input').forEach(input => { input.checked = options.some(option => option.value === input.value && option.selected); });
+            return;
+        }
+        signature = nextSignature;
+        popup.replaceChildren();
+        options.forEach(option => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = option.value;
+            checkbox.checked = option.selected;
+            const text = document.createElement('span');
+            text.textContent = option.textContent;
+            checkbox.addEventListener('change', () => {
+                const current = Array.from(source.options).find(row => row.value === checkbox.value);
+                if (!current)
+                    return;
+                current.selected = checkbox.checked;
+                source.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            label.append(checkbox, text);
+            popup.append(label);
+        });
+        if (!options.length)
+            popup.textContent = 'Pilih guru yang memiliki siswa Tahsin terlebih dahulu.';
+    }
+    function close() { if (!popup)
+        return; popup.hidden = true; trigger.setAttribute('aria-expanded', 'false'); }
+    document.addEventListener('panelready', () => {
+        source = document.getElementById('assignmentTahsinClass');
+        if (!source)
+            return;
+        source.hidden = true;
+        source.required = false;
+        wrapper = document.createElement('div');
+        wrapper.className = 'class-picker';
+        trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'class-picker-trigger';
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.setAttribute('aria-controls', 'classPickerOptions');
+        trigger.setAttribute('aria-label', 'Pilih kelas siswa Tahsin');
+        popup = document.createElement('div');
+        popup.id = 'classPickerOptions';
+        popup.className = 'class-picker-options';
+        popup.hidden = true;
+        popup.setAttribute('role', 'group');
+        popup.setAttribute('aria-label', 'Pilihan kelas');
+        wrapper.append(trigger, popup);
+        source.after(wrapper);
+        trigger.addEventListener('click', () => { popup.hidden = !popup.hidden; trigger.setAttribute('aria-expanded', String(!popup.hidden)); });
+        document.addEventListener('click', event => { if (!wrapper.contains(event.target))
+            close(); });
+        wrapper.addEventListener('keydown', event => { if (event.key === 'Escape') {
+            event.preventDefault();
+            close();
+            trigger.focus();
+        } });
+        wrapper.addEventListener('focusout', event => { if (!wrapper.contains(event.relatedTarget))
+            close(); });
+        new MutationObserver(refresh).observe(source, { childList: true, subtree: true });
+        refresh();
+    });
+    return { refresh, close };
+})();

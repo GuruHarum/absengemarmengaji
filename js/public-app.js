@@ -1,4 +1,3 @@
-// Public attendance entry point. Panel authentication is handled only in admin.html.
 let teachersData = [];
 let studentsData = [];
 let attendanceData = [];
@@ -16,23 +15,31 @@ const notification = document.getElementById('notification');
 const thankYouModal = document.getElementById('thankYouModal');
 const classOptions = document.getElementById('classOptions');
 const loadingIndicator = document.getElementById('loadingIndicator');
-
-        window.applySchoolProfile = function(profile) {
-            if (!profile) return;
-            const name = profile.name || 'Gemar Mengaji';
-            const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
-            const nameElement = document.getElementById('schoolName');
-            const addressElement = document.getElementById('schoolAddress');
-            const logoElement = document.getElementById('schoolLogo');
-            const loaderName = document.getElementById('loaderSchoolName');
-            if (nameElement) nameElement.textContent = name;
-            if (addressElement) addressElement.textContent = profile.address || '';
-            if (logoElement) logoElement.src = logo;
-            if (loaderName) loaderName.textContent = name;
-            document.documentElement.style.setProperty('--brand-color', resolveThemeColor(profile.theme_color));
-        };
-
-
+window.applySchoolProfile = function (profile) {
+    if (!profile)
+        return;
+    const name = profile.name || 'Gemar Mengaji';
+    const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
+    const nameElement = document.getElementById('schoolName');
+    const addressElement = document.getElementById('schoolAddress');
+    const logoElement = document.getElementById('schoolLogo');
+    const loaderName = document.getElementById('loaderSchoolName');
+    if (nameElement)
+        nameElement.textContent = name;
+    if (addressElement)
+        addressElement.textContent = profile.address || '';
+    if (logoElement)
+        logoElement.src = logo;
+    const loaderLogo = document.getElementById('loaderSchoolLogo');
+    if (loaderLogo && loaderLogo.getAttribute('src') !== logo) {
+        loaderLogo.hidden = false;
+        loaderLogo.parentElement.hidden = false;
+        loaderLogo.src = logo;
+    }
+    if (loaderName)
+        loaderName.textContent = name;
+    document.documentElement.style.setProperty('--brand-color', resolveThemeColor(profile.theme_color));
+};
 function hideIslamicLoader() {
     requestAnimationFrame(() => requestAnimationFrame(() => {
         document.body.classList.add('page-ready');
@@ -47,22 +54,30 @@ async function initApp() {
             return;
         }
         await Promise.all([fetchTeachers(), fetchStudents(), fetchAttendanceData({ date: formatDateForStorage() })]);
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Error initializing app:', error);
         showNotification('error', 'Terjadi kesalahan saat memuat aplikasi. Silakan refresh halaman.');
-    } finally { hideIslamicLoader(); }
+    }
+    finally {
+        hideIslamicLoader();
+    }
 }
-window.handleMaintenanceRealtime = function(enabled) {
-    if (enabled) window.location.replace('maintenance.html');
+window.handleMaintenanceRealtime = function (enabled) {
+    if (enabled)
+        window.location.replace('maintenance.html');
 };
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
-    // A panel session changes only the destination label, never public data access.
     panelAuthClient.auth.getSession().then(({ data }) => {
         const link = document.getElementById('loginBtn');
-        if (data.session && link) { link.href = 'admin.html'; link.textContent = 'Panel Saya'; }
+        if (data.session && link) {
+            link.href = 'admin.html';
+            link.textContent = 'Panel Saya';
+        }
     }).catch(console.error);
     document.getElementById('closeClassModal')?.addEventListener('click', closeClassModal);
     document.getElementById('backToHome')?.addEventListener('click', () => showPage(1));
-    window.addEventListener('click', event => { if (event.target === classModal) closeClassModal(); });
+    window.addEventListener('click', event => { if (event.target === classModal)
+        closeClassModal(); });
 });

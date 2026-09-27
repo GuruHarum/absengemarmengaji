@@ -1,0 +1,70 @@
+window.AssessmentData = (() => {
+    const periods = Object.freeze({ pts_ganjil: 'Tengah Semester Ganjil', pas_ganjil: 'Akhir Semester Ganjil', pts_genap: 'Tengah Semester Genap', pas_genap: 'Akhir Semester Genap' });
+    const scores = Object.freeze({ tahsin_makhraj: 'MAKHORIJUL HURUF Tahsin', tahsin_tajwid: 'TAJWID Tahsin', tahsin_tartil: 'TARTIL / KELANCARAN', tahsin_gharib: 'GHARIB MUSYKILAT', tahfidz_makhraj: 'MAKHORIJUL HURUF Tahfidz', tahfidz_tajwid: 'TAJWID Tahfidz', tahfidz_hafalan: 'TARTIL / KELANCARAN' });
+    const fields = Object.freeze([...Object.keys(scores), 'tahsin_book', 'tahsin_page', 'tahfidz_surah', 'tahfidz_ayah', ...(window.ReportCore?.extraFields || [])]);
+    function draft(record = {}) {
+        if (window.ReportCore) {
+            record = ReportCore.legacy(record);
+            if (record.version && ![true, 'true'].includes(record.tahfidz_aspect_confirmed))
+                record.tahfidz_hafalan = '';
+        }
+        return Object.fromEntries(fields.map(field => [field, record[field] == null ? '' : String(record[field])]));
+    }
+    function dirty(value, record) {
+        const previous = draft(record);
+        return fields.some(field => value[field] !== previous[field]);
+    }
+    function payload(context, student, value, saved) {
+        const year = Number(context.year);
+        if (!Number.isInteger(year) || year < 2000 || year > 2200 || !periods[context.period])
+            throw new Error('Tahun ajaran atau periode tidak valid.');
+        if (!student.id || !context.teacherId)
+            throw new Error('Identitas siswa atau guru tidak tersedia.');
+        if (context.subject && !['tahsin', 'tahfidz'].includes(context.subject))
+            throw new Error('Pelajaran tidak valid.');
+        const row = { student_id: String(student.id), teacher_id: String(context.teacherId), academic_year_start: year, period: context.period, version: saved?.version || 0 };
+        if (context.subject)
+            row.subject = context.subject;
+        for (const [field, label] of Object.entries(scores)) {
+            if (context.subject && !field.startsWith(context.subject + '_'))
+                continue;
+            if (window.ReportCore && context.subject && !ReportCore.applicable(value, context.subject).keys.includes(field))
+                continue;
+            const raw = String(value[field] ?? '').trim();
+            if (!window.ReportCore && !raw && field === 'tahsin_gharib') {
+                row[field] = null;
+                continue;
+            }
+            if (!raw || !/^\d{1,3}(\.\d{1,2})?$/.test(raw) || Number(raw) > 100)
+                throw new Error(`${label} wajib berupa angka 0–100, maksimal dua desimal.`);
+            row[field] = Number(raw);
+        }
+        if (window.ReportCore && context.subject) {
+            const checked = ReportCore.check(value, context.subject);
+            if (!checked.complete)
+                throw Error([...checked.stage, ...checked.missing.map(k => ReportCore.labels[k] + ' wajib diisi'), ...checked.invalid.map(k => ReportCore.labels[k] + ' tidak valid')].join('; '));
+            Object.assign(row, ReportCore.validateProgress(value, context.subject));
+        }
+        else {
+            if (!context.subject || context.subject === 'tahsin') {
+                row.tahsin_book = String(value.tahsin_book || '').trim();
+                if (!row.tahsin_book || row.tahsin_book.length > 80)
+                    throw new Error('Buku/Jilid wajib diisi, maksimal 80 karakter.');
+                row.tahsin_page = Number(value.tahsin_page);
+                if (!Number.isSafeInteger(row.tahsin_page) || row.tahsin_page < 1 || row.tahsin_page > 2147483647)
+                    throw new Error('Halaman terakhir harus berupa bilangan bulat positif.');
+            }
+            if (!context.subject || context.subject === 'tahfidz') {
+                row.tahfidz_surah = Number(value.tahfidz_surah);
+                row.tahfidz_ayah = Number(value.tahfidz_ayah);
+                const surah = QURAN_SURAHS.find(item => item.number === row.tahfidz_surah);
+                if (!surah)
+                    throw new Error('Pilih surat capaian Tahfidz.');
+                if (!Number.isInteger(row.tahfidz_ayah) || row.tahfidz_ayah < 1 || row.tahfidz_ayah > surah.ayahs)
+                    throw new Error(`Pilih ayat 1–${surah.ayahs} untuk ${surah.name}.`);
+            }
+        }
+        return row;
+    }
+    return Object.freeze({ periods, scores, fields, draft, dirty, payload });
+})();

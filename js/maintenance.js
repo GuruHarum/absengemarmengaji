@@ -1,5 +1,4 @@
 (() => {
-    // Original reflections, not quotations attributed to scripture or scholars.
     const quotes = [
         ['SABAR', 'Sabar bukan berhenti melangkah, melainkan menjaga hati tetap dekat kepada Allah saat jalan terasa panjang.'],
         ['SYUKUR', 'Sebelum meminta hari yang lebih indah, luangkan waktu untuk mensyukuri kebaikan yang sudah Allah hadirkan.'],
@@ -39,7 +38,8 @@
         document.getElementById('quoteTopic').textContent = quotes[index][0];
         document.getElementById('quoteText').textContent = quotes[index][1];
         document.getElementById('quoteCounter').textContent = `${String(index + 1).padStart(2, '0')} / ${quotes.length}`;
-        if (!reduced.matches && slide.animate) slide.animate([{ opacity: 0, transform: 'translateX(18px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 450, easing: 'ease-out' });
+        if (!reduced.matches && slide.animate)
+            slide.animate([{ opacity: 0, transform: 'translateX(18px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 450, easing: 'ease-out' });
     }
     document.getElementById('quotePrev').addEventListener('click', () => { show(index - 1); schedule(); });
     document.getElementById('quoteNext').addEventListener('click', () => { show(index + 1); schedule(); });
