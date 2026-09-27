@@ -1,0 +1,572 @@
+﻿[
+    {
+        "number":  1,
+        "englishName":  "Al-Faatiha",
+        "numberOfAyahs":  7
+    },
+    {
+        "number":  2,
+        "englishName":  "Al-Baqara",
+        "numberOfAyahs":  286
+    },
+    {
+        "number":  3,
+        "englishName":  "Aal-i-Imraan",
+        "numberOfAyahs":  200
+    },
+    {
+        "number":  4,
+        "englishName":  "An-Nisaa",
+        "numberOfAyahs":  176
+    },
+    {
+        "number":  5,
+        "englishName":  "Al-Maaida",
+        "numberOfAyahs":  120
+    },
+    {
+        "number":  6,
+        "englishName":  "Al-An\u0027aam",
+        "numberOfAyahs":  165
+    },
+    {
+        "number":  7,
+        "englishName":  "Al-A\u0027raaf",
+        "numberOfAyahs":  206
+    },
+    {
+        "number":  8,
+        "englishName":  "Al-Anfaal",
+        "numberOfAyahs":  75
+    },
+    {
+        "number":  9,
+        "englishName":  "At-Tawba",
+        "numberOfAyahs":  129
+    },
+    {
+        "number":  10,
+        "englishName":  "Yunus",
+        "numberOfAyahs":  109
+    },
+    {
+        "number":  11,
+        "englishName":  "Hud",
+        "numberOfAyahs":  123
+    },
+    {
+        "number":  12,
+        "englishName":  "Yusuf",
+        "numberOfAyahs":  111
+    },
+    {
+        "number":  13,
+        "englishName":  "Ar-Ra\u0027d",
+        "numberOfAyahs":  43
+    },
+    {
+        "number":  14,
+        "englishName":  "Ibrahim",
+        "numberOfAyahs":  52
+    },
+    {
+        "number":  15,
+        "englishName":  "Al-Hijr",
+        "numberOfAyahs":  99
+    },
+    {
+        "number":  16,
+        "englishName":  "An-Nahl",
+        "numberOfAyahs":  128
+    },
+    {
+        "number":  17,
+        "englishName":  "Al-Israa",
+        "numberOfAyahs":  111
+    },
+    {
+        "number":  18,
+        "englishName":  "Al-Kahf",
+        "numberOfAyahs":  110
+    },
+    {
+        "number":  19,
+        "englishName":  "Maryam",
+        "numberOfAyahs":  98
+    },
+    {
+        "number":  20,
+        "englishName":  "Taa-Haa",
+        "numberOfAyahs":  135
+    },
+    {
+        "number":  21,
+        "englishName":  "Al-Anbiyaa",
+        "numberOfAyahs":  112
+    },
+    {
+        "number":  22,
+        "englishName":  "Al-Hajj",
+        "numberOfAyahs":  78
+    },
+    {
+        "number":  23,
+        "englishName":  "Al-Muminoon",
+        "numberOfAyahs":  118
+    },
+    {
+        "number":  24,
+        "englishName":  "An-Noor",
+        "numberOfAyahs":  64
+    },
+    {
+        "number":  25,
+        "englishName":  "Al-Furqaan",
+        "numberOfAyahs":  77
+    },
+    {
+        "number":  26,
+        "englishName":  "Ash-Shu\u0027araa",
+        "numberOfAyahs":  227
+    },
+    {
+        "number":  27,
+        "englishName":  "An-Naml",
+        "numberOfAyahs":  93
+    },
+    {
+        "number":  28,
+        "englishName":  "Al-Qasas",
+        "numberOfAyahs":  88
+    },
+    {
+        "number":  29,
+        "englishName":  "Al-Ankaboot",
+        "numberOfAyahs":  69
+    },
+    {
+        "number":  30,
+        "englishName":  "Ar-Room",
+        "numberOfAyahs":  60
+    },
+    {
+        "number":  31,
+        "englishName":  "Luqman",
+        "numberOfAyahs":  34
+    },
+    {
+        "number":  32,
+        "englishName":  "As-Sajda",
+        "numberOfAyahs":  30
+    },
+    {
+        "number":  33,
+        "englishName":  "Al-Ahzaab",
+        "numberOfAyahs":  73
+    },
+    {
+        "number":  34,
+        "englishName":  "Saba",
+        "numberOfAyahs":  54
+    },
+    {
+        "number":  35,
+        "englishName":  "Faatir",
+        "numberOfAyahs":  45
+    },
+    {
+        "number":  36,
+        "englishName":  "Yaseen",
+        "numberOfAyahs":  83
+    },
+    {
+        "number":  37,
+        "englishName":  "As-Saaffaat",
+        "numberOfAyahs":  182
+    },
+    {
+        "number":  38,
+        "englishName":  "Saad",
+        "numberOfAyahs":  88
+    },
+    {
+        "number":  39,
+        "englishName":  "Az-Zumar",
+        "numberOfAyahs":  75
+    },
+    {
+        "number":  40,
+        "englishName":  "Ghafir",
+        "numberOfAyahs":  85
+    },
+    {
+        "number":  41,
+        "englishName":  "Fussilat",
+        "numberOfAyahs":  54
+    },
+    {
+        "number":  42,
+        "englishName":  "Ash-Shura",
+        "numberOfAyahs":  53
+    },
+    {
+        "number":  43,
+        "englishName":  "Az-Zukhruf",
+        "numberOfAyahs":  89
+    },
+    {
+        "number":  44,
+        "englishName":  "Ad-Dukhaan",
+        "numberOfAyahs":  59
+    },
+    {
+        "number":  45,
+        "englishName":  "Al-Jaathiya",
+        "numberOfAyahs":  37
+    },
+    {
+        "number":  46,
+        "englishName":  "Al-Ahqaf",
+        "numberOfAyahs":  35
+    },
+    {
+        "number":  47,
+        "englishName":  "Muhammad",
+        "numberOfAyahs":  38
+    },
+    {
+        "number":  48,
+        "englishName":  "Al-Fath",
+        "numberOfAyahs":  29
+    },
+    {
+        "number":  49,
+        "englishName":  "Al-Hujuraat",
+        "numberOfAyahs":  18
+    },
+    {
+        "number":  50,
+        "englishName":  "Qaaf",
+        "numberOfAyahs":  45
+    },
+    {
+        "number":  51,
+        "englishName":  "Adh-Dhaariyat",
+        "numberOfAyahs":  60
+    },
+    {
+        "number":  52,
+        "englishName":  "At-Tur",
+        "numberOfAyahs":  49
+    },
+    {
+        "number":  53,
+        "englishName":  "An-Najm",
+        "numberOfAyahs":  62
+    },
+    {
+        "number":  54,
+        "englishName":  "Al-Qamar",
+        "numberOfAyahs":  55
+    },
+    {
+        "number":  55,
+        "englishName":  "Ar-Rahmaan",
+        "numberOfAyahs":  78
+    },
+    {
+        "number":  56,
+        "englishName":  "Al-Waaqia",
+        "numberOfAyahs":  96
+    },
+    {
+        "number":  57,
+        "englishName":  "Al-Hadid",
+        "numberOfAyahs":  29
+    },
+    {
+        "number":  58,
+        "englishName":  "Al-Mujaadila",
+        "numberOfAyahs":  22
+    },
+    {
+        "number":  59,
+        "englishName":  "Al-Hashr",
+        "numberOfAyahs":  24
+    },
+    {
+        "number":  60,
+        "englishName":  "Al-Mumtahana",
+        "numberOfAyahs":  13
+    },
+    {
+        "number":  61,
+        "englishName":  "As-Saff",
+        "numberOfAyahs":  14
+    },
+    {
+        "number":  62,
+        "englishName":  "Al-Jumu\u0027a",
+        "numberOfAyahs":  11
+    },
+    {
+        "number":  63,
+        "englishName":  "Al-Munaafiqoon",
+        "numberOfAyahs":  11
+    },
+    {
+        "number":  64,
+        "englishName":  "At-Taghaabun",
+        "numberOfAyahs":  18
+    },
+    {
+        "number":  65,
+        "englishName":  "At-Talaaq",
+        "numberOfAyahs":  12
+    },
+    {
+        "number":  66,
+        "englishName":  "At-Tahrim",
+        "numberOfAyahs":  12
+    },
+    {
+        "number":  67,
+        "englishName":  "Al-Mulk",
+        "numberOfAyahs":  30
+    },
+    {
+        "number":  68,
+        "englishName":  "Al-Qalam",
+        "numberOfAyahs":  52
+    },
+    {
+        "number":  69,
+        "englishName":  "Al-Haaqqa",
+        "numberOfAyahs":  52
+    },
+    {
+        "number":  70,
+        "englishName":  "Al-Ma\u0027aarij",
+        "numberOfAyahs":  44
+    },
+    {
+        "number":  71,
+        "englishName":  "Nooh",
+        "numberOfAyahs":  28
+    },
+    {
+        "number":  72,
+        "englishName":  "Al-Jinn",
+        "numberOfAyahs":  28
+    },
+    {
+        "number":  73,
+        "englishName":  "Al-Muzzammil",
+        "numberOfAyahs":  20
+    },
+    {
+        "number":  74,
+        "englishName":  "Al-Muddaththir",
+        "numberOfAyahs":  56
+    },
+    {
+        "number":  75,
+        "englishName":  "Al-Qiyaama",
+        "numberOfAyahs":  40
+    },
+    {
+        "number":  76,
+        "englishName":  "Al-Insaan",
+        "numberOfAyahs":  31
+    },
+    {
+        "number":  77,
+        "englishName":  "Al-Mursalaat",
+        "numberOfAyahs":  50
+    },
+    {
+        "number":  78,
+        "englishName":  "An-Naba",
+        "numberOfAyahs":  40
+    },
+    {
+        "number":  79,
+        "englishName":  "An-Naazi\u0027aat",
+        "numberOfAyahs":  46
+    },
+    {
+        "number":  80,
+        "englishName":  "Abasa",
+        "numberOfAyahs":  42
+    },
+    {
+        "number":  81,
+        "englishName":  "At-Takwir",
+        "numberOfAyahs":  29
+    },
+    {
+        "number":  82,
+        "englishName":  "Al-Infitaar",
+        "numberOfAyahs":  19
+    },
+    {
+        "number":  83,
+        "englishName":  "Al-Mutaffifin",
+        "numberOfAyahs":  36
+    },
+    {
+        "number":  84,
+        "englishName":  "Al-Inshiqaaq",
+        "numberOfAyahs":  25
+    },
+    {
+        "number":  85,
+        "englishName":  "Al-Burooj",
+        "numberOfAyahs":  22
+    },
+    {
+        "number":  86,
+        "englishName":  "At-Taariq",
+        "numberOfAyahs":  17
+    },
+    {
+        "number":  87,
+        "englishName":  "Al-A\u0027laa",
+        "numberOfAyahs":  19
+    },
+    {
+        "number":  88,
+        "englishName":  "Al-Ghaashiya",
+        "numberOfAyahs":  26
+    },
+    {
+        "number":  89,
+        "englishName":  "Al-Fajr",
+        "numberOfAyahs":  30
+    },
+    {
+        "number":  90,
+        "englishName":  "Al-Balad",
+        "numberOfAyahs":  20
+    },
+    {
+        "number":  91,
+        "englishName":  "Ash-Shams",
+        "numberOfAyahs":  15
+    },
+    {
+        "number":  92,
+        "englishName":  "Al-Lail",
+        "numberOfAyahs":  21
+    },
+    {
+        "number":  93,
+        "englishName":  "Ad-Dhuhaa",
+        "numberOfAyahs":  11
+    },
+    {
+        "number":  94,
+        "englishName":  "Ash-Sharh",
+        "numberOfAyahs":  8
+    },
+    {
+        "number":  95,
+        "englishName":  "At-Tin",
+        "numberOfAyahs":  8
+    },
+    {
+        "number":  96,
+        "englishName":  "Al-Alaq",
+        "numberOfAyahs":  19
+    },
+    {
+        "number":  97,
+        "englishName":  "Al-Qadr",
+        "numberOfAyahs":  5
+    },
+    {
+        "number":  98,
+        "englishName":  "Al-Bayyina",
+        "numberOfAyahs":  8
+    },
+    {
+        "number":  99,
+        "englishName":  "Az-Zalzala",
+        "numberOfAyahs":  8
+    },
+    {
+        "number":  100,
+        "englishName":  "Al-Aadiyaat",
+        "numberOfAyahs":  11
+    },
+    {
+        "number":  101,
+        "englishName":  "Al-Qaari\u0027a",
+        "numberOfAyahs":  11
+    },
+    {
+        "number":  102,
+        "englishName":  "At-Takaathur",
+        "numberOfAyahs":  8
+    },
+    {
+        "number":  103,
+        "englishName":  "Al-Asr",
+        "numberOfAyahs":  3
+    },
+    {
+        "number":  104,
+        "englishName":  "Al-Humaza",
+        "numberOfAyahs":  9
+    },
+    {
+        "number":  105,
+        "englishName":  "Al-Fil",
+        "numberOfAyahs":  5
+    },
+    {
+        "number":  106,
+        "englishName":  "Quraish",
+        "numberOfAyahs":  4
+    },
+    {
+        "number":  107,
+        "englishName":  "Al-Maa\u0027un",
+        "numberOfAyahs":  7
+    },
+    {
+        "number":  108,
+        "englishName":  "Al-Kawthar",
+        "numberOfAyahs":  3
+    },
+    {
+        "number":  109,
+        "englishName":  "Al-Kaafiroon",
+        "numberOfAyahs":  6
+    },
+    {
+        "number":  110,
+        "englishName":  "An-Nasr",
+        "numberOfAyahs":  3
+    },
+    {
+        "number":  111,
+        "englishName":  "Al-Masad",
+        "numberOfAyahs":  5
+    },
+    {
+        "number":  112,
+        "englishName":  "Al-Ikhlaas",
+        "numberOfAyahs":  4
+    },
+    {
+        "number":  113,
+        "englishName":  "Al-Falaq",
+        "numberOfAyahs":  5
+    },
+    {
+        "number":  114,
+        "englishName":  "An-Naas",
+        "numberOfAyahs":  6
+    }
+]
