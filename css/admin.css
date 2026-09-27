@@ -1,4 +1,4 @@
-/* Admin layout: a stable desktop rail and an accessible mobile drawer. */
+
 @media screen {
     body.admin-page { --sidebar-width: 264px; }
     body.admin-page #sidebar {
@@ -211,3 +211,14 @@
 }
 
 @media screen { .report-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 9px; color: #6b7a63; margin: 0 0 14px; } .report-legend span:last-child { margin-left: auto; font-style: italic; } }
+
+/* Identitas siswa: tab baru dan daftar hasil audit, tanpa mengubah warna tema. */
+body.admin-page #manageDirectoryView[hidden], body.admin-page #manageDirectoryTable[hidden],
+body.admin-page #manageDirectoryPagination[hidden], body.admin-page #manageImportView[hidden],
+body.admin-page #manageIdentifierAudit[hidden],body.admin-page #manageIdentifierActions[hidden],
+body.admin-page #tab-impor[hidden] { display: none !important; }
+body.admin-page .manage-tabs { flex-wrap: wrap; max-width: 100%; }
+body.admin-page .manage-tabs button { padding-inline: clamp(12px, 1.5vw, 24px); }
+body.admin-page #manageIdentifierAuditList th { position: sticky; top: 0; background: #fffbeb; }
+body.admin-page #manageIdentifierAuditList td { vertical-align: top; }
+@media (max-width: 640px) { body.admin-page .manage-tabs { width: 100%; } body.admin-page .manage-tabs button { flex: 1 1 46%; } }

@@ -1,4 +1,4 @@
-/* Shared emerald and gold palette. Screen-only rules preserve printed reports. */
+
 :root {
     --brand-color: #216454;
     --brand-dark: #0c2724;
@@ -22,7 +22,7 @@
     }
     ::selection { background: #d9e6d6; color: #153d30; }
 
-    /* Primary surfaces repeat the fine geometry used by the opening animation. */
+    
     body .header-gradient,
     body.login-page .login-card > div:first-child,
     body.admin-page #settingsPreview {
@@ -38,8 +38,7 @@
         color: #dce5d9;
     }
 
-    /* Brand utilities also cover dynamically rendered cards and controls.
-       Attendance choices/badges keep their semantic status colors. */
+    
     body :is(.bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-indigo-600, .bg-indigo-700),
     body .filter-button {
         background-color: var(--brand-color);
@@ -98,7 +97,7 @@
     body .selected-option { outline: 2px solid #94783f; outline-offset: 2px; }
     body .selected-option::after { background-color: var(--brand-color); }
 
-    /* Quiet table framing, without changing attendance cell colors. */
+    
     body :is(.attendance-table, .monthly-report-table) th,
     body.admin-page thead { background-color: #eaf0e4; color: #244d3b; }
     body .monthly-report-table .student-name { background-color: #f6f7f0; }
@@ -131,7 +130,7 @@
     body .mobile-menu-button { border-color: #d2ddcd; background: #f5f7ef; }
     body .mobile-menu-button span { background: var(--brand-dark); }
 
-    /* Login and maintenance use the same atmospheric backdrop as the loader. */
+    
     body.login-page, body.maintenance-page {
         background: var(--theme-pattern), radial-gradient(ellipse at 50% 35%, #173d36, #071c1a 85%);
         min-height: 100vh;
@@ -179,3 +178,16 @@
         body.public-page #classTitle { font-size: 18px; }
     }
 }
+
+.teacher-photo-circle {
+    display: block;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    flex-shrink: 0;
+}
+.teacher-photo-circle--public { width: 100%; height: 100%; }
+.teacher-photo-circle--preview { width: 80px; height: 80px; }
+.teacher-photo-circle--small { width: 36px; height: 36px; }
+.teacher-photo-circle--placeholder { object-fit: contain; padding: 5%; background: var(--theme-paper); }

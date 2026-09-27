@@ -1,0 +1,532 @@
+
+@media screen {
+    body.admin-page { width: 100%; max-width: 100%; overflow-x: clip; }
+    body.admin-page #adminMain,
+    body.admin-page .admin-workspace,
+    body.admin-page [id^="page-"],
+    body.admin-page :is(.report-workspace,.report-panel,.settings-hub,.target-cards,
+        .assessment-context-grid,.assessment-score-grid,.assessment-attainment,
+        .assessment-student,.assessment-subjects,.info-filter-grid,
+        .detail-filter-grid,.donut-layout,.manage-toolbar,.section-heading) {
+        min-width: 0;
+        max-width: 100%;
+    }
+    body.admin-page #adminMain { flex: 1 1 0%; }
+    body.admin-page .admin-workspace { width: 100%; padding-inline: clamp(14px, 2.4vw, 32px); }
+    body.admin-page :is(.report-panel,.target-card,.assessment-student,.comparison-section) {
+        min-width: 0;
+    }
+    body.admin-page :is(.report-grid,.report-audit-grid,.report-actions,.assessment-toolbar,
+        .manage-search-row,.maintenance-control-actions) > * { min-width: 0; }
+    body.admin-page :is(.report-grid,.target-card,.assessment-student,.report-identity-audit,
+        .settings-hub,.section-heading,.admin-header-copy) { overflow-wrap: anywhere; }
+    body.admin-page :is(input,select,textarea) { max-width: 100%; }
+    body.admin-page :is(.overflow-x-auto,.assignment-table-wrap,.report-table-scroll) {
+        max-width: 100%;
+        min-width: 0;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+    body.admin-page .report-table-scroll table { min-width: 600px; }
+    body.admin-page .report-preview { width: min(100%, 794px); max-width: 100%; }
+    body.admin-page .report-preview canvas { width: 100%; max-width: 100%; height: auto; }
+    body.admin-page .report-preview { margin-inline: auto; }
+    body.admin-page #manageModal #modalContent {
+        max-width: min(100%, 720px);
+        max-height: calc(100dvh - 32px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    
+    body.admin-page #sidebar {
+        min-height: 0;
+        max-height: 100vh;
+        max-height: 100dvh;
+    }
+    body.admin-page #sidebar .sidebar-shell {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+    body.admin-page #sidebar .admin-navigation {
+        display: block;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+        scrollbar-width: thin;
+        scrollbar-color: #8eaa99 transparent;
+    }
+    body.admin-page #sidebar .admin-navigation::-webkit-scrollbar,
+    body.admin-page #sidebar::-webkit-scrollbar { width: 7px; }
+    body.admin-page #sidebar .admin-navigation::-webkit-scrollbar-thumb,
+    body.admin-page #sidebar::-webkit-scrollbar-thumb {
+        background: #8eaa99;
+        border-radius: 10px;
+    }
+    body.admin-page #sidebar .admin-navigation::-webkit-scrollbar-track,
+    body.admin-page #sidebar::-webkit-scrollbar-track { background: transparent; }
+    body.admin-page #sidebar .sidebar-brand,
+    body.admin-page #sidebar .sidebar-bottom { flex-shrink: 0; }
+}
+
+
+@media screen and (min-width: 768px) and (max-height: 780px) {
+    body.admin-page #sidebar {
+        height: 100vh;
+        height: 100dvh;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        scrollbar-width: thin;
+        scrollbar-color: #8eaa99 transparent;
+    }
+    body.admin-page #sidebar .sidebar-shell {
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
+    }
+    body.admin-page #sidebar .admin-navigation {
+        flex: 0 0 auto;
+        overflow: visible;
+        min-height: auto;
+        touch-action: pan-y;
+    }
+    body.admin-page #sidebar .sidebar-bottom { margin-top: auto; }
+}
+
+
+@media screen and (min-width: 768px) and (max-width: 1180px) {
+    body.admin-page .report-workspace { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page .report-preview { width: min(100%, 794px); }
+}
+
+
+@media screen and (max-width: 767px) {
+    body.admin-page #sidebar {
+        height: 100vh;
+        height: 100dvh;
+        min-height: 0;
+        max-height: 100dvh;
+        overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    body.admin-page #sidebar > .sidebar-shell {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+    body.admin-page #sidebar .admin-navigation {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+    }
+    body.admin-page .admin-workspace { padding: 16px 14px 32px; }
+    body.admin-page #adminMain > header {
+        padding: 10px 14px;
+        gap: 10px;
+        padding-top: max(10px, env(safe-area-inset-top, 0px));
+    }
+    body.admin-page #adminMain > header > div:first-child { min-width: 0; }
+    body.admin-page .admin-header-copy { min-width: 0; }
+    body.admin-page #adminHeaderTitle { overflow-wrap: anywhere; }
+    body.admin-page .report-workspace { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page :is(.report-panel,.comparison-section,.assessment-controls,.manage-toolbar) {
+        padding: clamp(14px, 4vw, 20px);
+    }
+    body.admin-page .target-cards { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page .report-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+    body.admin-page .report-actions > :is(button,a) { min-height: 44px; }
+    body.admin-page .report-table-scroll { overflow-x: auto; }
+    body.admin-page :is(.assessment-student > header,.assessment-student > footer) { flex-wrap: wrap; }
+    body.admin-page .donut-layout { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page .donut-canvas { max-width: 340px; width: 100%; margin: auto; }
+    body.admin-page .donut-legend { min-width: 0; }
+    body.admin-page #page-infografik canvas { max-height: 280px; }
+    body.admin-page .settings-hub { grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); }
+    body.admin-page .assessment-summary { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    body.admin-page .assessment-summary > div:first-child { grid-column: 1 / -1; }
+    
+    body.admin-page.drawer-open .pwa-tools { visibility: hidden; pointer-events: none; }
+    .pwa-tools { max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
+    body.admin-page #manageModal { padding: 12px; }
+    body.admin-page #manageModal #modalContent { max-height: calc(100dvh - 24px); }
+    body.admin-page :is(.admin-confirm,.class-picker-options) { max-width: calc(100vw - 28px); }
+    body.public-page .header-gradient .container { gap: 12px; }
+    body.public-page .header-gradient .container > div:first-child { min-width: 0; flex: 1 1 240px; }
+    body.public-page :is(#schoolAddress,#schoolName,#classTitle) { overflow-wrap: anywhere; }
+    body.public-page #studentList,
+    body.public-page #teacherGrid { min-width: 0; }
+    body.public-page #classModal .modal-content {
+        width: calc(100% - 24px);
+        max-width: 480px;
+        max-height: calc(100dvh - 32px);
+        margin: min(7vh, 32px) auto 12px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    body.public-page #classOptions { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    body.public-page #attendanceEditModal { overflow-y: auto; align-items: safe center; }
+    body.public-page #attendanceEditModal > div { max-height: calc(100dvh - 24px); overflow-y: auto; }
+    body.login-page { min-height: 100dvh; }
+    body.login-page .login-card { max-width: min(100%, 440px); }
+    body.maintenance-page .maintenance-layout { max-width: 100%; }
+    body.maintenance-page .maintenance-brand { min-width: 0; flex-wrap: wrap; }
+}
+
+
+@media screen and (max-width: 767px) and (max-height: 540px) {
+    body.admin-page #sidebar {
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+    }
+    body.admin-page #sidebar > .sidebar-shell {
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
+    }
+    body.admin-page #sidebar .sidebar-brand {
+        min-height: 0;
+        padding-block: 12px;
+    }
+    body.admin-page #sidebar .admin-navigation { flex: 0 0 auto; overflow: visible; }
+    body.admin-page #sidebar .sidebar-bottom { margin-top: auto; }
+}
+
+
+@media screen and (max-width: 480px) {
+    body.admin-page #adminMain > header { flex-direction: row; align-items: center; }
+    body.admin-page #adminMain > header #topLogoutBtn {
+        width: auto;
+        flex: 0 0 auto;
+        padding-inline: 10px;
+    }
+    body.admin-page #adminMain > header .mobile-menu-button { flex: 0 0 44px; }
+    body.admin-page .report-actions > :is(button,a) { width: 100%; justify-content: center; }
+    body.admin-page .report-panel { padding: 15px; }
+    body.admin-page .target-card .report-grid { grid-template-columns: minmax(0,1fr); }
+    body.admin-page .settings-hub { grid-template-columns: minmax(0,1fr); }
+    body.admin-page .admin-toasts { right: 10px; left: 10px; width: auto; }
+    body.public-page .header-gradient .container { flex-wrap: wrap; }
+    body.public-page #adminHeaderActions { margin-left: auto; }
+    body.public-page .attendance-heading > div:last-child { flex-wrap: wrap; gap: 8px; }
+    body.public-page #classOptions { gap: 8px; }
+    body.public-page #attendanceEditActions { flex-wrap: wrap; }
+    body.public-page #attendanceEditActions > button { flex: 1 1 100%; }
+}
+
+@media screen and (max-height: 600px) {
+    body.login-page {
+        justify-content: flex-start;
+        padding-top: max(12px, env(safe-area-inset-top, 0px));
+        padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    }
+    body.maintenance-page .maintenance-scene { padding-block: 18px; }
+}
+
+
+@media screen {
+    body.admin-page #page-identitas > .school-identity-header,
+    body.admin-page #page-pengaturan > .settings-intro,
+    body.admin-page #page-rapor > .report-panel {
+        border: 1px solid var(--theme-line, #dce4d2);
+        border-radius: 18px;
+        background: var(--theme-paper, #fffefb);
+        box-shadow: 0 4px 20px #153d3008;
+    }
+    body.admin-page #page-identitas .school-identity-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+        gap: clamp(16px, 2vw, 24px);
+        align-items: start;
+    }
+    body.admin-page #page-identitas :is(.school-identity-form,.school-identity-aside) {
+        min-width: 0;
+        padding: clamp(18px, 2vw, 28px);
+        border: 1px solid var(--theme-line, #dce4d2);
+        border-radius: 18px;
+        background: var(--theme-paper, #fffefb);
+        box-shadow: 0 4px 20px #153d3008;
+    }
+    body.admin-page #page-identitas .school-identity-form > div:not(.section-heading) {
+        display: grid;
+        gap: 8px;
+        margin-top: 18px;
+    }
+    body.admin-page #page-identitas .school-identity-form label {
+        display: block;
+        color: var(--theme-ink, #234334);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.65;
+    }
+    body.admin-page #page-identitas .school-identity-form :is(input:not([type="color"]),textarea) {
+        display: block;
+        min-height: 44px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--theme-line, #cbd9cd);
+        border-radius: 11px;
+        background: #fff;
+        color: var(--theme-ink, #234334);
+    }
+    body.admin-page #page-identitas .school-identity-form input[type="color"] { width: 70px; }
+    body.admin-page #page-identitas .school-identity-form button[type="submit"] { margin-top: 22px; }
+    body.admin-page #page-identitas #schoolSettingsForm,
+    body.admin-page #page-identitas #schoolSettingsForm + aside {
+        border-color: var(--theme-line, #dce4d2);
+        background: var(--theme-paper, #fffefb);
+    }
+    body.admin-page #page-identitas #settingsPreview {
+        background: var(--theme-soft, #edf3e8);
+        color: var(--theme-ink, #234334);
+        border: 1px solid var(--theme-line, #dce4d2);
+    }
+    body.admin-page #page-identitas #settingsPreview .text-slate-300 { color: var(--theme-muted, #6b7b68); }
+    body.admin-page #page-identitas #settingsNamePreview { color: var(--theme-ink, #234334); }
+    body.admin-page #page-pengaturan .settings-intro .section-heading h2 { margin: 0; }
+    body.admin-page #page-pengaturan .settings-intro .section-heading p:last-child { margin-top: 7px; }
+    body.admin-page #page-identitas .school-identity-header .section-heading h2 { margin: 0; }
+    body.admin-page #page-identitas .school-identity-header .section-heading p:last-child { margin-top: 8px; }
+    body.admin-page #page-identitas #schoolSettingsForm,
+    body.admin-page #page-identitas .school-identity-header { min-width: 0; }
+    body.admin-page #page-identitas :is(input:not([type="color"]),textarea),
+    body.admin-page #page-pengaturan :is(input,select,textarea) {
+        min-width: 0;
+        max-width: 100%;
+        border-radius: 10px;
+    }
+    body.admin-page #page-rapor .report-workspace {
+        grid-template-columns: minmax(270px, .9fr) minmax(0, 2.2fr);
+        align-items: start;
+        gap: clamp(14px, 2vw, 24px);
+    }
+    body.admin-page #page-rapor .report-selection-card { padding: clamp(16px, 2vw, 24px); }
+    body.admin-page #page-rapor .report-selection-heading h3 {
+        margin: 4px 0 6px;
+        font-size: 17px;
+        line-height: 1.45;
+        color: var(--theme-ink, #234334);
+    }
+    body.admin-page #page-rapor .report-selection-heading p:last-child {
+        margin: 0 0 20px;
+        color: var(--theme-muted, #6b7b68);
+        font-size: 12px;
+        line-height: 1.65;
+    }
+    body.admin-page #page-rapor .report-selection-form { min-width: 0; margin: 0; padding: 0; border: 0; }
+    body.admin-page #page-rapor .report-selection-fields { display: grid; gap: 16px; min-width: 0; }
+    body.admin-page #page-rapor .report-selection-fields .field-label { display: grid; gap: 7px; min-width: 0; }
+    body.admin-page #page-rapor .report-selection-fields :is(input,select) {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        padding: 10px 36px 10px 12px;
+        border: 1px solid var(--theme-line, #cbd9cd);
+        border-radius: 11px;
+        background-color: #fff;
+        line-height: 1.45;
+        font-size: 13px;
+        text-overflow: ellipsis;
+        box-shadow: none;
+        outline-offset: 2px;
+    }
+    body.admin-page #page-rapor .report-selection-fields input { padding-right: 12px; }
+    body.admin-page #page-rapor .report-selection-fields :is(input,select):focus-visible {
+        outline: 2px solid var(--brand-color, #216454);
+        border-color: var(--brand-color, #216454);
+    }
+    body.admin-page #page-rapor .report-selection-navigation {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 18px;
+    }
+    body.admin-page #page-rapor .report-selection-navigation > button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        min-height: 42px;
+        padding: 9px 8px;
+        font-size: 12px;
+        line-height: 1.5;
+        border-radius: 10px;
+        white-space: normal;
+        text-align: center;
+    }
+    body.admin-page #page-rapor .report-student-status {
+        min-width: 0;
+        margin-top: 18px;
+        padding: 14px;
+        border: 1px solid var(--theme-line, #dce4d2);
+        border-radius: 12px;
+        background: var(--theme-soft, #f4f7ef);
+        font-size: 12px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+    body.admin-page #page-rapor .report-status-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 11px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    body.admin-page #page-rapor .report-status-badge.is-complete { color: #246144; background: #e3f3e9; }
+    body.admin-page #page-rapor .report-status-badge.is-draft { color: #815d25; background: #f7edd6; }
+    body.admin-page #page-rapor .report-status-metrics { display: grid; gap: 10px; margin-top: 13px; }
+    body.admin-page #page-rapor .report-status-metrics > div {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 3px 10px;
+        border-top: 1px solid var(--theme-line, #dce4d2);
+        padding-top: 9px;
+    }
+    body.admin-page #page-rapor .report-status-metrics dt { color: var(--theme-muted, #6b7b68); }
+    body.admin-page #page-rapor .report-status-metrics dd { font-weight: 700; color: var(--theme-ink, #234334); margin: 0; }
+    body.admin-page #page-rapor .report-preview { margin-block: 0; border-radius: 12px; overflow: hidden; }
+    body.admin-page #page-rapor .report-audit-panel { margin-top: 20px; }
+    body.admin-page #page-rapor .report-identity-audit { margin-top: 8px; }
+    body.admin-page #page-rapor .report-audit-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+    body.admin-page #page-rapor .report-audit-panel .section-heading h2 { margin: 0; }
+    body.admin-page #page-rapor .report-audit-panel .section-heading p:last-child { margin-top: 6px; }
+    body.admin-page :is(.report-panel,.assessment-controls,.account-settings) :is(input,select,textarea) { transition: border-color .15s ease, box-shadow .15s ease; }
+    body.admin-page :is(.report-panel,.assessment-controls,.account-settings) :is(input,select,textarea):focus-visible {
+        border-color: var(--brand-color, #216454);
+        box-shadow: 0 0 0 3px #2164541e;
+    }
+}
+@media screen and (max-width: 1180px) {
+    body.admin-page #page-rapor .report-workspace { grid-template-columns: minmax(0,1fr); }
+    body.admin-page #page-rapor .report-preview { margin-inline: auto; }
+    body.admin-page #page-rapor .report-selection-navigation { max-width: 450px; }
+}
+@media screen and (max-width: 540px) {
+    body.admin-page #page-rapor .report-selection-navigation { max-width: none; }
+    body.admin-page #page-rapor .report-selection-card { padding: 16px; }
+    body.admin-page #page-rapor .report-selection-heading p:last-child { margin-bottom: 17px; }
+    body.admin-page #page-rapor .report-audit-panel { padding: 16px; }
+    body.admin-page #page-identitas .school-identity-header { padding: 18px; }
+}
+
+@media screen and (max-width: 1100px) {
+    body.admin-page #page-identitas .school-identity-grid { grid-template-columns: minmax(0,1fr); }
+    body.admin-page #page-identitas .school-identity-aside { max-width: none; }
+}
+
+@media screen {
+    html { text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+    :where(body.admin-page, body.public-page, body.login-page) * { box-sizing: border-box; }
+    :where(body.admin-page, body.public-page) :is(p,span,strong,small,label,dt,dd,th,td,button,a) { overflow-wrap: break-word; }
+    :where(body.admin-page, body.public-page) :is(input,select,textarea,button) { min-width: 0; }
+
+    body.admin-page .assessment-result-summary {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        padding: 11px 16px;
+        border-top: 1px solid #dfe7d9;
+        border-bottom: 1px solid #e8ede3;
+        background: #f5f8f1;
+        color: #315342;
+        font-size: 12px;
+        line-height: 1.65;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    body.admin-page .assessment-result-summary:empty { display: none; }
+    body.admin-page .assessment-student > footer > span { flex: 1 1 240px; min-width: 0; }
+    body.admin-page .assessment-student > footer > button { flex: 0 0 auto; }
+
+    body.admin-page :is(.report-panel,.assessment-controls,.assessment-student,.target-card,.comparison-section,.maintenance-control-card,.maintenance-preview-card,.account-settings) {
+        overflow: hidden;
+    }
+    body.admin-page :is(.report-panel,.assessment-controls,.target-card,.comparison-section,.maintenance-control-card,.maintenance-preview-card,.account-settings) > :first-child { margin-top: 0; }
+    body.admin-page :is(.report-panel,.target-card,.assessment-controls) :is(.field-label,input,select,textarea,button) { max-width: 100%; }
+    body.admin-page .field-label { overflow-wrap: anywhere; }
+    body.admin-page :is(.report-grid,.assessment-attainment,.assessment-score-grid,.assessment-context-grid,.info-filter-grid,.detail-filter-grid) { min-width: 0; }
+    body.admin-page :is(.report-grid,.assessment-attainment,.assessment-score-grid,.assessment-context-grid,.info-filter-grid,.detail-filter-grid) > * { min-width: 0; }
+    body.admin-page .assessment-student :is(input,select,textarea) { font-size: max(12px, 1em); }
+    body.admin-page .assessment-subjects h4 { line-height: 1.55; }
+    body.admin-page .progress-material { display: block; width: 100%; min-width: 0; overflow-wrap: anywhere; }
+
+    body.admin-page .section-heading { align-items: flex-start; }
+    body.admin-page .section-heading > * { min-width: 0; }
+    body.admin-page .section-heading :is(h1,h2,h3,p) { overflow-wrap: anywhere; }
+
+    body.admin-page :is(.comparison-table,.assignment-table,#monthlyReportTable,#adminDataList) { width: 100%; }
+    body.admin-page :is(.overflow-x-auto,.assignment-table-wrap,.report-table-scroll) { scrollbar-width: thin; }
+
+    body.public-page :is(.teacher-card,.student-card,.modal-content) { min-width: 0; }
+    body.public-page .teacher-card :is(h3,p), body.public-page .student-card :is(h3,p) { overflow-wrap: anywhere; }
+    body.public-page .attendance-options { min-width: 0; }
+    body.public-page .attendance-option { white-space: normal; text-align: center; justify-content: center; }
+
+    /* One notification language for public and admin pages. */
+    .admin-toasts { position: fixed; top: 18px; right: 20px; width: min(420px,calc(100vw - 32px)); z-index: 10000; display: grid; gap: 10px; pointer-events: none; }
+    .admin-toast { display: grid; grid-template-columns: 30px minmax(0,1fr) 28px; align-items: start; gap: 10px; padding: 16px; background: #fffefb; border: 1px solid #d4dfd2; border-left: 4px solid #8b7b4e; border-radius: 14px; box-shadow: 0 8px 32px #123a3024; color: #284536; pointer-events: auto; animation: notice-enter .25s ease-out both; }
+    .admin-toast strong { display:block; font-size: 13px; color: #204d39; }
+    .admin-toast p { margin: 4px 0 0; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+    .admin-toast button { border:0; background:transparent; padding:0; font-size: 22px; line-height: 26px; color: #647467; cursor:pointer; }
+    .notice-icon { display:grid; place-items:center; width:28px; height:28px; background:#eef3e7; border-radius:50%; color:#285c3c; font-weight:700; }
+    .notice-success { border-left-color:#347b51; }
+    .notice-error { border-left-color:#b35443; }
+    .notice-error .notice-icon { background:#fbe9e2; color:#9c4936; }
+    .admin-toast.notice-leaving { animation: notice-exit .25s ease-in both; pointer-events:none; }
+    @keyframes notice-enter { from { opacity:0; transform:translateY(-14px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes notice-exit { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-12px); } }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1040px) {
+    body.admin-page .assessment-context-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    body.admin-page .assessment-score-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    body.admin-page .assessment-attainment { grid-template-columns: minmax(0,1fr); max-width: none; }
+    body.admin-page .assessment-student > footer { align-items: stretch; flex-wrap: wrap; }
+    body.admin-page .assessment-student > footer > button { margin-left: auto; }
+    body.admin-page .info-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    body.admin-page .detail-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    body.admin-page .report-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,170px),1fr)); }
+}
+
+@media screen and (max-width: 767px) {
+    body.admin-page .assessment-student { border-left-width: 3px; }
+    body.admin-page .assessment-score-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    body.admin-page .assessment-attainment { grid-template-columns: minmax(0,1fr); max-width: none; }
+    body.admin-page .assessment-student > header { align-items:flex-start; }
+    body.admin-page .assessment-student > footer { align-items:stretch; }
+    body.admin-page .assessment-student > footer > span { flex-basis:auto; }
+    body.admin-page .assessment-student > footer > button { width:100%; }
+    body.admin-page .assessment-result-summary { padding: 10px 14px; font-size: 11.5px; }
+    body.admin-page :is(.report-panel,.assessment-controls,.target-card,.comparison-section,.account-settings) { border-radius: 14px; }
+    body.admin-page :is(.primary-action,.secondary-action) { white-space: normal; text-align:center; }
+    .admin-toasts { top: 10px; right: 10px; left: 10px; width: auto; }
+}
+
+@media screen and (max-width: 430px) {
+    body.admin-page .assessment-score-grid { grid-template-columns: minmax(0,1fr); }
+    body.admin-page .assessment-student > header > div { padding-left: 34px; }
+    body.admin-page .assessment-student > header { padding: 10px 12px; }
+    body.admin-page .assessment-subjects > fieldset { padding: 14px 12px; }
+    body.admin-page .assessment-result-summary { padding-inline: 12px; }
+    body.admin-page .assessment-student > footer { padding: 12px; }
+    body.admin-page .report-selection-navigation { grid-template-columns: minmax(0,1fr); }
+    body.public-page .attendance-options { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:8px; }
+    body.public-page .attendance-option { width:100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-toast,.admin-toast.notice-leaving { animation-duration:.01ms; }
+}

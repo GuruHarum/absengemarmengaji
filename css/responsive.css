@@ -387,3 +387,10 @@ textarea {
         padding-right: 1rem;
     }
 }
+
+
+.loader-logo-badge { width: 68px; height: 68px; padding: 6px; margin: 0 auto 16px; border-radius: 50%; background: #fffdf3; border: 1px solid #d4b777; box-shadow: 0 0 0 5px #d4b77712; }
+.loader-logo-badge img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 50%; }
+.loader-logo-badge[hidden], .loader-logo-badge img[hidden] { display: none; }
+@media (max-height: 740px) { .loader-logo-badge { width: 52px; height: 52px; margin-bottom: 10px; padding: 5px; } }
+@media (max-height: 520px) { .loader-logo-badge { width: 40px; height: 40px; margin-bottom: 6px; padding: 3px; } }

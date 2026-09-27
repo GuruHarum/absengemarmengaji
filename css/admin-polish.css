@@ -1,0 +1,130 @@
+
+@media screen {
+ .donut-layout { display:grid; grid-template-columns:minmax(140px,1fr) minmax(140px,.85fr); align-items:center; gap:20px; margin-top:20px; }
+ .donut-canvas { position:relative; height:270px; min-width:0; }
+ .donut-legend { display:grid; gap:16px; font-size:12px; }
+ .donut-legend > div { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:10px; }
+ .donut-legend > div > span { width:10px; height:10px; border-radius:50%; }
+ .donut-legend strong { font-variant-numeric:tabular-nums; color:#23533d; }
+ .admin-page #infoMonth { min-height:130px; }
+ .admin-page #infoMonthHelp { font-size:10px; font-weight:normal; }
+ .surah-picker:focus-within { z-index:110; }
+ .surah-suggestions > button { min-height:44px; touch-action:pan-y; }
+ @media(max-width:480px) { .donut-layout { gap:12px; grid-template-columns:minmax(110px,1fr) minmax(115px,1fr); } .donut-canvas {height:200px;} }
+ @media(prefers-reduced-motion:reduce) { .admin-page .islamic-loader *, .admin-page .islamic-loader {animation:none!important;transition:none!important;} }
+}
+@media screen {
+ .admin-page .assessment-student { overflow: visible; }
+ .admin-page .assessment-student > header { border-radius: 18px 18px 0 0; }
+ .admin-page .assessment-student > footer { border-radius: 0 0 18px 18px; }
+ .surah-picker { position: relative; min-width: 0; }
+ .admin-page .surah-picker > input { width: 100%; min-width: 0; border: 1px solid #d4dfd2; border-radius: 10px; padding: 7px 9px; background: #fff; min-height: 36px; font-size: 13px; }
+ .surah-suggestions { position: absolute; top: calc(100% + 6px); left: 0; width: max(100%,260px); max-width: calc(100vw - 64px); max-height: 260px; overflow-y: auto; overscroll-behavior: contain; z-index: 100; background: #fffefb; border: 1px solid #cadac4; border-radius: 13px; padding: 6px; box-shadow: 0 12px 32px #163e3029; }
+ .surah-suggestions > button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 8px; text-align: left; background: transparent; color: #214c3b; cursor: pointer; }
+ .surah-suggestions.is-above { top: auto; bottom: calc(100% + 6px); }
+ .surah-suggestions > button:hover, .surah-suggestions > button[aria-selected="true"] { background: #eaf2e4; }
+ .surah-number { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 8px; background: #f1ebdc; color: #806b32; font-size: 11px; font-weight: 700; }
+ .surah-name { flex: 1; font-size: 13px; font-weight: 600; }
+ .surah-verses { font-size: 11px; color: #6b7d6b; white-space: nowrap; }
+ .surah-no-results { padding: 12px; font-size: 12px; color: #657865; line-height: 1.6; }
+ .admin-page #studentImportYearLabel { flex: 0 1 190px; }
+ .admin-page #studentImportYearLabel > span { font-size: 10px; font-weight: normal; }
+}
+
+@media screen {
+ .admin-page #adminMain { min-width: 0; }
+ .admin-page [id^="page-"] > section { border-radius: 18px; }
+ .admin-page :is(.assessment-context-grid,.info-filter-grid) > * { min-width: 0; }
+ .admin-page :is(input,select,textarea) { max-width: 100%; }
+ .admin-page :is(.comparison-table,.assignment-table) td { overflow-wrap: anywhere; }
+ .admin-page #manageImportControls { flex-wrap: wrap; padding: 14px; background: #f4f7ef; border: 1px dashed #b8c9b3; border-radius: 12px; }
+ .admin-page #csvImportFile { flex: 1 1 240px; min-width: 0; max-width: 100%; }
+ .admin-page #csvImportFile::file-selector-button { border: 1px solid #c6d5bf; border-radius: 8px; padding: 9px 12px; margin-right: 12px; background: white; color: #24523d; cursor: pointer; }
+ .admin-page #studentTemplateDownload { display: inline-flex; align-items: center; justify-content: center; padding: 10px 15px; text-decoration: none; }
+ .admin-page .import-result { white-space: pre-line; max-height: 240px; overflow-y: auto; margin-top: 12px; padding: 14px; border-radius: 10px; background: #eef4e9; color: #30573e; font-size: 13px; line-height: 1.7; }
+ .admin-page .assessment-student { border: 1px solid #cfddc8; box-shadow: 0 3px 12px #173c2a08; }
+ .admin-page .assessment-student h3 { overflow-wrap: anywhere; }
+ .admin-page .assessment-student footer { gap: 12px; flex-wrap: wrap; }
+ @media(max-width: 640px) {
+  .admin-page #manageImportControls { align-items: stretch; }
+  .admin-page #csvImportFile { flex-basis: auto; width: 100%; }
+  .admin-page #manageImportControls :is(button,a) { width: 100%; }
+  .admin-page :is(.assessment-context-grid,.info-filter-grid) { grid-template-columns: minmax(0,1fr); }
+  .admin-page .assessment-student footer .primary-action { width: 100%; }
+ }
+}
+@media screen {
+    body.admin-page { background: #f3f5ef; color: #263d33; }
+    .admin-page [hidden] { display: none !important; }
+    .admin-page [id^="page-"] { min-width: 0; }
+    .admin-page .assessment-controls { padding: clamp(18px,2vw,28px); background: #fffefb; border: 1px solid #dee5d9; box-shadow: 0 3px 18px #143e3006; }
+    .admin-page .assessment-controls h2 { font-size: 20px; font-weight: 600; color: #174b3c; }
+    .admin-page .field-label { min-width: 0; font-size: 12px; line-height: 1.6; }
+    .admin-page .field-label input, .admin-page .field-label select { width: 100%; min-width: 0; min-height: 42px; border: 1px solid #d4dfd2; border-radius: 10px; background-color: #fff; font-size: 13px; padding: 10px 12px; }
+    .admin-page .field-label input[readonly] { background: #f0f3eb; color: #637465; }
+    .admin-page :is(button,input,select,summary,a):focus-visible { outline: 3px solid #b3995a; outline-offset: 3px; }
+    .admin-page button:disabled { opacity: .55; cursor: not-allowed; }
+    .admin-page :is(.primary-action,.secondary-action) { min-height: 42px; border-radius: 10px; font-size: 12px; }
+    .admin-page .assessment-help { font-size: 12px; line-height: 1.75; }
+    .admin-page :is(.assessment-feedback,.action-feedback) { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; border-radius: 10px; }
+    .admin-page [data-notice="error"] { background: #fff1ed; border: 1px solid #edc9bd; color: #923c32; }
+    .admin-page [data-notice="success"] { background: #eaf4ec; border: 1px solid #c5dcc7; color: #245b3c; }
+    .admin-page .assessment-context-grid { gap: 18px; align-items: start; }
+    .admin-page :is(.comparison-table,.assignment-table) { font-size: 12px; }
+    .admin-page :is(.comparison-table,.assignment-table) th { background: #edf2e8; color: #365643; padding: 14px; white-space: nowrap; }
+    .admin-page :is(.comparison-table,.assignment-table) td { padding: 14px; vertical-align: top; }
+    .admin-page :is(.comparison-table,.assignment-table) tbody tr:hover { background: #f7f9f2; }
+    .admin-page #assignmentPanel { overflow: visible; }
+    .admin-page #page-profil { max-width: 1000px; }
+    .admin-page #page-profil section { max-width: none; }
+    .admin-page #page-profil form { display: grid; gap: 16px; }
+    .admin-page #page-profil form > button { justify-self: start; }
+    .admin-page .assessment-student .field-label input, .admin-page .assessment-student .field-label select { min-height: 36px; padding: 7px 9px; }
+    .class-picker { position: relative; min-width: 0; }
+    .class-picker-trigger { width: 100%; min-height: 44px; padding: 10px 34px 10px 12px; border: 1px solid #cddbc9; border-radius: 10px; background: #fff; color: #28503b; text-align: left; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+    .class-picker-trigger::after { content: '⌄'; position: absolute; right: 13px; top: 10px; }
+    .class-picker-options { position: absolute; top: calc(100% + 6px); left: 0; z-index: 90; min-width: 100%; width: max-content; max-width: min(360px,80vw); max-height: 280px; overflow-y: auto; padding: 8px; background: #fffefb; border: 1px solid #cddbc9; border-radius: 12px; box-shadow: 0 12px 32px #123a3026; }
+    .class-picker-options label { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 7px; cursor: pointer; }
+    .class-picker-options label:hover { background: #edf3e9; }
+    .admin-page .class-picker-options input { width: 17px; height: 17px; min-height: 17px; padding: 0; accent-color: #216454; }
+    .admin-toasts { position: fixed; right: 20px; bottom: 20px; width: min(420px,calc(100vw - 32px)); z-index: 10000; display: grid; gap: 10px; pointer-events: none; }
+    .admin-toast { display: grid; grid-template-columns: 30px 1fr 28px; align-items: start; gap: 10px; padding: 16px; background: #fffefb; border: 1px solid #d4dfd2; border-left: 4px solid #8b7b4e; border-radius: 14px; box-shadow: 0 8px 32px #123a3024; pointer-events: auto; }
+    .admin-toast strong { font-size: 13px; color: #204d39; }
+    .admin-toast p { margin-top: 4px; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+    .admin-toast button { font-size: 22px; line-height: 26px; color: #647467; }
+    .notice-icon { display: grid; place-items: center; width: 28px; height: 28px; background: #eef3e7; border-radius: 50%; color: #285c3c; font-weight: 700; }
+    .notice-success { border-left-color: #347b51; }
+    .notice-error { border-left-color: #b35443; }
+    .notice-error .notice-icon { background: #fbe9e2; color: #9c4936; }
+    .admin-confirm { width: min(440px,calc(100vw - 32px)); padding: 28px; border: 1px solid #d9e1d1; border-radius: 20px; background: #fffef9; color: #284536; box-shadow: 0 24px 90px #09251955; }
+    .admin-confirm::backdrop { background: #0d2d26a6; backdrop-filter: blur(4px); }
+    .confirm-emblem { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: #f3ead4; color: #806933; font-size: 22px; margin-bottom: 16px; }
+    .admin-confirm h2 { font-size: 20px; font-weight: 600; }
+    .admin-confirm p { font-size: 13px; line-height: 1.8; margin: 12px 0 24px; }
+    .confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    @media (max-width: 767px) { .admin-toasts { bottom: 12px; right: 16px; } .class-picker-options { max-width: calc(100vw - 72px); } }
+}
+@media print { .admin-toasts, .admin-confirm, .class-picker-options { display: none !important; } }
+
+@media screen {
+ .admin-toasts { top: 18px; bottom: auto; right: 20px; }
+ .admin-toast { animation: notice-enter .25s ease-out both; }
+ .admin-toast.notice-leaving { animation: notice-exit .25s ease-in both; pointer-events: none; }
+ @keyframes notice-enter { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: translateY(0); } }
+ @keyframes notice-exit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-12px); } }
+ @media(prefers-reduced-motion:reduce) { .admin-toast,.admin-toast.notice-leaving { animation-duration: .01ms; } }
+}
+
+.admin-page .import-review-panel { margin-top: 14px; border: 1px solid #dbe4ee; border-radius: 12px; background: #f8fafc; overflow: hidden; }
+.admin-page .import-review-title { padding: 11px 14px; border-bottom: 1px solid #e2e8f0; font-size: 12px; font-weight: 800; color: #334155; letter-spacing: .02em; }
+.admin-page .import-review-panel .import-result { margin-top: 0; border-radius: 0; max-height: 520px; min-height: 110px; background: #fff; color: #334155; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* Konflik impor: show full names and Excel row references, keep school theme. */
+.admin-page .import-review-panel .import-result {
+    max-height: min(68vh, 740px); min-height: 145px; overflow: auto;
+    white-space: pre-wrap; overflow-wrap: anywhere; user-select: text;
+    font-size: 13px; line-height: 1.75; padding: 16px;
+}
+@media(max-width: 600px) {
+    .admin-page .import-review-panel .import-result { font-size: 12px; padding: 12px; }
+}
