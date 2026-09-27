@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Hadir Gemar Mengaji - SDIT Harapan Umat Karawang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-color) 100%);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .page-transition {
+            transition: all 0.5s ease-in-out;
+        }
+        
+        .modal {
+            backdrop-filter: blur(8px);
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+        
+        .modal-content {
+            transform: scale(0.7);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .teacher-card {
+            transition: all 0.3s ease;
+        }
+        
+        .teacher-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .attendance-option {
+            transition: all 0.2s ease;
+        }
+        
+        .attendance-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            transform: translateX(150%);
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .student-row {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .student-row:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .attendance-badge {
+            transition: all 0.3s ease;
+        }
+        
+        .attendance-badge:hover {
+            transform: scale(1.05);
+        }
+        
+        .thank-you-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        .thank-you-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .thank-you-content {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            max-width: 90%;
+            width: 400px;
+        }
+        
+        .thank-you-modal.show .thank-you-content {
+            transform: translateY(0);
+        }
+        
+        .logo-circle {
+            border-radius: 50%;
+            overflow: hidden;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .admin-panel {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.hadir {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.sakit {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.izin {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.alpha {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .student-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        
+        .student-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .student-header {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .student-content {
+            padding: 16px;
+        }
+        
+        .note-container {
+            background-color: #f9fafb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        
+        .attendance-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .attendance-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .attendance-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .attendance-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .attendance-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .attendance-table tr:hover td {
+            background-color: #f8fafc;
+        }
+        
+        .filter-container {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .filter-group {
+            margin-bottom: 16px;
+        }
+        
+        .filter-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background-color: white;
+            font-size: 0.875rem;
+            color: #334155;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .filter-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-button:hover {
+            background-color: #2563eb;
+        }
+        
+        .filter-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .monthly-report-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+        
+        .monthly-report-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .monthly-report-table td {
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        .monthly-report-table .student-name {
+            text-align: left;
+            font-weight: 500;
+            background-color: #f8fafc;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+        
+        .monthly-report-table .date-header {
+            min-width: 40px;
+            font-size: 0.875rem;
+        }
+        
+        .monthly-report-table .summary-header {
+            background-color: #e0f2fe;
+        }
+        
+        .monthly-report-table .summary-cell {
+            background-color: #f0f9ff;
+            font-weight: 500;
+        }
+        
+        .monthly-report-table .percentage-cell {
+            background-color: #dbeafe;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .monthly-report-table .status-H {
+            background-color: #d1fae5;
+            color: #065f46;
+            font-weight: 600;
+        }
+        
+        .monthly-report-table .status-S {
+            background-color: #fef3c7;
+            color: #92400e;
+            font-weight: 600;
+        }
+        
+        .monthly-report-table .status-I {
+            background-color: #dbeafe;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        
+        .monthly-report-table .status-- {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            font-weight: 600;
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .report-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e40af;
+        }
+        
+        .report-info {
+            margin-bottom: 16px;
+        }
+        
+        .report-info-item {
+            margin-bottom: 4px;
+        }
+        
+        .report-info-label {
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .print-button {
+            background-color: #4ade80;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .print-button:hover {
+            background-color: #22c55e;
+        }
+        
+        .print-button svg {
+            margin-right: 8px;
+        }
+        
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #reportContainer, #reportContainer * {
+    visibility: visible !important;
+  }
+  #reportContainer {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 297mm !important;
+    min-height: 210mm !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    font-size: 11pt !important;
+    page-break-before: auto !important;
+    page-break-after: auto !important;
+    page-break-inside: avoid !important;
+  }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .monthly-report-table {
+    width: 100% !important;
+    font-size: 10pt !important;
+    border: 1px solid #000 !important;
+    page-break-inside: avoid !important;
+  }
+  .header-gradient, .footer, .no-print {
+    display: none !important;
+  }
+  .admin-panel {
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+        
+        .selected-option {
+            position: relative;
+        }
+        
+        .selected-option::after {
+            content: '✓';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #3b82f6;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .inline-loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        .content-placeholder {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .refresh-button {
+            background-color: #e0f2fe;
+            color: #1e40af;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .refresh-button:hover {
+            background-color: #bae6fd;
+        }
+        
+        .refresh-button svg {
+            margin-right: 6px;
+        }
+        
+        .refresh-icon {
+            display: inline-block;
+            animation: none;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-icon.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-indicator.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .pdf-button {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .pdf-button:hover {
+            background-color: #dc2626;
+        }
+        
+        .pdf-button svg {
+            margin-right: 8px;
+        }
+    </style>
+    <link rel="stylesheet" href="css/theme.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/css/pwa.css">
+    <link rel="stylesheet" href="css/layout-responsive.css">
+</head>
+<body class="public-page">
+    <div id="loadingIndicator" class="islamic-loader" role="status" aria-live="polite" aria-label="Memuat halaman Gemar Mengaji">
+        <div class="loader-pattern" aria-hidden="true"></div>
+        <div class="loader-corner loader-corner-top" aria-hidden="true"></div>
+        <div class="loader-corner loader-corner-bottom" aria-hidden="true"></div>
+        <div class="islamic-loader-card">
+            <div class="loader-logo-badge"><img id="loaderSchoolLogo" src="https://iili.io/FjF61ou.png" alt="Logo sekolah" width="56" height="56" decoding="async" onerror="this.hidden=true; this.parentElement.hidden=true;"></div>
+            <div class="loader-eyebrow">BERAWAL DARI NIAT YANG BAIK</div>
+            <div class="loader-art" aria-hidden="true">
+                <svg viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="loaderGold" x1="60" y1="30" x2="220" y2="250" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#f5dfac"/><stop offset="0.5" stop-color="#c8a568"/><stop offset="1" stop-color="#8c754b"/>
+                        </linearGradient>
+                        <radialGradient id="loaderGlow"><stop stop-color="#b8d7aa" stop-opacity=".12"/><stop offset="1" stop-color="#b8d7aa" stop-opacity="0"/></radialGradient>
+                    </defs>
+                    <circle cx="140" cy="140" r="134" fill="url(#loaderGlow)"/>
+                    <g class="loader-rosette" stroke="url(#loaderGold)" stroke-width=".7" opacity=".22">
+                        <path d="M140 8 178 48 233 47 232 102 272 140 232 178 233 233 178 232 140 272 102 232 47 233 48 178 8 140 48 102 47 47 102 48Z"/>
+                        <path d="M140 24 222 58 256 140 222 222 140 256 58 222 24 140 58 58Z"/>
+                        <rect x="58" y="58" width="164" height="164" rx="2"/>
+                        <rect x="58" y="58" width="164" height="164" rx="2" transform="rotate(45 140 140)"/>
+                    </g>
+                    <path d="M72 221V127C72 88 111 65 140 42C169 65 208 88 208 127V221" stroke="url(#loaderGold)" stroke-width="1.4"/>
+                    <path d="M81 220V128C81 94 115 74 140 53C165 74 199 94 199 128V220" stroke="#d1b581" stroke-opacity=".22"/>
+                    <path class="loader-crescent" d="M152 82A16 16 0 1 0 165 107A18 18 0 0 1 152 82Z" fill="url(#loaderGold)"/>
+                    <g class="loader-stars" fill="#efd7a1">
+                        <path d="m177 78 1.6 4.4 4.4 1.6-4.4 1.6L177 90l-1.6-4.4L171 84l4.4-1.6Z"/>
+                        <circle cx="105" cy="111" r="1.5"/><circle cx="178" cy="122" r="1"/>
+                    </g>
+                    <g stroke="url(#loaderGold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M112 179C112 158 132 156 140 140C148 156 168 158 168 179Z" fill="#d1b581" fill-opacity=".08"/>
+                        <path d="M140 134V141M110 184H170M114 184V217M166 184V217M130 217V199Q140 184 150 199V217"/>
+                        <path d="M94 217V164H102V217M92 164H104L98 151ZM98 146V151M178 217V164H186V217M176 164H188L182 151ZM182 146V151"/>
+                        <path d="M67 222H213" stroke-opacity=".65"/>
+                    </g>
+                    <path d="m140 240 3 5-3 5-3-5Z" fill="#d1b581"/>
+                </svg>
+            </div>
+            <div class="loader-bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            <h2 class="islamic-loader-title">Gemar Mengaji</h2>
+            <div id="loaderSchoolName" class="loader-school-name">SDIT Harapan Umat Karawang</div>
+            <div class="loader-progress" aria-hidden="true"><span></span></div>
+            <div class="islamic-loader-text">Menyiapkan ruang untuk belajar<span class="loader-ellipsis" aria-hidden="true">...</span></div>
+        </div>
+        <div class="loader-footer" aria-hidden="true"><span></span> SETIAP HURUF, SELANGKAH KEBAIKAN <span></span></div>
+    </div>
+
+    <header class="header-gradient shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="logo-circle mr-4">
+                    <img id="schoolLogo" src="https://iili.io/FjF61ou.png" alt="Logo sekolah" class="h-full w-full object-cover">
+                </div>
+                <div>
+                    <h1 id="schoolName" class="text-xl font-bold text-white">SDIT Harapan Umat Karawang</h1>
+                    <p id="schoolAddress" class="text-sm text-blue-100">Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur</p>
+                </div>
+            </div>
+            <div id="adminHeaderActions" class="flex items-center gap-2">
+                <a id="loginBtn" href="login.html" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all">Admin</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="page1" class="page-transition">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-blue-800 mb-2">Daftar Hadir Kegiatan Gemar Mengaji</h2>
+                <p class="text-gray-600">Silakan pilih guru untuk melanjutkan</p>
+            </div>
+            
+            <div id="teacherGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="col-span-full flex justify-center">
+                    <div class="w-full h-32 max-w-sm rounded-lg shimmer"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="page2" class="page-transition hidden">
+            <div class="attendance-heading flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-800" id="classTitle"></h2>
+                    <div class="flex items-center text-gray-600 mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span id="currentDate"></span>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <a href="https://desty.page/sditharapanummahkrw/materitahsintahfidz" target="_blank" rel="noopener noreferrer" id="materiLinkBtn" class="refresh-button mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3h7v7 M21 3l-9 9 M10 5H5a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5" />
+                        </svg>
+                        Link Materi
+                    </a>
+                    <button id="backToHome" class="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Kembali
+                    </button>
+                </div>
+            </div>
+            
+            <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="col-span-full">
+                    <div class="w-full h-32 rounded shimmer mb-2"></div>
+                    <div class="w-full h-32 rounded shimmer mb-2"></div>
+                    <div class="w-full h-32 rounded shimmer"></div>
+                </div>
+            </div>
+        </div>
+        
+        
+    </main>
+
+    <footer class="bg-blue-800 text-white py-4 footer">
+        <div class="container mx-auto px-4 text-center">
+            <p>Hak Cipta SDIT Harapan Umat Karawang</p>
+        </div>
+    </footer>
+
+    
+
+    <div id="attendanceEditModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-800">Ubah Absensi Siswa</h3><button id="closeAttendanceEdit" type="button" class="text-slate-400 hover:text-slate-700">✕</button></div>
+            <p id="attendanceEditStudent" class="mt-2 text-sm text-slate-500"></p>
+            <form id="attendanceEditForm" class="mt-5 space-y-4">
+                <input id="attendanceEditId" type="hidden">
+                <div><label class="mb-1 block text-sm font-medium text-slate-700">Status Kehadiran</label><select id="attendanceEditStatus" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"><option value="hadir">Hadir</option><option value="sakit">Sakit</option><option value="izin">Izin</option><option value="alpha">Alpha</option></select></div>
+                <div><label class="mb-1 block text-sm font-medium text-slate-700">Catatan</label><textarea id="attendanceEditNote" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2.5"></textarea></div>
+                <div class="flex gap-3 pt-2">
+                    <div id="attendanceEditActions" class="flex items-center gap-3 w-full">
+                        <button type="button" id="deleteAttendanceBtn" class="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100">Hapus Absensi</button>
+                        <button type="submit" class="ml-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">Simpan Perubahan</button>
+                    </div>
+                </div>
+                <div id="attendanceDeleteConfirm" class="hidden mt-4 p-4 bg-red-50 rounded-lg border border-red-100">
+                    <p class="text-sm text-red-700 mb-3">Yakin ingin menghapus data absensi ini? Tindakan ini tidak dapat dibatalkan.</p>
+                    <div class="flex gap-2 justify-end">
+                        <button type="button" id="cancelDeleteBtn" class="rounded-lg bg-white border border-gray-200 px-4 py-2 text-sm font-medium">Batal</button>
+                        <button type="button" id="confirmDeleteBtn" class="rounded-lg bg-red-600 text-white px-4 py-2 text-sm font-semibold">Hapus</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="classModal" class="modal">
+        <div class="modal-content bg-white w-full max-w-md mx-auto mt-20 rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-blue-800">Pilih Kelas</h3>
+                <button id="closeClassModal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="classOptions" class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 flex justify-center">
+                    <div class="w-full h-32 rounded shimmer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification bg-white rounded-lg shadow-lg p-4 max-w-md">
+        <div id="notificationContent" class="flex items-center">
+        </div>
+    </div>
+
+    <div id="thankYouModal" class="thank-you-modal">
+        <div class="thank-you-content">
+            <div class="mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Terimakasih Ayah/Bunda</h3>
+            <p class="text-white text-opacity-90 mb-4">Absensi berhasil disimpan!</p>
+        </div>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/public-client.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/admin-notices.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/public-app.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966457682771ea76',t:'MTc1MzcwNTM0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script src="/js/pwa.js" defer></script>
+</body>
+</html>
+
+
