@@ -1,0 +1,13 @@
+window.deleteSchoolAccount = async (kind, target) => {
+    const { data, error } = await supabase.functions.invoke('delete-school-account', { body: { kind, target } });
+    if (error) {
+        let detail;
+        try {
+            detail = await error.context?.json();
+        }
+        catch (_) { }
+        throw new Error(detail?.error || 'Penghapusan belum berhasil. Pastikan migrasi dan fungsi delete-school-account sudah diaktifkan.');
+    }
+    if (!data?.ok)
+        throw new Error('Konfirmasi penghapusan belum lengkap.');
+};

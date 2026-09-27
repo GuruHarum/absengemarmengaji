@@ -1,0 +1,98 @@
+window.StudentImport = (() => {
+    const headers = ['nama', 'nis', 'nisn', 'kelas', 'guru tahsin', 'guru tahfidz'];
+    const classAliases = [
+        [/\bKHOTTOB\b/g, 'KHATTAB']
+    ];
+    function normalizeClass(value) {
+        let text = String(value ?? '').trim().replace(/^kelas\s*/i, '').toUpperCase();
+        classAliases.forEach(([pattern, replacement]) => { text = text.replace(pattern, replacement); });
+        const match = text.match(/^(XII|XI|IX|VIII|VII|VI|IV|III|II|X|V|I)(?=\s|[A-H]|$)/);
+        const values = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10, XI: 11, XII: 12 };
+        const normalized = (match ? values[match[0]] + text.slice(match[0].length) : text).replace(/\s+/g, ' ').trim();
+        if (/^\d+\s*[A-Z]$/.test(normalized))
+            return normalized.replace(/\s/g, '');
+        return normalized.replace(/^(\d+)(?=[A-Z])/, '$1 ').toLowerCase().replace(/(^|[\s'-])([a-z])/g, (_, prefix, letter) => prefix + letter.toUpperCase());
+    }
+    function parseRows(rows) {
+        const clean = value => String(value ?? '').trim();
+        const names = (rows[0] || []).map(value => clean(value).replace(/^\uFEFF/, '').toLocaleLowerCase('id').replace(/\s+/g, ' '));
+        if (headers.some(name => names.filter(value => value === name).length !== 1))
+            throw new Error('Judul kolom wajib: Nama, NIS, NISN, Kelas, Guru Tahsin, Guru Tahfidz (masing-masing satu kolom).');
+        const positions = headers.map(name => names.indexOf(name));
+        const result = [];
+        rows.slice(1).forEach((row, index) => {
+            if (!row.some(value => clean(value)))
+                return;
+            const [nama, nis, nisn, kelas, guru, guru_tahfidz] = positions.map(position => clean(row[position]));
+            if (!nama || !kelas || !guru)
+                throw new Error(`Baris ${index + 2}: Nama, Kelas, dan Guru Tahsin wajib diisi. NIS/NISN boleh kosong untuk dilengkapi manual.`);
+            if ([nis, nisn].some(value => value && !/^\d{1,32}$/.test(value)))
+                throw new Error(`Baris ${index + 2}: NIS/NISN harus berupa angka. Gunakan format Teks agar nol di awal tidak hilang.`);
+            result.push({ nama, nis, nisn, kelas: normalizeClass(kelas), guru, guru_tahfidz, row: index + 2 });
+        });
+        if (!result.length || result.length > 1000)
+            throw new Error('Isi 1–1.000 siswa per file.');
+        return result;
+    }
+    // Informasi NOMOR GANDA untuk ditampilkan, bukan alasan memblokir seluruh file.
+    // SERVER menentukan ulang pengosongan dari file asli sebelum pratinjau dan simpan.
+    // Duplikasi nama+kelas / ID siswa ambigu tetap diblokir oleh RPC server.
+    function auditFileDuplicates(entries) {
+        const groups = [];
+        const issuesByRow = new Map();
+        for (const field of ['nis', 'nisn']) {
+            const values = new Map();
+            for (const entry of entries) {
+                const value = String(entry[field] ?? '').trim();
+                if (!value) continue;
+                if (!values.has(value)) values.set(value, []);
+                values.get(value).push(entry);
+            }
+            for (const [value, matches] of values) {
+                if (matches.length < 2) continue;
+                groups.push({ field, value, matches: matches.map(item => ({
+                    row: item.row, nama: item.nama, kelas: item.kelas,
+                    nis: item.nis, nisn: item.nisn
+                })) });
+                for (const entry of matches) {
+                    const current = issuesByRow.get(entry.row) || {
+                        ...entry, action: 'warning', reasons: [], related_file_rows: []
+                    };
+                    current.reasons.push(`${field.toUpperCase()} ${value} digunakan pada ${matches.length} baris dalam file`);
+                    for (const other of matches) {
+                        if (other.row === entry.row) continue;
+                        if (!current.related_file_rows.some(item => item.field === field && item.row === other.row)) {
+                            current.related_file_rows.push({ field, row: other.row, nama: other.nama, kelas: other.kelas });
+                        }
+                    }
+                    issuesByRow.set(entry.row, current);
+                }
+            }
+        }
+        const issues = [...issuesByRow.values()].sort((a, b) => a.row - b.row)
+            .map(row => ({ ...row, reason: row.reasons.join('; ') }));
+        return { local_only: true, can_import: true,
+            groups, rows: issues, total_file_rows: entries.length,
+            summary: { new: 0, update: 0, unchanged: 0, review: 0, conflict: 0, identifiers_cleared: issues.length, teacher_new: 0 } };
+    }
+    async function read(file) {
+        if (!/\.(xlsx|xls|csv)$/i.test(file.name))
+            throw new Error('Gunakan file Excel (.xlsx/.xls) atau CSV.');
+        if (file.size > 5 * 1024 * 1024)
+            throw new Error('Ukuran file maksimal 5 MB.');
+        const csv = /\.csv$/i.test(file.name);
+        const book = XLSX.read(csv ? await file.text() : await file.arrayBuffer(), { type: csv ? 'string' : 'array', raw: true, cellFormula: true, sheetRows: 1002 });
+        const sheet = book.Sheets[book.SheetNames.includes('Siswa') ? 'Siswa' : book.SheetNames[0]];
+        if (!sheet)
+            throw new Error('File tidak memiliki lembar data.');
+        const range = XLSX.utils.decode_range(sheet['!fullref'] || sheet['!ref'] || 'A1');
+        if (range.e.r > 1000)
+            throw new Error('Maksimal 1.000 baris siswa per file. Pisahkan data ke beberapa file.');
+        if (range.e.c > 99)
+            throw new Error('Lembar siswa memiliki terlalu banyak kolom. Gunakan template yang disediakan.');
+        if (Object.values(sheet).some(cell => cell && typeof cell === 'object' && cell.f))
+            throw new Error('Gunakan nilai biasa, bukan rumus, pada lembar siswa.');
+        return parseRows(XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false, blankrows: true }));
+    }
+    return { read, parseRows, normalizeClass, auditFileDuplicates };
+})();

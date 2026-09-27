@@ -1,0 +1,1061 @@
+window.ReportReference = {
+    "books": [
+        {
+            "book": 1,
+            "page": 1,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 2,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 3,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 4,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 5,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 6,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 7,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 8,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 9,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 10,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 11,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 12,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 13,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 14,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 15,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 16,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 17,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 18,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 19,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 20,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 21,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 22,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 23,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 24,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 25,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 26,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 27,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 28,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 29,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 30,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 31,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 32,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 33,
+            "material": "huruf Hijaiyah tunggal berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 34,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 35,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 36,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 37,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 38,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 39,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 40,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 41,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 42,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 43,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 44,
+            "material": "huruf Hijaiyah sambung berharakat fathah"
+        },
+        {
+            "book": 1,
+            "page": 45,
+            "material": "huruf Hijaiyah sambung berharakat kasrah"
+        },
+        {
+            "book": 1,
+            "page": 46,
+            "material": "huruf Hijaiyah sambung berharakat kasrah"
+        },
+        {
+            "book": 1,
+            "page": 47,
+            "material": "huruf Hijaiyah sambung berharakat kasrah"
+        },
+        {
+            "book": 1,
+            "page": 48,
+            "material": "huruf Hijaiyah sambung berharakat kasrah"
+        },
+        {
+            "book": 1,
+            "page": 49,
+            "material": "huruf Hijaiyah sambung berharakat dhummah"
+        },
+        {
+            "book": 1,
+            "page": 50,
+            "material": "huruf Hijaiyah sambung berharakat dhummah"
+        },
+        {
+            "book": 1,
+            "page": 51,
+            "material": "huruf Hijaiyah sambung berharakat dhummah"
+        },
+        {
+            "book": 1,
+            "page": 52,
+            "material": "huruf Hijaiyah sambung berharakat dhummah"
+        },
+        {
+            "book": 1,
+            "page": 53,
+            "material": "huruf Hijaiyah sambung berharakat fathah tanwin"
+        },
+        {
+            "book": 1,
+            "page": 54,
+            "material": "huruf Hijaiyah sambung berharakat fathah tanwin"
+        },
+        {
+            "book": 1,
+            "page": 55,
+            "material": "huruf Hijaiyah sambung berharakat kasrah tanwin"
+        },
+        {
+            "book": 1,
+            "page": 56,
+            "material": "huruf Hijaiyah sambung berharakat kasrah tanwin"
+        },
+        {
+            "book": 1,
+            "page": 57,
+            "material": "huruf Hijaiyah sambung berharakat dhummah tanwin"
+        },
+        {
+            "book": 1,
+            "page": 58,
+            "material": "huruf Hijaiyah sambung berharakat dhummah tanwin"
+        },
+        {
+            "book": 1,
+            "page": 59,
+            "material": "huruf Hijaiyah sambung berharakat fathah, kasrah, dhummah dan tanwin"
+        },
+        {
+            "book": 1,
+            "page": 60,
+            "material": "huruf Hijaiyah sambung berharakat fathah, kasrah, dhummah dan tanwin"
+        },
+        {
+            "book": 2,
+            "page": 1,
+            "material": "bacaan Mad Thabii harakat fathah diikuti Alif"
+        },
+        {
+            "book": 2,
+            "page": 2,
+            "material": "bacaan Mad Thabii harakat fathah diikuti Alif"
+        },
+        {
+            "book": 2,
+            "page": 3,
+            "material": "bacaan Mad Thabii harakat fathah diikuti Alif"
+        },
+        {
+            "book": 2,
+            "page": 4,
+            "material": "bacaan Mad Thabii harakat fathah diikuti Alif"
+        },
+        {
+            "book": 2,
+            "page": 5,
+            "material": "bacaan Mad Thabii harakat fathah diikuti Alif"
+        },
+        {
+            "book": 2,
+            "page": 6,
+            "material": "bacaan Mad Thabii harakat fathah diikuti Alif"
+        },
+        {
+            "book": 2,
+            "page": 7,
+            "material": "kalimat bacaan Ta' Marbuthah (ة)"
+        },
+        {
+            "book": 2,
+            "page": 8,
+            "material": "bacaan Mad Thabii harakat fathah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 9,
+            "material": "bacaan Mad Thabii harakat fathah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 10,
+            "material": "bacaan Mad Thabii harakat fathah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 11,
+            "material": "bacaan Mad Thabii harakat kasrah diikuti Ya sukun"
+        },
+        {
+            "book": 2,
+            "page": 12,
+            "material": "bacaan Mad Thabii harakat kasrah diikuti Ya sukun"
+        },
+        {
+            "book": 2,
+            "page": 13,
+            "material": "bacaan Mad Thabii harakat kasrah diikuti Ya sukun"
+        },
+        {
+            "book": 2,
+            "page": 14,
+            "material": "bacaan Mad Thabii harakat kasrah diikuti Ya sukun"
+        },
+        {
+            "book": 2,
+            "page": 15,
+            "material": "bacaan Mad Thabii harakat dhummah diikuti Wawu sukun"
+        },
+        {
+            "book": 2,
+            "page": 16,
+            "material": "bacaan Mad Thabii harakat dhummah diikuti Wawu sukun"
+        },
+        {
+            "book": 2,
+            "page": 17,
+            "material": "bacaan Mad Thobii kalimat berharakat fathah, fathah berdiri, kasrah, kasrah berdiri, dhummah dan dhummah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 18,
+            "material": "bacaan Mad Thobii kalimat berharakat fathah, fathah berdiri, kasrah, kasrah berdiri, dhummah dan dhummah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 19,
+            "material": "bacaan Mad Thobii kalimat berharakat fathah, fathah berdiri, kasrah, kasrah berdiri, dhummah dan dhummah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 20,
+            "material": "bacaan Mad Thobii kalimat berharakat fathah, fathah berdiri, kasrah, kasrah berdiri, dhummah dan dhummah berdiri"
+        },
+        {
+            "book": 2,
+            "page": 21,
+            "material": "bacaan Alif-Lam berharakat sukun (اَلْ)"
+        },
+        {
+            "book": 2,
+            "page": 22,
+            "material": "bacaan Alif-Lam berharakat sukun (اَلْ)"
+        },
+        {
+            "book": 2,
+            "page": 23,
+            "material": "bacaan Alif-Lam berharakat sukun (اَلْ)"
+        },
+        {
+            "book": 2,
+            "page": 24,
+            "material": "bacaan Alif-Lam berharakat sukun (اَلْ)"
+        },
+        {
+            "book": 2,
+            "page": 25,
+            "material": "bacaan Alif-Lam berharakat sukun (اَلْ)"
+        },
+        {
+            "book": 2,
+            "page": 26,
+            "material": "bacaan Alif-Lam berharakat sukun (اَلْ)"
+        },
+        {
+            "book": 2,
+            "page": 27,
+            "material": "bacaan huruf Sin berharakat sukun (سْ)"
+        },
+        {
+            "book": 2,
+            "page": 28,
+            "material": "bacaan huruf Sin berharakat sukun (سْ)"
+        },
+        {
+            "book": 2,
+            "page": 29,
+            "material": "bacaan huruf Sin berharakat sukun (سْ)"
+        },
+        {
+            "book": 2,
+            "page": 30,
+            "material": "bacaan huruf Sin berharakat sukun (سْ)"
+        },
+        {
+            "book": 2,
+            "page": 31,
+            "material": "bacaan huruf Mim berharakat sukun (مْ)"
+        },
+        {
+            "book": 2,
+            "page": 32,
+            "material": "bacaan huruf Mim berharakat sukun (مْ)"
+        },
+        {
+            "book": 2,
+            "page": 33,
+            "material": "bacaan huruf Mim berharakat sukun (مْ)"
+        },
+        {
+            "book": 2,
+            "page": 34,
+            "material": "bacaan huruf Mim berharakat sukun (مْ)"
+        },
+        {
+            "book": 2,
+            "page": 35,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 36,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 37,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 38,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 39,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 40,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 41,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 42,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 43,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 44,
+            "material": "bacaan huruf Liin"
+        },
+        {
+            "book": 2,
+            "page": 45,
+            "material": "bacaan Ro' Tafkhim dan Ro' Tarqiq (رْ)"
+        },
+        {
+            "book": 2,
+            "page": 46,
+            "material": "bacaan Ro' Tafkhim dan Ro' Tarqiq (رْ)"
+        },
+        {
+            "book": 2,
+            "page": 47,
+            "material": "bacaan Ro' Tafkhim dan Ro' Tarqiq (رْ)"
+        },
+        {
+            "book": 2,
+            "page": 48,
+            "material": "bacaan Ro' Tafkhim dan Ro' Tarqiq (رْ)"
+        },
+        {
+            "book": 2,
+            "page": 49,
+            "material": "perbedaan bunyi huruf 'Ain berharakat sukun dan Hamzah berharakat sukun (عْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 50,
+            "material": "perbedaan bunyi huruf 'Ain berharakat sukun dan Hamzah berharakat sukun (عْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 51,
+            "material": "perbedaan bunyi huruf 'Ain berharakat sukun dan Hamzah berharakat sukun (عْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 52,
+            "material": "perbedaan bunyi huruf 'Ain berharakat sukun dan Hamzah berharakat sukun (عْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 53,
+            "material": "perbedaan bunyi huruf 'Ain berharakat sukun dan Hamzah berharakat sukun (عْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 54,
+            "material": "perbedaan bunyi huruf 'Ain berharakat sukun dan Hamzah berharakat sukun (عْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 55,
+            "material": "perbedaan bunyi huruf Fa' berharakat sukun dan Ha' berharakat sukun (فْ - حْ)"
+        },
+        {
+            "book": 2,
+            "page": 56,
+            "material": "perbedaan bunyi huruf Fa' berharakat sukun dan Ha' berharakat sukun (فْ - حْ)"
+        },
+        {
+            "book": 2,
+            "page": 57,
+            "material": "perbedaan bunyi huruf Kaf berharakat sukun dan Hamzah berharakat sukun (كْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 58,
+            "material": "perbedaan bunyi huruf Kaf berharakat sukun dan Hamzah berharakat sukun (كْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 59,
+            "material": "perbedaan bunyi huruf Kaf berharakat sukun dan Hamzah berharakat sukun (كْ - ءْ)"
+        },
+        {
+            "book": 2,
+            "page": 60,
+            "material": "perbedaan bunyi huruf Kaf berharakat sukun dan Hamzah berharakat sukun (كْ - ءْ)"
+        },
+        {
+            "book": 3,
+            "page": 1,
+            "material": "bacaan Ikhfa dari huruf Nun berharakat sukun (نْ)"
+        },
+        {
+            "book": 3,
+            "page": 2,
+            "material": "bacaan Ikhfa dari huruf Nun berharakat sukun (نْ)"
+        },
+        {
+            "book": 3,
+            "page": 3,
+            "material": "bacaan Ikhfa dari huruf Nun berharakat sukun (نْ)"
+        },
+        {
+            "book": 3,
+            "page": 4,
+            "material": "bacaan Ikhfa dari harakat Tanwin"
+        },
+        {
+            "book": 3,
+            "page": 5,
+            "material": "bacaan Ikhfa dari harakat Tanwin"
+        },
+        {
+            "book": 3,
+            "page": 6,
+            "material": "bacaan Ikhfa dari harakat Tanwin"
+        },
+        {
+            "book": 3,
+            "page": 7,
+            "material": "bacaan Ikhfa dari harakat Tanwin"
+        },
+        {
+            "book": 3,
+            "page": 8,
+            "material": "bacaan Ikhfa dari harakat Tanwin"
+        },
+        {
+            "book": 3,
+            "page": 9,
+            "material": "bacaan Mad Wajib Muttashil"
+        },
+        {
+            "book": 3,
+            "page": 10,
+            "material": "bacaan Mad Wajib Muttashil"
+        },
+        {
+            "book": 3,
+            "page": 11,
+            "material": "bacaan huruf Ghunnah (نّ - مّ)"
+        },
+        {
+            "book": 3,
+            "page": 12,
+            "material": "bacaan huruf Ghunnah (نّ - مّ)"
+        },
+        {
+            "book": 3,
+            "page": 13,
+            "material": "bacaan huruf Ghunnah (نّ - مّ)"
+        },
+        {
+            "book": 3,
+            "page": 14,
+            "material": "bacaan huruf bertasydid"
+        },
+        {
+            "book": 3,
+            "page": 15,
+            "material": "bacaan huruf bertasydid"
+        },
+        {
+            "book": 3,
+            "page": 16,
+            "material": "bacaan huruf Syamsiyah"
+        },
+        {
+            "book": 3,
+            "page": 17,
+            "material": "bacaan huruf Syamsiyah"
+        },
+        {
+            "book": 3,
+            "page": 18,
+            "material": "bacaan Idghom Bighunnah huruf Mim (م)"
+        },
+        {
+            "book": 3,
+            "page": 19,
+            "material": "bacaan Idghom Bighunnah huruf Mim (م)"
+        },
+        {
+            "book": 3,
+            "page": 20,
+            "material": "bacaan Idghom Bighunnah dan Idghom Mitsli"
+        },
+        {
+            "book": 3,
+            "page": 21,
+            "material": "bacaan Idghom Bilaghunnah"
+        },
+        {
+            "book": 3,
+            "page": 22,
+            "material": "bacaan Idghom Bilaghunnah"
+        },
+        {
+            "book": 3,
+            "page": 23,
+            "material": "bacaan Idghom Bighunnah huruf Ya' dan Wawu (ي - و)"
+        },
+        {
+            "book": 3,
+            "page": 24,
+            "material": "bacaan Idghom Bighunnah huruf Ya' dan Wawu (ي - و)"
+        },
+        {
+            "book": 3,
+            "page": 25,
+            "material": "bacaan Idghom Bighunnah huruf Ya' dan Wawu (ي - و)"
+        },
+        {
+            "book": 3,
+            "page": 26,
+            "material": "bacaan lafadz Allah dibaca Tafkhim dan Tarqiq"
+        },
+        {
+            "book": 3,
+            "page": 27,
+            "material": "bacaan lafadz Allah dibaca Tafkhim dan Tarqiq"
+        },
+        {
+            "book": 3,
+            "page": 28,
+            "material": "bacaan Mad Aridh Lissukun"
+        },
+        {
+            "book": 3,
+            "page": 29,
+            "material": "bacaan Mad Iwadh"
+        },
+        {
+            "book": 3,
+            "page": 30,
+            "material": "bacaan Qalqalah huruf Ba', Jim dan Dal berharakat sukun (بْ - جْ - دْ)"
+        },
+        {
+            "book": 3,
+            "page": 31,
+            "material": "bacaan Qalqalah huruf Ba', Jim dan Dal berharakat sukun (بْ - جْ - دْ)"
+        },
+        {
+            "book": 3,
+            "page": 32,
+            "material": "bacaan Qalqalah huruf Ba', Jim dan Dal berharakat sukun (بْ - جْ - دْ)"
+        },
+        {
+            "book": 3,
+            "page": 33,
+            "material": "bacaan Waqaf huruf Ha dan Ro (ه - ر)"
+        },
+        {
+            "book": 3,
+            "page": 34,
+            "material": "bacaan Waqaf huruf Ha dan Ro (ه - ر)"
+        },
+        {
+            "book": 3,
+            "page": 35,
+            "material": "bacaan Iqlab"
+        },
+        {
+            "book": 3,
+            "page": 36,
+            "material": "bacaan Waqaf Ta' Marbuthah (ة)"
+        },
+        {
+            "book": 3,
+            "page": 37,
+            "material": "bacaan Ikhfa Syafawi"
+        },
+        {
+            "book": 3,
+            "page": 38,
+            "material": "bacaan Ikhfa Syafawi"
+        },
+        {
+            "book": 3,
+            "page": 39,
+            "material": "bacaan Qalqalah huruf Tho' dan Qof berharakat sukun (طْ - قْ)"
+        },
+        {
+            "book": 3,
+            "page": 40,
+            "material": "bacaan Qalqalah huruf Tho' dan Qof berharakat sukun (طْ - قْ)"
+        },
+        {
+            "book": 3,
+            "page": 41,
+            "material": "bacaan Qalqalah huruf Tho' dan Qof berharakat sukun (طْ - قْ)"
+        },
+        {
+            "book": 3,
+            "page": 42,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 43,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 44,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 45,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 46,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 47,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 48,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 49,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 50,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 51,
+            "material": "bacaan Idzhar"
+        },
+        {
+            "book": 3,
+            "page": 52,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 53,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 54,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 55,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 56,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 57,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 58,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 59,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        },
+        {
+            "book": 3,
+            "page": 60,
+            "material": "bacaan tilawah surat-surat pilihan dalam Al-Qur'an"
+        }
+    ],
+    "surahGroups": {
+        "SURAT_1_3": [
+            "Tes Juz",
+            "Review persiapan tes Juz",
+            "QS. Al-Baqarah",
+            "QS. Al-Imran"
+        ],
+        "SURAT_25": [
+            "Tes Juz 25",
+            "Review persiapan tes Juz 25",
+            "QS. Asy-Syura",
+            "QS. Az-Zukhruf",
+            "QS. Ad-Dukhan",
+            "QS. Al-Jatsiyah"
+        ],
+        "SURAT_26": [
+            "Tes Juz 26",
+            "Review persiapan tes Juz 26",
+            "QS. Al-Ahqaf",
+            "QS. Muhammad",
+            "QS. Al-Fath",
+            "QS. Al-Hujurat",
+            "QS. Qaf",
+            "QS. Adz-Dzariyat"
+        ],
+        "SURAT_27": [
+            "Tes Juz 27",
+            "Review persiapan tes Juz 27",
+            "QS. Adz-Dzariyat",
+            "QS. Ath-Thur",
+            "QS. An-Najm",
+            "QS. Al-Qamar",
+            "QS. Ar-Rahman",
+            "QS. Al-Waqi'ah",
+            "QS. Al-Hadid"
+        ],
+        "SURAT_28": [
+            "Tes Juz 28",
+            "Review persiapan tes Juz 28",
+            "QS. Al-Mujadilah",
+            "QS. Al-Hasyr",
+            "QS. Al-Mumtahanah",
+            "QS. Ash-Shaf",
+            "QS. Al-Jumu'ah",
+            "QS. Al-Munafiqun",
+            "QS. At-Taghabun",
+            "QS. Ath-Thalaq",
+            "QS. At-Tahrim"
+        ],
+        "SURAT_29": [
+            "Tes Juz 29",
+            "Review persiapan tes Juz 29",
+            "QS. Al-Mulk",
+            "QS. Al-Qalam",
+            "QS. Al-Haqqah",
+            "QS. Al-Ma'arij",
+            "QS. Nuh",
+            "QS. Al-Jinn",
+            "QS. Al-Muzzammil",
+            "QS. Al-Muddatstsir",
+            "QS. Al-Qiyamah",
+            "QS. Al-Insan",
+            "QS. Al-Mursalat"
+        ],
+        "SURAT_30": [
+            "Tes Juz 30",
+            "Review persiapan tes Juz 30",
+            "QS. An-Naba",
+            "QS. An-Nazi'at",
+            "QS. Abasa",
+            "QS. At-Takwir",
+            "QS. Al-Infithar",
+            "QS. Al-Muthaffifin",
+            "QS. Al-Insyiqaq",
+            "QS. Al-Buruj",
+            "QS. Ath-Thariq",
+            "QS. Al-A'la",
+            "QS. Al-Ghasyiyah",
+            "QS. Al-Fajr",
+            "QS. Al-Balad",
+            "QS. Asy-Syams",
+            "QS. Al-Lail",
+            "QS. Adh-Dhuha",
+            "QS. Al-Insyirah",
+            "QS. At-Tiin",
+            "QS. Al-Alaq",
+            "QS. Al-Qadr",
+            "QS. Al-Bayyinah",
+            "QS. Al-Zalzalah",
+            "QS. Al-Adiyat",
+            "QS. Al-Qari'ah",
+            "QS. At-Takatsur",
+            "QS. Al-Ashr",
+            "QS. Al-Humazah",
+            "QS. Al-Fiil",
+            "QS. Quraisy",
+            "QS. Al-Ma'un",
+            "QS. Al-Kautsar",
+            "QS. Al-Kafirun",
+            "QS. An-Nashr",
+            "QS. Al-Lahab",
+            "QS. Al-Ikhlash",
+            "QS. Al-Falaq",
+            "QS. An-Naas"
+        ],
+        "SURAT_4": [
+            "Tes Juz 4",
+            "Review persiapan tes Juz 4",
+            "QS. Al-Imran",
+            "QS. An-Nisaa'"
+        ],
+        "SURAT_5": [
+            "Tes Juz 5",
+            "Review persiapan tes Juz 5",
+            "QS. An-Nisaa'"
+        ],
+        "SURAT_6": [
+            "Tes Juz 6",
+            "Review persiapan tes Juz 6",
+            "QS. An-Nisaa'",
+            "QS. Al-Maidah"
+        ],
+        "SURAT_7": [
+            "Tes Juz 7",
+            "Review persiapan tes Juz 7",
+            "QS. Al-Maidah",
+            "QS. Al-An'am"
+        ],
+        "SURAT_8": [
+            "Tes Juz 8",
+            "Review persiapan tes Juz 8",
+            "QS. Al-An'am",
+            "QS. Al-A'raf"
+        ]
+    },
+    "texts": {
+        "AA1": " menunjukan pemahaman yang baik dalam melafalkan bacaan tahsin ",
+        "AB1": " berhasil menuntaskan pelajaran tahsin metode Qiraati dan meraih ",
+        "AC1": " membutuhkan bimbingan dalam melafalkan bacaan tahsin ",
+        "AD1": "sesuai pengajaran dan bimbingan kaidah bacaan yang telah guru contohkan.",
+        "AE1": " menunjukan pemahaman yang baik dalam melafalkan tilawah Al-Qur'an dalam kelas ",
+        "AF1": " menunjukan pemahaman yang baik dalam melafalkan hafalan Al-Qur'an surat ",
+        "AG1": " sesuai pengajaran dan bimbingan kaidah pelafalan ayat yang telah guru contohkan.",
+        "AH1": " membutuhkan bimbingan dalam melafalkan hafalan Al-Qur'an surat ",
+        "AI1": " menunjukan pemahaman yang baik dalam tes kompetensi hafalan Al-Qur'an kenaikan Juz ",
+        "AJ1": " membutuhkan bimbingan lagi dalam tes kompetensi hafalan Al-Qur'an kenaikan Juz ",
+        "AK1": " menunjukan pemahaman yang baik dalam sesi ",
+        "AL1": " membutuhkan bimbingan dalam sesi "
+    },
+    "types": [
+        "BUKU",
+        "JILID",
+        "AL-QUR'AN",
+        "FINISHING",
+        "SYAHADAH",
+        "TAKHASSUS"
+    ]
+};

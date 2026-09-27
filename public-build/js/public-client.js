@@ -1,0 +1,9 @@
+window.panelAuthClient = window.supabase;
+window.supabase = supabaseClientFactory(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: 'gemar-mengaji-public'
+    }
+});
