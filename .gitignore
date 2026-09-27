@@ -1,0 +1,11 @@
+.test-tools/
+outputs/
+
+public-build/
+# Local data and connection metadata should never be committed or deployed.
+backup_supabase*.sql
+supabase/.temp/
+.env
+.env.*
+!.env.example
+referensi-rapor/

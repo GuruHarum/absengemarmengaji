@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/maintenance.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/css/pwa.css">
+    <link rel="stylesheet" href="css/layout-responsive.css">
 </head>
 <body class="maintenance-page">
     <main class="maintenance-layout">
@@ -52,5 +54,6 @@
             .catch(error => console.error('Gagal memeriksa status maintenance:', error));
     </script>
     <script src="js/maintenance.js"></script>
+<script src="/js/pwa.js" defer></script>
 </body>
 </html>

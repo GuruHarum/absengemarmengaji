@@ -505,8 +505,8 @@
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
-    width: 297mm !important; /* A4 landscape width */
-    min-height: 210mm !important; /* A4 landscape height */
+    width: 297mm !important;
+    min-height: 210mm !important;
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -661,6 +661,8 @@
         }
     </style>
     <link rel="stylesheet" href="css/theme.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/css/pwa.css">
+    <link rel="stylesheet" href="css/layout-responsive.css">
 </head>
 <body class="public-page">
     <div id="loadingIndicator" class="islamic-loader" role="status" aria-live="polite" aria-label="Memuat halaman Gemar Mengaji">
@@ -668,6 +670,7 @@
         <div class="loader-corner loader-corner-top" aria-hidden="true"></div>
         <div class="loader-corner loader-corner-bottom" aria-hidden="true"></div>
         <div class="islamic-loader-card">
+            <div class="loader-logo-badge"><img id="loaderSchoolLogo" src="https://iili.io/FjF61ou.png" alt="Logo sekolah" width="56" height="56" decoding="async" onerror="this.hidden=true; this.parentElement.hidden=true;"></div>
             <div class="loader-eyebrow">BERAWAL DARI NIAT YANG BAIK</div>
             <div class="loader-art" aria-hidden="true">
                 <svg viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -849,10 +852,12 @@
     <script src="js/config.js"></script>
     <script src="js/public-client.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/admin-notices.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/database.js"></script>
     <script src="js/public-app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966457682771ea76',t:'MTc1MzcwNTM0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'966457682771ea76',t:'MTc1MzcwNTM0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script src="/js/pwa.js" defer></script>
+</body>
 </html>
 
 
