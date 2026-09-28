@@ -18,211 +18,65 @@ async function fetchAllRows(queryFactory, batchSize = 500) {
 async function getTeachers() {
     if (window.AppAccess)
         await AppAccess.ready;
-    const rows = await fetchAllRows(() => window.AppAccess ? AppAccess.scope(supabase.from("teachers").select("*").order("nama"), "teachers") : supabase.from("teachers").select("*").order("nama"), 500);
-    return window.AppAccess ? rows : rows.filter(row => row.attendance_enabled !== false);
+    if (!window.AppAccess) {
+        const {data,error} = await supabase.rpc('gm_public_tahsin_teachers');
+        if (error) throw new Error('Daftar guru Tahsin belum tersedia: ' + error.message);
+        return data || [];
+    }
+    return fetchAllRows(() => AppAccess.scope(supabase.from('teachers').select('*').order('nama'), 'teachers'), 500);
 }
 async function getStudents() {
     if (window.AppAccess)
         await AppAccess.ready;
-    return fetchAllRows(() => window.AppAccess ? AppAccess.scope(supabase.from("students").select("*").order("kelas").order("nama siswa"), "students") : supabase.from("students").select("*").order("kelas").order("nama siswa"), 500);
+    if (!window.AppAccess) {
+        const {data,error} = await supabase.rpc('gm_public_tahsin_students');
+        if (error) throw new Error('Daftar peserta Tahsin belum tersedia: ' + error.message);
+        return data || [];
+    }
+    return fetchAllRows(() => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'), 500);
 }
+// Ambil absensi dengan filter server-side dan identitas ID. Tidak pernah
+// mengunduh seluruh riwayat sebagai fallback jika filter gagal.
 async function getAttendance(filters = {}) {
     if (window.AppAccess) {
         await AppAccess.ready;
-        if (AppAccess.teacher())
-            filters = { ...filters, teacher: AppAccess.profile.teacherName };
+        if (AppAccess.teacher()) {
+            filters = { ...filters, teacher_id: String(AppAccess.profile.teacher_id) };
+            delete filters.teacher;
+        }
     }
-    try {
-        const hasFilters = filters && Object.keys(filters).length > 0;
-        if (hasFilters) {
-            const batchSize = 1000;
-            let from = 0;
-            let allFiltered = [];
-            let filteredFailed = false;
-            while (true) {
-                const to = from + batchSize - 1;
-                let q = supabase.from('attendance').select('id,date,teacher,class,student,status,note');
-                if (filters.date)
-                    q = q.eq('date', filters.date);
-                if (filters.date_from && filters.date_to)
-                    q = q.gte('date', filters.date_from).lte('date', filters.date_to);
-                else if (filters.month && filters.year) {
-                    const m = String(filters.month).padStart(2, '0');
-                    const y = String(filters.year);
-                    const first = `${y}-${m}-01`;
-                    const lastDay = new Date(Number(y), Number(m), 0).getDate();
-                    const last = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
-                    q = q.gte('date', first).lte('date', last);
-                }
-                if (filters.teacher)
-                    q = q.eq('teacher', filters.teacher);
-                if (filters.class)
-                    q = q.eq('class', filters.class);
-                if (filters.student)
-                    q = q.eq('student', filters.student);
-                q = q.order('date', { ascending: false }).range(from, to);
-                try {
-                    const { data, error } = await q;
-                    if (error) {
-                        try {
-                            const serialized = JSON.stringify(error, Object.getOwnPropertyNames(error));
-                            console.error('getAttendance filtered chunk error (serialized):', serialized);
-                        }
-                        catch (serr) {
-                            console.error('getAttendance filtered chunk error (keys):', Object.getOwnPropertyNames(error));
-                            console.error('getAttendance filtered chunk error (raw):', error);
-                        }
-                        console.error('getAttendance filtered chunk error props:', {
-                            message: error && error.message,
-                            details: error && error.details,
-                            hint: error && error.hint,
-                            code: error && error.code,
-                            status: error && error.status
-                        });
-                        console.error('getAttendance filtered chunk context:', { from, to, filters });
-                        filteredFailed = true;
-                        break;
-                    }
-                    console.log(`getAttendance filtered chunk from ${from} to ${to} fetched: ${data ? data.length : 0}`);
-                    if (!data || data.length === 0)
-                        break;
-                    allFiltered = allFiltered.concat(data);
-                    if (data.length < batchSize)
-                        break;
-                    from += batchSize;
-                }
-                catch (ex) {
-                    try {
-                        const ser = JSON.stringify(ex, Object.getOwnPropertyNames(ex));
-                        console.error('getAttendance filtered chunk thrown exception (serialized):', ser);
-                    }
-                    catch (e2) {
-                        console.error('getAttendance filtered chunk thrown exception (raw):', ex);
-                    }
-                    console.error('getAttendance filtered chunk context on exception:', { from, to, filters });
-                    filteredFailed = true;
-                    break;
-                }
-            }
-            if (!filteredFailed) {
-                console.log('getAttendance with filters total fetched:', allFiltered.length, 'filters=', filters);
-                return allFiltered;
-            }
-            console.warn('getAttendance: server-side filtered fetch failed, falling back to client-side filtering. This will fetch all attendance in pages then filter locally. filters=', filters);
-            const batchSize2 = 1000;
-            let from2 = 0;
-            let all = [];
-            while (true) {
-                const to = from2 + batchSize2 - 1;
-                const { data, error } = await supabase
-                    .from('attendance')
-                    .select('id,date,teacher,class,student,status,note')
-                    .order('date', { ascending: false })
-                    .range(from2, to);
-                if (error) {
-                    try {
-                        const serialized = JSON.stringify(error, Object.getOwnPropertyNames(error));
-                        console.error('getAttendance fallback full fetch error (serialized):', serialized);
-                    }
-                    catch (serr) {
-                        console.error('getAttendance fallback full fetch error (keys):', Object.getOwnPropertyNames(error));
-                        console.error('getAttendance fallback full fetch error (raw):', error);
-                    }
-                    console.error('getAttendance fallback chunk context:', { from: from2, to, filters });
-                    throw error;
-                }
-                console.log(`Fallback fetched chunk from ${from2} to ${to}: ${data ? data.length : 0}`);
-                if (!data || data.length === 0)
-                    break;
-                all = all.concat(data);
-                if (data.length < batchSize2)
-                    break;
-                from2 += batchSize2;
-            }
-            const filtered = all.filter(rec => {
-                try {
-                    if (filters.date)
-                        return rec.date === filters.date;
-                    if (filters.date_from && filters.date_to)
-                        return rec.date >= filters.date_from && rec.date <= filters.date_to;
-                    if (filters.month && filters.year) {
-                        const m = String(filters.month).padStart(2, '0');
-                        const y = String(filters.year);
-                        const first = `${y}-${m}-01`;
-                        const lastDay = new Date(Number(y), Number(m), 0).getDate();
-                        const last = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
-                        return rec.date >= first && rec.date <= last;
-                    }
-                    if (filters.teacher && rec.teacher !== filters.teacher)
-                        return false;
-                    if (filters.class && rec.class !== filters.class)
-                        return false;
-                    if (filters.student && rec.student !== filters.student)
-                        return false;
-                    return true;
-                }
-                catch (e) {
-                    return false;
-                }
-            });
-            console.log('getAttendance fallback filtered client total:', filtered.length, 'filters=', filters);
-            return filtered;
+    const identity = window.GMFilter;
+    const teacherId = filters.teacher_id || identity?.teacherId(filters.teacher);
+    const classId = filters.class_id || identity?.classId(filters.class);
+    const select = 'id,date,teacher,class,student,status,note,student_id,class_id,teacher_id';
+    const makeQuery = () => {
+        let q = supabase.from('attendance').select(select);
+        if (filters.date) q = q.eq('date', filters.date);
+        else if (filters.date_from && filters.date_to) q = q.gte('date', filters.date_from).lte('date', filters.date_to);
+        else if (filters.month && filters.year) {
+            const m = String(filters.month).padStart(2,'0'), y = String(filters.year);
+            const last = new Date(Number(y),Number(m),0).getDate();
+            q = q.gte('date',`${y}-${m}-01`).lte('date',`${y}-${m}-${String(last).padStart(2,'0')}`);
         }
-        const { count, error: countErr } = await supabase
-            .from('attendance')
-            .select('*', { count: 'exact', head: true });
-        if (countErr) {
-            console.warn('Gagal mendapatkan count total attendance, akan paging tanpa total.');
+        if (teacherId) q = q.eq('teacher_id', teacherId);
+        else if (filters.teacher) q = q.eq('teacher', filters.teacher);
+        if (classId) q = q.eq('class_id', classId);
+        else if (filters.class) q = q.eq('class', filters.class);
+        if (filters.student_id) q = q.eq('student_id', filters.student_id);
+        else if (filters.student) q = q.eq('student', filters.student);
+        return q.order('date',{ascending:false}).order('id',{ascending:false});
+    };
+    const all = [];
+    for (let offset=0; ; offset+=500) {
+        const {data,error} = await makeQuery().range(offset,offset+499);
+        if (error) {
+            console.error('Filter absensi gagal (tanpa fallback seluruh tabel):', {filters,error});
+            throw new Error(`Gagal memuat absensi: ${error.message}. Periksa migrasi ID dan izin akses.`);
         }
-        const batchSize = 1000;
-        let all = [];
-        if (typeof count === 'number') {
-            const total = count;
-            const batches = Math.ceil(total / batchSize);
-            console.log(`Mengambil attendance: total=${total}, batches=${batches}`);
-            for (let b = 0; b < batches; b++) {
-                const from = b * batchSize;
-                const to = from + batchSize - 1;
-                const { data, error } = await supabase
-                    .from('attendance')
-                    .select('id,date,teacher,class,student,status,note')
-                    .order('date', { ascending: false })
-                    .range(from, to);
-                if (error)
-                    throw error;
-                console.log(`Batch ${b + 1}/${batches} fetched: ${data ? data.length : 0}`);
-                if (data && data.length > 0)
-                    all = all.concat(data);
-            }
-        }
-        else {
-            console.log('Count tidak tersedia — mulai paging fallback.');
-            let from = 0;
-            while (true) {
-                const to = from + batchSize - 1;
-                const { data, error } = await supabase
-                    .from('attendance')
-                    .select('id,date,teacher,class,student,status,note')
-                    .order('date', { ascending: false })
-                    .range(from, to);
-                if (error)
-                    throw error;
-                console.log(`Fetched chunk from ${from} to ${to}: ${data ? data.length : 0}`);
-                if (!data || data.length === 0)
-                    break;
-                all = all.concat(data);
-                if (data.length < batchSize)
-                    break;
-                from += batchSize;
-            }
-        }
-        console.log('Total attendance fetched:', all.length);
-        return all;
+        all.push(...(data||[]));
+        if (!data || data.length < 500) break;
     }
-    catch (err) {
-        console.error('getAttendance error:', err);
-        throw err;
-    }
+    return all;
 }
 async function getMaintenanceMode() {
     const { data, error } = await supabase
@@ -254,6 +108,11 @@ async function getPublicAttendanceIds(student, teacherName, date) {
     const matchedTeachers = (teachersData || []).filter(t => t.nama === teacherName && Number.isSafeInteger(Number(t.id)));
     if (matchedTeachers.length !== 1)
         throw new Error('Identitas guru tidak unik. Muat ulang halaman.');
+    if (Number.isSafeInteger(Number(student.class_id)) && Number(student.class_id) > 0 &&
+        String(student.teacher_id) === String(matchedTeachers[0].id) &&
+        Number(student.academic_year_start) === year) {
+        return {student_id:studentId,class_id:Number(student.class_id),teacher_id:Number(student.teacher_id)};
+    }
     const cleanClass = value => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
     const className = cleanClass(student.kelas);
     const { data: classes, error } = await supabase.from('school_classes')
@@ -375,6 +234,7 @@ async function fetchAttendanceData(filters = {}) {
             showLoading();
         }
         attendanceData = await getAttendance(filters);
+        window.GM_ATTENDANCE_FILTER_FETCHED = true;
         if (typeof attendanceIndex !== 'undefined' && attendanceIndex instanceof Map) {
             attendanceIndex.clear();
         }
@@ -594,7 +454,7 @@ async function getSchoolProfile() {
         id: 1,
         name: 'SDIT Harapan Umat Karawang',
         address: 'Jl. Pakuncen No. 01, Desa Sukaharja, Kec. Teluk Jambe Timur',
-        logo_url: 'https://iili.io/FjF61ou.png',
+        logo_url: 'assets/school-logo.png',
         theme_color: '#216454'
     };
 }

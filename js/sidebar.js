@@ -37,7 +37,13 @@
     });
     close.addEventListener('click', () => window.setMobileDrawer(false));
     overlay.addEventListener('click', () => window.setMobileDrawer(false));
-    sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', () => window.setMobileDrawer(false)));
+    sidebar.querySelectorAll('nav .admin-nav-item').forEach(item => item.addEventListener('click', () => {
+        if (mobile.matches) window.setMobileDrawer(false);
+        else {
+            collapsed = true;
+            render();
+        }
+    }));
     document.addEventListener('keydown', event => {
         if (!mobile.matches || !opened)
             return;

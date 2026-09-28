@@ -18,8 +18,6 @@ window.TeacherEnrollment = (() => {
         }
     }
     document.addEventListener('panelready', () => {
-        if (AppAccess.full())
-            open();
         el('enrollmentTeacher').addEventListener('change', () => {
             const existing = Boolean(el('enrollmentTeacher').value);
             ['enrollmentName', 'enrollmentFullName', 'enrollmentAttendance'].forEach(id => { el(id).disabled = existing; });

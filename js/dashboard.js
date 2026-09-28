@@ -54,10 +54,10 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
     }
     showLoading(true);
     try {
-        if (typeof fetchStudents === 'function' && studentsData.length === 0) {
+        if (typeof fetchStudents === 'function' && studentsData.length === 0 && !Array.isArray(window.tahsinRosterStudents)) {
             await fetchStudents();
         }
-        if (typeof fetchAttendanceData === 'function' && attendanceData.length === 0) {
+        if (typeof fetchAttendanceData === 'function' && !window.GM_ATTENDANCE_FILTER_FETCHED) {
             const ym = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
             const last = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
             await fetchAttendanceData({date_from:`${ym}-01`,date_to:`${ym}-${String(last).padStart(2,'0')}`});
@@ -76,22 +76,23 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
         if (typeof metaBulan !== 'undefined' && typeof getMonthName === 'function') {
             metaBulan.innerText = `${getMonthName(monthInt)} ${yearInt}`;
         }
-        let filteredStudents = [...studentsData];
+        const attendanceRoster = Array.isArray(window.tahsinRosterStudents) ? window.tahsinRosterStudents : studentsData;
+        let filteredStudents = [...attendanceRoster];
         if (selectedTeacher) {
             const teacherKey = safeLowerCase(selectedTeacher);
-            filteredStudents = filteredStudents.filter(student => safeLowerCase(student['nama guru'] || student.nama_guru) === teacherKey);
+            filteredStudents = filteredStudents.filter(student => window.GMFilter ? GMFilter.teacherMatches(student,selectedTeacher) : safeLowerCase(student['nama guru'] || student.nama_guru) === teacherKey);
         }
         if (selectedClass && selectedClass !== "Semua Tingkat" && selectedClass !== "Semua Nama Kelas") {
             const cleanSelectedClass = selectedClass.toString().toLowerCase().trim();
-            filteredStudents = studentsData.filter(student => {
+            filteredStudents = filteredStudents.filter(student => {
                 const studentClass = student.kelas || student.class_name || student.kelas_nama || "";
                 const cleanStudentClass = studentClass.toString().toLowerCase().trim();
                 const classNumber = extractClassNumber(String(studentClass));
-                return cleanStudentClass === cleanSelectedClass || classNumber === cleanSelectedClass;
+                return (window.GMFilter && !/^\d+$/.test(cleanSelectedClass)) ? GMFilter.classMatches(student, selectedClass) : (cleanStudentClass === cleanSelectedClass || classNumber === cleanSelectedClass);
             });
             if (selectedTeacher) {
                 const teacherKey = safeLowerCase(selectedTeacher);
-                filteredStudents = filteredStudents.filter(student => safeLowerCase(student['nama guru'] || student.nama_guru) === teacherKey);
+                filteredStudents = filteredStudents.filter(student => window.GMFilter ? GMFilter.teacherMatches(student,selectedTeacher) : safeLowerCase(student['nama guru'] || student.nama_guru) === teacherKey);
             }
         }
         filteredStudents.sort((a, b) => String(a['nama siswa'] || a.nama || '').localeCompare(String(b['nama siswa'] || b.nama || ''), 'id'));
@@ -128,16 +129,20 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
         let totalPercentStudents = 0;
         const attendanceMap = new Map();
         const attendanceByStudentDate = new Map();
+        const attendanceById = new Map();
         attendanceData.forEach(record => {
             if (!record)
                 return;
             const recordDate = formatDateToYYYYMMDD(record.date || record.tanggal);
             const recordStudent = safeLowerCase(record.nama_siswa || record.student || record.student_name);
             const recordTeacher = safeLowerCase(record.nama_guru || record.teacher || record.teacher_name);
-            if (recordDate && recordStudent) {
-                attendanceMap.set(`${recordDate}|${recordStudent}|${recordTeacher}`, record);
-                attendanceMap.set(`${recordDate}|${recordStudent}|`, record);
-                attendanceByStudentDate.set(`${recordDate}|${recordStudent}`, record);
+            if (recordDate && record.student_id != null) {
+                attendanceById.set(`${recordDate}|${record.student_id}|${record.teacher_id ?? ''}`,record);
+            }
+            if (recordDate && recordStudent && record.student_id == null) {
+                attendanceMap.set(`${recordDate}|${recordStudent}|${recordTeacher}|${safeLowerCase(record.class)}`, record);
+                attendanceMap.set(`${recordDate}|${recordStudent}||${safeLowerCase(record.class)}`, record);
+                attendanceByStudentDate.set(`${recordDate}|${recordStudent}|${safeLowerCase(record.class)}`, record);
             }
         });
         filteredStudents.forEach(student => {
@@ -148,8 +153,8 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
             let alphaCount = 0;
             let studentRow = `
                 <tr class="divide-x divide-slate-200 hover:bg-slate-50 transition-colors">
-                    <td class="px-4 py-3 font-semibold text-slate-800 sticky left-0 bg-white hover:bg-slate-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)] whitespace-nowrap">
-                        ${studentName}
+                    <td class="px-4 py-3 font-semibold text-slate-800 sticky left-0 bg-white hover:bg-slate-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]" title="${manageEscape(studentName)}" data-fullname="${manageEscape(studentName)}" tabindex="0" aria-label="Nama siswa: ${manageEscape(studentName)}">
+                        ${manageEscape(studentName)}
                     </td>
             `;
             let cellsHtml = '';
@@ -157,12 +162,11 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
                 const dateStr = `${yearStr}-${monthStr}-${String(day).padStart(2, '0')}`;
                 const studentKey = safeLowerCase(studentName);
                 const teacherKey = safeLowerCase(selectedTeacher);
-                let record = teacherKey
-                    ? attendanceMap.get(`${dateStr}|${studentKey}|${teacherKey}`)
-                    : attendanceMap.get(`${dateStr}|${studentKey}|`);
-                if (!record && !teacherKey) {
-                    record = attendanceByStudentDate.get(`${dateStr}|${studentKey}`);
-                }
+                const studentTeacherId = student.teacher_id ?? (window.GMFilter ? GMFilter.teacherId(selectedTeacher || student['nama guru']) : '');
+                let record = attendanceById.get(`${dateStr}|${student.id}|${studentTeacherId}`);
+                // Cadangan teks hanya untuk riwayat lama tanpa student_id.
+                if (!record) record = attendanceMap.get(`${dateStr}|${studentKey}|${safeLowerCase(selectedTeacher || student['nama guru'])}|${safeLowerCase(student.kelas)}`);
+                if (!record && !teacherKey) record = attendanceByStudentDate.get(`${dateStr}|${studentKey}|${safeLowerCase(student.kelas)}`);
                 let statusCode = '-';
                 let bgClass = 'text-gray-400';
                 if (record) {
@@ -262,13 +266,13 @@ function renderLocalAdminLogTable(filterTeacher = "", filterClass = "", isInitia
     if (filterTeacher) {
         filteredLogs = filteredLogs.filter(item => {
             const guru = item.teacher || item.guru || "";
-            return guru.toString().toLowerCase().includes(filterTeacher.toLowerCase());
+            return window.GMFilter ? GMFilter.teacherMatches(item, filterTeacher) : guru.toString().toLowerCase() === filterTeacher.toLowerCase();
         });
     }
     if (filterClass) {
         filteredLogs = filteredLogs.filter(item => {
             const kelas = item.class || item.kelas || "";
-            return kelas.toString().toLowerCase().includes(filterClass.toLowerCase());
+            return window.GMFilter && !/^\d+$/.test(String(filterClass)) ? GMFilter.classMatches(item,filterClass) : (String(filterClass).match(/^\d+$/) ? extractClassNumber(kelas) === String(filterClass) : kelas.toString().toLowerCase() === filterClass.toLowerCase());
         });
     }
     filteredLogs.sort((a, b) => {
@@ -361,13 +365,13 @@ function printAttendanceReport() {
     const tanggalCetak = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
     const reportTeacherText = teacher || 'Semua Guru';
     const reportClassText = className || (classNumber ? `Kelas ${classNumber}` : 'Semua Kelas');
-    let filteredStudents = Array.isArray(studentsData) ? [...studentsData] : [];
+    let filteredStudents = Array.isArray(window.tahsinRosterStudents) ? [...window.tahsinRosterStudents] : (Array.isArray(studentsData) ? [...studentsData] : []);
     if (teacher && teacher.trim() !== '') {
         filteredStudents = filteredStudents.filter(student => {
             if (!student)
                 return false;
             const namaGuru = student['nama guru'] ? String(student['nama guru']) : '';
-            return namaGuru.toLowerCase() === teacher.toLowerCase();
+            return window.GMFilter ? GMFilter.teacherMatches(student,teacher) : namaGuru.toLowerCase() === teacher.toLowerCase();
         });
     }
     if (className && className.trim() !== '') {
@@ -375,7 +379,7 @@ function printAttendanceReport() {
             if (!student)
                 return false;
             const kelasSiswa = student.kelas ? String(student.kelas) : '';
-            return kelasSiswa.toLowerCase() === className.toLowerCase();
+            return window.GMFilter ? GMFilter.classMatches(student,className) : kelasSiswa.toLowerCase() === className.toLowerCase();
         });
     }
     else if (classNumber && classNumber.trim() !== '') {
@@ -421,8 +425,8 @@ function printAttendanceReport() {
                 const recordStudent = r.student ? String(r.student) : '';
                 const recordTeacher = r.teacher ? String(r.teacher) : '';
                 const matchDate = recordDate === dateStr;
-                const matchStudent = recordStudent.toLowerCase() === studentName.toLowerCase();
-                const matchTeacher = teacher ? recordTeacher.toLowerCase() === teacher.toLowerCase() : true;
+                const matchStudent = window.GMFilter ? GMFilter.studentMatches(r, student) : recordStudent.toLowerCase() === studentName.toLowerCase();
+                const matchTeacher = window.GMFilter ? GMFilter.teacherMatches(r, teacher || student['nama guru']) : (teacher ? recordTeacher.toLowerCase() === teacher.toLowerCase() : true);
                 return matchDate && matchStudent && matchTeacher;
             });
             let statusCode = '-';
@@ -565,21 +569,21 @@ async function exportAttendanceToPDF() {
         const tanggalCetak = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
         const reportTeacherText = teacher || 'Semua Guru';
         const reportClassText = className || (classNumber ? `Kelas ${classNumber}` : 'Semua Kelas');
-        if (!Array.isArray(studentsData) || studentsData.length === 0) {
+        if (!Array.isArray(window.tahsinRosterStudents) && (!Array.isArray(studentsData) || studentsData.length === 0)) {
             await fetchStudents();
         }
         const startDate = `${year}-${month}-01`;
         const endDate = `${year}-${month}-${new Date(year, parseInt(month), 0).getDate()}`;
-        await fetchAttendanceData({ date_from: startDate, date_to: endDate });
+        if (!window.GM_ATTENDANCE_FILTER_FETCHED) await fetchAttendanceData({ date_from: startDate, date_to: endDate });
         const dbStudentsList = Array.isArray(studentsData) ? studentsData : [];
         const listAbsensi = Array.isArray(attendanceData) ? attendanceData : [];
-        let filteredStudents = [...dbStudentsList];
+        let filteredStudents = Array.isArray(window.tahsinRosterStudents) ? [...window.tahsinRosterStudents] : [...dbStudentsList];
         if (teacher && teacher.trim() !== '') {
             filteredStudents = filteredStudents.filter(student => {
                 if (!student)
                     return false;
                 const namaGuru = student['nama guru'] || student.nama_guru || '';
-                return safeLowerCase(namaGuru) === safeLowerCase(teacher);
+                return window.GMFilter ? GMFilter.teacherMatches(student,teacher) : safeLowerCase(namaGuru) === safeLowerCase(teacher);
             });
         }
         if (className && className.trim() !== '') {
@@ -587,7 +591,7 @@ async function exportAttendanceToPDF() {
                 if (!student)
                     return false;
                 const kelasSiswa = student.kelas || student.kelas_nama || '';
-                return safeLowerCase(kelasSiswa) === safeLowerCase(className);
+                return window.GMFilter ? GMFilter.classMatches(student,className) : safeLowerCase(kelasSiswa) === safeLowerCase(className);
             });
         }
         else if (classNumber && classNumber.trim() !== '') {
@@ -633,10 +637,9 @@ async function exportAttendanceToPDF() {
                     const recordStudent = r.nama_siswa || r.student || '';
                     const recordTeacher = r.nama_guru || r.teacher || '';
                     const matchDate = formattedRecordDate === dateStr;
-                    const matchStudent = safeLowerCase(recordStudent) === safeLowerCase(studentName);
-                    const matchTeacher = teacher
-                        ? safeLowerCase(recordTeacher) === safeLowerCase(teacher)
-                        : true;
+                    const matchStudent = window.GMFilter ? GMFilter.studentMatches(r, student) : safeLowerCase(recordStudent) === safeLowerCase(studentName);
+                    const matchTeacher = window.GMFilter ? GMFilter.teacherMatches(r, teacher || student['nama guru']) :
+                        (teacher ? safeLowerCase(recordTeacher) === safeLowerCase(teacher) : true);
                     return matchDate && matchStudent && matchTeacher;
                 });
                 let statusCode = '-';
@@ -748,15 +751,20 @@ window.addEventListener('panelready', () => {
         document.getElementById('filterClassNumber').innerHTML = '<option value="">Semua Tingkat</option>';
         document.getElementById('filterClassName').innerHTML = '<option value="">Semua Nama Kelas (Opsional)</option>';
         try {
-            if (typeof fetchTeachers === 'function' && teachersData.length === 0) {
-                await fetchTeachers();
-            }
-            if (typeof fetchStudents === 'function' && studentsData.length === 0) {
-                await fetchStudents();
-            }
+            if (!AppAccess.canPage('absensi')) { showLoading(false); return; }
+            // Panel awal hanya memuat roster Tahsin yang ringkas; master penuh baru
+            // dimuat saat menu Kelola Data dipilih. Absensi baru diambil saat difilter.
+            const [teachers, students] = await Promise.all([
+                supabase.rpc('gm_public_tahsin_teachers'),
+                supabase.rpc('gm_public_tahsin_students')
+            ]);
+            if (teachers.error || students.error) throw teachers.error || students.error;
+            window.tahsinRosterTeachers = teachers.data || [];
+            window.tahsinRosterStudents = students.data || [];
         }
         catch (err) {
             console.error("Gagal menarik data master guru/siswa:", err);
+            if (window.AdminNotice) AdminNotice.notify('Daftar Tahsin gagal dimuat. Periksa SQL kelompok serta koneksi; filter tidak akan menampilkan guru Tahfidz sebagai pengganti.', 'error');
         }
         if (typeof populateAdminDropdowns === 'function') {
             populateAdminDropdowns();
@@ -768,22 +776,9 @@ window.addEventListener('panelready', () => {
             populateYearFilter();
         }
         await renderMonthlyReportTable(currentMonth, currentYear, "", "", true);
-        try {
-            // Muat hanya absensi bulan berjalan ketika panel dibuka, bukan seluruh tahun.
-            const start = `${currentYear}-${currentMonth}-01`;
-            const end = `${currentYear}-${currentMonth}-${String(new Date(Number(currentYear), Number(currentMonth), 0).getDate()).padStart(2, '0')}`;
-            if (!attendanceData.length) await fetchAttendanceData({date_from:start,date_to:end});
-            if (typeof renderAdminTable === 'function') {
-                await renderAdminTable();
-            }
-            else {
-                renderLocalAdminLogTable();
-            }
-        }
-        catch (err) {
-            console.warn("Gagal menjalankan renderAdminTable utama, beralih ke render lokal:", err);
-            renderLocalAdminLogTable();
-        }
+        // Hanya tampilkan placeholder; unduh absensi saat filter Data Absensi digunakan.
+        // Tidak mengunduh puluhan ribu baris saat pertama membuka panel.
+        renderLocalAdminLogTable('', '', true);
         showLoading(false);
     })();
 });
@@ -792,7 +787,8 @@ document.addEventListener("panelready", () => {
     const downloadButton = document.getElementById("btn-download");
     if (printButton) {
         printButton.addEventListener("click", () => {
-            if (typeof studentsData !== 'undefined' && studentsData.length > 0) {
+            if (Array.isArray(window.tahsinRosterStudents) ? window.tahsinRosterStudents.length > 0 : (typeof studentsData !== 'undefined' && studentsData.length > 0)) {
+                if (!window.GM_ATTENDANCE_FILTER_FETCHED) { AdminNotice.notify('Terapkan filter data absensi terlebih dahulu sebelum mencetak.','warning'); return; }
                 printAttendanceReport();
             }
             else {
@@ -802,7 +798,8 @@ document.addEventListener("panelready", () => {
     }
     if (downloadButton) {
         downloadButton.addEventListener("click", () => {
-            if (typeof studentsData !== 'undefined' && studentsData.length > 0) {
+            if (Array.isArray(window.tahsinRosterStudents) ? window.tahsinRosterStudents.length > 0 : (typeof studentsData !== 'undefined' && studentsData.length > 0)) {
+                if (!window.GM_ATTENDANCE_FILTER_FETCHED) { AdminNotice.notify('Terapkan filter data absensi terlebih dahulu sebelum mengunduh.','warning'); return; }
                 exportAttendanceToPDF();
             }
             else {
@@ -811,6 +808,7 @@ document.addEventListener("panelready", () => {
         });
     }
 });
+window.GM_DASHBOARD_OWNS_FILTER = true;
 document.getElementById('filterBtn').addEventListener('click', async (event) => {
     const button = event.currentTarget;
     const originalButtonHtml = button.innerHTML;
@@ -828,16 +826,27 @@ document.getElementById('filterBtn').addEventListener('click', async (event) => 
     const t = document.getElementById('filterTeacher').value || "";
     const c = document.getElementById('filterClassName').value || document.getElementById('filterClassNumber').value || "";
     try {
-        await renderMonthlyReportTable(m, y, t, c, false);
-        if (typeof renderAdminTable === 'function') {
-            await renderAdminTable();
-        }
-        else {
-            renderLocalAdminLogTable(t, c, false);
-        }
+        const year = y || String(new Date().getFullYear());
+        const month = m || String(new Date().getMonth()+1).padStart(2,'0');
+        const last = new Date(Number(year), Number(month), 0).getDate();
+        if (!m) document.getElementById('filterMonth').value=String(month).padStart(2,'0');
+        if (!y) document.getElementById('filterYear').value=year;
+        const filter = {date_from:`${year}-${String(month).padStart(2,'0')}-01`, date_to:`${year}-${String(month).padStart(2,'0')}-${String(last).padStart(2,'0')}`};
+        const teacherId = window.GMFilter?.teacherId(t);
+        const classId = window.GMFilter?.classId(c);
+        if (t) { if (!teacherId) throw new Error('Guru tidak ditemukan di kelompok Tahsin. Muat ulang data kelompok.'); filter.teacher_id=teacherId; }
+        if (c && !/^\d+$/.test(c)) { if (!classId) throw new Error('Kelas tidak ditemukan dalam master. Muat ulang daftar kelas.'); filter.class_id=classId; }
+        await fetchAttendanceData(filter);
+        await renderMonthlyReportTable(month, year, t, c, false);
+        if (typeof getFilteredAttendanceRecords === 'function' && typeof renderAdminData === 'function') {
+            filteredAttendanceData = getFilteredAttendanceRecords(attendanceData);
+            currentPage = 1;
+            renderAdminData();
+        } else renderLocalAdminLogTable(t,c,false);
     }
     catch (err) {
-        renderLocalAdminLogTable(t, c, false);
+        console.error('Filter Data Absensi:',err);
+        if (window.AdminNotice) AdminNotice.notify(err.message || 'Gagal memuat data filter.', 'error');
     }
     finally {
         button.disabled = false;
@@ -910,18 +919,47 @@ async function loadMaintenanceMode() {
         document.getElementById('maintenanceFeedback').textContent = 'Status belum dapat dimuat. Buka kembali menu ini untuk mencoba lagi.';
     }
 }
-if (AppAccess.full())
-    loadMaintenanceMode();
 let currentManageTab = 'siswa';
 let currentTeacherGroup = 'tahsin';
 let editingIndex = null;
 let identifierAuditLoaded = false;
 let missingIdentifierRows = [];
-document.addEventListener('panelready', async () => {
-    await fetchTeachers();
-    await fetchClasses();
-    switchManageTab('siswa');
-});
+// Kelola Data dimuat hanya ketika pengguna membuka menunya.
+let gmManageDataLoaded = false;
+let gmManageDataPending = null;
+async function gmOpenManageData() {
+    if (!gmManageDataLoaded) {
+        if (!gmManageDataPending) gmManageDataPending = Promise.all([getTeachers(),getStudents()])
+            .then(([teachers,students])=> {teachersData=teachers;studentsData=students;gmManageDataLoaded=true;})
+            .finally(()=> {gmManageDataPending=null;});
+        try { await gmManageDataPending; }
+        catch (error) { AdminNotice.notify('Gagal memuat master: '+error.message,'error'); return; }
+    }
+    renderManageTable();
+    switchManageView('directory');
+}
+function switchManageView(view) {
+    if (!['directory', 'enrollment'].includes(view)) return;
+    if (view === 'enrollment' && !AppAccess.full()) return;
+    const directory = document.getElementById('manageViewDirectory');
+    const enrollment = document.getElementById('teacherEnrollment');
+    const directoryButton = document.getElementById('manageViewDirectoryButton');
+    const enrollmentButton = document.getElementById('manageViewEnrollmentButton');
+    if (enrollmentButton) enrollmentButton.hidden = !AppAccess.full();
+    if (directory) directory.hidden = view !== 'directory';
+    if (enrollment) enrollment.hidden = view !== 'enrollment';
+    [[directoryButton, view === 'directory'], [enrollmentButton, view === 'enrollment']].forEach(([button, active]) => {
+        if (!button) return;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('active', active);
+    });
+    if (view === 'directory') {
+        renderManageTable();
+    } else {
+        void TeacherEnrollment.open();
+    }
+}
+document.addEventListener('panelready', () => switchManageTab('siswa'));
 async function fetchTeachers() {
     try {
         teachersData = await getTeachers();
@@ -959,6 +997,13 @@ let managePage = 1;
 const manageRowsPerPage = 25;
 function manageEscape(value) {
     return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+}
+// Guru Tahsin pada tabel Data Siswa bersumber dari kelompok aktif, bukan
+// kolom nama guru legacy yang bisa tertinggal setelah anggota dipindahkan.
+function gmTahsinGroupTeacher(student) {
+    const roster = window.tahsinRosterStudents;
+    const active = Array.isArray(roster) ? roster.find(row => String(row.id) === String(student.id)) : null;
+    return active ? String(active['nama guru'] || '') : (Array.isArray(roster) ? 'Belum ada kelompok' : String(student['nama guru'] || 'Belum ada kelompok'));
 }
 function getManageData() {
     if (currentManageTab === 'siswa')
@@ -1001,7 +1046,7 @@ function refreshStudentManageFilters() {
         return;
     }
     const options = modeSelect.value === 'guru'
-        ? [...new Set(levelStudents.map(student => student['nama guru'] || student.nama_guru).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id'))
+        ? [...new Set(levelStudents.map(student => gmTahsinGroupTeacher(student)).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id'))
         : [...new Set(levelStudents.map(student => student.kelas).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id'));
     const current = detailSelect.value;
     detailSelect.innerHTML = `<option value="">Pilih ${modeSelect.value === 'guru' ? 'nama guru' : 'nama kelas'}</option>` + options.map(option => `<option value="${manageEscape(option)}">${manageEscape(option)}</option>`).join('');
@@ -1033,12 +1078,12 @@ function renderManageTable() {
         if (currentManageTab === 'siswa') {
             if (level && getManageLevel(item.kelas) !== level)
                 return false;
-            if (mode === 'guru' && detail && String(item['nama guru'] || item.nama_guru || '') !== detail)
+            if (mode === 'guru' && detail && gmTahsinGroupTeacher(item) !== detail)
                 return false;
             if (mode === 'kelas' && detail && String(item.kelas || '') !== detail)
                 return false;
         }
-        const studentSearch = `${item['nama siswa'] || item.nama_siswa || ''} ${item['nama guru'] || item.nama_guru || ''} ${item.kelas || ''}`;
+        const studentSearch = `${item['nama siswa'] || item.nama_siswa || ''} ${gmTahsinGroupTeacher(item)} ${item.kelas || ''}`;
         const teacherSearch = `${item.nama || item.nama_guru || ''} ${item.nama_lengkap || ''} ${item.foto || ''}`;
         return !search || (currentManageTab === 'guru' ? teacherSearch : studentSearch).toLowerCase().includes(search);
     }).sort((a, b) => {
@@ -1054,7 +1099,7 @@ function renderManageTable() {
     const pageRows = rows.slice((managePage - 1) * manageRowsPerPage, managePage * manageRowsPerPage);
     header.innerHTML = currentManageTab === 'guru'
         ? `<tr><th class="px-6 py-4">No</th><th class="px-6 py-4">Nama Guru</th>${currentTeacherGroup === 'tahsin' ? '<th class="px-6 py-4">Foto</th>' : ''}<th class="px-6 py-4 text-center w-36">Aksi</th></tr>`
-        : '<tr><th class="px-6 py-4">No</th><th class="px-6 py-4">Nama Siswa</th><th class="px-6 py-4">Nama Guru</th><th class="px-6 py-4">Kelas</th><th class="px-6 py-4 text-center w-36">Aksi</th></tr>';
+        : '<tr><th class="px-6 py-4">No</th><th class="px-6 py-4">Nama Siswa</th><th class="px-6 py-4">Kelompok Tahsin</th><th class="px-6 py-4">Kelas</th><th class="px-6 py-4 text-center w-36">Aksi</th></tr>';
     if (!pageRows.length) {
         body.innerHTML = `<tr><td colspan="${currentManageTab === 'guru' ? (currentTeacherGroup === 'tahsin' ? 4 : 3) : 5}" class="p-8 text-center text-slate-400">Data tidak ditemukan.</td></tr>`;
     }
@@ -1074,7 +1119,7 @@ function renderManageTable() {
                 const photo = currentTeacherGroup === 'tahsin' ? `<td class="px-6 py-3">${item.foto ? `<img src="${manageEscape(item.foto)}" alt="Foto ${manageEscape(item.nama)}" class="teacher-photo-circle teacher-photo-circle--small bg-slate-100" loading="lazy" decoding="async" onerror="this.onerror=null;this.classList.add('teacher-photo-circle--placeholder');this.src='assets/school-logo.png'">` : '<span class="text-slate-400">Belum ada foto</span>'}</td>` : '';
                 return `${classGroup}<tr class="hover:bg-slate-50"><td class="px-6 py-3 text-slate-500">${startNumber + offset + 1}</td><td class="px-6 py-3 font-semibold">${manageEscape(getManageTitle(item))}<div class="text-xs font-normal text-slate-500 mt-1">${manageEscape(item.nama_lengkap || 'Nama lengkap belum diisi')}</div><small>${item.attendance_enabled === false ? 'Khusus Tahfidz' : 'Tampil pada absensi Tahsin'}</small></td>${photo}${actions}</tr>`;
             }
-            return `${classGroup}<tr class="hover:bg-slate-50"><td class="px-6 py-3 text-slate-500">${startNumber + offset + 1}</td><td class="px-6 py-3 font-semibold">${manageEscape(getManageTitle(item))}</td><td class="px-6 py-3">${manageEscape(item['nama guru'] || item.nama_guru || '-')}</td><td class="px-6 py-3">${manageEscape(item.kelas || '-')}</td>${actions}</tr>`;
+            return `${classGroup}<tr class="hover:bg-slate-50"><td class="px-6 py-3 text-slate-500">${startNumber + offset + 1}</td><td class="px-6 py-3 font-semibold">${manageEscape(getManageTitle(item))}</td><td class="px-6 py-3">${manageEscape(gmTahsinGroupTeacher(item))}</td><td class="px-6 py-3">${manageEscape(item.kelas || '-')}</td>${actions}</tr>`;
         }).join('');
     }
     document.getElementById('manageRecordInfo').textContent = `${rows.length} data`;
@@ -1135,7 +1180,7 @@ async function openManageModal(id = null) {
             fields.innerHTML += `<div><label for="inputGuruAttendance" class="block text-xs font-bold text-slate-600 uppercase mb-2">Tampil pada absensi (Tahsin)</label><select id="inputGuruAttendance" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"><option value="true" ${(item ? item.attendance_enabled !== false : currentTeacherGroup === 'tahsin') ? 'selected' : ''}>Ya - guru Tahsin / kedua pelajaran</option><option value="false" ${(item ? item.attendance_enabled === false : currentTeacherGroup === 'tahfidz') ? 'selected' : ''}>Tidak - khusus Tahfidz</option></select></div>`;
     }
     else {
-        fields.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Siswa</label><input id="inputSiswaNama" required value="${manageEscape(item?.['nama siswa'] || item?.nama_siswa || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div><div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Guru</label><input id="inputSiswaGuru" required value="${manageEscape(item?.['nama guru'] || item?.nama_guru || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div><div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Kelas</label><input id="inputSiswaKelas" required value="${manageEscape(item?.kelas || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Contoh: Kelas 1A"></div>`;
+        fields.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Siswa</label><input id="inputSiswaNama" required value="${manageEscape(item?.['nama siswa'] || item?.nama_siswa || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div><input type="hidden" id="inputSiswaGuru" value="${manageEscape(item?.['nama guru'] || item?.nama_guru || 'Belum ditugaskan')}"><div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Kelas</label><input id="inputSiswaKelas" required value="${manageEscape(item?.kelas || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Contoh: Kelas 1A"></div>`;
         if (AppAccess.full() && item) {
             // Identitas diambil langsung dari tabel tersendiri; student master tidak memuat NIS/NISN.
             const { data: ids, error: idsError } = await supabase.from('student_identifiers')
@@ -1701,7 +1746,7 @@ function applySchoolProfile(profile) {
     if (!profile)
         return;
     const name = profile.name || 'Gemar Mengaji';
-    const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
+    const logo = (!profile.logo_url || String(profile.logo_url).includes('FjF61ou.png')) ? 'assets/school-logo.png' : profile.logo_url;
     document.getElementById('adminSchoolName')?.replaceChildren(document.createTextNode(name));
     document.getElementById('adminSchoolAddress')?.replaceChildren(document.createTextNode(profile.address || ''));
     const logoElement = document.getElementById('adminSchoolLogo');
@@ -1870,12 +1915,17 @@ async function showInfographic() {
     }
 }
 function switchPage(pageId) {
-    const pages = ['rapor', 'absensi', 'kelola', 'kelompok', 'profil', 'penilaian', 'infografik', 'identitas', 'pengaturan', 'maintenance'];
+    const pages = ['dashboard','rapor','laporan','arsip','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
     if (!pages.includes(pageId) || !AppAccess.canPage(pageId))
         return;
+    if (document.body?.dataset) document.body.dataset.activePage = pageId;
     const headings = {
+        dashboard: ['Dashboard', 'Ringkasan Gemar Mengaji.', ''],
+        laporan: ['Laporan', 'Target Tahsin dan Tahfidz.', ''],
+        arsip: ['Arsip Rapor', 'Riwayat rapor siswa.', ''],
         rapor: ['Rapor Siswa', 'Laporan perkembangan siswa.', 'Periksa dan terbitkan rapor per tingkat kelas.'],
-        kelompok: ['Kelompok Tahfidz', 'Atur pengampu dan anggota.', 'Satu guru dapat mengampu beberapa kelompok lintas kelas.'],
+        kelompok: ['Kelola Tahfidz', 'Kelola kelompok Tahfidz.', ''],
+        'kelompok-tahsin': ['Kelola Tahsin', 'Kelola kelompok Tahsin.', ''],
         profil: ['Pengaturan Profil', 'Kelola akun Anda.', 'Perbarui nama profil dan password akun.'],
         absensi: ['Data Absensi', 'Catat kehadiran, dampingi kebaikan.', 'Pantau dan kelola rekap kehadiran siswa dalam satu tempat.'],
         penilaian: ['Penilaian Periodik', 'Catat perkembangan, rawat potensi.', 'Penilaian Tahsin dan Tahfidz untuk setiap tahap belajar siswa.'],
@@ -1890,6 +1940,8 @@ function switchPage(pageId) {
         if (element)
             element.textContent = headings[pageId][index];
     });
+    const eyebrow = document.getElementById('adminEyebrow');
+    if (eyebrow && pageId !== 'dashboard') eyebrow.textContent = 'PANEL ADMINISTRASI';
     pages.forEach(name => {
         const item = document.getElementById(`menu-${name}`);
         if (name === pageId)
@@ -1907,21 +1959,25 @@ function switchPage(pageId) {
             requestAnimationFrame(() => page.classList.add('page-animate-in'));
         }
     });
-    ['menu-rapor', 'menu-kelompok', 'menu-profil', 'menu-absensi', 'menu-kelola', 'menu-penilaian', 'menu-infografik', 'menu-identitas', 'menu-pengaturan', 'menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
+    ['menu-dashboard','menu-rapor','menu-laporan','menu-arsip','menu-kelompok','menu-kelompok-tahsin','menu-profil','menu-absensi','menu-kelola','menu-penilaian','menu-infografik','menu-identitas','menu-pengaturan','menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
     const active = document.getElementById(`menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
+    if (pageId === 'dashboard')
+        GMUpgrade.dashboard();
     if (pageId === 'kelola')
-        renderManageTable();
+        void gmOpenManageData();
     if (pageId === 'kelompok')
-        TeachingAssignments.open();
+        LearningGroups.open('tahfidz');
+    if (pageId === 'kelompok-tahsin')
+        LearningGroups.open('tahsin');
     if (pageId === 'profil')
         AccountProfile.open();
-    if (pageId === 'kelola')
-        TeacherEnrollment.open();
     if (pageId === 'penilaian')
         PeriodicAssessments.open();
     if (pageId === 'rapor')
         StudentReports.open();
+    if (pageId === 'arsip')
+        GMUpgrade.archive();
     if (pageId === 'infografik')
         populateInfographicFilters();
     if (pageId === 'identitas')
@@ -1929,7 +1985,6 @@ function switchPage(pageId) {
     if (pageId === 'pengaturan') {
         SettingsHub.open();
         ReportSettings.open();
-        loadAccountSettings().catch(console.error);
     }
     if (pageId === 'maintenance')
         loadMaintenanceMode();
@@ -1946,6 +2001,20 @@ document.addEventListener('panelready', () => {
         document.getElementById('settingsThemeColorValue').textContent = event.target.value;
         document.getElementById('settingsColorPreview').style.backgroundColor = event.target.value;
     });
-    if (AppAccess.full())
-        loadSchoolSettings();
+    // Pengaturan identitas sekolah dimuat saat menu Identitas dibuka.
+});
+
+// Nama tetap ringkas pada HP; sentuh sel nama untuk membaca nama lengkap.
+document.addEventListener('panelready', () => {
+    const table = document.getElementById('monthlyReportTable');
+    if (!table) return;
+    const showFullName = target => {
+        const cell = target.closest?.('td[data-fullname]');
+        if (cell && window.matchMedia('(max-width: 640px)').matches)
+            AdminNotice.notify(cell.dataset.fullname, 'info');
+    };
+    table.addEventListener('click', event => showFullName(event.target));
+    table.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') showFullName(event.target);
+    });
 });
