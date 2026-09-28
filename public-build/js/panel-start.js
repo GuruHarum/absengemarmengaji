@@ -5,7 +5,7 @@
         await Promise.all(modules.map(source => new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.async = false; // unduh paralel, jalankan sesuai urutan deklarasi
-                script.src = ['js/student-import.js', 'js/dashboard.js', 'js/accounts.js', 'js/learning-groups.js', 'js/assessments.js', 'js/report-pdf.js', 'js/admin.js', 'js/api.js'].includes(source) ? `${source}?v=20260928-roster17` : source;
+                script.src = ['js/student-import.js', 'js/dashboard.js', 'js/accounts.js', 'js/learning-groups.js', 'js/assessments.js', 'js/report-pdf.js', 'js/admin.js', 'js/api.js'].includes(source) ? `${source}?v=20260928-roster20-pagination` : source;
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(`Gagal memuat ${source}`));
                 document.body.appendChild(script);

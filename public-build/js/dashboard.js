@@ -754,13 +754,13 @@ window.addEventListener('panelready', () => {
             if (!AppAccess.canPage('absensi')) { showLoading(false); return; }
             // Panel awal hanya memuat roster Tahsin yang ringkas; master penuh baru
             // dimuat saat menu Kelola Data dipilih. Absensi baru diambil saat difilter.
+            const yearKey = getPublicAcademicYearStart();
             const [teachers, students] = await Promise.all([
-                supabase.rpc('gm_public_tahsin_teachers'),
-                supabase.rpc('gm_public_tahsin_students')
+                fetchAllRpcRows('gm_public_tahsin_teachers', { year_key: yearKey }, 500),
+                fetchAllRpcRows('gm_public_tahsin_students', { year_key: yearKey }, 500)
             ]);
-            if (teachers.error || students.error) throw teachers.error || students.error;
-            window.tahsinRosterTeachers = teachers.data || [];
-            window.tahsinRosterStudents = students.data || [];
+            window.tahsinRosterTeachers = teachers;
+            window.tahsinRosterStudents = students;
         }
         catch (err) {
             console.error("Gagal menarik data master guru/siswa:", err);

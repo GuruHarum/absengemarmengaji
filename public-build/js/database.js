@@ -23,15 +23,38 @@ async function fetchAllRows(queryFactory, batchSize = 500) {
     }
     return all;
 }
+async function fetchAllRpcRows(rpcName, args = {}, batchSize = 500) {
+    const all = [];
+    let from = 0;
+    while (true) {
+        const request = supabase.rpc(rpcName, args);
+        // Supabase/PostgREST membatasi jumlah baris per request (umumnya 1000).
+        // Ambil roster dalam potongan kecil agar siswa setelah batas tersebut tidak hilang.
+        if (!request || typeof request.range !== 'function') {
+            const { data, error } = await request;
+            if (error) throw error;
+            return data || [];
+        }
+        const to = from + batchSize - 1;
+        const { data, error } = await request.range(from, to);
+        if (error)
+            throw error;
+        const rows = data || [];
+        all.push(...rows);
+        if (rows.length < batchSize)
+            break;
+        from += batchSize;
+    }
+    return all;
+}
 async function getTeachers() {
     if (window.AppAccess)
         await AppAccess.ready;
     if (!window.AppAccess) {
         const yearKey = getPublicAcademicYearStart();
-        const { data, error } = await supabase.rpc('gm_public_tahsin_teachers', { year_key: yearKey });
-        if (error) throw new Error('Daftar guru Tahsin belum tersedia: ' + error.message);
-        window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), teacherSource: 'gm_public_tahsin_teachers', yearKey, teachers: (data || []).length, build: 'roster19-hotfix' };
-        return data || [];
+        const rows = await fetchAllRpcRows('gm_public_tahsin_teachers', { year_key: yearKey }, 500);
+        window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), teacherSource: 'gm_public_tahsin_teachers', yearKey, teachers: rows.length, build: 'roster20-pagination' };
+        return rows;
     }
     return fetchAllRows(() => AppAccess.scope(supabase.from('teachers').select('*').order('nama'), 'teachers'), 500);
 }
@@ -40,10 +63,8 @@ async function getStudents() {
         await AppAccess.ready;
     if (!window.AppAccess) {
         const yearKey = getPublicAcademicYearStart();
-        const { data, error } = await supabase.rpc('gm_public_tahsin_students', { year_key: yearKey });
-        if (error) throw new Error('Daftar peserta Tahsin belum tersedia: ' + error.message);
-        const rows = data || [];
-        window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), studentSource: 'gm_public_tahsin_students', yearKey, students: rows.length, build: 'roster19-hotfix' };
+        const rows = await fetchAllRpcRows('gm_public_tahsin_students', { year_key: yearKey }, 500);
+        window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), studentSource: 'gm_public_tahsin_students', yearKey, students: rows.length, build: 'roster20-pagination', paginated: true };
         return rows;
     }
     return fetchAllRows(() => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'), 500);

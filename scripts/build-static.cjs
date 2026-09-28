@@ -24,4 +24,4 @@ for (const rel of ['index.html', 'sw.js', 'js/database.js', 'js/ui.js', 'js/util
     }
 }
 
-console.log('Static website prepared in public-build (roster19-hotfix)');
+console.log('Static website prepared in public-build (roster20-pagination)');

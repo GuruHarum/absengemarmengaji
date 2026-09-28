@@ -331,10 +331,13 @@ window.LearningGroups = (() => {
   }
 
   async function refreshPublicTahsinRoster() {
-    const [teachers, students] = await Promise.all([supabase.rpc('gm_public_tahsin_teachers'),supabase.rpc('gm_public_tahsin_students')]);
-    if(teachers.error || students.error) throw teachers.error || students.error;
-    window.tahsinRosterTeachers=teachers.data || [];
-    window.tahsinRosterStudents=students.data || [];
+    const yearKey = getPublicAcademicYearStart();
+    const [teachers, students] = await Promise.all([
+      fetchAllRpcRows('gm_public_tahsin_teachers', {year_key: yearKey}, 500),
+      fetchAllRpcRows('gm_public_tahsin_students', {year_key: yearKey}, 500)
+    ]);
+    window.tahsinRosterTeachers=teachers;
+    window.tahsinRosterStudents=students;
     if(typeof populateAdminDropdowns==='function') populateAdminDropdowns();
     if(typeof renderManageTable==='function') renderManageTable();
   }
