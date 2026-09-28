@@ -222,3 +222,17 @@ body.admin-page .manage-tabs button { padding-inline: clamp(12px, 1.5vw, 24px); 
 body.admin-page #manageIdentifierAuditList th { position: sticky; top: 0; background: #fffbeb; }
 body.admin-page #manageIdentifierAuditList td { vertical-align: top; }
 @media (max-width: 640px) { body.admin-page .manage-tabs { width: 100%; } body.admin-page .manage-tabs button { flex: 1 1 46%; } }
+
+/* Seluler: nama tidak menutupi tanggal; tampil 90px ringkas saat tabel digeser. */
+@media screen and (max-width: 640px) {
+ body.admin-page #monthlyReportTable { min-width: max-content; }
+ body.admin-page #monthlyReportTable th:first-child,
+ body.admin-page #monthlyReportTable td:first-child {
+   position: sticky; left: 0; z-index: 2; min-width: 92px; max-width: 92px;
+   width: 92px; padding: 8px 5px; white-space: normal;
+   overflow-wrap: anywhere; font-size: 10px; line-height: 1.35;
+   box-shadow: 1px 0 3px rgba(0,0,0,.1);
+ }
+ body.admin-page #monthlyReportTable th:not(:first-child),
+ body.admin-page #monthlyReportTable td:not(:first-child) { min-width: 28px; padding: 7px 3px; }
+}
