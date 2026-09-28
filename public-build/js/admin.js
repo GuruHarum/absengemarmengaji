@@ -68,11 +68,11 @@ function getFilteredAttendanceRecords(records) {
             return false;
         if (month && date.slice(5, 7) !== month.padStart(2, '0'))
             return false;
-        if (teacher && itemTeacher !== teacher && itemTeacher !== teacherRecord?.nama && String(item.guru_id ?? '') !== teacher)
+        if (teacher && !(window.GMFilter ? GMFilter.teacherMatches(item, teacher) : (itemTeacher === teacher || itemTeacher === teacherRecord?.nama || String(item.teacher_id ?? item.guru_id ?? '') === teacher)))
             return false;
         if (level && String(item.kelas_tingkat || extractClassNumber(itemClass)) !== level)
             return false;
-        if (className && itemClass !== className)
+        if (className && !(window.GMFilter ? GMFilter.classMatches(item, className) : itemClass === className))
             return false;
         return true;
     });
@@ -186,13 +186,13 @@ function renderAdminTable() {
             return '';
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
-    let filteredStudents = typeof studentsData !== 'undefined' && Array.isArray(studentsData) ? [...studentsData] : [];
+    let filteredStudents = Array.isArray(window.tahsinRosterStudents) ? [...window.tahsinRosterStudents] : (typeof studentsData !== 'undefined' && Array.isArray(studentsData) ? [...studentsData] : []);
     if (teacher) {
         filteredStudents = filteredStudents.filter(student => {
             if (!student)
                 return false;
             const namaGuru = student['nama guru'] || student.nama_guru || '';
-            return safeLowerCase(namaGuru) === safeLowerCase(teacher);
+            return window.GMFilter ? GMFilter.teacherMatches(student, teacher) : safeLowerCase(namaGuru) === safeLowerCase(teacher);
         });
     }
     if (className) {
@@ -200,7 +200,7 @@ function renderAdminTable() {
             if (!student)
                 return false;
             const kelasSiswa = student.kelas || student.kelas_nama || '';
-            return safeLowerCase(kelasSiswa) === safeLowerCase(className);
+            return window.GMFilter ? GMFilter.classMatches(student,className) : safeLowerCase(kelasSiswa) === safeLowerCase(className);
         });
     }
     else if (classNumber) {
@@ -245,8 +245,8 @@ function renderAdminTable() {
             return;
         const date = formatDateToYYYYMMDD(record.date || record.tanggal);
         const student = safeLowerCase(record.nama_siswa || record.student || record.student_name);
-        if (date && student)
-            attendanceMap.set(`${date}|${student}`, record);
+        if (date && record.student_id != null) attendanceMap.set(`${date}|id:${record.student_id}|${record.teacher_id ?? ''}`,record);
+        else if (date && student) attendanceMap.set(`${date}|legacy:${student}|${safeLowerCase(record.class)}|${safeLowerCase(record.teacher)}`,record);
     });
     filteredStudents.forEach((student, index) => {
         if (!student)
@@ -256,7 +256,8 @@ function renderAdminTable() {
         let cellsHtml = '';
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
-            const record = attendanceMap.get(`${dateStr}|${safeLowerCase(studentName)}`);
+            const record = attendanceMap.get(`${dateStr}|id:${student.id}|${student.teacher_id ?? GMFilter?.teacherId(teacher) ?? ''}`) ||
+                attendanceMap.get(`${dateStr}|legacy:${safeLowerCase(studentName)}|${safeLowerCase(student.kelas)}|${safeLowerCase(student['nama guru'])}`);
             let statusCode = '';
             let bgClass = '';
             if (record) {
@@ -317,9 +318,10 @@ function populateAdminDropdowns() {
     const dropdownGuru = document.getElementById('filterTeacher');
     const dropdownTingkat = document.getElementById('filterClassNumber');
     const dropdownNamaKelas = document.getElementById('filterClassName');
-    if (dropdownGuru && typeof teachersData !== 'undefined' && Array.isArray(teachersData)) {
+    if (dropdownGuru && (Array.isArray(window.tahsinRosterTeachers) || (typeof teachersData !== 'undefined' && Array.isArray(teachersData)))) {
         dropdownGuru.innerHTML = '<option value="">Semua Guru</option>';
-        const uniqueTeachers = [...new Set(teachersData.map(g => g.nama || g.nama_guru).filter(Boolean))].sort();
+        const masterTeachers = Array.isArray(window.tahsinRosterTeachers) ? window.tahsinRosterTeachers : teachersData.filter(g => g.attendance_enabled !== false);
+        const uniqueTeachers = [...new Set(masterTeachers.map(g => g.nama || g.nama_guru).filter(Boolean))].sort();
         uniqueTeachers.forEach(name => {
             const option = document.createElement('option');
             option.value = name;
@@ -331,9 +333,10 @@ function populateAdminDropdowns() {
             dropdownGuru.disabled = true;
         }
     }
-    if (dropdownTingkat && typeof studentsData !== 'undefined' && Array.isArray(studentsData)) {
+    if (dropdownTingkat && (Array.isArray(window.tahsinRosterStudents) || Array.isArray(studentsData))) {
+        const classRoster = Array.isArray(window.tahsinRosterStudents) ? window.tahsinRosterStudents : studentsData;
         dropdownTingkat.innerHTML = '<option value="">Semua Tingkat</option>';
-        const uniqueTingkat = [...new Set(studentsData.map(s => {
+        const uniqueTingkat = [...new Set(classRoster.map(s => {
                 const kelas = s.kelas || s.kelas_nama || '';
                 const match = kelas.match(/\d+/);
                 return match ? match[0] : kelas;
@@ -345,9 +348,10 @@ function populateAdminDropdowns() {
             dropdownTingkat.appendChild(option);
         });
     }
-    if (dropdownNamaKelas && typeof studentsData !== 'undefined' && Array.isArray(studentsData)) {
+    if (dropdownNamaKelas && (Array.isArray(window.tahsinRosterStudents) || Array.isArray(studentsData))) {
+        const classRoster = Array.isArray(window.tahsinRosterStudents) ? window.tahsinRosterStudents : studentsData;
         dropdownNamaKelas.innerHTML = '<option value="">Semua Nama Kelas</option>';
-        const uniqueNamaKelas = [...new Set(studentsData.map(s => s.kelas || s.kelas_nama).filter(Boolean))].sort();
+        const uniqueNamaKelas = [...new Set(classRoster.map(s => s.kelas || s.kelas_nama).filter(Boolean))].sort();
         uniqueNamaKelas.forEach(kelas => {
             const option = document.createElement('option');
             option.value = kelas;
@@ -374,7 +378,7 @@ if (nextPage) {
     });
 }
 const filterBtn = document.getElementById('filterBtn');
-if (filterBtn) {
+if (filterBtn && !window.GM_DASHBOARD_OWNS_FILTER) {
     filterBtn.addEventListener('click', filterAttendanceData);
 }
 window.addEventListener(document.body.classList.contains('admin-page') ? 'panelready' : 'DOMContentLoaded', () => {

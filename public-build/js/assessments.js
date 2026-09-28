@@ -1,6 +1,5 @@
 window.PeriodicAssessments = (() => {
     const state = { initialized: false, busy: false, context: null, teachers: [], students: [], saved: new Map(), drafts: new Map(), page: 1 };
-    const pageSize = 8;
     const el = id => document.getElementById(id);
     const escape = value => escapeHtml(value);
     const classLevel = value => String(value || '').match(/^\s*(?:kelas\s*)?(\d+)(?=\D|$)/i)?.[1].replace(/^0+(?=\d)/, '') || '';
@@ -31,27 +30,27 @@ window.PeriodicAssessments = (() => {
         el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' : 'Simpan Semua';
         pagination();
     }
+    // Setiap halaman hanya satu kelas nyata, bukan gabungan tingkat/rombel.
     function visible() {
         const kelas = el('assessmentClass').value;
+        if (!kelas) return [];
         const search = el('assessmentSearch').value.trim().toLocaleLowerCase('id');
-        return state.students.filter(student => (!el('assessmentLevel').value || classLevel(student.kelas) === el('assessmentLevel').value) && (!kelas || (kelas.startsWith('level:') ? classLevel(student.kelas) === kelas.slice(6) : student.kelas === kelas)) && String(student['nama siswa']).toLocaleLowerCase('id').includes(search));
+        return state.students.filter(student => student.kelas === kelas &&
+            String(student['nama siswa']).toLocaleLowerCase('id').includes(search));
     }
-    function currentPageSize() {
-        const rows = visible();
-        const levels = new Set(rows.map(row => classLevel(row.kelas)));
-        return rows.length && levels.size === 1 && !levels.has('') ? rows.length : pageSize;
-    }
+    const currentPageSize = () => Math.max(visible().length, 1);
     function pagination() {
-        const total = Math.max(1, Math.ceil(visible().length / currentPageSize()));
-        state.page = Math.max(1, Math.min(total, state.page));
-        el('assessmentPrev').disabled = state.busy || state.page <= 1;
-        el('assessmentNext').disabled = state.busy || state.page >= total;
-        el('assessmentPageInfo').textContent = `Halaman ${state.page} / ${total}`;
+        state.page = 1;
+        el('assessmentPrev').disabled = true;
+        el('assessmentNext').disabled = true;
+        el('assessmentPageInfo').textContent = el('assessmentClass').value ? classLabel(el('assessmentClass').value) : 'Pilih kelas';
     }
     function summaries() {
-        el('assessmentTotal').textContent = state.students.length;
-        el('assessmentSaved').textContent = state.students.filter(student => state.saved.has(String(student.id))).length;
-        el('assessmentDirty').textContent = dirtyStudents().length;
+        const shown = visible();
+        const cleanSaved = shown.filter(student => state.saved.has(String(student.id)) && !isDirty(student)).length;
+        el('assessmentTotal').textContent = shown.length;
+        el('assessmentSaved').textContent = cleanSaved;
+        el('assessmentDirty').textContent = shown.length - cleanSaved;
         el('assessmentCards').querySelectorAll('[data-student-index]').forEach(card => {
             const student = state.students[Number(card.dataset.studentIndex)];
             const badge = card.querySelector('.assessment-state');
@@ -81,7 +80,7 @@ window.PeriodicAssessments = (() => {
         const markup = `<form novalidate class="assessment-student" data-student-index="${index}"><header><div><p>${escape(classLabel(student.kelas))}</p><h3>${escape(student['nama siswa'])}</h3></div><span class="assessment-state"></span></header>
             <div class="assessment-subjects"><fieldset data-subject="tahsin"><legend><span>01</span> Tahsin</legend><div class="assessment-score-grid">${(window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']).map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div></fieldset>
             <fieldset data-subject="tahfidz"><legend><span>02</span> Tahfidz</legend><div class="assessment-score-grid">${['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'].map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div ${['REVIEW', 'TES'].includes(draft.tahfidz_progress_type) ? 'hidden' : ''}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div></fieldset></div>
-            <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Nilai lama: pengelola perlu memeriksa dan menyimpan untuk verifikasi pengampu.' : state.context.subject === 'tahsin' ? (window.ReportCore && !ReportCore.applicable(draft, 'tahsin').known ? 'Lengkapi tahap capaian untuk menentukan aspek wajib.' : 'Aspek nilai mengikuti capaian aktual siswa.') : 'Capaian sesuai surat dan ayat terakhir.'}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
+            <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Nilai lama: pengelola perlu memeriksa dan menyimpan untuk verifikasi pengampu.' : state.context.subject === 'tahsin' ? 'Nilai mengikuti capaian aktual siswa.' : 'Tahfidz'}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
         const selectedMarkup = markup.replace(/<fieldset data-subject="(tahsin|tahfidz)">[\s\S]*?<\/fieldset>/g, (block, subject) => subject === state.context.subject ? block : '');
         return state.saved.get(String(student.id))?.needs_review && !AppAccess.full()
             ? selectedMarkup.replace('<form ', '<form data-review-locked="true" ').replace('<fieldset ', '<fieldset disabled ').replace('type="submit"', 'type="submit" disabled')
@@ -90,7 +89,7 @@ window.PeriodicAssessments = (() => {
     function render() {
         pagination();
         const rows = visible().slice((state.page - 1) * currentPageSize(), state.page * currentPageSize());
-        el('assessmentCards').innerHTML = rows.length ? rows.map(student => cardMarkup(student, state.students.indexOf(student))).join('') : '<div class="assessment-empty">Tidak ada siswa untuk pilihan ini.</div>';
+        el('assessmentCards').innerHTML = rows.length ? rows.map(student => cardMarkup(student, state.students.indexOf(student))).join('') : '<div class="assessment-empty">Tidak ada siswa pada kelas ini.</div>';
         summaries();
     }
     async function load() {
@@ -110,10 +109,19 @@ window.PeriodicAssessments = (() => {
         setBusy(true);
         message('Memuat siswa dan nilai tersimpan...');
         try {
-            const [students, saved] = await Promise.all([
-                fetchAllRows(() => supabase.rpc('assessment_roster', { teacher_key: String(teacher.id), year_key: context.year, subject_key: context.subject })),
-                fetchAllRows(() => supabase.from('subject_assessments').select('*').eq('subject', context.subject).eq('academic_year_start', context.year).eq('period', context.period).order('id'))
-            ]);
+            const students = await fetchAllRows(() => supabase.rpc('assessment_roster', {
+                teacher_key: String(teacher.id), year_key: context.year, subject_key: context.subject
+            }));
+            // Hanya unduh nilai untuk peserta guru/pelajaran terpilih, bukan seluruh database.
+            const saved = [];
+            const studentIds = [...new Set(students.map(row => String(row.id)))];
+            for (let i = 0; i < studentIds.length; i += 100) {
+                const ids = studentIds.slice(i, i + 100);
+                const chunk = await fetchAllRows(() => supabase.from('subject_assessments').select('*')
+                    .eq('subject', context.subject).eq('academic_year_start', context.year)
+                    .eq('period', context.period).in('student_id', ids).order('id'));
+                saved.push(...chunk);
+            }
             state.context = context;
             state.students = students.sort((a, b) => String(a.kelas).localeCompare(String(b.kelas), 'id', { numeric: true }) || String(a['nama siswa']).localeCompare(String(b['nama siswa']), 'id'));
             state.saved = new Map(saved.map(row => [String(row.student_id), { ...row, ...row.scores }]));
@@ -121,14 +129,18 @@ window.PeriodicAssessments = (() => {
             state.page = 1;
             el('assessmentLevel').replaceChildren(new Option('Semua tingkat', ''));
             [...new Set(students.map(row => classLevel(row.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b)).forEach(level => el('assessmentLevel').add(new Option(`Kelas ${level}`, level)));
-            el('assessmentClass').replaceChildren(new Option('Semua kelas', ''));
-            [...new Set(students.map(row => classLevel(row.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b)).forEach(level => el('assessmentClass').add(new Option(`Kelas ${level} (semua rombel)`, `level:${level}`)));
-            [...new Set(students.map(row => row.kelas).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id', { numeric: true })).forEach(kelas => el('assessmentClass').add(new Option(classLabel(kelas), kelas)));
+            el('assessmentClass').replaceChildren(new Option('Pilih kelas', ''));
+            const classes = [...new Set(students.map(row => row.kelas).filter(Boolean))]
+                .sort((a, b) => String(a).localeCompare(String(b), 'id', { numeric: true }));
+            classes.forEach(kelas => el('assessmentClass').add(new Option(classLabel(kelas), kelas)));
+            // Kelas pertama langsung dipilih; tidak pernah merender gabungan dua kelas.
+            el('assessmentClass').value = classes[0] || '';
+            el('assessmentLevel').value = classes.length ? classLevel(classes[0]) : '';
             el('assessmentSearch').value = '';
             el('assessmentActivePeriod').textContent = `${context.year}/${context.year + 1} · ${AssessmentData.periods[context.period]} · ${teacher.nama} / ${context.subject.toUpperCase()}`;
             el('assessmentWorkspace').hidden = false;
             render();
-            message(students.length ? 'Nilai siap diisi. Data kosong tidak dihitung sebagai nilai nol.' : 'Belum ada siswa. Tahsin mengikuti data guru pada master siswa; Tahfidz memerlukan anggota kelompok untuk tahun ajaran ini.');
+            message(students.length ? 'Nilai siap diisi. Data kosong tidak dihitung sebagai nilai nol.' : 'Belum ada anggota kelompok aktif untuk guru dan pelajaran ini.');
         }
         catch (error) {
             console.error(error);
@@ -152,10 +164,12 @@ window.PeriodicAssessments = (() => {
             }
             catch (error) {
                 message(`${student['nama siswa']}: ${error.message} Belum ada perubahan yang dikirim.`, true);
-                el('assessmentLevel').value = '';
-                el('assessmentClass').value = '';
+                // Tetap berada pada kelas siswa yang perlu diperbaiki.
+                // Jangan pernah beralih ke gabungan kelas ketika validasi gagal.
+                el('assessmentLevel').value = classLevel(student.kelas);
+                el('assessmentClass').value = student.kelas;
                 el('assessmentSearch').value = '';
-                state.page = Math.floor(state.students.indexOf(student) / currentPageSize()) + 1;
+                state.page = 1;
                 render();
                 el('assessmentCards').querySelector(`[data-student-index="${state.students.indexOf(student)}"]`)?.reportValidity();
                 return;
@@ -180,13 +194,38 @@ window.PeriodicAssessments = (() => {
             setBusy(false);
         }
     }
+    // Guru untuk penilaian mengikuti pelajaran, bukan gabungan semua guru.
+    // Guru yang mengampu keduanya dapat tampil di kedua pilihan apabila
+    // memiliki siswa Tahfidz melalui kelompok aktif.
+    async function refreshSubjectTeachers() {
+        const subject = el('assessmentSubject').value || 'tahsin';
+        const previous = el('assessmentTeacher').value;
+        const year = Number(el('assessmentYear').value);
+        const assignmentRows = await fetchAllRows(() => supabase.from('teaching_assignments')
+            .select('teacher_id').eq('subject', subject).eq('active', true)
+            .eq('academic_year_start', year));
+        const ids = new Set(assignmentRows.map(row => String(row.teacher_id)));
+        const eligible = state.teachers.filter(row => ids.has(String(row.id)) &&
+            (subject !== 'tahsin' || row.attendance_enabled !== false));
+        el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
+        eligible.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
+        const wanted = AppAccess.teacher?.() ? String(AppAccess.profile.teacher_id) : (previous || String(AppAccess.profile.teacher_id || ''));
+        if (eligible.some(row => String(row.id) === wanted))
+            el('assessmentTeacher').value = wanted;
+        else
+            el('assessmentTeacher').value = '';
+        el('assessmentTeacher').disabled = !AppAccess.full();
+        // Guru hanya melihat peserta yang terhubung dengan akunnya.
+        const teacherLabel = el('assessmentTeacher').closest?.('label');
+        if (teacherLabel) teacherLabel.hidden = !AppAccess.full();
+        return Boolean(el('assessmentTeacher').value);
+    }
     async function open() {
         if (state.busy)
             return;
         if (state.initialized) {
             state.busy = true;
             try {
-                const previous = el('assessmentTeacher').value;
                 if (window.ReportCore) {
                     const ref = await supabase.from('report_reference').select('data').eq('id', 1).single();
                     if (ref.error)
@@ -194,9 +233,7 @@ window.PeriodicAssessments = (() => {
                     ReportCore.useReference(ref.data.data);
                 }
                 state.teachers = await getTeachers();
-                el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
-                state.teachers.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
-                el('assessmentTeacher').value = previous;
+                await refreshSubjectTeachers();
             }
             catch (error) {
                 message(error.message, true);
@@ -217,18 +254,15 @@ window.PeriodicAssessments = (() => {
                 ReportCore.useReference(ref.data.data);
             }
             state.teachers = await getTeachers();
-            el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
-            state.teachers.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
-            if (AppAccess.profile.teacher_id)
-                el('assessmentTeacher').value = AppAccess.profile.teacher_id;
-            el('assessmentTeacher').disabled = !AppAccess.full();
+
             const now = new Date();
             el('assessmentYear').value = now.getFullYear() - (now.getMonth() < 6 ? 1 : 0);
             el('assessmentPeriod').value = now.getMonth() < 6 ? 'pts_genap' : 'pts_ganjil';
             yearLabel();
-            el('assessmentScopeNote').textContent = AppAccess.full() ? 'Tahsin otomatis mengikuti daftar siswa Gemar Mengaji. Atur anggota Tahfidz melalui menu Kelompok Tahfidz di sidebar.' : 'Tahsin mengikuti siswa Anda di Gemar Mengaji. Tahfidz mengikuti anggota kelompok yang ditugaskan kepada Anda.';
+            await refreshSubjectTeachers();
+            el('assessmentScopeNote').textContent = AppAccess.full() ? 'Daftar siswa mengikuti anggota kelompok pelajaran yang aktif.' : 'Hanya siswa dari kelompok pelajaran Anda.';
             state.initialized = true;
-            message('Pilih tahun ajaran dan periode, lalu tampilkan siswa.');
+            message('Pilih pelajaran, guru, dan periode untuk memuat kelas.');
         }
         catch (error) {
             message(error.message, true);
@@ -240,7 +274,12 @@ window.PeriodicAssessments = (() => {
     function yearLabel() { const year = Number(el('assessmentYear').value); el('assessmentYearLabel').textContent = `Tahun ajaran ${year}/${year + 1}`; }
     document.addEventListener('panelready', () => {
         el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); return load(); });
-        el('assessmentYear').addEventListener('input', yearLabel);
+        el('assessmentYear').addEventListener('input', () => { yearLabel(); refreshSubjectTeachers().catch(error => message(error.message, true)); });
+        el('assessmentSubject').addEventListener('change', () => {
+            el('assessmentWorkspace').hidden = true;
+            state.students = []; state.saved.clear(); state.drafts.clear(); state.context = null;
+            refreshSubjectTeachers().catch(error => message(error.message, true));
+        });
         el('assessmentCards').addEventListener('input', event => {
             if (event.target.dataset.surahSearch) {
                 if (!event.target.dataset.surahCommit)
@@ -301,9 +340,9 @@ window.PeriodicAssessments = (() => {
         SurahPicker.bind(el('assessmentCards'));
         el('assessmentCards').addEventListener('submit', event => { event.preventDefault(); const student = state.students[Number(event.target.dataset.studentIndex)]; if (student)
             return save([student]); });
-        el('assessmentSaveAll').addEventListener('click', () => save(dirtyStudents()));
+        el('assessmentSaveAll').addEventListener('click', () => save(visible().filter(isDirty)));
         ['assessmentClass', 'assessmentSearch'].forEach(id => el(id).addEventListener('input', () => { state.page = 1; render(); }));
-        el('assessmentLevel').addEventListener('input', () => { el('assessmentClass').value = ''; state.page = 1; render(); });
+        el('assessmentLevel').addEventListener('input', () => { const level = el('assessmentLevel').value; const row = state.students.find(s => !level || classLevel(s.kelas) === level); el('assessmentClass').value = row?.kelas || ''; state.page = 1; render(); });
         el('assessmentPrev').addEventListener('click', () => { state.page--; render(); });
         el('assessmentNext').addEventListener('click', () => { state.page++; render(); });
     });

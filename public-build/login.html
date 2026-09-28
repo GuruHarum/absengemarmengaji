@@ -18,14 +18,14 @@
     </style>
     <link rel="stylesheet" href="css/theme.css">
 <link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/css/pwa.css">
-    <link rel="stylesheet" href="css/layout-responsive.css">
+    <link rel="stylesheet" href="css/layout-responsive.css?v=20260928-account-link-4">
 </head>
 <body class="login-page min-h-screen flex items-center justify-center p-4">
 
     <div class="login-card bg-white w-full max-w-md rounded-2xl shadow-xl border border-blue-50/50 overflow-hidden transition-all duration-300 hover:shadow-2xl">
         <div class="bg-gradient-to-r from-blue-800 to-blue-600 px-6 py-8 text-center text-white relative">
             <div class="mx-auto w-16 h-16 bg-white rounded-full p-2 flex items-center justify-center shadow-md mb-3">
-                <img src="https://iili.io/FjF61ou.png" alt="Logo SDIT" class="w-full h-full object-contain">
+                <img src="assets/school-logo.png" alt="Logo SDIT" class="w-full h-full object-contain">
             </div>
             <h3 class="text-xl font-bold">Masuk ke Gemar Mengaji</h3>
             <p class="text-xs text-blue-100 mt-1">SDIT Harapan Umat Karawang</p>
@@ -81,7 +81,7 @@
             if (!data) return;
             document.documentElement.style.setProperty('--brand-color', resolveThemeColor(data.theme_color));
             const logo = document.querySelector('img[alt="Logo SDIT"]');
-            if (logo && data.logo_url) logo.src = data.logo_url;
+            if (logo && data.logo_url) logo.src = String(data.logo_url).includes('FjF61ou.png') ? 'assets/school-logo.png' : data.logo_url;
             const title = document.querySelector('.bg-gradient-to-r h3');
             if (title && data.name) title.textContent = data.name;
         });

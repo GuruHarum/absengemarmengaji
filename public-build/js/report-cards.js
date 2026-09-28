@@ -1,5 +1,5 @@
 window.StudentReports = (() => {
-    let rows = [], busy = false, previewToken = 0, pdfUrl = null;
+    let rows = [], busy = false, previewToken = 0, pdfUrl = null, activeTab = 'preview';
     const el = id => document.getElementById(id);
     const esc = value => escapeHtml(String(value ?? ''));
     const period = () => `${el('reportExam').value}_${el('reportSemester').value}`;
@@ -10,7 +10,7 @@ window.StudentReports = (() => {
     function setBusy(value) {
         busy = value;
         el('reportControls').disabled = value;
-        el('reportActions').querySelectorAll('button').forEach(button => { button.disabled = value; });
+        ['checkMissingScores','downloadReports'].forEach(id => { el(id).disabled = value; });
         el('reportSelection').disabled = value;
     }
     function updateNavigationButtons() {
@@ -29,7 +29,7 @@ window.StudentReports = (() => {
         else if (candidates.length)
             el('reportStudent').value = String(candidates[0].student.id);
         updateNavigationButtons();
-        preview();
+        if (activeTab === 'preview') preview();
     }
     function checks() {
         const grouped = ReportCore.missingByStudent(rows);
@@ -230,49 +230,56 @@ window.StudentReports = (() => {
         preview();
     }
     async function download() {
-        if (busy || !await load() || !rows.length)
-            return;
-        if (rows.some(row => !ReportCore.reportCheck(row).complete)) {
-            checks();
-            tell('Lengkapi nilai wajib, identitas dan masalah pengaturan pada hasil pemeriksaan sebelum menerbitkan PDF.');
-            return;
+        if (busy || !await load() || !rows.length) return;
+        const selectedRows = visible();
+        if (!selectedRows.length) { tell('Tidak ada siswa sesuai filter aktif.'); return; }
+        if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
+            checks(); tell('Lengkapi nilai wajib, identitas dan masalah pengaturan sebelum menerbitkan rapor.'); return;
         }
         setBusy(true);
         try {
-            const pdf = await ReportPDF.build(rows, {
-                onProgress: (n, total) => tell(`Membuat PDF: ${n}/${total} siswa`)
-            });
-            const issued = await supabase.rpc('record_report_issuance', {
-                entries: rows.map(row => ({ student_id: row.student.id, year: row.year,
-                    period: row.period, fingerprint: row.fingerprint }))
-            });
-            if (issued.error)
-                throw issued.error;
-            if (pdfUrl)
-                URL.revokeObjectURL(pdfUrl);
-            pdfUrl = URL.createObjectURL(pdf.output('blob'));
+            const blob = await ReportZip.build(selectedRows, { onProgress: (n,total)=>tell(`Membuat PDF siswa: ${n}/${total}`) });
+            const issued = await supabase.rpc('record_report_issuance', { entries: selectedRows.map(row => ({ student_id: row.student.id, year: row.year, period: row.period, fingerprint: row.fingerprint })) });
+            if (issued.error) throw issued.error;
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+            pdfUrl = URL.createObjectURL(blob);
+            const cls = el('reportClass').value || `Tingkat ${el('reportGrade').value}`;
             const link = el('reportPdfLink');
             link.href = pdfUrl;
-            link.download = `Rapor Kelas ${el('reportGrade').value} - ${el('reportExam').value.toUpperCase()} - ` +
-                `${el('reportYear').value}-${Number(el('reportYear').value) + 1}.pdf`;
-            link.hidden = false;
-            link.textContent = 'Simpan / Buka PDF';
-            link.click();
-            tell('PDF seluruh tingkat selesai. Jika unduhan tidak terbuka, ketuk Simpan / Buka PDF.');
+            link.download = `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${cls} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
+            link.hidden = false; link.textContent = 'Simpan ZIP Rapor'; link.click();
+            tell(`ZIP selesai: ${selectedRows.length} PDF siswa.`);
+        } catch (error) { tell(error.message); }
+        finally { setBusy(false); }
+    }
+    function changeTab(tab) {
+        if (!['preview','missing','print'].includes(tab)) return;
+        activeTab = tab;
+        for (const key of ['preview','missing','print']) {
+            const panel = el('reportView' + key[0].toUpperCase() + key.slice(1));
+            panel.hidden = key !== tab;
         }
-        catch (error) {
-            tell(error.message);
-        }
-        finally {
-            setBusy(false);
-        }
+        document.querySelectorAll('[data-rapor-view]').forEach(button => {
+            const chosen = button.dataset.raporView === tab;
+            button.classList.toggle('active', chosen);
+            button.setAttribute('aria-selected', String(chosen));
+        });
+        if (tab === 'preview' && selected() && !el('reportPreview').firstChild) preview();
+        if (tab === 'missing' && rows.length) checks();
     }
     function open() {
         if (AppAccess.profile?.role !== 'koordinator')
             return;
+        changeTab(activeTab);
         el('reportYear').value ||= String(new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0));
     }
     document.addEventListener('panelready', () => {
+        document.querySelectorAll('[data-rapor-view]').forEach(button =>
+            button.addEventListener('click', () => changeTab(button.dataset.raporView)));
+        el('reportPaperTint').addEventListener('change', event => {
+            el('reportPreview').classList.toggle('paper-tint', event.target.checked);
+        });
+        changeTab('preview');
         el('loadReports').addEventListener('click', load);
         el('checkMissingScores').addEventListener('click', load);
         el('reportClass').addEventListener('change', studentOptions);

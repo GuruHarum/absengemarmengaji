@@ -1,5 +1,5 @@
-const SUPABASE_URL = "https://ISI-URL-PROYEK-PENGUJIAN.supabase.co";
-const SUPABASE_ANON_KEY = "ISI-PUBLISHABLE-KEY-PENGUJIAN";
+const SUPABASE_URL = "https://pfuwdqgrltxxtnrzmzpe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmdXdkcWdybHR4eHRucnptenBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5OTkxMjYsImV4cCI6MjA5OTU3NTEyNn0.PlHBHfrbrWxqeBa77ybSKgDuTCKZtemVwIoPJOvJAlE";
 const supabaseClientFactory = window.supabase.createClient;
 window.supabase = supabaseClientFactory(SUPABASE_URL, SUPABASE_ANON_KEY);
 function resolveThemeColor(color) {

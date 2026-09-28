@@ -19,7 +19,7 @@ window.applySchoolProfile = function (profile) {
     if (!profile)
         return;
     const name = profile.name || 'Gemar Mengaji';
-    const logo = profile.logo_url || 'https://iili.io/FjF61ou.png';
+    const logo = (!profile.logo_url || String(profile.logo_url).includes('FjF61ou.png')) ? 'assets/school-logo.png' : profile.logo_url;
     const nameElement = document.getElementById('schoolName');
     const addressElement = document.getElementById('schoolAddress');
     const logoElement = document.getElementById('schoolLogo');

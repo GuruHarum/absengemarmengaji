@@ -29,7 +29,9 @@ async function getStudents() {
     if (window.AppAccess)
         await AppAccess.ready;
     if (!window.AppAccess) {
-        const {data,error} = await supabase.rpc('gm_public_tahsin_students');
+        const now = new Date();
+        const yearKey = now.getFullYear() - (now.getMonth() + 1 < 7 ? 1 : 0);
+        const {data,error} = await supabase.rpc('gm_public_tahsin_students', { year_key: yearKey });
         if (error) throw new Error('Daftar peserta Tahsin belum tersedia: ' + error.message);
         return data || [];
     }

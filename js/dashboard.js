@@ -1320,6 +1320,14 @@ async function handleFormSubmit(event) {
                 throw error;
             saved = data;
         }
+        else if (!teacherTab && AppAccess.full()) {
+            const { data, error } = await supabase.rpc('gm_create_student_master', {
+                p_student_name: payload['nama siswa'],
+                p_class_name: payload.kelas
+            });
+            if (error) throw error;
+            saved = data;
+        }
         else {
             const { data, error } = await supabase.from(table).insert([payload]).select('*').single();
             if (error)

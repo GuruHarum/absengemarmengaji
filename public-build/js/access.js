@@ -2,7 +2,8 @@ window.AppAccess = (() => {
     let profile = null;
     const full = () => ['admin', 'koordinator'].includes(profile?.role);
     const teacher = () => profile?.role === 'guru';
-    const canPage = page => page === 'rapor' ? profile?.role === 'koordinator' : full() || (teacher() && ['absensi', 'kelola', 'penilaian', 'profil'].includes(page) && (page !== 'absensi' || profile.attendanceEnabled !== false));
+    const linkedTeacher = () => Boolean(profile?.teacher_id && profile?.teacherName);
+    const canPage = page => ['rapor','laporan','arsip','pengaturan','identitas','maintenance'].includes(page) ? profile?.role === 'koordinator' : page === 'dashboard' ? Boolean(profile) : full() || (teacher() && ['absensi','kelola','kelompok','kelompok-tahsin','penilaian','profil'].includes(page) && (page !== 'absensi' || profile.attendanceEnabled !== false));
     const ready = (async () => {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data.user)
@@ -46,8 +47,9 @@ window.AppAccess = (() => {
         document.body.dataset.role = profile.role;
         const badge = document.getElementById('accountRole');
         if (badge)
-            badge.textContent = teacher() ? `Guru · ${profile.teacherName}` : (profile.role === 'koordinator' ? 'Koordinator' : 'Admin');
-        ['rapor', 'kelompok', 'absensi', 'infografik', 'identitas', 'pengaturan', 'maintenance'].forEach(page => {
+            badge.textContent = teacher() ? `Guru · ${profile.teacherName}` :
+                (profile.role === 'koordinator' ? (linkedTeacher() ? `Koordinator · ${profile.teacherName}` : 'Koordinator') : 'Admin');
+        ['dashboard','rapor','laporan','arsip','kelompok','kelompok-tahsin','absensi','infografik','identitas','pengaturan','maintenance'].forEach(page => {
             const item = document.getElementById(`menu-${page}`);
             if (item)
                 item.hidden = !canPage(page);
@@ -75,5 +77,5 @@ window.AppAccess = (() => {
         else
             deny(error);
     });
-    return { ready, full, teacher, canPage, scope, applyUI, get profile() { return profile; } };
+    return { ready, full, teacher, linkedTeacher, canPage, scope, applyUI, get profile() { return profile; } };
 })();

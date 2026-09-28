@@ -90,13 +90,17 @@ function renderTeachers() {
     document.querySelectorAll('.teacher-card').forEach(card => {
         card.addEventListener('click', function () {
             const index = this.getAttribute('data-index');
-            selectedTeacher = teachersData[index].nama;
+            const selectedTeacherRow = teachersData[index];
+            selectedTeacher = selectedTeacherRow.nama;
+            const selectedTeacherId = String(selectedTeacherRow.id ?? '');
             const teacherClassNumbers = new Set();
             studentsData.forEach(student => {
-                if (student['nama guru'] === selectedTeacher) {
+                const sameTeacher = student.teacher_id != null
+                    ? String(student.teacher_id) === selectedTeacherId
+                    : student['nama guru'] === selectedTeacher;
+                if (sameTeacher) {
                     const classNumber = extractClassNumber(student.kelas);
-                    if (classNumber)
-                        teacherClassNumbers.add(classNumber);
+                    if (classNumber) teacherClassNumbers.add(classNumber);
                 }
             });
             renderClassOptions(Array.from(teacherClassNumbers));
@@ -240,14 +244,7 @@ async function renderStudents() {
                                          <p class="text-sm text-gray-600 mb-1">Catatan:</p>
                                          <p class="text-gray-800">${escapeHtml(recordedData.note || '-')}</p>
                                      </div>
-                                      <div class="flex gap-2 mt-3">
-                                          <button type="button" class="edit-attendance-btn p-2 rounded-md text-blue-700 hover:bg-blue-50" data-attendance-id="${escapeHtml(recordedData.id)}" title="Edit absensi">
-                                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                                  <path fill-rule="evenodd" d="M2 15.25V18h2.75l8.447-8.447-2.75-2.75L2 15.25z" clip-rule="evenodd" />
-                                              </svg>
-                                          </button>
-                                      </div>
+                                      <p class="text-xs text-slate-500 mt-3">Perlu koreksi? Hubungi guru atau koordinator.</p>
                                  </div>` :
             `<div class="flex flex-col">
                                     <div class="attendance-options">

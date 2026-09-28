@@ -1,0 +1,54 @@
+'use strict';
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { readFileSync } = require('node:fs');
+const { join } = require('node:path');
+const vm = require('node:vm');
+const { PGlite } = require('../../.test-tools/node_modules/@electric-sql/pglite');
+const base = join(__dirname,'../..');
+const sql = name => readFileSync(join(base,'supabase',name),'utf8');
+const c=vm.createContext({});c.window=c;
+for (const file of ['quran-surahs','report-reference','curriculum-targets','report-core']) vm.runInContext(readFileSync(join(base,'js',file+'.js'),'utf8'),c);
+
+test('new PDF target migration is repeatable, guarded and stores both curriculum programs without overwriting other periods',async()=>{
+ const db=new PGlite();
+ try {
+  await db.exec(`create role anon; create role authenticated; create schema app_private;
+    create table public.quran_surahs(number integer primary key,ayahs integer not null);
+    create table public.report_reference(id integer primary key,data jsonb not null);
+    insert into report_reference values(1,'{"books":[]}');
+    create table public.report_settings(id integer primary key,data jsonb not null default '{}',version integer not null default 1);
+    insert into report_settings(id) values(1);
+    grant select on public.report_settings to authenticated;
+    create function app_private.is_manager() returns boolean language sql stable as $$select coalesce(current_setting('test.manager',true),'')='yes'$$;
+    grant usage on schema app_private to authenticated;
+  `);
+  for(const s of c.QURAN_SURAHS) await db.query('insert into quran_surahs values($1,$2)',[s.number,s.ayahs]);
+  await db.exec(sql('curriculum-targets-2025-2026.sql'));
+  await db.exec(sql('curriculum-targets-2025-2026.sql'));
+  const t=c.CurriculumTargets;
+  const save=(year,pr,grade,sub,v,previous=null)=>db.query('select public.save_report_target($1,$2,$3,$4,$5::jsonb,$6,$7::jsonb)',[year,pr,grade,sub,JSON.stringify(v),75,previous?JSON.stringify(previous):null]);
+  await db.exec('set role anon');
+  await assert.rejects(save(2025,'pts_ganjil',4,'tahsin',t.preset('tahsin',4,'pts_ganjil')),/Akses|permission/i);
+  await db.exec('reset role');
+  await db.exec('set role authenticated');
+  await assert.rejects(save(2025,'pts_ganjil',4,'tahsin',t.preset('tahsin',4,'pts_ganjil')),/Akses/);
+  await db.exec('reset role');
+  await db.query("select set_config('test.manager','yes',false)");
+  await db.exec('set role authenticated');
+  await save(2025,'pts_ganjil',4,'tahsin',t.preset('tahsin',4,'pts_ganjil'));
+  await save(2025,'pts_ganjil',4,'tahfidz',t.preset('tahfidz',4,'pts_ganjil'));
+  await save(2025,'pas_ganjil',5,'tahfidz',t.preset('tahfidz',5,'pas_ganjil'));
+  const rec=(await db.query('select data from report_settings where id=1')).rows[0].data.curriculum;
+  assert.equal(rec['2025_pts_ganjil_4'].tahsin_target.gharib_page_end,15);
+  assert.equal(rec['2025_pts_ganjil_4'].tahfidz_target.tahfidz_surah_start,67);
+  assert.equal(rec['2025_pas_ganjil_5'].tahfidz_target.tahfidz_ayah_start,16);
+  await assert.rejects(save(2025,'pts_ganjil',4,'tahsin',t.preset('tahsin',4,'pas_ganjil')),/berubah/);
+  await assert.rejects(save(2025,'pts_genap',4,'tahsin',{...t.preset('tahsin',4,'pts_genap'),gharib_page_end:61}),/Gharib/);
+  await assert.rejects(save(2025,'pts_genap',5,'tahfidz',{...t.preset('tahfidz',5,'pts_genap'),tahfidz_ayah:55}),/ayat Tahfidz/i);
+  await db.exec('reset role');
+  await db.exec("select set_config('test.manager','no',false)");
+  await db.exec('set role authenticated');
+  await assert.rejects(save(2025,'pts_genap',4,'tahsin',t.preset('tahsin',4,'pts_genap')),/Akses/);
+ } finally {await db.close();}
+});

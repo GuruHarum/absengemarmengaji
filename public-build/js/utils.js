@@ -85,15 +85,24 @@ function getTodayDate() {
     return `${year}-${month}-${day}`;
 }
 function getFilteredStudents() {
-    const filteredStudents = studentsData.filter(student => {
-        const studentClass = student.kelas;
-        const studentClassNumber = extractClassNumber(studentClass);
-        return (student['nama guru'] === selectedTeacher &&
-            studentClassNumber === selectedClass);
+    const selectedTeacherRow = (teachersData || []).find(teacher => String(teacher.nama || '').trim() === String(selectedTeacher || '').trim());
+    const selectedTeacherId = selectedTeacherRow?.id != null ? String(selectedTeacherRow.id) : '';
+    const selectedLevel = String(selectedClass || '').trim();
+    const filteredStudents = (studentsData || []).filter(student => {
+        const studentClassNumber = String(extractClassNumber(student.kelas) || '');
+        const hasTeacherId = student.teacher_id != null && String(student.teacher_id).trim() !== '';
+        const sameTeacher = hasTeacherId && selectedTeacherId
+            ? String(student.teacher_id) === selectedTeacherId
+            : String(student['nama guru'] || '').trim() === String(selectedTeacher || '').trim();
+        return sameTeacher && studentClassNumber === selectedLevel;
     });
-    filteredStudents.sort((a, b) => a['nama siswa'].localeCompare(b['nama siswa']));
+    filteredStudents.sort((a, b) => String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
+    if (window.GEMAR_DEBUG === true) {
+        console.log('[Roster Tahsin]', { teacher: selectedTeacher, teacherId: selectedTeacherId, tingkat: selectedLevel, totalRoster: studentsData?.length || 0, hasil: filteredStudents.length });
+    }
     return filteredStudents;
 }
+
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>'"]/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'

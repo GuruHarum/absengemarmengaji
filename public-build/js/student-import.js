@@ -34,7 +34,7 @@ window.StudentImport = (() => {
             throw new Error('Isi 1–1.000 siswa per file.');
         return result;
     }
-    // Informasi NOMOR GANDA untuk ditampilkan, bukan alasan memblokir seluruh file.
+    // NOMOR GANDA di file diblokir hingga diperbaiki; jangan mengosongkan identitas otomatis.
     // SERVER menentukan ulang pengosongan dari file asli sebelum pratinjau dan simpan.
     // Duplikasi nama+kelas / ID siswa ambigu tetap diblokir oleh RPC server.
     function auditFileDuplicates(entries) {
@@ -56,7 +56,7 @@ window.StudentImport = (() => {
                 })) });
                 for (const entry of matches) {
                     const current = issuesByRow.get(entry.row) || {
-                        ...entry, action: 'warning', reasons: [], related_file_rows: []
+                        ...entry, action: 'conflict', reasons: [], related_file_rows: []
                     };
                     current.reasons.push(`${field.toUpperCase()} ${value} digunakan pada ${matches.length} baris dalam file`);
                     for (const other of matches) {
@@ -71,11 +71,24 @@ window.StudentImport = (() => {
         }
         const issues = [...issuesByRow.values()].sort((a, b) => a.row - b.row)
             .map(row => ({ ...row, reason: row.reasons.join('; ') }));
-        return { local_only: true, can_import: true,
+        return { local_only: true, can_import: issues.length === 0,
             groups, rows: issues, total_file_rows: entries.length,
-            summary: { new: 0, update: 0, unchanged: 0, review: 0, conflict: 0, identifiers_cleared: issues.length, teacher_new: 0 } };
+            summary: { new: 0, update: 0, unchanged: 0, review: 0, conflict: issues.length, identifiers_cleared: 0, teacher_new: 0 } };
+    }
+    let xlsxLoading;
+    async function ensureXlsx() {
+        if (typeof XLSX !== 'undefined') return;
+        if (!xlsxLoading) xlsxLoading = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'js/vendor/xlsx.full.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Pustaka Excel gagal dimuat. Periksa koneksi.'));
+            document.head.appendChild(script);
+        });
+        await xlsxLoading;
     }
     async function read(file) {
+        await ensureXlsx();
         if (!/\.(xlsx|xls|csv)$/i.test(file.name))
             throw new Error('Gunakan file Excel (.xlsx/.xls) atau CSV.');
         if (file.size > 5 * 1024 * 1024)

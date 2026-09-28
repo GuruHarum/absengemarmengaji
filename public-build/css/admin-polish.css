@@ -128,3 +128,13 @@
 @media(max-width: 600px) {
     .admin-page .import-review-panel .import-result { font-size: 12px; padding: 12px; }
 }
+
+/* Status keanggotaan akun dapat dipindai tanpa membuka formulir. */
+.gm-account-link-tools{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:18px 0 10px}
+.gm-account-link-tools .field-label{min-width:170px}.gm-account-link-tools select{display:block;width:100%;margin-top:4px}
+.gm-link-badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.gm-link-badge.is-linked{background:#dcfce7;color:#166534}.gm-link-badge.is-unlinked{background:#fef3c7;color:#92400e}.gm-link-badge.is-admin{background:#e0e7ff;color:#3730a3}
+.gm-account-scope{font-size:.82rem;margin-top:5px;color:#475569}
+#accountRows tr[hidden]{display:none}
+
+.gm-account-directory-hint{font-size:.77rem;color:#64748b;max-width:560px;margin-top:4px}

@@ -1,12 +1,15 @@
 window.SettingsHub = (() => {
     let current = 'report';
     async function show(category) {
-        const valid = ['report', 'accounts', 'reference'];
+        const valid = ['report', 'accounts', 'reference', 'data'];
         if (!valid.includes(category)) return;
+        if (category === 'data' && AppAccess.profile?.role !== 'koordinator') return;
         if (category !== current && current === 'report' && window.ReportSettings?.hasUnsavedChanges?.()) {
             if (!(await AdminNotice.confirm('Ada perubahan rapor yang belum disimpan. Berpindah pengaturan tanpa menyimpannya?'))) return;
         }
         current = category;
+        if (category === 'accounts' && AppAccess.full()) await loadAccountSettings();
+        if (category === 'data' && AppAccess.profile?.role === 'koordinator') await SystemReset.open();
         document.querySelectorAll('[data-settings-panel]').forEach(panel => {
             panel.hidden = panel.dataset.settingsPanel !== category;
         });

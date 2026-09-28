@@ -90,13 +90,17 @@ function renderTeachers() {
     document.querySelectorAll('.teacher-card').forEach(card => {
         card.addEventListener('click', function () {
             const index = this.getAttribute('data-index');
-            selectedTeacher = teachersData[index].nama;
+            const selectedTeacherRow = teachersData[index];
+            selectedTeacher = selectedTeacherRow.nama;
+            const selectedTeacherId = String(selectedTeacherRow.id ?? '');
             const teacherClassNumbers = new Set();
             studentsData.forEach(student => {
-                if (student['nama guru'] === selectedTeacher) {
+                const sameTeacher = student.teacher_id != null
+                    ? String(student.teacher_id) === selectedTeacherId
+                    : student['nama guru'] === selectedTeacher;
+                if (sameTeacher) {
                     const classNumber = extractClassNumber(student.kelas);
-                    if (classNumber)
-                        teacherClassNumbers.add(classNumber);
+                    if (classNumber) teacherClassNumbers.add(classNumber);
                 }
             });
             renderClassOptions(Array.from(teacherClassNumbers));
