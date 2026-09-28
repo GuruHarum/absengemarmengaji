@@ -1,10 +1,10 @@
 (async () => {
     try {
         await AppAccess.ready;
-        for (const source of ['js/admin-notices.js', 'js/class-picker.js', 'js/quran-surahs.js', 'js/surah-picker.js', 'js/report-reference.js', 'js/curriculum-targets.js', 'js/report-core.js', 'js/progress-form.js', 'js/assessments-core.js', 'js/assignments.js', 'js/assessments.js', 'js/report-pdf.js', 'js/report-settings.js', 'js/report-cards.js', 'js/settings-hub.js', 'js/account-deletion.js', 'js/accounts.js', 'js/profile.js', 'js/enrollment.js', 'js/vendor/xlsx.full.min.js', 'js/student-import.js', 'js/teacher-photo.js', 'js/dashboard.js', 'js/admin.js', 'js/api.js']) {
+        for (const source of ['js/admin-notices.js', 'js/class-picker.js', 'js/quran-surahs.js', 'js/surah-picker.js', 'js/report-reference.js', 'js/curriculum-targets.js', 'js/report-core.js', 'js/progress-form.js', 'js/assessments-core.js', 'js/assignments.js', 'js/assessments.js', 'js/report-pdf.js', 'js/report-settings.js', 'js/report-cards.js', 'js/settings-hub.js', 'js/account-deletion.js', 'js/accounts.js', 'js/profile.js', 'js/enrollment.js', 'js/student-import.js', 'js/teacher-photo.js', 'js/dashboard.js', 'js/admin.js', 'js/api.js']) {
             await new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = ['js/student-import.js', 'js/dashboard.js'].includes(source) ? `${source}?v=20260926-student-guard-1` : source;
+                script.src = ['js/student-import.js', 'js/dashboard.js'].includes(source) ? `${source}?v=20260928-complete-1` : source;
                 script.onload = resolve;
                 script.onerror = () => reject(new Error(`Gagal memuat ${source}`));
                 document.body.appendChild(script);

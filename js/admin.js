@@ -319,7 +319,7 @@ function populateAdminDropdowns() {
     const dropdownNamaKelas = document.getElementById('filterClassName');
     if (dropdownGuru && typeof teachersData !== 'undefined' && Array.isArray(teachersData)) {
         dropdownGuru.innerHTML = '<option value="">Semua Guru</option>';
-        const uniqueTeachers = [...new Set(teachersData.map(g => g.nama || g.nama_guru).filter(Boolean))].sort();
+        const uniqueTeachers = [...new Set(teachersData.filter(g => g.attendance_enabled !== false).map(g => g.nama || g.nama_guru).filter(Boolean))].sort();
         uniqueTeachers.forEach(name => {
             const option = document.createElement('option');
             option.value = name;

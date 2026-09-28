@@ -180,13 +180,43 @@ window.PeriodicAssessments = (() => {
             setBusy(false);
         }
     }
+    // Guru untuk penilaian mengikuti pelajaran, bukan gabungan semua guru.
+    // Guru yang mengampu keduanya dapat tampil di kedua pilihan apabila
+    // memiliki siswa Tahfidz melalui kelompok aktif.
+    async function refreshSubjectTeachers() {
+        const subject = el('assessmentSubject').value || 'tahsin';
+        const previous = el('assessmentTeacher').value;
+        let eligible = state.teachers;
+        if (subject === 'tahsin') {
+            eligible = eligible.filter(row => row.attendance_enabled !== false);
+        } else {
+            const year = Number(el('assessmentYear').value);
+            const { data, error } = await supabase.from('teaching_assignments')
+                .select('teacher_id').eq('subject', 'tahfidz').eq('active', true)
+                .eq('academic_year_start', year);
+            if (error) throw error;
+            const ids = new Set((data || []).map(row => String(row.teacher_id)));
+            eligible = eligible.filter(row => ids.has(String(row.id)));
+        }
+        el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
+        eligible.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
+        const wanted = AppAccess.teacher?.() ? String(AppAccess.profile.teacher_id) : (previous || String(AppAccess.profile.teacher_id || ''));
+        if (eligible.some(row => String(row.id) === wanted))
+            el('assessmentTeacher').value = wanted;
+        else
+            el('assessmentTeacher').value = '';
+        el('assessmentTeacher').disabled = !AppAccess.full();
+        // Guru hanya melihat peserta yang terhubung dengan akunnya.
+        const teacherLabel = el('assessmentTeacher').closest?.('label');
+        if (teacherLabel) teacherLabel.hidden = !AppAccess.full();
+        return Boolean(el('assessmentTeacher').value);
+    }
     async function open() {
         if (state.busy)
             return;
         if (state.initialized) {
             state.busy = true;
             try {
-                const previous = el('assessmentTeacher').value;
                 if (window.ReportCore) {
                     const ref = await supabase.from('report_reference').select('data').eq('id', 1).single();
                     if (ref.error)
@@ -194,9 +224,7 @@ window.PeriodicAssessments = (() => {
                     ReportCore.useReference(ref.data.data);
                 }
                 state.teachers = await getTeachers();
-                el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
-                state.teachers.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
-                el('assessmentTeacher').value = previous;
+                await refreshSubjectTeachers();
             }
             catch (error) {
                 message(error.message, true);
@@ -217,16 +245,13 @@ window.PeriodicAssessments = (() => {
                 ReportCore.useReference(ref.data.data);
             }
             state.teachers = await getTeachers();
-            el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
-            state.teachers.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
-            if (AppAccess.profile.teacher_id)
-                el('assessmentTeacher').value = AppAccess.profile.teacher_id;
-            el('assessmentTeacher').disabled = !AppAccess.full();
+
             const now = new Date();
             el('assessmentYear').value = now.getFullYear() - (now.getMonth() < 6 ? 1 : 0);
             el('assessmentPeriod').value = now.getMonth() < 6 ? 'pts_genap' : 'pts_ganjil';
             yearLabel();
-            el('assessmentScopeNote').textContent = AppAccess.full() ? 'Tahsin otomatis mengikuti daftar siswa Gemar Mengaji. Atur anggota Tahfidz melalui menu Kelompok Tahfidz di sidebar.' : 'Tahsin mengikuti siswa Anda di Gemar Mengaji. Tahfidz mengikuti anggota kelompok yang ditugaskan kepada Anda.';
+            await refreshSubjectTeachers();
+            el('assessmentScopeNote').textContent = AppAccess.full() ? 'Tahsin mengikuti master siswa. Tahfidz mengikuti kelompok aktif; kolom Guru Tahfidz pada impor dapat membuat dan memperbarui anggota kelompok. Periksa daftar sebelum memberi nilai.' : 'Tahsin hanya siswa yang Anda ampu; Tahfidz hanya anggota kelompok Tahfidz Anda.';
             state.initialized = true;
             message('Pilih tahun ajaran dan periode, lalu tampilkan siswa.');
         }
@@ -240,7 +265,12 @@ window.PeriodicAssessments = (() => {
     function yearLabel() { const year = Number(el('assessmentYear').value); el('assessmentYearLabel').textContent = `Tahun ajaran ${year}/${year + 1}`; }
     document.addEventListener('panelready', () => {
         el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); return load(); });
-        el('assessmentYear').addEventListener('input', yearLabel);
+        el('assessmentYear').addEventListener('input', () => { yearLabel(); refreshSubjectTeachers().catch(error => message(error.message, true)); });
+        el('assessmentSubject').addEventListener('change', () => {
+            el('assessmentWorkspace').hidden = true;
+            state.students = []; state.saved.clear(); state.drafts.clear(); state.context = null;
+            refreshSubjectTeachers().catch(error => message(error.message, true));
+        });
         el('assessmentCards').addEventListener('input', event => {
             if (event.target.dataset.surahSearch) {
                 if (!event.target.dataset.surahCommit)

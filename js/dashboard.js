@@ -58,7 +58,9 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
             await fetchStudents();
         }
         if (typeof fetchAttendanceData === 'function' && attendanceData.length === 0) {
-            await fetchAttendanceData();
+            const ym = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+            const last = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
+            await fetchAttendanceData({date_from:`${ym}-01`,date_to:`${ym}-${String(last).padStart(2,'0')}`});
         }
         const yearInt = parseInt(selectedYear) || new Date().getFullYear();
         const monthInt = parseInt(selectedMonth) || (new Date().getMonth() + 1);
@@ -767,6 +769,10 @@ window.addEventListener('panelready', () => {
         }
         await renderMonthlyReportTable(currentMonth, currentYear, "", "", true);
         try {
+            // Muat hanya absensi bulan berjalan ketika panel dibuka, bukan seluruh tahun.
+            const start = `${currentYear}-${currentMonth}-01`;
+            const end = `${currentYear}-${currentMonth}-${String(new Date(Number(currentYear), Number(currentMonth), 0).getDate()).padStart(2, '0')}`;
+            if (!attendanceData.length) await fetchAttendanceData({date_from:start,date_to:end});
             if (typeof renderAdminTable === 'function') {
                 await renderAdminTable();
             }
@@ -1063,7 +1069,7 @@ function renderManageTable() {
                 classGroup = `<tr class="bg-indigo-50"><td colspan="5" class="px-6 py-2 text-xs font-bold text-indigo-700">Kelas: ${manageEscape(item.kelas || '-')}</td></tr>`;
             }
             const canEdit = !(AppAccess.teacher() && currentManageTab === 'guru' && (currentTeacherGroup !== 'tahsin' || String(AppAccess.profile.teacher_id) !== String(item.id)));
-            const actions = `<td class="px-6 py-3 text-center whitespace-nowrap">${canEdit ? `<button onclick="openManageModal('${id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold text-xs mr-3">Edit</button>` : '<span class="text-slate-400 text-xs">—</span>'}${currentManageTab === 'guru' && !AppAccess.teacher() ? `<button onclick="deleteData('${id}')" class="text-red-600 hover:text-red-800 font-semibold text-xs">Hapus</button>` : ''}</td>`;
+            const actions = `<td class="px-6 py-3 text-center whitespace-nowrap">${canEdit ? `<button onclick="openManageModal('${id}')" class="text-indigo-600 hover:text-indigo-800 font-semibold text-xs mr-3">Edit</button>` : '<span class="text-slate-400 text-xs">—</span>'}${currentManageTab === 'guru' && !AppAccess.teacher() ? `<button onclick="deleteData('${id}')" class="text-red-600 hover:text-red-800 font-semibold text-xs">Hapus</button>` : currentManageTab === 'siswa' && AppAccess.profile.role === 'koordinator' ? `<button onclick="deleteStudentVerified('${id}')" class="text-red-600 hover:text-red-800 font-semibold text-xs">Hapus siswa</button>` : ''}</td>`;
             if (currentManageTab === 'guru') {
                 const photo = currentTeacherGroup === 'tahsin' ? `<td class="px-6 py-3">${item.foto ? `<img src="${manageEscape(item.foto)}" alt="Foto ${manageEscape(item.nama)}" class="teacher-photo-circle teacher-photo-circle--small bg-slate-100" loading="lazy" decoding="async" onerror="this.onerror=null;this.classList.add('teacher-photo-circle--placeholder');this.src='assets/school-logo.png'">` : '<span class="text-slate-400">Belum ada foto</span>'}</td>` : '';
                 return `${classGroup}<tr class="hover:bg-slate-50"><td class="px-6 py-3 text-slate-500">${startNumber + offset + 1}</td><td class="px-6 py-3 font-semibold">${manageEscape(getManageTitle(item))}<div class="text-xs font-normal text-slate-500 mt-1">${manageEscape(item.nama_lengkap || 'Nama lengkap belum diisi')}</div><small>${item.attendance_enabled === false ? 'Khusus Tahfidz' : 'Tampil pada absensi Tahsin'}</small></td>${photo}${actions}</tr>`;
@@ -1085,7 +1091,7 @@ function refreshManageImportControls() {
         document.getElementById('studentImportYear').value = now.getFullYear() - (now.getMonth() < 6 ? 1 : 0);
     }
     document.getElementById('csvImportFile').accept = '.xlsx,.xls,.csv';
-    document.getElementById('csvImportHint').textContent = 'Impor 2 tahap. Nomor NIS/NISN yang berulang akan dikosongkan pada siswa yang diimpor; nama/kelas yang ambigu tetap harus diperiksa agar ID tidak ganda. Guru Tahsin/Tahfidz dan peserta rapor disinkronkan.';
+    document.getElementById('csvImportHint').textContent = 'Impor 2 tahap. Identitas dicocokkan berdasarkan NISN, lalu NIS; perubahan nama/kelas/guru diperbarui untuk ID yang sama. Nomor ganda atau NIS dan NISN yang bertentangan akan diblokir untuk diperiksa. Guru Tahfidz pada Excel menyinkronkan anggota kelompok.';
 }
 function switchManageTab(tab) {
     if (!['siswa', 'guru', 'guru-tahsin', 'guru-tahfidz', 'impor'].includes(tab))
@@ -1310,6 +1316,32 @@ async function handleFormSubmit(event) {
         button.textContent = buttonText;
     }
 }
+// Dua tahap konfirmasi: tinjau jumlah relasi, lalu ketik ID siswa.
+// Penghapusan sebenarnya wajib dilakukan RPC di database, bukan DELETE langsung.
+async function deleteStudentVerified(id) {
+    if (AppAccess.profile.role !== 'koordinator') return;
+    const { data: preview, error: previewError } = await supabase.rpc('gm_student_delete_preview', { p_student_id: Number(id) });
+    if (previewError) return AdminNotice.notify('Pratinjau penghapusan gagal: ' + previewError.message, 'error');
+    const confirmed = await AdminNotice.confirm(
+        `KONFIRMASI 1/2\nHapus siswa ${preview.name} (#${preview.id}), kelas ${preview.class}? ` +
+        `${preview.attendance} absensi dan ${preview.subject_assessments} penilaian serta relasi siswa akan dihapus permanen. ` +
+        'Guru, akun, foto dan data siswa lain tidak ikut dihapus. Buat backup terlebih dahulu.'
+    );
+    if (!confirmed) return;
+    const phrase = `HAPUS ${preview.id}`;
+    const typed = window.prompt(`KONFIRMASI 2/2\nKetik tepat: ${phrase}\nuntuk menghapus ${preview.name}.`);
+    if (typed !== phrase) return AdminNotice.notify('Penghapusan dibatalkan: konfirmasi kedua tidak cocok.', 'error');
+    try {
+        const { error } = await supabase.rpc('gm_delete_student_verified', {
+            p_student_id: Number(id), p_expected_name: preview.name,
+            p_expected_attendance: preview.attendance, p_confirmation: typed
+        });
+        if (error) throw error;
+        studentsData = await getStudents();
+        renderManageTable();
+        AdminNotice.notify(`Siswa ${preview.name} beserta data terkait berhasil dihapus.`, 'success');
+    } catch (error) { AdminNotice.notify('Penghapusan dibatalkan: ' + error.message, 'error'); }
+}
 async function deleteData(id) {
     // Master siswa dikunci selama TA 2026/2027 agar absensi tetap utuh.
     // Hapus massal siswa hanya melalui reset tahunan TERPISAH yang belum aktif.
@@ -1445,7 +1477,7 @@ function renderStudentImportPreview(data) {
         'HASIL PEMERIKSAAN FILE IMPOR',
         `Baru: ${summary.new || 0} · Diperbarui/Disinkronkan: ${summary.update || 0} · Sudah sesuai: ${summary.unchanged || 0} · Perlu diperiksa: ${summary.review || 0} · Konflik: ${summary.conflict || 0}`,
         `Referensi guru yang belum ada: ${summary.teacher_new || 0}`,
-        `NIS/NISN yang AKAN DIKOSONGKAN: ${summary.identifiers_cleared || 0} siswa`,
+        'Identitas bermasalah harus diperbaiki, tidak dikosongkan otomatis.',
         ...(data.local_only ? [] : [
             `Tahun ajaran: ${data.year_key || '-'} / ${(Number(data.year_key) || 0) + 1}`,
             `Perlu sinkronisasi guru/Tahfidz/rapor: ${summary.link_sync || 0} siswa`,
@@ -1526,7 +1558,7 @@ function renderStudentImportPreview(data) {
             lines.push('', 'Rapor yang dibuat berupa daftar peserta saja; nilai dan rapor disetujui tidak diubah.');
             lines.push('Siswa dengan Guru Tahfidz kosong TIDAK akan dipindah otomatis ke kelompok mana pun.', '');
         }
-        lines.push('Pratinjau selesai. Klik “Proses Impor Aman” jika semua nama dan pengosongan nomor sudah benar.');
+        lines.push('Pratinjau selesai. Klik “Proses Impor Aman” jika tidak ada konflik dan seluruh perubahan guru/kelas sudah benar.');
     }
 
     result.textContent = lines.join('\n');
@@ -1587,7 +1619,7 @@ async function importManageCsv() {
         if (!studentImportPreview.can_import) {
             return AdminNotice.notify('File impor perlu diperiksa', 'error');
         }
-        if (!(await AdminNotice.confirm(`Simpan impor tahun ajaran ${year_key}/${year_key + 1}? ${studentImportPreview.summary?.new || 0} siswa baru, ${studentImportPreview.summary?.update || 0} siswa diperbarui, ${studentImportPreview.summary?.link_sync || 0} relasi perlu disinkronkan. ${studentImportPreview.summary?.identifiers_cleared || 0} siswa akan dikosongkan KEDUA kolom NIS dan NISN karena nomor ganda (tidak dapat dipulihkan otomatis). Penugasan Tahsin/Tahfidz dan daftar 4 periode rapor akan diselaraskan sesuai Excel. Nilai/rapor terbit serta ID lama tidak dihapus.`))) {
+        if (!(await AdminNotice.confirm(`Simpan impor tahun ajaran ${year_key}/${year_key + 1}? ${studentImportPreview.summary?.new || 0} siswa baru, ${studentImportPreview.summary?.update || 0} siswa diperbarui, ${studentImportPreview.summary?.link_sync || 0} relasi perlu disinkronkan. Nomor ganda, identitas bertentangan, dan nama ambigu WAJIB diperiksa; jangan membuat ID ganda. Penugasan Tahsin/Tahfidz dan daftar 4 periode rapor akan diselaraskan sesuai Excel. Nilai/rapor terbit serta ID lama tidak dihapus.`))) {
             button.textContent = 'Proses Impor Aman';
             return;
         }
@@ -1603,7 +1635,7 @@ async function importManageCsv() {
         teachersData = await getTeachers();
         renderManageTable();
         document.getElementById('csvImportFile').value = '';
-        const summary = `${data.created} siswa baru, ${data.updated} master diperbarui, ${data.unchanged} master sudah sesuai. ${(data.tahfidz_added || 0)} kelompok Tahfidz ditautkan, ${(data.report_added || 0)} daftar periode rapor dibuat, ${(data.report_refreshed || 0)} daftar rapor diperbarui. ${(data.teachers_created || 0)} guru baru dibuat. ${data.identifiers_cleared || 0} siswa telah dikosongkan NIS/NISN-nya.`;
+        const summary = `${data.created} siswa baru, ${data.updated} master diperbarui, ${data.unchanged} master sudah sesuai. ${(data.tahfidz_added || 0)} kelompok Tahfidz ditautkan, ${(data.report_added || 0)} daftar periode rapor dibuat, ${(data.report_refreshed || 0)} daftar rapor diperbarui. ${(data.teachers_created || 0)} guru baru dibuat. Pencocokan NISN/NIS dan keanggotaan Tahfidz telah diperiksa.`;
         result.textContent = 'IMPOR BERHASIL\n' + summary + '\n\n' +
             `Tahun ajaran: ${year_key}/${year_key + 1}. Periksa menu Tahsin, Kelompok Tahfidz, dan Rapor.\n` +
             'Guru Tahfidz yang berbeda dari guru Tahsin tidak harus memiliki jumlah siswa yang sama.';
