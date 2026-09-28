@@ -1,3 +1,11 @@
+function getPublicAcademicYearStart() {
+    const now = new Date();
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit' }).formatToParts(now);
+    const year = Number(parts.find(part => part.type === 'year')?.value || now.getFullYear());
+    const month = Number(parts.find(part => part.type === 'month')?.value || (now.getMonth() + 1));
+    return month < 7 ? year - 1 : year;
+}
+
 async function fetchAllRows(queryFactory, batchSize = 500) {
     const all = [];
     let from = 0;
@@ -19,8 +27,10 @@ async function getTeachers() {
     if (window.AppAccess)
         await AppAccess.ready;
     if (!window.AppAccess) {
-        const {data,error} = await supabase.rpc('gm_public_tahsin_teachers');
+        const yearKey = getPublicAcademicYearStart();
+        const { data, error } = await supabase.rpc('gm_public_tahsin_teachers', { year_key: yearKey });
         if (error) throw new Error('Daftar guru Tahsin belum tersedia: ' + error.message);
+        window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), teacherSource: 'gm_public_tahsin_teachers', yearKey, teachers: (data || []).length, build: 'roster19-hotfix' };
         return data || [];
     }
     return fetchAllRows(() => AppAccess.scope(supabase.from('teachers').select('*').order('nama'), 'teachers'), 500);
@@ -29,11 +39,12 @@ async function getStudents() {
     if (window.AppAccess)
         await AppAccess.ready;
     if (!window.AppAccess) {
-        const now = new Date();
-        const yearKey = now.getFullYear() - (now.getMonth() + 1 < 7 ? 1 : 0);
-        const {data,error} = await supabase.rpc('gm_public_tahsin_students', { year_key: yearKey });
+        const yearKey = getPublicAcademicYearStart();
+        const { data, error } = await supabase.rpc('gm_public_tahsin_students', { year_key: yearKey });
         if (error) throw new Error('Daftar peserta Tahsin belum tersedia: ' + error.message);
-        return data || [];
+        const rows = data || [];
+        window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), studentSource: 'gm_public_tahsin_students', yearKey, students: rows.length, build: 'roster19-hotfix' };
+        return rows;
     }
     return fetchAllRows(() => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'), 500);
 }

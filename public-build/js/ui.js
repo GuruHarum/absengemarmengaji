@@ -95,7 +95,7 @@ function renderTeachers() {
             const selectedTeacherId = String(selectedTeacherRow.id ?? '');
             const teacherClassNumbers = new Set();
             studentsData.forEach(student => {
-                const sameTeacher = student.teacher_id != null
+                const sameTeacher = selectedTeacherId && student.teacher_id != null
                     ? String(student.teacher_id) === selectedTeacherId
                     : student['nama guru'] === selectedTeacher;
                 if (sameTeacher) {

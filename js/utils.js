@@ -85,24 +85,18 @@ function getTodayDate() {
     return `${year}-${month}-${day}`;
 }
 function getFilteredStudents() {
-    const selectedTeacherRow = (teachersData || []).find(teacher => String(teacher.nama || '').trim() === String(selectedTeacher || '').trim());
+    const selectedTeacherRow = (teachersData || []).find(teacher => teacher.nama === selectedTeacher);
     const selectedTeacherId = selectedTeacherRow?.id != null ? String(selectedTeacherRow.id) : '';
-    const selectedLevel = String(selectedClass || '').trim();
-    const filteredStudents = (studentsData || []).filter(student => {
-        const studentClassNumber = String(extractClassNumber(student.kelas) || '');
-        const hasTeacherId = student.teacher_id != null && String(student.teacher_id).trim() !== '';
-        const sameTeacher = hasTeacherId && selectedTeacherId
+    const filteredStudents = studentsData.filter(student => {
+        const studentClassNumber = extractClassNumber(student.kelas);
+        const sameTeacher = selectedTeacherId && student.teacher_id != null
             ? String(student.teacher_id) === selectedTeacherId
-            : String(student['nama guru'] || '').trim() === String(selectedTeacher || '').trim();
-        return sameTeacher && studentClassNumber === selectedLevel;
+            : student['nama guru'] === selectedTeacher;
+        return sameTeacher && studentClassNumber === selectedClass;
     });
-    filteredStudents.sort((a, b) => String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
-    if (window.GEMAR_DEBUG === true) {
-        console.log('[Roster Tahsin]', { teacher: selectedTeacher, teacherId: selectedTeacherId, tingkat: selectedLevel, totalRoster: studentsData?.length || 0, hasil: filteredStudents.length });
-    }
+    filteredStudents.sort((a, b) => a['nama siswa'].localeCompare(b['nama siswa']));
     return filteredStudents;
 }
-
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>'"]/g, char => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
