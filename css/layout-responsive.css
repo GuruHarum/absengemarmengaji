@@ -173,7 +173,7 @@
     body.public-page #classOptions { grid-template-columns: repeat(2, minmax(0,1fr)); }
     body.public-page #attendanceEditModal { overflow-y: auto; align-items: safe center; }
     body.public-page #attendanceEditModal > div { max-height: calc(100dvh - 24px); overflow-y: auto; }
-    body.login-page { min-height: 100dvh; }
+    body.login-page { min-height: 100dvh; display: flex; justify-content: center; align-items: center; }
     body.login-page .login-card { max-width: min(100%, 440px); }
     body.maintenance-page .maintenance-layout { max-width: 100%; }
     body.maintenance-page .maintenance-brand { min-width: 0; flex-wrap: wrap; }
@@ -224,7 +224,10 @@
 
 @media screen and (max-height: 600px) {
     body.login-page {
-        justify-content: flex-start;
+        /* Tetap di tengah secara horizontal pada desktop pendek.
+           Karena body adalah flex-row, justify-content mengatur sumbu horizontal. */
+        justify-content: center;
+        align-items: flex-start;
         padding-top: max(12px, env(safe-area-inset-top, 0px));
         padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
     }
@@ -529,4 +532,10 @@
 
 @media (prefers-reduced-motion: reduce) {
     .admin-toast,.admin-toast.notice-leaving { animation-duration:.01ms; }
+}
+
+@media screen {
+    body.login-page {
+        justify-content: center !important;
+    }
 }

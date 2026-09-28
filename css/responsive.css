@@ -394,3 +394,5 @@ textarea {
 .loader-logo-badge[hidden], .loader-logo-badge img[hidden] { display: none; }
 @media (max-height: 740px) { .loader-logo-badge { width: 52px; height: 52px; margin-bottom: 10px; padding: 5px; } }
 @media (max-height: 520px) { .loader-logo-badge { width: 40px; height: 40px; margin-bottom: 6px; padding: 3px; } }
+/* Logo sekolah v3: aset transparan berbentuk lingkaran. */
+#schoolLogo,.loader-logo-badge img{border-radius:50%!important;object-fit:contain!important;background:transparent!important}

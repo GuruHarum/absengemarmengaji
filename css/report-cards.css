@@ -36,3 +36,29 @@
     border-top: 1px solid #6a8d79;
   }
 }
+
+/* Rapor: pemisahan submenu; hanya satu panel terlihat. */
+#page-rapor [hidden] { display: none !important; }
+#page-rapor .report-period-panel { padding: 18px 22px; }
+#page-rapor .report-period-panel .report-grid { align-items: end; }
+#page-rapor .report-submenu { display: flex; gap: 8px; margin: 0; flex-wrap: wrap; }
+#page-rapor .report-submenu button { min-height: 42px; padding: 10px 18px; border-radius: 10px; }
+#page-rapor .report-subview { min-width: 0; }
+#page-rapor .report-view-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+#page-rapor .report-view-heading h3 { margin: 0; }
+#page-rapor .report-summary { font-weight: 600; color: var(--brand-dark, #174b3c); margin-bottom: 0; }
+#page-rapor .report-action-feedback:empty, #page-rapor .report-summary:empty { display: none; }
+#page-rapor .report-selection-card { align-self: start; }
+#page-rapor .report-selection-card h3 { margin: 0 0 15px; }
+#page-rapor .report-paper-option { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 16px; }
+#page-rapor .report-paper-option input { width: auto; }
+#page-rapor .report-preview { background: #fff; border: 1px solid #d5dfd9; border-radius: 2px; overflow: hidden; }
+#page-rapor .report-preview.paper-tint { background: #f1e2bd; }
+#page-rapor .report-preview canvas { background: transparent; }
+#page-rapor .report-identity-details { margin-top: 18px; }
+#page-rapor .report-identity-details summary { font-size: 13px; }
+#page-rapor .report-print-panel { max-width: 900px; }
+#page-rapor .report-paper-note { background: var(--theme-soft, #f1f5ef); padding: 12px 14px; border-radius: 10px; font-size: 12px; }
+.account-email-pick { color: var(--brand-dark, #175844); text-align: left; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.account-email-pick:hover { text-decoration-thickness: 2px; }
+@media(max-width: 680px) { #page-rapor .report-submenu button { flex: 1 1 auto; font-size: 12px; padding: 10px 7px; } #page-rapor .report-panel { padding: 16px; } }
