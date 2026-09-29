@@ -1,0 +1,88 @@
+/* Gemar Mengaji — REV38
+   Halaman login memakai atmosfer yang sama dengan loading animation.
+   Rapor digambar melalui canvas di js/report-pdf.js. */
+
+body.login-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #173d36 0%, #0c2724 48%, #071c1a 100%) !important;
+  color: #203e35;
+}
+
+body.login-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  opacity: .055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cpath d='M48 0 62 34 96 48 62 62 48 96 34 62 0 48 34 34Z M0 0 96 96 M96 0 0 96' fill='none' stroke='%23e4c68c' stroke-width='.8'/%3E%3C/svg%3E");
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 8%, #000 88%);
+  mask-image: radial-gradient(ellipse at center, transparent 8%, #000 88%);
+}
+
+body.login-page::after {
+  content: "";
+  position: fixed;
+  inset: 18px;
+  z-index: -1;
+  pointer-events: none;
+  border: 1px solid rgba(211,183,127,.16);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 0 7px rgba(211,183,127,.025),
+    0 0 120px rgba(201,170,106,.045);
+}
+
+body.login-page .login-card {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,254,251,.975) !important;
+  border-color: rgba(220,196,145,.34) !important;
+  box-shadow: 0 26px 80px rgba(2,21,18,.32) !important;
+  backdrop-filter: blur(10px);
+}
+
+body.login-page .login-card > .bg-gradient-to-r {
+  background:
+    radial-gradient(circle at 85% 10%, rgba(255,255,255,.09), transparent 30%),
+    linear-gradient(135deg, #123c33 0%, #216454 100%) !important;
+  border-bottom: 1px solid rgba(220,196,145,.28);
+}
+
+body.login-page .login-card > .bg-gradient-to-r::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cpath d='M36 1 46 26 71 36 46 46 36 71 26 46 1 36 26 26Z' fill='none' stroke='%23efd7a1' stroke-width='.7'/%3E%3C/svg%3E");
+}
+
+body.login-page .login-card img[alt="Logo SDIT"] {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  aspect-ratio: 1 / 1;
+}
+
+body.login-page #loginForm input {
+  background: rgba(255,255,255,.96);
+}
+
+body.login-page #loginForm button[type="submit"] {
+  background: linear-gradient(135deg, #216454, #174a3e) !important;
+}
+
+body.login-page #loginForm button[type="submit"]:hover {
+  background: linear-gradient(135deg, #1b574a, #10382f) !important;
+}
+
+@media (max-width: 520px) {
+  body.login-page { padding: 16px !important; }
+  body.login-page::after { inset: 10px; border-radius: 18px; }
+  body.login-page .login-card { border-radius: 18px !important; }
+}

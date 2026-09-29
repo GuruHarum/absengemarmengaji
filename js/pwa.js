@@ -1,7 +1,7 @@
 (() => {
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'loader36';
+    const BUILD = 'loader40';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;

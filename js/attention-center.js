@@ -30,8 +30,7 @@ window.GMAttention = (() => {
     const missingGroupRows = subject => state.rows.filter(row => row.issue_type === 'missing_group' && row.subject === subject);
 
     function issueText(row) {
-        if (row.issue_type === 'missing_group')
-            return `Belum memiliki kelompok ${row.subject === 'tahsin' ? 'Tahsin' : 'Tahfidz'}`;
+        if (row.issue_type === 'missing_group') return `Belum memiliki kelompok ${row.subject === 'tahsin' ? 'Tahsin' : 'Tahfidz'}`;
         const payload = row.issue_payload || {};
         const missing = Array.isArray(payload.missing) ? payload.missing : [];
         const invalid = Array.isArray(payload.invalid) ? payload.invalid : [];
@@ -127,9 +126,7 @@ window.GMAttention = (() => {
         return [...groups.values()].sort((a,b) => a.teacherName.localeCompare(b.teacherName, 'id'));
     }
     function coordinatorScoreGroups() {
-        const search = String(el('gmAttentionSearch')?.value || '').trim().toLocaleLowerCase('id');
-        return teacherScoreGroups(state.rows.filter(row => row.issue_type === 'incomplete_score'))
-            .filter(group => !search || group.teacherName.toLocaleLowerCase('id').includes(search));
+        return teacherScoreGroups(state.rows.filter(row => row.issue_type === 'incomplete_score'));
     }
     function scoreGroupsMarkup(groups) {
         return `<div class="gm-attention-teacher-groups gm-attention-teacher-groups-compact">${groups.map(group => {
@@ -145,6 +142,15 @@ window.GMAttention = (() => {
             </article>`;
         }).join('')}</div>`;
     }
+    function listHeadMarkup(coordinatorScores) {
+        if (coordinatorScores) {
+            const total = coordinatorScoreGroups().length;
+            return `<div class="gm-attention-list-head"><div><strong>Tindak lanjut</strong><span id="gmAttentionResultCount"></span></div>
+                <button type="button" id="gmAttentionNotifyAll" class="gm-attention-open" ${total ? '' : 'disabled'}>Ingatkan semua</button></div>`;
+        }
+        return `<div class="gm-attention-list-head"><div><strong>Tindak lanjut</strong><span id="gmAttentionResultCount"></span></div>
+            <label class="gm-attention-search"><span class="sr-only">Cari siswa</span><input id="gmAttentionSearch" type="search" name="attention_search" placeholder="Cari siswa..." autocomplete="off"></label></div>`;
+    }
     function listMarkup() {
         const coordinatorScores = AppAccess.profile?.role === 'koordinator' && state.filter === 'scores';
         if (coordinatorScores) {
@@ -154,34 +160,33 @@ window.GMAttention = (() => {
             return `${scoreGroupsMarkup(shown)}${groups.length > shown.length ? `<button type="button" id="gmAttentionMore" class="gm-attention-more">Tampilkan berikutnya <span>${shown.length}/${groups.length} guru</span></button>` : ''}`;
         }
         const rows = filteredRows();
-        if (!rows.length) {
-            return `<div class="gm-attention-empty"><span class="gm-attention-empty-mark" aria-hidden="true">✓</span><strong>Tidak ada yang perlu ditindaklanjuti</strong></div>`;
-        }
+        if (!rows.length) return `<div class="gm-attention-empty"><span class="gm-attention-empty-mark" aria-hidden="true">✓</span><strong>Tidak ada yang perlu ditindaklanjuti</strong></div>`;
         const shown = rows.slice(0, state.limit);
         return `<div class="gm-attention-list">${shown.map(rowMarkup).join('')}</div>${rows.length > shown.length ? `<button type="button" id="gmAttentionMore" class="gm-attention-more">Tampilkan berikutnya <span>${shown.length}/${rows.length}</span></button>` : ''}`;
     }
-    function renderContent() {
-        if (!state.section) return;
-        const summary = el('gmAttentionSummary');
-        const list = el('gmAttentionRows');
-        const count = el('gmAttentionResultCount');
-        if (summary) summary.innerHTML = summaryMarkup();
-        if (list) list.innerHTML = listMarkup();
-        const coordinatorScores = AppAccess.profile?.role === 'koordinator' && state.filter === 'scores';
-        const resultTotal = coordinatorScores ? coordinatorScoreGroups().length : filteredRows().length;
-        if (count) count.textContent = coordinatorScores ? `${resultTotal} guru` : String(resultTotal);
-        const search = el('gmAttentionSearch');
-        if (search) search.placeholder = coordinatorScores ? 'Cari guru...' : 'Cari siswa...';
+    function bindDynamicHandlers() {
         state.section.querySelectorAll('[data-attention-filter]').forEach(button => button.addEventListener('click', () => {
             const next = button.dataset.attentionFilter;
-            if (AppAccess.profile?.role === 'koordinator')
-                state.filter = next === 'scores' ? 'scores' : (state.filter === next ? 'scores' : next);
-            else
-                state.filter = state.filter === next ? 'all' : next;
+            if (AppAccess.profile?.role === 'koordinator') state.filter = next === 'scores' ? 'scores' : (state.filter === next ? 'scores' : next);
+            else state.filter = state.filter === next ? 'all' : next;
             state.limit = 8;
             renderContent();
         }));
+        el('gmAttentionSearch')?.addEventListener('input', () => { state.limit = 8; renderContent(); });
         el('gmAttentionMore')?.addEventListener('click', () => { state.limit += 8; renderContent(); });
+        el('gmAttentionNotifyAll')?.addEventListener('click', async () => {
+            const button = el('gmAttentionNotifyAll');
+            if (!button || !window.GMNotifications?.sendAttentionAll) return;
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Mengirim...';
+            try {
+                await window.GMNotifications.sendAttentionAll(coordinatorScoreGroups(), { year: state.year, period: state.period });
+            } finally {
+                button.disabled = false;
+                button.textContent = original;
+            }
+        });
         state.section.querySelectorAll('[data-attention-open]').forEach(button => button.addEventListener('click', () => openIssue(state.rows[Number(button.dataset.attentionOpen)])));
         state.section.querySelectorAll('[data-attention-notify]').forEach(button => button.addEventListener('click', async () => {
             const teacherId = button.dataset.attentionNotify;
@@ -197,6 +202,20 @@ window.GMAttention = (() => {
                 button.innerHTML = original;
             }
         }));
+    }
+    function renderContent() {
+        if (!state.section) return;
+        const body = el('gmAttentionBody');
+        const coordinatorScores = AppAccess.profile?.role === 'koordinator' && state.filter === 'scores';
+        if (body) body.innerHTML = `<div id="gmAttentionSummary" class="gm-attention-summary"></div>${listHeadMarkup(coordinatorScores)}<div id="gmAttentionRows"></div>`;
+        const summary = el('gmAttentionSummary');
+        const list = el('gmAttentionRows');
+        const count = el('gmAttentionResultCount');
+        if (summary) summary.innerHTML = summaryMarkup();
+        if (list) list.innerHTML = listMarkup();
+        const resultTotal = coordinatorScores ? coordinatorScoreGroups().length : filteredRows().length;
+        if (count) count.textContent = coordinatorScores ? `${resultTotal} guru` : String(resultTotal);
+        bindDynamicHandlers();
     }
     async function openIssue(row) {
         if (!row) return;
@@ -233,12 +252,7 @@ window.GMAttention = (() => {
         try {
             state.rows = await fetchAllRpcRows('gm_attention_center', { year_key: state.year, period_key: state.period }, 500);
             state.limit = 8;
-            if (state.filter !== 'all' && !state.rows.some(matchesFilter)) state.filter = 'all';
-            if (body) body.innerHTML = `<div id="gmAttentionSummary" class="gm-attention-summary"></div>
-                <div class="gm-attention-list-head"><div><strong>Tindak lanjut</strong><span id="gmAttentionResultCount"></span></div>
-                <label class="gm-attention-search"><span class="sr-only">Cari siswa</span><input id="gmAttentionSearch" type="search" name="attention_search" placeholder="Cari siswa..." autocomplete="off"></label></div>
-                <div id="gmAttentionRows"></div>`;
-            el('gmAttentionSearch')?.addEventListener('input', () => { state.limit = 8; renderContent(); });
+            if (state.filter !== 'all' && !state.rows.some(matchesFilter)) state.filter = AppAccess.profile?.role === 'koordinator' ? 'scores' : 'all';
             renderContent();
         } catch (error) {
             console.error('Pusat Perlu Perhatian gagal dimuat:', error);

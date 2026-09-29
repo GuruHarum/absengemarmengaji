@@ -6,6 +6,51 @@ window.LearningGroups = (() => {
   const schoolYear = () => { const d = new Date(); return d.getFullYear() - (d.getMonth() < 6 ? 1 : 0); };
   const titleOf = subject => subject === 'tahsin' ? 'Tahsin' : 'Tahfidz';
 
+  let tahsinPickerDialog;
+  function teacherName(state, id) {
+    const t = state.teachers.find(row => String(row.id) === String(id));
+    return t?.nama_lengkap || t?.nama || 'Guru tidak tersedia';
+  }
+  function gradeFromClassName(value) {
+    const match = String(value || '').match(/(?:^|\D)([1-6])(?:\D|$)/);
+    return match ? match[1] : '';
+  }
+  function tahsinGroupName(state, teacherId, ids) {
+    const levels = [...new Set([...ids].map(id => gradeFromClassName(state.students.find(student => String(student.id) === String(id))?.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
+    if (!levels.length) return '';
+    return `Tahfidz ${teacherName(state, teacherId)} / Kelas ${levels.join(', ')}`;
+  }
+  async function pickTahsinLevels(levels) {
+    if (!levels.length) return [];
+    if (!tahsinPickerDialog) {
+      tahsinPickerDialog = document.createElement('dialog');
+      tahsinPickerDialog.className = 'admin-confirm admin-value-dialog';
+      tahsinPickerDialog.innerHTML = `<form method="dialog" class="gm-level-picker">
+        <div class="confirm-emblem" aria-hidden="true">≡</div>
+        <h2>Samakan dengan siswa Tahsin</h2>
+        <p>Pilih satu atau beberapa tingkat kelas Tahsin yang ingin disalin ke kelompok Tahfidz.</p>
+        <div id="gmTahsinLevelList" class="assignment-student-options gm-member-picker" style="max-height:280px;overflow:auto;margin:8px 0 14px"></div>
+        <div class="confirm-actions"><button type="button" data-cancel class="secondary-action">Batal</button><button type="submit" value="ok" class="primary-action">Gunakan pilihan</button></div>
+      </form>`;
+      document.body.append(tahsinPickerDialog);
+      tahsinPickerDialog.querySelector('[data-cancel]').addEventListener('click', () => tahsinPickerDialog.close('cancel'));
+      tahsinPickerDialog.addEventListener('cancel', event => { event.preventDefault(); tahsinPickerDialog.close('cancel'); });
+    }
+    const list = tahsinPickerDialog.querySelector('#gmTahsinLevelList');
+    list.innerHTML = levels.map(level => `<label><input type="checkbox" value="${safe(level)}"><span><strong>Kelas ${safe(level)}</strong><small>Mencakup seluruh rombel tingkat ${safe(level)}</small></span></label>`).join('');
+    return await new Promise(resolve => {
+      const finish = () => {
+        const picked = tahsinPickerDialog.returnValue === 'ok'
+          ? [...list.querySelectorAll('input:checked')].map(input => input.value).filter(Boolean)
+          : [];
+        tahsinPickerDialog.removeEventListener('close', finish);
+        resolve(picked);
+      };
+      tahsinPickerDialog.addEventListener('close', finish);
+      tahsinPickerDialog.showModal();
+    });
+  }
+
   function shell(subject) {
     const title = titleOf(subject);
     const host = el(subject === 'tahsin' ? 'learningGroupTahsin' : 'learningGroupTahfidz');
@@ -49,7 +94,7 @@ window.LearningGroups = (() => {
               </div>
               <div class="gm-group-form-grid">
                 <label class="field-label">Kelas siswa
-                  <select data-class required><option value="">Pilih kelas</option></select>
+                  <select data-class ${subject === 'tahfidz' ? '' : 'required'}><option value="">Pilih kelas</option></select>
                 </label>
                 <label class="field-label">Cari siswa
                   <input data-search type="search" placeholder="Cari nama siswa di semua kelas" autocomplete="off">
@@ -57,6 +102,7 @@ window.LearningGroups = (() => {
               </div>
               <div class="gm-group-tools gm-member-tools">
                 <button type="button" data-pick-visible class="secondary-action">Pilih semua</button>
+                ${subject === 'tahfidz' ? '<button type="button" data-sync-tahsin class="secondary-action">Samakan dengan siswa Tahsin</button>' : ''}
                 <button type="button" data-clear class="secondary-action">Kosongkan</button>
                 <strong data-selected>0 siswa dipilih</strong>
               </div>
@@ -107,11 +153,7 @@ window.LearningGroups = (() => {
     host.querySelector('[data-refresh]').disabled = value;
     host.querySelector('[data-year]').disabled = value;
     host.querySelector('[data-view-teacher]').disabled = value;
-    host.querySelectorAll('[data-edit], [data-end], [data-delete-group]').forEach(button => button.disabled = value);
-  }
-  function teacherName(state, id) {
-    const t = state.teachers.find(row => String(row.id) === String(id));
-    return t?.nama_lengkap || t?.nama || 'Guru tidak tersedia';
+    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer]').forEach(button => button.disabled = value);
   }
   function selectedTeacher(subject) {
     return shell(subject).querySelector('[data-view-teacher]').value;
@@ -119,7 +161,7 @@ window.LearningGroups = (() => {
 
   async function open(subject, refresh = false) {
     const host = shell(subject);
-    const state = views[subject] ||= { teachers: [], students: [], groups: [], members: [], selected: new Set(), edit: null, busy: false, year: schoolYear() };
+    const state = views[subject] ||= { teachers: [], students: [], groups: [], members: [], selected: new Set(), edit: null, busy: false, year: schoolYear(), autoTahsinLevels: [] };
     if (state.busy) return;
     const requestedYear = Number(host.querySelector('[data-year]').value || schoolYear());
     if (state.groups.length && !refresh && requestedYear === state.year) return;
@@ -139,7 +181,7 @@ window.LearningGroups = (() => {
         fetchAllRows(() => supabase.from('teaching_assignments').select('id,teacher_id,subject,class_name,academic_year_start,active').eq('subject', subject).eq('academic_year_start', year).order('class_name')),
         fetchAllRows(() => supabase.from('assessment_group_members').select('assignment_id,student_id,subject,academic_year_start,active').eq('subject', subject).eq('academic_year_start', year))
       ]);
-      Object.assign(state, { teachers, students, groups, members, year });
+      Object.assign(state, { teachers, students, groups, members, year, autoTahsinLevels: [] });
       state.edit = null; state.selected.clear();
 
       const allowedTeachers = teachers.filter(t => subject !== 'tahsin' || t.attendance_enabled !== false);
@@ -149,28 +191,30 @@ window.LearningGroups = (() => {
       const teacherIds = new Set(allowedTeachers.map(t => String(t.id)));
       const firstWithGroup = groups.find(g => teacherIds.has(String(g.teacher_id)))?.teacher_id;
       teacherSelect.value = AppAccess.teacher() ? String(AppAccess.profile.teacher_id || '') : (teacherIds.has(String(previousTeacher)) ? String(previousTeacher) : (firstWithGroup ? String(firstWithGroup) : (allowedTeachers[0] ? String(allowedTeachers[0].id) : '')));
-      teacherSelect.disabled = AppAccess.teacher(); host.querySelector('[data-year]').disabled = AppAccess.teacher(); host.querySelector('[data-show-archived]').closest('label').hidden = AppAccess.teacher();
+      teacherSelect.disabled = AppAccess.teacher();
+      host.querySelector('[data-year]').disabled = AppAccess.teacher();
+      host.querySelector('[data-show-archived]').closest('label').hidden = AppAccess.teacher();
 
-      const cls = host.querySelector('[data-class]'); cls.replaceChildren(new Option('Pilih kelas', ''));
-      [...new Set(students.map(s => s.kelas).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}))
-        .forEach(c => cls.add(new Option(c,c)));
+      const cls = host.querySelector('[data-class]');
+      cls.replaceChildren(new Option('Pilih kelas', ''));
+      [...new Set(students.map(s => s.kelas).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true})).forEach(c => cls.add(new Option(c,c)));
       resetForm(subject, false);
-      renderGroups(subject); renderStudents(subject);
+      renderGroups(subject);
+      renderStudents(subject);
       msg(subject, '');
-    } catch(error) { msg(subject, `Gagal memuat kelompok: ${error.message}`, true); }
-    finally { busy(subject, false); }
+    } catch(error) {
+      msg(subject, `Gagal memuat kelompok: ${error.message}`, true);
+    } finally {
+      busy(subject, false);
+    }
   }
 
   function membersOf(state, groupId) {
-    const g = state.groups.find(x => x.id === groupId); return new Set(state.members.filter(row => row.assignment_id === groupId && (g?.active ? row.active : true)).map(row => String(row.student_id)));
-  }
-  function gradeFromClassName(value) {
-    const match = String(value || '').match(/(?:^|\D)([1-6])(?:\D|$)/);
-    return match ? match[1] : '';
+    const g = state.groups.find(x => x.id === groupId);
+    return new Set(state.members.filter(row => row.assignment_id === groupId && (g?.active ? row.active : true)).map(row => String(row.student_id)));
   }
   function groupClassLabels(state, group, students) {
-    const labels = [...new Set([...membersOf(state, group.id)].map(id => students.get(id)?.kelas).filter(Boolean))]
-      .sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
+    const labels = [...new Set([...membersOf(state, group.id)].map(id => students.get(id)?.kelas).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'id',{numeric:true}));
     if (labels.length) return labels;
     const raw = String(group.class_name || '').trim();
     const slash = raw.lastIndexOf(' / ');
@@ -181,7 +225,7 @@ window.LearningGroups = (() => {
     const state = views[subject], host = shell(subject), target = host.querySelector('[data-groups]');
     const teacherId = selectedTeacher(subject);
     if (!teacherId) {
-      target.innerHTML = '<div class="gm-empty-state gm-empty-rich"><strong>Pilih guru</strong><span>Kelompok akan tampil di sini.</span></div>';
+      target.innerHTML = '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3"/><path d="M5 20c.8-4 3.2-6 7-6s6.2 2 7 6"/></svg></span><strong>Pilih guru</strong><span>Kelompok akan tampil di sini.</span></div>';
       host.querySelector('[data-page-summary]').textContent = 'Satu halaman hanya menampilkan kelompok milik satu guru.';
       host.querySelector('[data-editor]').hidden = true;
       return;
@@ -215,13 +259,14 @@ window.LearningGroups = (() => {
     host.querySelector('[data-page-summary]').textContent = `${teacherName(state, teacherId)} · ${buckets.length} tingkat · ${totalMembers} siswa`;
     target.innerHTML = buckets.map(bucket => {
       const title = bucket.grade === 'lain' ? 'Tingkat belum dikenali' : `Tingkat ${bucket.grade}`;
-      const breakdown = [...bucket.classCounts]
-        .sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true}))
-        .map(([c,n])=>`<span>${safe(c)} <b>${n}</b></span>`).join('');
+      const breakdown = [...bucket.classCounts].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([c,n])=>`<span>${safe(c)} <b>${n}</b></span>`).join('');
       const groupRows = bucket.groups.map(({group,ids,labels}) => `<div class="gm-grade-group-row">
           <div><strong>${safe(labels.join(', '))}</strong><small>${ids.size} siswa</small></div>
           <div class="gm-grade-group-actions">
-            ${AppAccess.full() ? `<button type="button" class="secondary-action" data-edit="${safe(group.id)}">Ubah anggota</button>${group.active ? `<button type="button" class="secondary-action" data-transfer="${safe(group.id)}">Transfer Guru</button><button type="button" class="secondary-action" data-end="${safe(group.id)}">Arsipkan</button><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus</button>` : '<span class="gm-muted">Arsip</span>'}` : '<span class="gm-muted">Lihat saja</span>'}
+            ${AppAccess.full() ? (group.active
+              ? `<button type="button" class="secondary-action" data-edit="${safe(group.id)}">Ubah anggota</button><button type="button" class="secondary-action" data-transfer="${safe(group.id)}">Transfer Guru</button><button type="button" class="secondary-action" data-end="${safe(group.id)}">Arsipkan</button><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus</button>`
+              : `<span class="gm-muted">Arsip</span><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus permanen</button>`)
+              : '<span class="gm-muted">Lihat saja</span>'}
           </div>
         </div>`).join('');
       return `<article class="gm-group-card gm-grade-card">
@@ -235,7 +280,7 @@ window.LearningGroups = (() => {
           <div class="gm-grade-group-list">${groupRows}</div>
         </details>
       </article>`;
-    }).join('') || '<div class="gm-empty-state gm-empty-rich"><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai.</span></div>';
+    }).join('') || '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>';
   }
 
   function renderStudents(subject) {
@@ -244,34 +289,39 @@ window.LearningGroups = (() => {
     const search = host.querySelector('[data-search]').value.trim().toLocaleLowerCase('id');
     const list = host.querySelector('[data-students]');
 
-    // Pencarian nama bersifat global. Filter kelas hanya membatasi daftar ketika kolom cari kosong.
     const candidates = search
       ? state.students.filter(s => `${s['nama siswa']} ${s.kelas || ''}`.toLocaleLowerCase('id').includes(search))
-      : (cls ? state.students.filter(s => s.kelas === cls) : []);
+      : (cls ? state.students.filter(s => s.kelas === cls) : (state.autoTahsinLevels?.length ? state.students.filter(s => state.selected.has(String(s.id))) : []));
 
     const filtered = candidates.slice(0, search ? 80 : candidates.length);
     list.innerHTML = filtered.map(s => {
-      const current = state.members.find(m => String(m.student_id) === String(s.id));
+      const activeGroupIds = new Set(state.groups.filter(group => group.active).map(group => String(group.id)));
+      const current = state.members.find(m => m.active && activeGroupIds.has(String(m.assignment_id)) && String(m.student_id) === String(s.id));
       const other = current && current.assignment_id !== state.edit;
       const origin = state.groups.find(g => g.id === current?.assignment_id);
       const classMismatch = Boolean(cls && s.kelas !== cls && !state.selected.has(String(s.id)));
       const disabled = other || classMismatch;
-      const note = other
-        ? ` · Sudah di ${safe(origin?.class_name || 'kelompok lain')}`
-        : (classMismatch ? ` · Pilihan kelas: ${safe(cls)}` : '');
+      const note = other ? ` · Sudah di ${safe(origin?.class_name || 'kelompok lain')}` : (classMismatch ? ` · Pilihan kelas: ${safe(cls)}` : '');
       return `<label class="${classMismatch ? 'is-class-mismatch' : ''}"><input type="checkbox" data-student="${safe(s.id)}" data-student-class="${safe(s.kelas)}" ${state.selected.has(String(s.id)) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
         <span><strong>${safe(s['nama siswa'])}</strong><small>${safe(s.kelas)}${note}</small></span></label>`;
     }).join('') || (search
       ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Siswa tidak ditemukan</strong><span>Coba nama lain.</span></div>'
       : (cls
           ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Belum ada siswa</strong><span>Tidak ada siswa pada kelas ini.</span></div>'
-          : '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Cari siswa atau pilih kelas</strong><span>Pencarian dapat langsung digunakan tanpa memilih kelas.</span></div>'));
-    host.querySelector('[data-selected]').textContent = `${state.selected.size} siswa dipilih`;
+          : (state.autoTahsinLevels?.length
+              ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Belum ada siswa Tahsin pada pilihan ini</strong><span>Periksa pilihan tingkat kelas atau muat ulang data Tahsin.</span></div>'
+              : '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Cari siswa atau pilih kelas</strong><span>Pencarian ini dipakai untuk memilih siswa manual.</span></div>')));
+
+    host.querySelector('[data-selected]').textContent = state.autoTahsinLevels?.length
+      ? `${state.selected.size} siswa dipilih · salinan Tahsin kelas ${state.autoTahsinLevels.join(', ')}`
+      : `${state.selected.size} siswa dipilih`;
   }
 
   function resetForm(subject, closeEditor = true) {
     const state = views[subject], host = shell(subject);
-    state.edit = null; state.selected.clear();
+    state.edit = null;
+    state.selected.clear();
+    state.autoTahsinLevels = [];
     host.querySelector('[data-class]').value = '';
     host.querySelector('[data-search]').value = '';
     host.querySelector('[data-form-title]').textContent = `Buat kelompok ${titleOf(subject)}`;
@@ -287,7 +337,7 @@ window.LearningGroups = (() => {
     if (!state || state.busy) return;
     if (event.target.closest('[data-refresh]')) return void open(subject, true);
     if (event.target.closest('[data-cancel]')) return resetForm(subject);
-    if (event.target.closest('[data-clear]')) { state.selected.clear(); renderStudents(subject); return; }
+    if (event.target.closest('[data-clear]')) { state.selected.clear(); state.autoTahsinLevels = []; renderStudents(subject); return; }
     if (event.target.closest('[data-pick-visible]')) {
       const visible = [...host.querySelectorAll('[data-student]:not([disabled])')];
       const classSelect = host.querySelector('[data-class]');
@@ -296,15 +346,51 @@ window.LearningGroups = (() => {
         if (classes.length !== 1) return msg(subject, 'Pilih satu siswa terlebih dahulu atau pilih kelas sebelum menggunakan Pilih semua.', true);
         classSelect.value = classes[0];
       }
+      state.autoTahsinLevels = [];
       visible.filter(input => input.dataset.studentClass === classSelect.value).forEach(input => state.selected.add(input.dataset.student));
-      msg(subject, ''); renderStudents(subject); return;
+      msg(subject, '');
+      renderStudents(subject);
+      return;
+    }
+    if (event.target.closest('[data-sync-tahsin]')) {
+      if (subject !== 'tahfidz') return;
+      const teacherId = selectedTeacher(subject);
+      if (!teacherId) return msg(subject, 'Pilih guru terlebih dahulu sebelum menyalin siswa Tahsin.', true);
+      busy(subject, true);
+      try {
+        const groups = await fetchAllRows(() => supabase.from('teaching_assignments').select('id,class_name').eq('subject', 'tahsin').eq('academic_year_start', state.year).eq('teacher_id', teacherId).eq('active', true).order('class_name'));
+        const ids = groups.map(group => group.id).filter(Boolean);
+        if (!ids.length) throw new Error('Guru ini belum memiliki kelompok Tahsin aktif.');
+        const members = await fetchAllRows(() => supabase.from('assessment_group_members').select('assignment_id,student_id').eq('subject', 'tahsin').eq('academic_year_start', state.year).eq('active', true).in('assignment_id', ids));
+        const tahsinStudents = members.map(row => state.students.find(student => String(student.id) === String(row.student_id))).filter(Boolean);
+        const levels = [...new Set(tahsinStudents.map(student => gradeFromClassName(student.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
+        const pickedLevels = await pickTahsinLevels(levels);
+        if (!pickedLevels.length) { busy(subject, false); return; }
+        const activeGroupIds = new Set(state.groups.filter(group => group.active).map(group => String(group.id)));
+        const eligible = tahsinStudents.filter(student => pickedLevels.includes(gradeFromClassName(student.kelas))).filter(student => {
+          const current = state.members.find(m => m.active && activeGroupIds.has(String(m.assignment_id)) && String(m.student_id) === String(student.id));
+          return !current || current.assignment_id === state.edit;
+        });
+        state.selected = new Set(eligible.map(student => String(student.id)));
+        state.autoTahsinLevels = pickedLevels;
+        host.querySelector('[data-class]').value = '';
+        host.querySelector('[data-search]').value = '';
+        msg(subject, state.selected.size ? `Siswa Tahsin kelas ${pickedLevels.join(', ')} berhasil disalin.` : 'Tidak ada siswa Tahsin yang dapat disalin pada tingkat yang dipilih.', !state.selected.size);
+        renderStudents(subject);
+      } catch (error) {
+        msg(subject, error.message, true);
+      }
+      busy(subject, false);
+      return;
     }
     const edit = event.target.closest('[data-edit]');
     if (edit) {
       const g = state.groups.find(row => row.id === edit.dataset.edit);
       if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
       host.querySelector('[data-view-teacher]').value = String(g.teacher_id);
-      state.edit = g.id; state.selected = membersOf(state, g.id);
+      state.edit = g.id;
+      state.selected = membersOf(state, g.id);
+      state.autoTahsinLevels = [];
       const first = state.students.find(s => state.selected.has(String(s.id)));
       host.querySelector('[data-class]').value = first?.kelas || '';
       host.querySelector('[data-search]').value = '';
@@ -313,16 +399,16 @@ window.LearningGroups = (() => {
       host.querySelector('[data-save]').textContent = 'Simpan perubahan';
       host.querySelector('[data-cancel]').hidden = false;
       host.querySelector('[data-editor]').open = true;
-      renderGroups(subject); renderStudents(subject);
-      host.querySelector('[data-editor]').scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
+      renderGroups(subject);
+      renderStudents(subject);
+      host.querySelector('[data-editor]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
     }
     const transfer = event.target.closest('[data-transfer]');
     if (transfer) {
       const g = state.groups.find(row => row.id === transfer.dataset.transfer);
       if (!g) return msg(subject,'Kelompok sudah berubah. Muat ulang.',true);
-      const choices = state.teachers
-        .filter(t => String(t.id) !== String(g.teacher_id))
-        .map(t => ({ value: String(t.id), label: t.nama_lengkap || t.nama || `Guru ${t.id}` }));
+      const choices = state.teachers.filter(t => String(t.id) !== String(g.teacher_id)).map(t => ({ value: String(t.id), label: t.nama_lengkap || t.nama || `Guru ${t.id}` }));
       const target = await AdminNotice.request({
         title: 'Transfer kelompok',
         message: `Pilih guru tujuan untuk ${g.class_name}.`,
@@ -333,8 +419,11 @@ window.LearningGroups = (() => {
       });
       if (!target) return;
       busy(subject,true);
-      try { const {data,error}=await supabase.rpc('gm_transfer_learning_group',{p_group_id:g.id,p_teacher_id:String(target).trim()}); if(error) throw error; msg(subject,`Kelompok ditransfer ke ${data?.teacher_name||'guru tujuan'}.`); }
-      catch(error){ msg(subject,error.message,true); busy(subject,false); return; }
+      try {
+        const {data,error}=await supabase.rpc('gm_transfer_learning_group',{p_group_id:g.id,p_teacher_id:String(target).trim()});
+        if(error) throw error;
+        msg(subject,`Kelompok ditransfer ke ${data?.teacher_name||'guru tujuan'}.`);
+      } catch(error){ msg(subject,error.message,true); busy(subject,false); return; }
       busy(subject,false); await open(subject,true); return;
     }
     const del = event.target.closest('[data-delete-group]');
@@ -343,10 +432,15 @@ window.LearningGroups = (() => {
       if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
       busy(subject,true);
       try {
-        const {data: preview, error: previewError} = await supabase.rpc('gm_learning_group_delete_preview', {p_group_id:g.id});
-        if (previewError) throw previewError;
-        if (!preview?.can_delete) throw new Error(`Kelompok mempunyai data nilai/penilaian historis (${Number(preview?.subject_assessments||0)+Number(preview?.legacy_periodic||0)}). Gunakan Akhiri agar riwayat tetap aman.`);
-        if (!(await AdminNotice.confirm(`Hapus permanen ${g.class_name}? ${preview.members || 0} keanggotaan kelompok juga akan dihapus dari database.`))) { busy(subject,false); return; }
+        let preview = { members: state.members.filter(row => row.assignment_id === g.id).length };
+        if (subject !== 'tahfidz') {
+          const {data, error: previewError} = await supabase.rpc('gm_learning_group_delete_preview', {p_group_id:g.id});
+          if (previewError) throw previewError;
+          preview = data || preview;
+          if (!preview?.can_delete) throw new Error(`Kelompok mempunyai data nilai/penilaian historis (${Number(preview?.subject_assessments||0)+Number(preview?.legacy_periodic||0)}). Gunakan Arsipkan agar riwayat tetap aman.`);
+        }
+        const impact = subject === 'tahfidz' ? `${preview.members || 0} keanggotaan kelompok akan dihapus. Nilai siswa dan data guru/siswa tetap aman.` : `${preview.members || 0} keanggotaan kelompok juga akan dihapus dari database.`;
+        if (!(await AdminNotice.confirm(`Hapus permanen ${g.class_name}? ${impact}`))) { busy(subject,false); return; }
         const phrase = `HAPUS ${g.id}`;
         const typed = await AdminNotice.request({
           title: 'Konfirmasi penghapusan permanen',
@@ -356,10 +450,12 @@ window.LearningGroups = (() => {
           confirmLabel: 'Hapus permanen'
         });
         if (typed !== phrase) { busy(subject,false); return msg(subject,'Penghapusan dibatalkan: konfirmasi kedua tidak sesuai.',true); }
-        const {data: result, error} = await supabase.rpc('gm_delete_learning_group_verified', {p_group_id:g.id,p_confirmation:typed});
+        const rpcName = subject === 'tahfidz' ? 'gm_delete_tahfidz_group_verified' : 'gm_delete_learning_group_verified';
+        const {data: result, error} = await supabase.rpc(rpcName, {p_group_id:g.id,p_confirmation:typed});
         if (error) throw error;
         if(subject==='tahsin') await refreshPublicTahsinRoster();
-        msg(subject,`Kelompok dihapus permanen. ${result?.deleted_members || 0} keanggotaan terkait ikut dihapus.`);
+        const detached = Number(result?.detached_assessments || 0);
+        msg(subject,`Kelompok dihapus permanen. ${result?.deleted_members || preview.members || 0} keanggotaan dihapus${detached ? `; ${detached} nilai tetap disimpan tanpa tautan kelompok lama` : ''}.`);
       } catch(error) { msg(subject,error.message,true); busy(subject,false); return; }
       busy(subject,false); await open(subject,true); return;
     }
@@ -369,10 +465,10 @@ window.LearningGroups = (() => {
       if (!g || !(await AdminNotice.confirm(`Akhiri kelompok ${g.class_name}? Kelompok dinonaktifkan, bukan dihapus.`))) return;
       busy(subject,true);
       try {
-        const {error} = await supabase.rpc('gm_archive_learning_group', {p_group_id:g.id});
+        const {data: archived, error} = await supabase.rpc('gm_archive_learning_group_v2', {p_group_id:g.id});
         if(error) throw error;
         if(subject==='tahsin') await refreshPublicTahsinRoster();
-        msg(subject,'Kelompok diarsipkan. Riwayat tetap tersimpan dan disembunyikan dari tampilan utama.');
+        msg(subject,`Kelompok diarsipkan. ${archived?.released_members || 0} keanggotaan dilepas dari status aktif sehingga siswa dapat dimasukkan ke kelompok baru.`);
       } catch(error) { msg(subject,error.message,true); busy(subject,false); return; }
       busy(subject,false); await open(subject,true);
     }
@@ -396,9 +492,11 @@ window.LearningGroups = (() => {
     const teacher = selectedTeacher(subject);
     const cls = host.querySelector('[data-class]').value;
     if (!teacher) return msg(subject, 'Pilih guru pada bagian atas terlebih dahulu.', true);
-    if (!cls || !state.selected.size) return msg(subject, 'Pilih minimal satu siswa. Kelas akan mengikuti siswa yang dipilih.',true);
+    if (!state.selected.size) return msg(subject, 'Pilih minimal satu siswa terlebih dahulu.', true);
     const group = state.groups.find(g => g.id === state.edit);
-    const name = `${titleOf(subject)} ${teacherName(state, teacher)} / ${cls}`;
+    const autoName = subject === 'tahfidz' && state.autoTahsinLevels?.length ? tahsinGroupName(state, teacher, state.selected) : '';
+    const name = autoName || `${titleOf(subject)} ${teacherName(state, teacher)} / ${cls}`;
+    if (!name || (!autoName && !cls)) return msg(subject, 'Pilih kelas untuk pemilihan manual, atau gunakan tombol Samakan dengan siswa Tahsin.', true);
     if (name.length > 80) return msg(subject,'Nama kelompok melebihi 80 karakter.',true);
     busy(subject,true);
     try {
@@ -412,5 +510,6 @@ window.LearningGroups = (() => {
     } catch(error) { msg(subject,error.message,true); busy(subject,false); return; }
     busy(subject,false); resetForm(subject); await open(subject,true);
   }
+
   return { open };
 })();

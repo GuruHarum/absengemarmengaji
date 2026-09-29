@@ -1,4 +1,4 @@
-const VERSION = 'loader36';
+const VERSION = 'loader41';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -14,9 +14,11 @@ const PRECACHE = [
   '/css/ux-stage5.css',
   '/css/pwa.css',
   '/css/visual-stage8.css',
+  '/css/rev37-visual-fixes.css',
   '/js/islamic-quotes.js',
   '/assets/school-logo.png',
   '/assets/icon-192.png',
+  '/assets/notification-icon-192.png',
   '/assets/icon-512.png',
   '/assets/maskable-512.png',
   '/assets/apple-touch-icon.png',
@@ -69,7 +71,7 @@ self.addEventListener('push', event => {
   data.url ||= '/admin.html?pwa=notification';
   const options = {
     body,
-    icon: payload.icon || '/assets/icon-192.png',
+    icon: payload.icon || '/assets/notification-icon-192.png',
     badge: payload.badge || '/assets/notification-badge-96.png',
     tag: payload.tag || 'gemar-mengaji',
     renotify: Boolean(payload.renotify),

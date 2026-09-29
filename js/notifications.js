@@ -97,8 +97,10 @@ window.GMNotifications = (() => {
         if (AppAccess.profile?.role !== 'koordinator') return;
         const teacherName = options.teacherName || 'guru ini';
         const studentCount = Number(options.studentCount || 0);
-        const confirmed = await AdminNotice.confirm(`Kirim pengingat nilai kepada ${teacherName}${studentCount ? ` untuk ${studentCount} siswa` : ''}?`);
-        if (!confirmed) return;
+        if (!options.skipConfirm) {
+            const confirmed = await AdminNotice.confirm(`Kirim pengingat nilai kepada ${teacherName}${studentCount ? ` untuk ${studentCount} siswa` : ''}?`);
+            if (!confirmed) return null;
+        }
         const { data, error } = await supabase.rpc('gm_send_attention_notification', {
             teacher_key: String(teacherId),
             year_key: Number(options.year || getPublicAcademicYearStart()),
@@ -110,26 +112,61 @@ window.GMNotifications = (() => {
             const push = await window.GMPush?.dispatch?.(result.notification_ids || []);
             result.push = push || { status: 'not_requested' };
             const name = result.teacher_name || teacherName;
-            if (push?.status === 'sent') AdminNotice.notify(`Pengingat terkirim ke ${name} · Push terkirim.`, 'success');
-            else if (push?.status === 'partial') AdminNotice.notify(`Pengingat terkirim ke ${name} · Push terkirim ke sebagian perangkat.`, 'success');
-            else if (push?.status === 'no_subscription') AdminNotice.notify(`Pengingat terkirim ke ${name} · Push belum aktif.`, 'success');
-            else AdminNotice.notify(`Pengingat internal terkirim ke ${name}.`, 'success');
+            if (!options.quiet) {
+                if (push?.status === 'sent') AdminNotice.notify(`Pengingat terkirim ke ${name} · Push terkirim.`, 'success');
+                else if (push?.status === 'partial') AdminNotice.notify(`Pengingat terkirim ke ${name} · Push terkirim ke sebagian perangkat.`, 'success');
+                else if (push?.status === 'no_subscription') AdminNotice.notify(`Pengingat terkirim ke ${name} · Push belum aktif.`, 'success');
+                else AdminNotice.notify(`Pengingat internal terkirim ke ${name}.`, 'success');
+            }
             return result;
         }
-        if (result.status === 'recent') {
-            AdminNotice.notify(`Pengingat untuk ${result.teacher_name || teacherName} baru saja dikirim.`, 'info');
-            return result;
+        if (!options.quiet) {
+            if (result.status === 'recent') AdminNotice.notify(`Pengingat untuk ${result.teacher_name || teacherName} baru saja dikirim.`, 'info');
+            else if (result.status === 'no_account') AdminNotice.notify(`${result.teacher_name || teacherName} belum memiliki akun yang tertaut.`, 'error');
+            else if (result.status === 'no_issues') AdminNotice.notify(`Nilai ${result.teacher_name || teacherName} sudah lengkap untuk periode ini.`, 'info');
+            else AdminNotice.notify('Pengingat belum dapat dikirim.', 'error');
         }
-        if (result.status === 'no_account') {
-            AdminNotice.notify(`${result.teacher_name || teacherName} belum memiliki akun yang tertaut.`, 'error');
-            return result;
-        }
-        if (result.status === 'no_issues') {
-            AdminNotice.notify(`Nilai ${result.teacher_name || teacherName} sudah lengkap untuk periode ini.`, 'info');
-            return result;
-        }
-        AdminNotice.notify('Pengingat belum dapat dikirim.', 'error');
         return result;
+    }
+
+    async function sendAttentionAll(groups = [], options = {}) {
+        if (AppAccess.profile?.role !== 'koordinator') return null;
+        const unique = (groups || []).filter(group => group?.teacherId).filter((group, index, list) => list.findIndex(item => String(item.teacherId) === String(group.teacherId)) === index);
+        if (!unique.length) {
+            AdminNotice.notify('Tidak ada guru yang perlu diingatkan.', 'info');
+            return { status: 'no_issues', total: 0 };
+        }
+        const confirmed = await AdminNotice.confirm(`Kirim pengingat ke semua guru yang nilainya belum lengkap? (${unique.length} guru)`);
+        if (!confirmed) return null;
+        const summary = { total: unique.length, sent: 0, recent: 0, no_account: 0, no_issues: 0, failed: 0 };
+        for (const group of unique) {
+            try {
+                const result = await sendAttention(group.teacherId, {
+                    year: options.year,
+                    period: options.period,
+                    teacherName: group.teacherName,
+                    studentCount: group.students?.size ?? group.studentCount,
+                    skipConfirm: true,
+                    quiet: true
+                });
+                const status = result?.status || 'failed';
+                if (status === 'sent') summary.sent += 1;
+                else if (status === 'recent') summary.recent += 1;
+                else if (status === 'no_account') summary.no_account += 1;
+                else if (status === 'no_issues') summary.no_issues += 1;
+                else summary.failed += 1;
+            } catch (_) {
+                summary.failed += 1;
+            }
+        }
+        const fragments = [];
+        if (summary.sent) fragments.push(`${summary.sent} terkirim`);
+        if (summary.recent) fragments.push(`${summary.recent} baru saja diingatkan`);
+        if (summary.no_account) fragments.push(`${summary.no_account} belum punya akun`);
+        if (summary.no_issues) fragments.push(`${summary.no_issues} sudah lengkap`);
+        if (summary.failed) fragments.push(`${summary.failed} gagal`);
+        AdminNotice.notify(`Pengingat massal selesai · ${fragments.join(' · ') || 'tidak ada perubahan'}.`, summary.failed ? 'info' : 'success');
+        return summary;
     }
 
     function startPolling() {
@@ -147,5 +184,5 @@ window.GMNotifications = (() => {
         });
     });
 
-    return { load, markSeen, openNotification, sendAttention, syncAppBadge, get items() { return [...state.items]; } };
+    return { load, markSeen, openNotification, sendAttention, sendAttentionAll, syncAppBadge, get items() { return [...state.items]; } };
 })();

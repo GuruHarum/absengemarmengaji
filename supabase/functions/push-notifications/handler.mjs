@@ -80,7 +80,7 @@ export function createHandler(admin, webpush, vapid) {
                 const payload = JSON.stringify({
                     title: notification.title || 'Gemar Mengaji',
                     body: notification.message || 'Ada informasi baru di Gemar Mengaji. Buka aplikasi untuk melihat detail.',
-                    icon: '/assets/icon-192.png',
+                    icon: '/assets/notification-icon-192.png',
                     badge: '/assets/notification-badge-96.png',
                     tag: `gm-notification-${notification.id}`,
                     data: {

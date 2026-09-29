@@ -1,5 +1,6 @@
 window.StudentReports = (() => {
-    let rows = [], busy = false, previewToken = 0, pdfUrl = null, activeTab = 'preview';
+    let rows = [], busy = false, previewToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '';
+    const currentLoadKey = () => `${Number(el('reportYear').value || 0)}|${period()}|${String(el('reportGrade').value || '')}`;
     const el = id => document.getElementById(id);
     const esc = value => escapeHtml(String(value ?? ''));
     const period = () => `${el('reportExam').value}_${el('reportSemester').value}`;
@@ -98,9 +99,17 @@ window.StudentReports = (() => {
         </tr>`).join('') || '<tr><td colspan="4">Tidak ada nilai kosong sesuai filter.</td></tr>';
         el('reportProblems').textContent = rows.flatMap(row => ReportCore.reportCheck(row).problems.map(problem => `${row.student.name} (${row.student.class}): ${problem}`)).join('\n');
     }
-    async function load() {
+    async function load(force = true) {
         if (busy || AppAccess.profile?.role !== 'koordinator')
             return false;
+        const requestKey = currentLoadKey();
+        if (!force && rows.length && loadedKey === requestKey) {
+            studentOptions();
+            checks();
+            tell('Data rapor yang sudah dimuat dipakai kembali.');
+            refreshDownloadScope();
+            return true;
+        }
         setBusy(true);
         el('reportPdfLink').hidden = true;
         tell('Memuat seluruh siswa dan rombel tingkat terpilih...');
@@ -118,6 +127,7 @@ window.StudentReports = (() => {
                     break;
             }
             rows = ReportPDF.sorted(all);
+            loadedKey = requestKey;
             const classes = [...new Set(rows.map(row => row.student.class))];
             const previousReportClass = el('reportClass').value;
             const previousDownloadClass = el('reportDownloadClass')?.value || '';
@@ -146,6 +156,7 @@ window.StudentReports = (() => {
         }
         catch (error) {
             rows = [];
+            loadedKey = '';
             previewToken++;
             el('reportPreview').replaceChildren();
             el('reportDataAudit').replaceChildren();
@@ -277,7 +288,7 @@ window.StudentReports = (() => {
         preview();
     }
     async function download() {
-        if (busy || !await load() || !rows.length) return;
+        if (busy || !await load(false) || !rows.length) return;
         let selection;
         try { selection = downloadSelection(); }
         catch (error) { tell(error.message); refreshDownloadScope(); return; }
@@ -287,7 +298,8 @@ window.StudentReports = (() => {
         }
         setBusy(true);
         try {
-            const blob = await ReportZip.build(selectedRows, { onProgress: (n,total)=>tell(`Membuat PDF siswa: ${n}/${total}`) });
+            const pdfName = `Rapor ${selection.label} - ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1' : '2'} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.pdf`;
+            const blob = await ReportZip.build(selectedRows, { fileName: pdfName, onProgress: (n,total)=>tell(n ? `Menyusun rapor ${n}/${total} halaman...` : 'Menyiapkan dokumen rapor...') });
             const issued = await supabase.rpc('record_report_issuance', { entries: selectedRows.map(row => ({ student_id: row.student.id, year: row.year, period: row.period, fingerprint: row.fingerprint })) });
             if (issued.error) throw issued.error;
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -297,7 +309,7 @@ window.StudentReports = (() => {
             const scope = ReportZip.safe(selection.label);
             link.download = `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${scope} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
             link.hidden = false; link.textContent = 'Simpan ZIP Rapor'; link.click();
-            tell(`ZIP selesai: ${selectedRows.length} PDF siswa · ${selection.label}.`);
+            tell(`ZIP selesai: 1 PDF berisi ${selectedRows.length} halaman rapor · ${selection.label}.`);
         } catch (error) { tell(error.message); }
         finally { setBusy(false); refreshDownloadScope(); }
     }
@@ -333,7 +345,7 @@ window.StudentReports = (() => {
         el('reportSemester').value = semester;
         el('reportGrade').value = grade;
         changeTab('missing');
-        const ok = await load();
+        const ok = await load(true);
         if (!ok) return false;
         if (options.className && [...el('missingClass').options].some(option => option.value === options.className))
             el('missingClass').value = options.className;
@@ -352,8 +364,8 @@ window.StudentReports = (() => {
             el('reportPreview').classList.toggle('paper-tint', event.target.checked);
         });
         changeTab('preview');
-        el('loadReports').addEventListener('click', load);
-        el('checkMissingScores').addEventListener('click', load);
+        el('loadReports').addEventListener('click', () => load(true));
+        el('checkMissingScores').addEventListener('click', () => load(true));
         el('reportClass').addEventListener('change', studentOptions);
         el('reportSearch').addEventListener('input', studentOptions);
         el('reportStudent').addEventListener('change', preview);
@@ -367,6 +379,7 @@ window.StudentReports = (() => {
             .forEach(id => el(id).addEventListener('input', checks));
         ['reportYear', 'reportExam', 'reportSemester', 'reportGrade'].forEach(id => el(id).addEventListener('change', () => {
             rows = [];
+            loadedKey = '';
             studentOptions();
             el('reportChecks').textContent = 'Filter berubah. Muat rapor kembali.';
             checks();

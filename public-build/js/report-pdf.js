@@ -62,6 +62,32 @@ window.ReportPDF = (() => {
         return degrees.length ? `${name}, ${degrees.join(', ')}` : name;
     }
 
+    // Nama siswa di narasi rapor mengikuti format dokumen sekolah: Title Case,
+    // sedangkan nama pada identitas / nama guru tetap kapital.
+    function naturalName(value) {
+        const raw = String(value || '').trim().replace(/\s+/g, ' ');
+        if (!raw) return '-';
+        return raw.toLocaleLowerCase('id-ID').replace(/(^|[\s'’\-])([a-zà-ÿ])/g, (_, lead, char) => lead + char.toLocaleUpperCase('id-ID'));
+    }
+
+    function schoolHeader(value) {
+        const raw = String(value || '').trim().replace(/\s+/g, ' ');
+        if (!raw) return 'PROFIL SEKOLAH BELUM DIISI';
+        const upper = raw.toLocaleUpperCase('id-ID');
+        const expanded = upper.match(/^SEKOLAH DASAR ISLAM TERPADU\s*\(SDIT\)\s*(.*)$/i);
+        if (expanded) return `SEKOLAH DASAR ISLAM TERPADU (SDIT)\n${expanded[1] || ''}`.trim();
+        const short = upper.match(/^SDIT\s+(.+)$/i);
+        if (short) return `SEKOLAH DASAR ISLAM TERPADU (SDIT)\n${short[1]}`;
+        return upper;
+    }
+
+    function signatureSchoolName(value) {
+        const raw = String(value || '').trim().replace(/\s+/g, ' ');
+        if (!raw) return '';
+        const match = raw.match(/^SEKOLAH DASAR ISLAM TERPADU\s*\(SDIT\)\s*(.*)$/i);
+        return match ? `SDIT ${match[1] || ''}`.trim() : raw;
+    }
+
     async function render(report, { draft = false, date = new Date() } = {}) {
         draft = draft || !ReportCore.reportCheck(report).complete;
         ReportCore.useReference(report.reference);
@@ -72,15 +98,15 @@ window.ReportPDF = (() => {
         c.scale(scale, scale);
         // Tidak melukis latar putih: PNG ber-alpha di atas halaman PDF yang tidak diberi warna.
         // Area kosong akan mengikuti warna kertas saat dicetak, termasuk kepala tabel.
-        c.strokeStyle = '#222';
-        c.lineWidth = .25;
+        c.strokeStyle = '#161616';
+        c.lineWidth = .34;
         const box = (x, y, w, h) => { c.strokeRect(x, y, w, h); };
         const filledBox = (x, y, w, h, color) => { c.save(); c.fillStyle = color; c.fillRect(x, y, w, h); c.restore(); c.strokeRect(x, y, w, h); };
         // Label/judul tetap kapital. Nama orang dibuat kapital, sedangkan gelar akademik dipertahankan dalam bentuk normal seperti S. Pd / M. Pd.
-        const text = (value, x, y, w, h, { size = 2.7, bold = false, align = 'left', min = 2.35, preserveCase = false } = {}) => {
+        const text = (value, x, y, w, h, { size = 2.82, bold = false, align = 'left', min = 2.4, preserveCase = false } = {}) => {
             const display = preserveCase ? String(value ?? '-') : String(value ?? '-').toLocaleUpperCase('id-ID');
             for (let font = size;; font -= .1) {
-                c.font = `${bold ? '600 ' : '400 '}${font}px Arial, Helvetica, sans-serif`;
+                c.font = `${bold ? '700 ' : '400 '}${font}px Arial, Helvetica, sans-serif`;
                 const lines = wrap(c, display, w - 2.8), lineHeight = font * 1.24, total = lines.length * lineHeight;
                 if (total <= h - (h <= 7 ? 1.2 : 2.2)) {
                     c.fillStyle = '#111';
@@ -98,7 +124,7 @@ window.ReportPDF = (() => {
         const logoUrl = school.logo_url && String(school.logo_url).includes('FjF61ou.png') ? 'assets/school-logo.png' : school.logo_url;
         const image = await logo(logoUrl);
         if (image) {
-            const size = 22, x = 11, y = 11, ratio = Math.min(size / image.width, size / image.height);
+            const size = 25, x = 12, y = 9, ratio = Math.min(size / image.width, size / image.height);
             const dw = image.width * ratio, dh = image.height * ratio;
             c.save();
             c.beginPath();
@@ -107,32 +133,34 @@ window.ReportPDF = (() => {
             c.clearRect(x, y, size, size);
             c.drawImage(image, x + (size - dw) / 2, y + (size - dh) / 2, dw, dh);
             c.restore();
-            c.save();
-            c.strokeStyle = '#d9d9d9';
-            c.lineWidth = .2;
-            c.beginPath();
-            c.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
-            c.stroke();
-            c.restore();
         }
-        text('LAPORAN PENILAIAN HASIL BELAJAR TAHSIN & TAHFIDZ', 36, 10, 164, 8, { size: 3.5, bold: true, align: 'center' });
-        text((ReportCore.periods[report.period] || '') + ' - TAHUN AJARAN ' + report.year + ' / ' + (report.year + 1), 36, 19, 164, 7, { size: 3.2, bold: true, align: 'center' });
-        text(school.name || 'Profil sekolah belum diisi', 36, 27, 164, 12, { size: 4.2, bold: true, align: 'center' });
+        text('LAPORAN PENILAIAN HASIL BELAJAR TAHSIN & TAHFIDZ', 39, 8.5, 158, 8, { size: 3.85, bold: true, align: 'center' });
+        text((ReportCore.periods[report.period] || '') + ' - TAHUN AJARAN ' + report.year + ' / ' + (report.year + 1), 39, 17, 158, 7, { size: 3.35, bold: true, align: 'center' });
+        text(schoolHeader(school.name), 39, 24.5, 158, 15, { size: 4.15, bold: true, align: 'center', min: 3.7 });
+        c.save();
+        c.lineWidth = .48;
         c.beginPath();
-        c.moveTo(10, 41);
-        c.lineTo(200, 41);
+        c.moveTo(10, 42);
+        c.lineTo(200, 42);
         c.stroke();
-        text('NAMA : ' + personName(student.name), 12, 44, 114, 10, { bold: true, preserveCase: true });
-        text('NISN : ' + (student.nisn || '-'), 131, 44, 67, 7);
-        text('NIS : ' + (student.nis || '-'), 12, 54, 114, 7);
-        text('KELAS : ' + (window.PeriodicAssessments?.classLabel(student.class) || student.class), 131, 53, 67, 9);
+        c.restore();
+
+        const identity = (label, value, x, y, w, labelW) => {
+            text(label, x, y, labelW, 7, { bold: true, size: 2.55 });
+            text(':', x + labelW, y, 4, 7, { bold: true, size: 2.55, align: 'center' });
+            text(value || '-', x + labelW + 4, y, w - labelW - 4, 7, { bold: true, size: 2.55, preserveCase: true });
+        };
+        identity('NAMA', personName(student.name), 12, 45, 104, 14);
+        identity('NISN', String(student.nisn || '-').toLocaleUpperCase('id-ID'), 119, 45, 79, 14);
+        identity('NIS', String(student.nis || '-').toLocaleUpperCase('id-ID'), 12, 54, 104, 14);
+        identity('KELAS', String(window.PeriodicAssessments?.classLabel(student.class) || student.class || '-').toLocaleUpperCase('id-ID'), 119, 54, 79, 14);
         function subjectTable(sub, y) {
             const row = report[sub], scores = row?.scores || {}, sum = ReportCore.stats(scores, sub), target = report.settings?.[sub + '_target'];
             const fields = sub === 'tahsin' ? ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib'] : ['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'];
             const rows = fields.length;
             const h = 6;
-            const programColor = sub === 'tahsin' ? '#FFF2CB' : '#FCE5D7';
-            const summaryColor = '#E7E5E6';
+            const programColor = sub === 'tahsin' ? '#FFF6D9' : '#FDEDE4';
+            const summaryColor = '#ECEBEC';
             filledBox(10, y, 29, 6, programColor);
             text('PROGRAM', 10, y, 29, 6, { bold: true, align: 'center' });
             filledBox(39, y, 161, 6, programColor);
@@ -142,10 +170,10 @@ window.ReportPDF = (() => {
             box(39, y + 6, 161, 6);
             text(target ? ReportCore.progress(target, sub) : 'Target belum diatur', 39, y + 6, 161, 6, { align: 'center' });
             const xs = [39, 78, 90, 136], ws = [39, 12, 46, 64];
-            ['ASPEK', 'NILAI', 'KETERANGAN', 'PENCAPAIAN ' + sub.toUpperCase()].forEach((label, i) => { box(xs[i], y + 12, ws[i], 6); text(label, xs[i], y + 12, ws[i], 6, { bold: true, align: 'center', size: 2.55 }); });
-            fields.forEach((field, i) => { [0, 1, 2].forEach(col => box(xs[col], y + 18 + i * h, ws[col], h)); const active = ReportCore.applicable(scores, sub).keys.includes(field), value = active && !(sub === 'tahfidz' && field === 'tahfidz_hafalan' && ![true, 'true'].includes(scores.tahfidz_aspect_confirmed)) ? scores[field] : null; text(labels[i], 39, y + 18 + i * h, 39, h, { size: 2.4 }); text(ReportCore.blank(value) ? '-' : value, 78, y + 18 + i * h, 12, h, { align: 'center' }); text(ReportCore.aspect(value), 90, y + 18 + i * h, 46, h, { align: 'center', size: 2.45 }); });
+            ['ASPEK', 'NILAI', 'KETERANGAN', 'PENCAPAIAN ' + sub.toUpperCase()].forEach((label, i) => { box(xs[i], y + 12, ws[i], 6); text(label, xs[i], y + 12, ws[i], 6, { bold: true, align: 'center', size: 2.68 }); });
+            fields.forEach((field, i) => { [0, 1, 2].forEach(col => box(xs[col], y + 18 + i * h, ws[col], h)); const active = ReportCore.applicable(scores, sub).keys.includes(field), value = active && !(sub === 'tahfidz' && field === 'tahfidz_hafalan' && ![true, 'true'].includes(scores.tahfidz_aspect_confirmed)) ? scores[field] : null; text(labels[i], 39, y + 18 + i * h, 39, h, { size: 2.55 }); text(ReportCore.blank(value) ? '-' : value, 78, y + 18 + i * h, 12, h, { align: 'center' }); text(ReportCore.aspect(value), 90, y + 18 + i * h, 46, h, { align: 'center', size: 2.55 }); });
             box(136, y + 18, 64, rows * h);
-            text(ReportCore.progress(scores, sub), 138, y + 20, 60, rows * h - 3, { align: 'center', size: 2.9 });
+            text(ReportCore.progress(scores, sub), 138, y + 20, 60, rows * h - 3, { align: 'center', size: 3.0 });
             const bottom = y + 18 + rows * h;
             filledBox(10, bottom, 190, 7, summaryColor);
             text('JUMLAH : ' + (sum.sum ?? '-'), 39, bottom, 45, 7, { bold: true });
@@ -153,27 +181,27 @@ window.ReportPDF = (() => {
             text('GRADE NILAI : ' + sum.grade, 144, bottom, 56, 7, { bold: true });
             const actualTeacher = report.teachers?.[sub] || row?.teacher_name || '-';
             filledBox(10, bottom + 9, 190, 9, summaryColor);
-            text('NILAI KKM : ' + (report.settings?.[sub + '_kkm'] ?? '-'), 11, bottom + 10, 24, 7, { size: 2.4 });
-            text('PREDIKAT : ' + sum.predicate, 36, bottom + 10, 76, 7, { size: 2.4 });
-            text('GURU PEMBIMBING : ' + personName(actualTeacher), 112, bottom + 10, 87, 7, { size: 2.4, preserveCase: true });
-            text('CAPAIAN KOMPETENSI', 10, bottom + 19, 100, 5, { bold: true, size: 2.5 });
+            text('NILAI KKM : ' + (report.settings?.[sub + '_kkm'] ?? '-'), 11, bottom + 10, 24, 7, { size: 2.55, bold: true });
+            text('PREDIKAT : ' + sum.predicate, 36, bottom + 10, 76, 7, { size: 2.55, bold: true });
+            text('GURU PEMBIMBING : ' + personName(actualTeacher), 112, bottom + 10, 87, 7, { size: 2.55, preserveCase: true, bold: true });
+            text('CAPAIAN KOMPETENSI :', 10, bottom + 19, 100, 5, { bold: true, size: 2.65 });
             box(10, bottom + 24, 190, 17);
-            text(ReportCore.description(personName(student.name), scores, sub), 12, bottom + 25, 186, 15, { size: 2.65, preserveCase: true });
+            text(ReportCore.description(naturalName(student.name), scores, sub), 12, bottom + 25, 186, 15, { size: 2.8, min: 2.45, preserveCase: true });
             return bottom + 43;
         }
-        const next = subjectTable('tahsin', 64);
+        const next = subjectTable('tahsin', 64.5);
         const end = subjectTable('tahfidz', next + 1);
-        text('CATATAN GURU MENGENAI SISWA', 10, end, 190, 5, { bold: true, size: 2.5 });
+        text('CATATAN GURU MENGENAI SISWA', 10, end, 190, 5, { bold: true, size: 2.65 });
         box(10, end + 5, 190, 22);
         const complete = ReportCore.reportCheck(report).complete;
-        const auto = complete ? ReportCore.note(personName(student.name), report.period) : 'Rapor belum lengkap. ' + (report.issues || []).join('; ');
-        text(auto, 12, end + 6, 186, 20, { size: 2.5, min: 2.35, preserveCase: true });
-        text((officials.city || 'Tempat belum diisi').toUpperCase() + ', ' + dateLabel(date), 110, 257, 90, 6, { bold: true, align: 'right', size: 2.5 });
-        const signer = (x, title, name, niy) => { text(title, x, 264, 60, 13, { align: 'center', size: 2.5 }); c.beginPath(); c.moveTo(x + 6, 287); c.lineTo(x + 54, 287); c.stroke(); text(name ? personName(name) : '', x, 280, 60, 7, { align: 'center', bold: true, size: 2.5, preserveCase: true }); if (niy)
-            text('NIY. ' + niy, x, 288, 60, 5, { align: 'center', size: 2.4 }); };
-        signer(10, 'ORANG TUA / WALI SISWA', '', '');
-        signer(75, 'KEPALA SEKOLAH\n' + (school.name || ''), [officials.principal_name, officials.principal_degree].filter(Boolean).join(', '), officials.principal_niy);
-        signer(140, "KOORDINATOR STUDI AL-QUR'AN", [officials.coordinator_name, officials.coordinator_degree].filter(Boolean).join(', '), officials.coordinator_niy);
+        const auto = complete ? ReportCore.note(naturalName(student.name), report.period) : 'Rapor belum lengkap. ' + (report.issues || []).join('; ');
+        text(auto, 12, end + 6, 186, 20, { size: 2.65, min: 2.35, preserveCase: true });
+        text((officials.city || 'Tempat belum diisi').toUpperCase() + ', ' + dateLabel(date), 110, 257, 90, 6, { bold: true, align: 'right', size: 2.6 });
+        const signer = (x, title, name, niy) => { text(title, x, 264, 60, 13, { align: 'center', size: 2.6, bold: true }); c.beginPath(); c.moveTo(x + 6, 287); c.lineTo(x + 54, 287); c.stroke(); text(name ? personName(name) : '', x, 280, 60, 7, { align: 'center', bold: true, size: 2.6, preserveCase: true }); if (niy)
+            text('NIY. ' + niy, x, 288, 60, 5, { align: 'center', size: 2.45, bold: true }); };
+        signer(10, 'ORANG TUA / WALI\nSISWA', '', '');
+        signer(75, 'KEPALA SEKOLAH\n' + signatureSchoolName(school.name), [officials.principal_name, officials.principal_degree].filter(Boolean).join(', '), officials.principal_niy);
+        signer(140, "KOORDINATOR STUDI\nAL-QUR'AN", [officials.coordinator_name, officials.coordinator_degree].filter(Boolean).join(', '), officials.coordinator_niy);
         if (draft) {
             c.save();
             c.translate(105, 148);
@@ -200,5 +228,5 @@ window.ReportPDF = (() => {
         await new Promise(resolve => setTimeout(resolve, 0));
     } if (pdf.getNumberOfPages() !== list.length)
         throw Error('Jumlah halaman tidak sesuai'); return pdf; }
-    return { render, build, sorted, dateLabel, personName, normalizeDegree };
+    return { render, build, sorted, dateLabel, personName, normalizeDegree, naturalName, schoolHeader, signatureSchoolName };
 })();

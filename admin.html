@@ -49,7 +49,8 @@
     <link rel="stylesheet" href="css/gm-upgrade-20260928.css?v=20260928-1">
     <link rel="stylesheet" href="css/ui-polish-20260928.css?v=20260929-groups26">
     <link rel="stylesheet" href="css/ux-stage5.css?v=20260929-ux27">
-    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader35">
+    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader40">
+    <link rel="stylesheet" href="css/rev37-visual-fixes.css?v=20260929-rev37">
 </head>
 <body class="admin-page sidebar-collapsed flex min-h-screen overflow-x-hidden">
 
@@ -489,14 +490,14 @@
     </section>
     <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Cetak rapor" hidden>
         <h3>Download Rapor</h3>
-        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Setiap siswa tetap dibuat sebagai satu PDF di dalam ZIP.</p>
+        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Hasil unduhan berupa satu ZIP yang berisi satu file PDF. Semua siswa sesuai filter digabung dalam PDF tersebut dan setiap siswa tetap satu halaman.</p>
         <div class="report-grid report-download-grid">
             <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
             <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
         </div>
         <p id="reportDownloadSummary" class="report-download-summary" role="status">Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.</p>
         <div id="reportActions" class="report-actions">
-            <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Satu Tingkat</button>
+            <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Rapor Satu Tingkat</button>
             <a id="reportPdfLink" class="secondary-action" target="_blank" rel="noopener" hidden>Simpan ZIP Rapor</a>
         </div>
         <p class="report-paper-note">Latar PDF transparan, termasuk sel tabel. Saat dicetak di kertas berwarna, bagian yang tidak bertinta tetap mengikuti warna kertas. Coba satu lembar terlebih dahulu sesuai pengaturan printer.</p>
@@ -722,7 +723,7 @@
     
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260929-loader35"></script>
+    <script src="js/panel-start.js?v=20260929-loader40"></script>
     <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
     
 
@@ -733,6 +734,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260929-loader35" defer></script>
+<script src="/js/pwa.js?v=20260929-loader40" defer></script>
 </body>
 </html>
