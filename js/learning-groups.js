@@ -20,6 +20,16 @@ window.LearningGroups = (() => {
     if (!levels.length) return '';
     return `Tahfidz ${teacherName(state, teacherId)} / Kelas ${levels.join(', ')}`;
   }
+  function selectedClassLabel(state, ids) {
+    const classes = [...new Set([...ids].map(id => state.students.find(student => String(student.id) === String(id))?.kelas).filter(Boolean))]
+      .sort((a, b) => String(a).localeCompare(String(b), 'id', { numeric: true }));
+    if (!classes.length) return '';
+    if (classes.length === 1) return classes[0];
+    const levels = [...new Set(classes.map(gradeFromClassName).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
+    if (levels.length === 1) return `Kelas ${levels[0]}`;
+    if (levels.length) return `Kelas ${levels.join(', ')}`;
+    return classes.join(', ');
+  }
   async function pickTahsinLevels(levels) {
     if (!levels.length) return [];
     if (!tahsinPickerDialog) {
@@ -299,7 +309,7 @@ window.LearningGroups = (() => {
       const current = state.members.find(m => m.active && activeGroupIds.has(String(m.assignment_id)) && String(m.student_id) === String(s.id));
       const other = current && current.assignment_id !== state.edit;
       const origin = state.groups.find(g => g.id === current?.assignment_id);
-      const classMismatch = Boolean(cls && s.kelas !== cls && !state.selected.has(String(s.id)));
+      const classMismatch = Boolean(!search && cls && s.kelas !== cls && !state.selected.has(String(s.id)));
       const disabled = other || classMismatch;
       const note = other ? ` · Sudah di ${safe(origin?.class_name || 'kelompok lain')}` : (classMismatch ? ` · Pilihan kelas: ${safe(cls)}` : '');
       return `<label class="${classMismatch ? 'is-class-mismatch' : ''}"><input type="checkbox" data-student="${safe(s.id)}" data-student-class="${safe(s.kelas)}" ${state.selected.has(String(s.id)) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
@@ -341,13 +351,18 @@ window.LearningGroups = (() => {
     if (event.target.closest('[data-pick-visible]')) {
       const visible = [...host.querySelectorAll('[data-student]:not([disabled])')];
       const classSelect = host.querySelector('[data-class]');
-      if (!classSelect.value) {
-        const classes = [...new Set(visible.map(input => input.dataset.studentClass).filter(Boolean))];
-        if (classes.length !== 1) return msg(subject, 'Pilih satu siswa terlebih dahulu atau pilih kelas sebelum menggunakan Pilih semua.', true);
-        classSelect.value = classes[0];
-      }
+      const searchValue = host.querySelector('[data-search]').value.trim();
       state.autoTahsinLevels = [];
-      visible.filter(input => input.dataset.studentClass === classSelect.value).forEach(input => state.selected.add(input.dataset.student));
+      if (searchValue) {
+        visible.forEach(input => state.selected.add(input.dataset.student));
+      } else {
+        if (!classSelect.value) {
+          const classes = [...new Set(visible.map(input => input.dataset.studentClass).filter(Boolean))];
+          if (classes.length !== 1) return msg(subject, 'Pilih kelas terlebih dahulu sebelum menggunakan Pilih semua.', true);
+          classSelect.value = classes[0];
+        }
+        visible.filter(input => input.dataset.studentClass === classSelect.value).forEach(input => state.selected.add(input.dataset.student));
+      }
       msg(subject, '');
       renderStudents(subject);
       return;
@@ -495,8 +510,9 @@ window.LearningGroups = (() => {
     if (!state.selected.size) return msg(subject, 'Pilih minimal satu siswa terlebih dahulu.', true);
     const group = state.groups.find(g => g.id === state.edit);
     const autoName = subject === 'tahfidz' && state.autoTahsinLevels?.length ? tahsinGroupName(state, teacher, state.selected) : '';
-    const name = autoName || `${titleOf(subject)} ${teacherName(state, teacher)} / ${cls}`;
-    if (!name || (!autoName && !cls)) return msg(subject, 'Pilih kelas untuk pemilihan manual, atau gunakan tombol Samakan dengan siswa Tahsin.', true);
+    const actualClassLabel = selectedClassLabel(state, state.selected) || cls;
+    const name = autoName || `${titleOf(subject)} ${teacherName(state, teacher)} / ${actualClassLabel}`;
+    if (!actualClassLabel && !autoName) return msg(subject, 'Kelas siswa terpilih tidak dapat dikenali. Periksa data siswa terlebih dahulu.', true);
     if (name.length > 80) return msg(subject,'Nama kelompok melebihi 80 karakter.',true);
     busy(subject,true);
     try {
