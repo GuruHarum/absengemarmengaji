@@ -1,4 +1,4 @@
-const VERSION = 'loader42';
+const VERSION = 'loader43';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';

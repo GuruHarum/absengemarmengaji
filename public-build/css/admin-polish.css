@@ -143,3 +143,48 @@
 #accountRows tr[hidden]{display:none}
 
 .gm-account-directory-hint{font-size:.77rem;color:#64748b;max-width:560px;margin-top:4px}
+
+/* REV43 — dialog transfer sebagian murid */
+.admin-confirm.gm-transfer-student-dialog {
+    width: min(640px, calc(100vw - 28px));
+    max-height: min(86vh, 760px);
+    overflow: hidden;
+}
+.gm-transfer-student-dialog .gm-transfer-student-form {
+    display: flex;
+    min-height: 0;
+    max-height: calc(86vh - 56px);
+    flex-direction: column;
+}
+.gm-transfer-student-dialog .gm-transfer-student-form > p:first-of-type {
+    margin-bottom: 14px;
+}
+.gm-transfer-student-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 12px 0 8px;
+    font-size: 12px;
+}
+.gm-transfer-student-toolbar > span {
+    display: flex;
+    gap: 6px;
+}
+.gm-transfer-student-list {
+    flex: 1 1 auto;
+    min-height: 120px;
+    max-height: 310px;
+    overflow-y: auto;
+    border: 1px solid #dbe4dd;
+    border-radius: 14px;
+    padding: 8px;
+    background: #fbfdfb;
+}
+.gm-transfer-student-dialog [data-transfer-error]:empty { display: none; }
+.gm-transfer-student-dialog [data-transfer-error] { margin: 8px 0 0; }
+@media (max-width: 640px) {
+    .gm-transfer-student-toolbar { align-items: flex-start; flex-direction: column; }
+    .gm-transfer-student-toolbar > span { width: 100%; }
+    .gm-transfer-student-toolbar .secondary-action { flex: 1; }
+}

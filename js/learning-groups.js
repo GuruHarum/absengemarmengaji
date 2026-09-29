@@ -61,6 +61,100 @@ window.LearningGroups = (() => {
     });
   }
 
+  async function pickStudentsForTransfer(state, sourceGroup) {
+    const sourceIds = [...membersOf(state, sourceGroup.id)];
+    if (!sourceIds.length) throw new Error('Kelompok asal belum memiliki murid aktif.');
+
+    const targets = state.groups
+      .filter(group => group.active && group.id !== sourceGroup.id)
+      .sort((a, b) => {
+        const ta = teacherName(state, a.teacher_id);
+        const tb = teacherName(state, b.teacher_id);
+        return ta.localeCompare(tb, 'id') || String(a.class_name || '').localeCompare(String(b.class_name || ''), 'id', { numeric: true });
+      });
+    if (!targets.length) throw new Error('Belum ada kelompok tujuan aktif. Buat kelompok tujuan terlebih dahulu.');
+
+    const students = sourceIds
+      .map(id => state.students.find(student => String(student.id) === String(id)))
+      .filter(Boolean)
+      .sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }) || String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
+
+    const studentMap = new Map(students.map(student => [String(student.id), student]));
+    const dialog = document.createElement('dialog');
+    dialog.className = 'admin-confirm gm-transfer-student-dialog';
+    dialog.innerHTML = `<form class="gm-transfer-student-form">
+      <div class="confirm-emblem" aria-hidden="true">↔</div>
+      <h2>Transfer Murid</h2>
+      <p>Pilih murid yang dipindahkan dari <strong>${safe(sourceGroup.class_name)}</strong>, lalu pilih kelompok tujuan. Murid lain tetap berada di kelompok asal.</p>
+      <label class="confirm-field-label" for="gmTransferTarget">Kelompok tujuan</label>
+      <select id="gmTransferTarget" class="confirm-value-field" required>
+        <option value="">Pilih kelompok tujuan</option>
+        ${targets.map(group => {
+          const ids = membersOf(state, group.id);
+          const labels = groupClassLabels(state, group, new Map(state.students.map(student => [String(student.id), student])));
+          const label = `${teacherName(state, group.teacher_id)} · ${labels.join(', ')} · ${ids.size} siswa`;
+          return `<option value="${safe(group.id)}">${safe(label)}</option>`;
+        }).join('')}
+      </select>
+      <div class="gm-transfer-student-toolbar">
+        <strong><span data-transfer-count>0</span> dari ${students.length} murid dipilih</strong>
+        <span><button type="button" class="secondary-action" data-transfer-all>Pilih semua</button><button type="button" class="secondary-action" data-transfer-clear>Kosongkan</button></span>
+      </div>
+      <div class="assignment-student-options gm-member-picker gm-transfer-student-list">
+        ${students.map(student => `<label><input type="checkbox" data-transfer-student="${safe(student.id)}"><span><strong>${safe(student['nama siswa'])}</strong><small>${safe(student.kelas || '-')}</small></span></label>`).join('')}
+      </div>
+      <p class="assessment-feedback is-error" data-transfer-error role="alert"></p>
+      <div class="confirm-actions"><button type="button" data-transfer-cancel class="secondary-action">Batal</button><button type="submit" class="primary-action">Transfer murid</button></div>
+    </form>`;
+    document.body.append(dialog);
+
+    const form = dialog.querySelector('form');
+    const list = dialog.querySelector('.gm-transfer-student-list');
+    const count = dialog.querySelector('[data-transfer-count]');
+    const error = dialog.querySelector('[data-transfer-error]');
+    const updateCount = () => { count.textContent = String(list.querySelectorAll('[data-transfer-student]:checked').length); };
+    list.addEventListener('change', updateCount);
+    dialog.querySelector('[data-transfer-all]').addEventListener('click', () => {
+      list.querySelectorAll('[data-transfer-student]').forEach(input => { input.checked = true; });
+      updateCount();
+    });
+    dialog.querySelector('[data-transfer-clear]').addEventListener('click', () => {
+      list.querySelectorAll('[data-transfer-student]').forEach(input => { input.checked = false; });
+      updateCount();
+    });
+
+    return await new Promise(resolve => {
+      let settled = false;
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        if (dialog.open) dialog.close();
+        dialog.remove();
+        resolve(value);
+      };
+      dialog.querySelector('[data-transfer-cancel]').addEventListener('click', () => finish(null));
+      dialog.addEventListener('cancel', event => { event.preventDefault(); finish(null); });
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        const targetGroupId = dialog.querySelector('#gmTransferTarget').value;
+        const studentIds = [...list.querySelectorAll('[data-transfer-student]:checked')]
+          .map(input => input.dataset.transferStudent)
+          .filter(id => studentMap.has(String(id)));
+        if (!targetGroupId) {
+          error.textContent = 'Pilih kelompok tujuan terlebih dahulu.';
+          return;
+        }
+        if (!studentIds.length) {
+          error.textContent = 'Pilih minimal satu murid yang akan dipindahkan.';
+          return;
+        }
+        finish({ targetGroupId, studentIds });
+      });
+      dialog.showModal();
+    });
+  }
+
+
   function shell(subject) {
     const title = titleOf(subject);
     const host = el(subject === 'tahsin' ? 'learningGroupTahsin' : 'learningGroupTahfidz');
@@ -163,7 +257,7 @@ window.LearningGroups = (() => {
     host.querySelector('[data-refresh]').disabled = value;
     host.querySelector('[data-year]').disabled = value;
     host.querySelector('[data-view-teacher]').disabled = value;
-    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer]').forEach(button => button.disabled = value);
+    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer], [data-transfer-students]').forEach(button => button.disabled = value);
   }
   function selectedTeacher(subject) {
     return shell(subject).querySelector('[data-view-teacher]').value;
@@ -274,7 +368,7 @@ window.LearningGroups = (() => {
           <div><strong>${safe(labels.join(', '))}</strong><small>${ids.size} siswa</small></div>
           <div class="gm-grade-group-actions">
             ${AppAccess.full() ? (group.active
-              ? `<button type="button" class="secondary-action" data-edit="${safe(group.id)}">Ubah anggota</button><button type="button" class="secondary-action" data-transfer="${safe(group.id)}">Transfer Guru</button><button type="button" class="secondary-action" data-end="${safe(group.id)}">Arsipkan</button><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus</button>`
+              ? `<button type="button" class="secondary-action" data-edit="${safe(group.id)}">Ubah anggota</button><button type="button" class="secondary-action" data-transfer-students="${safe(group.id)}">Transfer Murid</button><button type="button" class="secondary-action" data-transfer="${safe(group.id)}">Transfer Guru</button><button type="button" class="secondary-action" data-end="${safe(group.id)}">Arsipkan</button><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus</button>`
               : `<span class="gm-muted">Arsip</span><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus permanen</button>`)
               : '<span class="gm-muted">Lihat saja</span>'}
           </div>
@@ -417,6 +511,38 @@ window.LearningGroups = (() => {
       renderGroups(subject);
       renderStudents(subject);
       host.querySelector('[data-editor]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const transferStudents = event.target.closest('[data-transfer-students]');
+    if (transferStudents) {
+      const g = state.groups.find(row => row.id === transferStudents.dataset.transferStudents);
+      if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
+      let choice;
+      try {
+        choice = await pickStudentsForTransfer(state, g);
+      } catch (error) {
+        return msg(subject, error.message, true);
+      }
+      if (!choice) return;
+      const target = state.groups.find(row => row.id === choice.targetGroupId);
+      if (!target) return msg(subject, 'Kelompok tujuan sudah berubah. Muat ulang.', true);
+      busy(subject, true);
+      try {
+        const { data, error } = await supabase.rpc('gm_transfer_group_students', {
+          p_source_group_id: g.id,
+          p_target_group_id: target.id,
+          p_student_ids: choice.studentIds
+        });
+        if (error) throw error;
+        if (subject === 'tahsin') await refreshPublicTahsinRoster();
+        msg(subject, `${Number(data?.moved || choice.studentIds.length)} murid dipindahkan ke ${data?.target_teacher_name || teacherName(state, target.teacher_id)}. ${Number(data?.source_remaining || 0)} murid tetap di kelompok asal.`);
+      } catch (error) {
+        msg(subject, error.message, true);
+        busy(subject, false);
+        return;
+      }
+      busy(subject, false);
+      await open(subject, true);
       return;
     }
     const transfer = event.target.closest('[data-transfer]');
