@@ -3,6 +3,7 @@
 <head>
     <style>html { visibility: hidden; }</style>
     <meta charset="UTF-8">
+    <script>window.GM_INITIAL_LOADER_STARTED_AT = performance.now();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Admin - SDIT Harapan Umat Karawang</title>
     
@@ -42,11 +43,13 @@
     <link rel="stylesheet" href="css/assessments.css">
     <link rel="stylesheet" href="css/admin-polish.css?v=20260928-filter-id-3">
 <link rel="stylesheet" href="css/report-cards.css">
-<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/css/pwa.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="/css/pwa.css">
     <link rel="stylesheet" href="css/layout-responsive.css">
     <link rel="stylesheet" href="css/admin-refinement.css?v=20260928-submenu-level-1">
     <link rel="stylesheet" href="css/gm-upgrade-20260928.css?v=20260928-1">
-    <link rel="stylesheet" href="css/ui-polish-20260928.css?v=20260928-3">
+    <link rel="stylesheet" href="css/ui-polish-20260928.css?v=20260929-groups26">
+    <link rel="stylesheet" href="css/ux-stage5.css?v=20260929-ux27">
+    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader33">
 </head>
 <body class="admin-page sidebar-collapsed flex min-h-screen overflow-x-hidden">
 
@@ -148,9 +151,31 @@
                 </button>
                 <div class="admin-header-copy"><p>Gemar Mengaji <span id="accountRole">/ Administrasi</span></p><h2 id="adminHeaderTitle">Data Absensi</h2></div>
             </div>
-            <button id="topLogoutBtn" class="flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 transition-all font-semibold text-sm px-4 py-2 rounded-xl border border-red-100">
-                Keluar
-            </button>
+            <div class="admin-account-actions" aria-label="Aksi akun">
+                <div class="admin-notification-wrap">
+                    <button id="notificationBellBtn" type="button" class="admin-icon-button" aria-label="Notifikasi" title="Notifikasi" aria-expanded="false" aria-controls="notificationPopover">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+                        <span id="notificationBadge" class="admin-notification-badge" hidden aria-label="Ada notifikasi baru"></span>
+                    </button>
+                    <div id="notificationPopover" class="admin-notification-popover" hidden>
+                        <div class="admin-notification-head"><strong>Notifikasi</strong><span id="notificationCountLabel">Belum ada yang baru</span></div>
+                        <div id="notificationList" class="admin-notification-list">
+                            <div class="admin-notification-empty"><span aria-hidden="true">✓</span><strong>Belum ada notifikasi</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <button id="headerProfileBtn" type="button" class="admin-profile-button" aria-label="Buka Pengaturan Profil" title="Pengaturan Profil">
+                    <span class="admin-profile-avatar" aria-hidden="true">
+                        <img id="headerProfilePhoto" alt="" hidden>
+                        <span id="headerProfileInitials">A</span>
+                    </span>
+                    <span id="headerProfileName" class="admin-profile-name">Profil</span>
+                </button>
+                <button id="topLogoutBtn" type="button" class="admin-logout-button" aria-label="Keluar" title="Keluar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 4H4v16h5M13 8l4 4-4 4M8 12h12"/></svg>
+                    <span>Keluar</span>
+                </button>
+            </div>
         </header>
 
 <div class="admin-workspace p-8 space-y-6 max-w-[1600px] w-full mx-auto">
@@ -549,9 +574,45 @@
         <p id="reportSettingsFeedback" class="settings-feedback" role="status"></p>
     </div>
 
-<div id="page-profil" class="hidden space-y-6"><section class="assessment-controls"><h2>Pengaturan Profil</h2><p id="profileFeedback" class="assessment-feedback" role="status"></p>
-<form id="profileForm" class="space-y-4"><label class="field-label" for="profileEmail">Email akun<input id="profileEmail" type="email" readonly autocomplete="email"></label><label class="field-label" for="profileName">Nama profil<input id="profileName" maxlength="160" autocomplete="name"></label><p class="assessment-help">Nama profil berbeda dari nama guru pada master dan rapor.</p><button type="submit" class="primary-action">Simpan Profil</button></form></section>
-<section class="assessment-controls"><h2>Ubah Password</h2><form id="passwordForm" class="space-y-4"><label class="field-label" for="profilePassword">Password baru<input id="profilePassword" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></label><label class="field-label" for="profileConfirm">Ulangi password baru<input id="profileConfirm" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></label><p class="assessment-help">Gunakan minimal 10 karakter. Ganti password sementara yang diberikan koordinator.</p><label class="field-label" for="profileNonce">Kode verifikasi (jika diminta)<input id="profileNonce" autocomplete="one-time-code"></label><button id="profileReauthenticate" type="button" class="secondary-action">Kirim kode verifikasi</button><button type="submit" class="primary-action">Ubah Password</button></form></section></div>
+<div id="page-profil" class="hidden profile-settings-grid">
+<section class="assessment-controls profile-main-card">
+    <div class="profile-section-heading"><div><p class="section-kicker">IDENTITAS AKUN</p><h2>Profil Saya</h2><p>Atur nama yang tampil pada dashboard dan foto profil akun Anda.</p></div></div>
+    <p id="profileFeedback" class="assessment-feedback" role="status" aria-live="polite"></p>
+    <div id="profileTeacherCard" class="profile-photo-card">
+        <div class="profile-photo-preview" aria-hidden="true"><img id="profilePhotoPreview" alt="" hidden><span id="profilePhotoInitials">A</span></div>
+        <div class="profile-photo-copy"><strong id="profileTeacherName">Akun Gemar Mengaji</strong><span id="profileTeacherMeta">Foto profil mengikuti data guru yang tertaut.</span>
+            <div id="profilePhotoActions" class="profile-photo-actions">
+                <label for="profilePhotoFile" class="secondary-action profile-file-action">Pilih Foto</label>
+                <input id="profilePhotoFile" name="profilePhotoFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                <button id="profilePhotoSave" type="button" class="primary-action">Simpan Foto</button>
+                <button id="profilePhotoRemove" type="button" class="profile-danger-link">Hapus Foto</button>
+            </div>
+            <p id="profilePhotoHint" class="assessment-help">JPG, PNG atau WebP. Maksimal 2 MB.</p>
+        </div>
+    </div>
+    <form id="profileForm" class="space-y-4 profile-identity-form">
+        <label class="field-label" for="profileEmail">Email akun<input id="profileEmail" name="profileEmail" type="email" readonly autocomplete="email"></label>
+        <label class="field-label" for="profileName">Nama profil<input id="profileName" name="profileName" maxlength="160" autocomplete="name" placeholder="Contoh: Pak Ahmad"></label>
+        <p class="assessment-help">Nama profil hanya digunakan untuk sapaan dan identitas akun. Nama resmi guru pada rapor tidak berubah.</p>
+        <button type="submit" class="primary-action">Simpan Profil</button>
+    </form>
+    <div id="profilePushCard" class="profile-push-card" hidden>
+        <div class="profile-push-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></div>
+        <div class="profile-push-copy"><strong>Notifikasi perangkat</strong><span id="profilePushStatus">Belum aktif</span></div>
+        <div class="profile-push-actions"><button id="profilePushEnable" type="button" class="secondary-action">Aktifkan</button><button id="profilePushDisable" type="button" class="profile-danger-link" hidden>Nonaktifkan</button></div>
+    </div>
+</section>
+<section class="assessment-controls profile-security-card">
+    <div class="profile-section-heading"><div><p class="section-kicker">KEAMANAN AKUN</p><h2>Ubah Password</h2><p>Perbarui password akun tanpa mengubah data guru.</p></div></div>
+    <form id="passwordForm" class="space-y-4">
+        <label class="field-label" for="profilePassword">Password baru<input id="profilePassword" name="profilePassword" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></label>
+        <label class="field-label" for="profileConfirm">Ulangi password baru<input id="profileConfirm" name="profileConfirm" type="password" minlength="10" maxlength="128" required autocomplete="new-password"></label>
+        <p class="assessment-help">Gunakan minimal 10 karakter. Ganti password sementara yang diberikan koordinator.</p>
+        <label class="field-label" for="profileNonce">Kode verifikasi (jika diminta)<input id="profileNonce" name="profileNonce" autocomplete="one-time-code"></label>
+        <div class="profile-security-actions"><button id="profileReauthenticate" type="button" class="secondary-action">Kirim kode verifikasi</button><button type="submit" class="primary-action">Ubah Password</button></div>
+    </form>
+</section>
+</div>
 <div id="page-kelompok-tahsin" class="hidden space-y-6"><div id="learningGroupTahsin"></div></div>
 <div id="page-kelompok" class="hidden space-y-6"><div id="learningGroupTahfidz"></div></div>
 <div id="page-penilaian" class="hidden space-y-6">
@@ -645,17 +706,19 @@
         const hideLoading = () => showLoading(false);
     </script>
 
+    <script src="js/islamic-quotes.js?v=20260929-quotes28"></script>
     <script src="js/config.js"></script>
-    <script src="js/access.js"></script>
+    <script src="js/access.js?v=20260928-profile21"></script>
     <script src="js/utils.js"></script>
+    <script src="js/ux-stage5.js?v=20260929-ux27"></script>
     <script src="js/filter-identity.js?v=20260928-filter-id-1"></script>
     <script src="js/database.js?v=20260928-roster20-pagination"></script>
     <script src="js/report.js"></script>
     
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260928-roster20-pagination"></script>
-    <script src="js/gm-upgrade-20260928.js?v=20260928-1"></script>
+    <script src="js/panel-start.js?v=20260929-loader33"></script>
+    <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
     
 
 
@@ -665,6 +728,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260928-roster20-pagination" defer></script>
+<script src="/js/pwa.js?v=20260929-loader33" defer></script>
 </body>
 </html>

@@ -1,0 +1,37 @@
+'use strict';
+const fs = require('node:fs');
+const assert = require('node:assert');
+const read = file => fs.readFileSync(file, 'utf8');
+
+const attention = read('js/attention-center.js');
+const dashboard = read('js/gm-upgrade-20260928.js');
+const report = read('js/report-cards.js');
+const assessments = read('js/assessments.js');
+const css = read('css/ui-polish-20260928.css');
+const sql = read('supabase/20260928-18-pusat-perlu-perhatian.sql');
+const admin = read('admin.html');
+const sw = read('sw.js');
+
+assert.match(attention, /gm_attention_center/);
+assert.match(attention, /fetchAllRpcRows/);
+assert.match(attention, /Nilai belum lengkap/);
+assert.match(attention, /Belum kelompok Tahsin/);
+assert.match(attention, /Belum kelompok Tahfidz/);
+assert.match(attention, /gmAttentionPeriod/);
+assert.match(attention, /name=\"attention_period\"/);
+assert.match(attention, /name=\"attention_search\"/);
+assert.match(attention, /openIssue/);
+assert.match(dashboard, /data-gm-stat=\\?"?\$\{s\.key/);
+assert.match(dashboard, /GMAttention\.mount/);
+assert.match(report, /async function openMissing/);
+assert.match(assessments, /async function openAttention/);
+assert.match(css, /PUSAT PERLU PERHATIAN · ATTENTION22/);
+assert.match(sql, /CREATE OR REPLACE FUNCTION public\.gm_attention_center/);
+assert.match(sql, /app_private\.report_score_issues/);
+assert.match(sql, /role_name IN \('admin','koordinator'\) OR r\.teacher_id = linked_teacher/);
+assert.match(sql, /'missing_group'::text/);
+assert.doesNotMatch(sql, /\bDELETE\s+FROM\b/i);
+assert.doesNotMatch(sql, /\bTRUNCATE\b/i);
+assert.match(admin, /20260928-attention22/);
+assert.match(sw, /gemar-static-20260928-attention22/);
+console.log('attention center attention22 OK');

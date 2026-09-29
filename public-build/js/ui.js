@@ -3,19 +3,21 @@ const currentDate = document.getElementById('currentDate');
 const classTitle = document.getElementById('classTitle');
 function showLoading() {
     loadingCounter++;
-    if (loadingIndicator) {
+    // Initial loader dikelola khusus oleh public-app.js. Jangan biarkan
+    // fetch internal menyembunyikan/menampilkan loader sebelum waktunya.
+    if (loadingIndicator && !window.GM_INITIAL_LOADER_ACTIVE) {
         loadingIndicator.classList.remove('hidden');
     }
 }
 function hideLoading() {
     loadingCounter = Math.max(0, loadingCounter - 1);
-    if (loadingCounter === 0 && loadingIndicator) {
+    if (loadingCounter === 0 && loadingIndicator && !window.GM_INITIAL_LOADER_ACTIVE) {
         loadingIndicator.classList.add('hidden');
     }
 }
 function resetLoading() {
     loadingCounter = 0;
-    if (loadingIndicator) {
+    if (loadingIndicator && !window.GM_INITIAL_LOADER_ACTIVE) {
         loadingIndicator.classList.add('hidden');
     }
 }

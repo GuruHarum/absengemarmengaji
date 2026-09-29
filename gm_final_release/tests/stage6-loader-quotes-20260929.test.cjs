@@ -1,0 +1,17 @@
+const fs = require('node:fs');
+const assert = require('node:assert');
+const quotes = fs.readFileSync('js/islamic-quotes.js','utf8');
+const index = fs.readFileSync('index.html','utf8');
+const admin = fs.readFileSync('admin.html','utf8');
+const maintenance = fs.readFileSync('js/maintenance.js','utf8');
+const publicApp = fs.readFileSync('js/public-app.js','utf8');
+const panelStart = fs.readFileSync('js/panel-start.js','utf8');
+assert((quotes.match(/source:/g)||[]).length >= 180, 'bank quote harus besar');
+assert(quotes.includes("timeZone: tz") || quotes.includes("timeZone"), 'timezone harus tersedia');
+assert(index.includes('data-loader-quote-text'), 'loader index harus menampilkan quote');
+assert(!admin.includes('data-loader-quote-text'), 'loader admin tidak boleh menampilkan quote');
+assert(index.includes('islamic-quotes.js') && admin.includes('islamic-quotes.js'), 'bank quote tetap dimuat untuk index dan quote dashboard');
+assert(publicApp.includes('PUBLIC_LOADER_MIN_MS = 8000'), 'loader index minimum 8 detik harus diterapkan');
+assert(!panelStart.includes('5000'), 'loader admin tidak boleh dipaksa minimum 5 detik');
+assert(maintenance.includes('GMIslamicQuotes') && maintenance.includes('quoteSource'), 'maintenance harus memakai bank quote bersumber');
+console.log('stage6 loader quotes OK');

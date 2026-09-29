@@ -1,0 +1,13 @@
+"use strict";
+const fs=require('node:fs');
+const assert=require('node:assert');
+const app=fs.readFileSync('js/public-app.js','utf8');
+const ui=fs.readFileSync('js/ui.js','utf8');
+const sw=fs.readFileSync('sw.js','utf8');
+assert.match(app,/PUBLIC_LOADER_MIN_MS = 8000/);
+assert.match(app,/GM_INITIAL_LOADER_ACTIVE = true/);
+assert.match(app,/document\.body\.classList\.add\('page-ready'\)/);
+assert.match(app,/setTimeout\(\(\) => \{[\s\S]*GM_INITIAL_LOADER_ACTIVE = false;[\s\S]*classList\.add\('is-hidden'\)/);
+assert.match(ui,/!window\.GM_INITIAL_LOADER_ACTIVE/);
+assert.match(sw,/const VERSION = 'loader33'/);
+console.log('index loader handoff loader33 OK');

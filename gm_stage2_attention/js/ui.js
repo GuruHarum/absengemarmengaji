@@ -1,0 +1,502 @@
+const studentList = document.getElementById('studentList');
+const currentDate = document.getElementById('currentDate');
+const classTitle = document.getElementById('classTitle');
+function showLoading() {
+    loadingCounter++;
+    if (loadingIndicator) {
+        loadingIndicator.classList.remove('hidden');
+    }
+}
+function hideLoading() {
+    loadingCounter = Math.max(0, loadingCounter - 1);
+    if (loadingCounter === 0 && loadingIndicator) {
+        loadingIndicator.classList.add('hidden');
+    }
+}
+function resetLoading() {
+    loadingCounter = 0;
+    if (loadingIndicator) {
+        loadingIndicator.classList.add('hidden');
+    }
+}
+function showNotification(type, message) {
+    if (window.AdminNotice)
+        return AdminNotice.notify(message, type === 'warning' ? 'info' : type);
+    const notificationContent = document.getElementById('notificationContent');
+    if (type === 'success') {
+        notificationContent.innerHTML = `
+                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 w-full">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            <p>${escapeHtml(message)}</p>
+                        </div>
+                    </div>
+                `;
+    }
+    else if (type === 'info') {
+        notificationContent.innerHTML = `
+                    <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 w-full">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p>${escapeHtml(message)}</p>
+                        </div>
+                    </div>
+                `;
+    }
+    else {
+        notificationContent.innerHTML = `
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 w-full">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-red-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <p>${escapeHtml(message)}</p>
+                        </div>
+                    </div>
+                `;
+    }
+    notification.classList.add('show');
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+function showThankYouModal() {
+    thankYouModal.classList.add('show');
+}
+function hideThankYouModal() {
+    thankYouModal.classList.remove('show');
+}
+function renderTeachers() {
+    if (teachersData.length === 0) {
+        teacherGrid.innerHTML = `
+                    <div class="col-span-full text-center p-8">
+                        <p class="text-gray-500">Tidak ada data guru tersedia.</p>
+                    </div>
+                `;
+        return;
+    }
+    teacherGrid.innerHTML = teachersData.map((teacher, index) => `
+                <div class="teacher-card bg-white rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-lg" style="animation-delay: ${Math.min(index * 45, 450)}ms" data-index="${index}">
+                    <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-md transform transition-transform hover:scale-105">
+                        <img src="${escapeHtml(teacher.foto || 'assets/school-logo.png')}" alt="${escapeHtml(teacher.nama)}" class="teacher-photo-circle teacher-photo-circle--public${teacher.foto ? '' : ' teacher-photo-circle--placeholder'}" loading="lazy" decoding="async" data-fallback="assets/school-logo.png" onerror="this.onerror=null; this.classList.add('teacher-photo-circle--placeholder'); this.src=this.dataset.fallback;">
+                    </div>
+                    <h3 class="text-lg font-semibold text-blue-800">${escapeHtml(teacher.nama)}</h3>
+                </div>
+            `).join('');
+    document.querySelectorAll('.teacher-card').forEach(card => {
+        card.addEventListener('click', function () {
+            const index = this.getAttribute('data-index');
+            const selectedTeacherRow = teachersData[index];
+            selectedTeacher = selectedTeacherRow.nama;
+            const selectedTeacherId = String(selectedTeacherRow.id ?? '');
+            const teacherClassNumbers = new Set();
+            studentsData.forEach(student => {
+                const sameTeacher = selectedTeacherId && student.teacher_id != null
+                    ? String(student.teacher_id) === selectedTeacherId
+                    : student['nama guru'] === selectedTeacher;
+                if (sameTeacher) {
+                    const classNumber = extractClassNumber(student.kelas);
+                    if (classNumber) teacherClassNumbers.add(classNumber);
+                }
+            });
+            renderClassOptions(Array.from(teacherClassNumbers));
+            openClassModal();
+        });
+    });
+}
+function renderClassOptions(classes) {
+    if (classes.length === 0) {
+        classOptions.innerHTML = `
+                    <div class="col-span-2 text-center p-4">
+                        <p class="text-gray-500">Tidak ada kelas tersedia untuk guru ini.</p>
+                    </div>
+                `;
+        return;
+    }
+    classes.sort((a, b) => parseInt(a) - parseInt(b));
+    classOptions.innerHTML = classes.map(classNumber => `
+                <button class="class-option bg-blue-50 hover:bg-blue-100 text-blue-800 font-medium py-4 px-6 rounded-lg transition duration-300 shadow-sm transform hover:scale-105" data-class="${classNumber}">
+                    Kelas ${classNumber}
+                </button>
+            `).join('');
+    document.querySelectorAll('.class-option').forEach(button => {
+        button.addEventListener('click', function () {
+            selectedClass = this.getAttribute('data-class');
+            closeClassModal();
+            showPage(2);
+        });
+    });
+}
+function getAttendanceBadge(status) {
+    switch (status) {
+        case 'hadir':
+            return {
+                className: 'bg-green-100 text-green-800',
+                icon: '✅ Hadir'
+            };
+        case 'sakit':
+            return {
+                className: 'bg-yellow-100 text-yellow-800',
+                icon: '🤒 Sakit'
+            };
+        case 'izin':
+            return {
+                className: 'bg-blue-100 text-blue-800',
+                icon: '📝 Izin'
+            };
+        default:
+            return {
+                className: 'bg-red-100 text-red-800',
+                icon: '❌ Alpha'
+            };
+    }
+}
+function bindAttendanceOptionEvents() {
+    document.querySelectorAll('.attendance-option').forEach(button => {
+        button.addEventListener('click', function () {
+            const studentName = this.getAttribute('data-student');
+            const status = this.getAttribute('data-status');
+            const card = this.closest('.student-card');
+            const noteContainer = card.querySelector('.note-container');
+            const noteInput = card.querySelector('.note-input');
+            const isSelected = this.classList.contains('selected-option');
+            card.querySelectorAll('.attendance-option').forEach(opt => {
+                opt.classList.remove('selected-option');
+            });
+            if (isSelected) {
+                noteContainer.style.display = 'none';
+                delete selectedStudentStatus[studentName];
+                return;
+            }
+            this.classList.add('selected-option');
+            selectedStudentStatus[studentName] = status;
+            noteContainer.style.display = 'block';
+            if (status === 'hadir') {
+                noteInput.placeholder = 'Contoh: Buku 1 Halaman 1, Tahfidz Surah Al-Fatihah (Jangan Gunakan Enter)';
+            }
+            else if (status === 'sakit') {
+                noteInput.placeholder = 'Contoh: Demam';
+            }
+            else if (status === 'izin') {
+                noteInput.placeholder = 'Contoh: Acara Keluarga';
+            }
+            else if (status === 'alpha') {
+                noteInput.placeholder = 'Tidak Perlu Diisi';
+            }
+            noteContainer.style.display = 'block';
+        });
+    });
+}
+async function renderStudents() {
+    if (!selectedTeacher || !selectedClass)
+        return;
+    const drafts = new Map();
+    const draftContext = JSON.stringify([selectedTeacher, selectedClass, formatDateForStorage()]);
+    const draftCards = studentList.dataset.draftContext === draftContext ? studentList.querySelectorAll('.student-card') : [];
+    draftCards.forEach(card => {
+        const selected = card.querySelector('.attendance-option.selected-option');
+        if (selected)
+            drafts.set(selected.dataset.student, {
+                status: selected.dataset.status,
+                note: card.querySelector('.note-input')?.value || ''
+            });
+    });
+    selectedStudentStatus = {};
+    const filteredStudents = getFilteredStudents();
+    if (filteredStudents.length === 0) {
+        studentList.innerHTML = `
+            <div class="col-span-full text-center p-8 bg-white rounded-lg shadow-md">
+                <p class="text-gray-500">Tidak ada data siswa untuk guru dan kelas yang dipilih.</p>
+            </div>
+        `;
+        return;
+    }
+    const today = formatDateForStorage();
+    let html = '';
+    for (let i = 0; i < filteredStudents.length; i++) {
+        const student = filteredStudents[i];
+        const studentName = student['nama siswa'];
+        const recordedData = getAttendanceRecord(studentName, today);
+        const isRecorded = recordedData !== undefined;
+        const normalizedRecordedStatus = isRecorded ? ({ h: 'hadir', s: 'sakit', i: 'izin', a: 'alpha', alfa: 'alpha', '-': 'alpha' }[String(recordedData.status || '').toLowerCase()] || String(recordedData.status || '').toLowerCase()) : '';
+        html += `
+           <div class="student-card">
+                        <div class="student-header bg-blue-50">
+                            <h3 class="font-medium text-blue-800">${escapeHtml(studentName)}</h3>
+                            <p class="text-xs text-blue-600">${escapeHtml(student.kelas)}</p>
+                        </div>
+                        <div class="student-content">
+                            ${isRecorded ?
+            `<div class="flex flex-col">
+                                    <div class="flex items-center justify-center mb-3">
+                                        <span class="attendance-badge inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${normalizedRecordedStatus === 'hadir' ? 'bg-green-100 text-green-800' :
+                normalizedRecordedStatus === 'sakit' ? 'bg-yellow-100 text-yellow-800' :
+                    normalizedRecordedStatus === 'izin' ? 'bg-blue-100 text-blue-800' :
+                        'bg-red-100 text-red-800'}">
+                                            ${getAttendanceBadge(normalizedRecordedStatus).icon}
+                                        </span>
+                                    </div>
+                                     <div class="note-container">
+                                         <p class="text-sm text-gray-600 mb-1">Catatan:</p>
+                                         <p class="text-gray-800">${escapeHtml(recordedData.note || '-')}</p>
+                                     </div>
+                                      <p class="text-xs text-slate-500 mt-3">Perlu koreksi? Hubungi guru atau koordinator.</p>
+                                 </div>` :
+            `<div class="flex flex-col">
+                                    <div class="attendance-options">
+                                        <button class="attendance-option bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="hadir">
+                                            ✅ Hadir
+                                        </button>
+                                        <button class="attendance-option bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="sakit">
+                                            🤒 Sakit
+                                        </button>
+                                        <button class="attendance-option bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="izin">
+                                            📝 Izin
+                                        </button>
+                                        <button class="attendance-option bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-full text-sm font-medium flex items-center shadow-sm" data-student="${escapeHtml(studentName)}" data-status="alpha">
+                                            ❌ Alpha
+                                        </button>
+                                    </div>
+                                    <div class="note-container" data-student="${escapeHtml(studentName)}" style="display: none;">
+                                        <div class="mb-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan:</label>
+                                            <textarea class="note-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" rows="2" placeholder=""></textarea>
+                                        </div>
+                                        <button class="save-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 shadow-sm text-sm"
+    data-student-index="${i}">
+    Simpan
+                                        </button>
+                                    </div>
+                                </div>`}
+                        </div>
+                    </div>
+                `;
+    }
+    studentList.innerHTML = html;
+    studentList.dataset.draftContext = draftContext;
+    bindAttendanceOptionEvents();
+    studentList.querySelectorAll('.student-card').forEach(card => {
+        const options = Array.from(card.querySelectorAll('.attendance-option'));
+        const draft = drafts.get(options[0]?.dataset.student);
+        if (!draft)
+            return;
+        const selected = options.find(option => option.dataset.status === draft.status);
+        if (selected)
+            selected.click();
+        const noteInput = card.querySelector('.note-input');
+        if (noteInput)
+            noteInput.value = draft.note;
+    });
+    bindSaveButtonEvents(filteredStudents);
+    bindAttendanceEditEvents();
+    currentDate.textContent = formatCurrentDate();
+    classTitle.textContent = `Kelas ${selectedClass} - ${selectedTeacher}`;
+}
+function bindAttendanceEditEvents() {
+    document.querySelectorAll('.edit-attendance-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const record = (typeof attendanceData !== 'undefined' ? attendanceData : []).find(item => String(item.id) === this.dataset.attendanceId);
+            if (!record)
+                return showNotification('error', 'Data absensi tidak ditemukan. Silakan muat ulang halaman.');
+            const modal = document.getElementById('attendanceEditModal');
+            if (!modal)
+                return showNotification('error', 'Modal edit tidak ditemukan.');
+            document.getElementById('attendanceEditId').value = record.id;
+            document.getElementById('attendanceEditStatus').value = record.status || 'hadir';
+            document.getElementById('attendanceEditNote').value = record.note || '';
+            document.getElementById('attendanceEditStudent').textContent = `${record.student} — ${record.class} — ${record.date}`;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        });
+    });
+    const closeBtn = document.getElementById('closeAttendanceEdit');
+    if (closeBtn && !closeBtn.dataset.bound) {
+        closeBtn.addEventListener('click', () => {
+            const modal = document.getElementById('attendanceEditModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        });
+        closeBtn.dataset.bound = '1';
+    }
+    const form = document.getElementById('attendanceEditForm');
+    if (form && !form.dataset.bound) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('attendanceEditId').value;
+            const status = document.getElementById('attendanceEditStatus').value;
+            const note = document.getElementById('attendanceEditNote').value || '';
+            if (!id)
+                return showNotification('error', 'ID absensi tidak ditemukan.');
+            try {
+                showLoading();
+                const updated = await updateAttendance(id, { status: status, note: note.trim() });
+                showNotification('success', 'Absensi berhasil diperbarui.');
+                const modal = document.getElementById('attendanceEditModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher });
+                await renderStudents();
+            }
+            catch (err) {
+                console.error(err);
+                showNotification('error', err.message || 'Gagal memperbarui absensi.');
+            }
+            finally {
+                hideLoading();
+            }
+        });
+        form.dataset.bound = '1';
+    }
+    const modalDeleteBtn = document.getElementById('deleteAttendanceBtn');
+    if (modalDeleteBtn && !modalDeleteBtn.dataset.bound) {
+        modalDeleteBtn.addEventListener('click', function () {
+            const id = document.getElementById('attendanceEditId').value;
+            if (!id)
+                return showNotification('error', 'ID absensi tidak ditemukan.');
+            const confirmContainer = document.getElementById('attendanceDeleteConfirm');
+            const actions = document.getElementById('attendanceEditActions');
+            if (confirmContainer && actions) {
+                confirmContainer.classList.remove('hidden');
+                actions.classList.add('hidden');
+            }
+        });
+        modalDeleteBtn.dataset.bound = '1';
+    }
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    if (cancelDeleteBtn && !cancelDeleteBtn.dataset.bound) {
+        cancelDeleteBtn.addEventListener('click', function () {
+            const confirmContainer = document.getElementById('attendanceDeleteConfirm');
+            const actions = document.getElementById('attendanceEditActions');
+            if (confirmContainer && actions) {
+                confirmContainer.classList.add('hidden');
+                actions.classList.remove('hidden');
+            }
+        });
+        cancelDeleteBtn.dataset.bound = '1';
+    }
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmDeleteBtn && !confirmDeleteBtn.dataset.bound) {
+        confirmDeleteBtn.addEventListener('click', async function () {
+            const id = document.getElementById('attendanceEditId').value;
+            if (!id)
+                return showNotification('error', 'ID absensi tidak ditemukan.');
+            try {
+                showLoading();
+                const deleted = await deleteAttendance(id);
+                showNotification('success', 'Absensi berhasil dihapus.');
+                const modal = document.getElementById('attendanceEditModal');
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+                const confirmContainer = document.getElementById('attendanceDeleteConfirm');
+                const actions = document.getElementById('attendanceEditActions');
+                if (confirmContainer && actions) {
+                    confirmContainer.classList.add('hidden');
+                    actions.classList.remove('hidden');
+                }
+                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher });
+                await renderStudents();
+            }
+            catch (err) {
+                console.error(err);
+                showNotification('error', err.message || 'Gagal menghapus absensi.');
+            }
+            finally {
+                hideLoading();
+            }
+        });
+        confirmDeleteBtn.dataset.bound = '1';
+    }
+}
+function bindSaveButtonEvents(filteredStudents) {
+    const saveButtons = document.querySelectorAll('.save-btn');
+    saveButtons.forEach(button => {
+        button.addEventListener('click', async function () {
+            const studentIndex = this.getAttribute('data-student-index');
+            const student = filteredStudents[studentIndex];
+            const studentName = student['nama siswa'];
+            const status = selectedStudentStatus[studentName];
+            const cardContent = this.closest('.student-content');
+            const noteInput = cardContent.querySelector('.note-input');
+            const note = noteInput ? noteInput.value : '';
+            if (!status) {
+                showNotification('error', 'Silakan pilih status absensi terlebih dahulu (Hadir/Sakit/Izin/Alpha)');
+                return;
+            }
+            const today = formatDateForStorage();
+            const record = {
+                date: today,
+                teacher: selectedTeacher,
+                class: student.kelas,
+                student: studentName,
+                status: status,
+                note: note
+            };
+            try {
+                showLoading();
+                // Identitas tiga ID disisipkan otomatis; tampilan orang tua tidak berubah.
+                Object.assign(record, await getPublicAttendanceIds(student, selectedTeacher, today));
+                const savedData = await saveAttendance(record);
+                cacheAttendanceRecord(savedData);
+                showNotification('success', `Berhasil menyimpan absensi ${studentName}`);
+                await renderStudents();
+            }
+            catch (error) {
+                console.error(error);
+                showNotification('error', error.message || 'Gagal menyimpan absensi');
+            }
+            finally {
+                hideLoading();
+            }
+        });
+    });
+}
+function showPage(pageNumber) {
+    if (![1, 2].includes(pageNumber))
+        return;
+    page1.classList.toggle('hidden', pageNumber !== 1);
+    page2.classList.toggle('hidden', pageNumber !== 2);
+    if (pageNumber === 1) {
+        page1.classList.add('fade-in');
+        fetchTeachers();
+    }
+    else {
+        page2.classList.add('fade-in');
+        Promise.all([
+            fetchStudents(),
+            fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher })
+        ]).then(renderStudents).catch(error => {
+            console.error(error);
+            showNotification('error', 'Gagal memuat data absensi. Silakan coba lagi.');
+        });
+    }
+}
+function openClassModal() {
+    classModal.style.display = 'block';
+    setTimeout(() => {
+        classModal.classList.add('show');
+    }, 10);
+}
+function closeClassModal() {
+    classModal.classList.remove('show');
+    setTimeout(() => {
+        classModal.style.display = 'none';
+    }, 300);
+}
+function startRefreshAnimation(button) {
+    const icon = button.querySelector('.refresh-icon');
+    icon.classList.add('spinning');
+}
+function stopRefreshAnimation(button) {
+    const icon = button.querySelector('.refresh-icon');
+    icon.classList.remove('spinning');
+}

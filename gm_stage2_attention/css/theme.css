@@ -1,0 +1,193 @@
+
+:root {
+    --brand-color: #216454;
+    --brand-dark: #0c2724;
+    --theme-gold: #d1b581;
+    --theme-ink: #203e35;
+    --theme-muted: #60766b;
+    --theme-paper: #faf9f4;
+    --theme-line: #dce4da;
+    --theme-soft: #edf3ed;
+    --theme-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cpath d='M48 0 62 34 96 48 62 62 48 96 34 62 0 48 34 34Z M0 0 96 96 M96 0 0 96' fill='none' stroke='%23d1b581' stroke-opacity='.09' stroke-width='.8'/%3E%3C/svg%3E");
+}
+
+@media screen {
+    body {
+        font-family: 'Poppins', sans-serif;
+        color: var(--theme-ink);
+        background: var(--theme-paper);
+    }
+    body.public-page, body.admin-page {
+        background: radial-gradient(ellipse at 90% 0%, #e7eee3 0%, transparent 50%), var(--theme-paper);
+    }
+    ::selection { background: #d9e6d6; color: #153d30; }
+
+    
+    body .header-gradient,
+    body.login-page .login-card > div:first-child,
+    body.admin-page #settingsPreview {
+        background: var(--theme-pattern), linear-gradient(125deg, var(--brand-dark), var(--brand-color));
+        color: #f6f1e5;
+        border-bottom: 1px solid var(--theme-gold);
+    }
+    body.public-page > header { box-shadow: 0 5px 24px #0c272418; }
+    body.public-page .logo-circle { border: 2px solid var(--theme-gold); box-shadow: 0 0 0 5px #d1b58115; }
+    body.public-page > footer {
+        background: var(--theme-pattern), var(--brand-dark);
+        border-top: 1px solid #d1b58160;
+        color: #dce5d9;
+    }
+
+    
+    body :is(.bg-blue-600, .bg-blue-700, .bg-blue-800, .bg-indigo-600, .bg-indigo-700),
+    body .filter-button {
+        background-color: var(--brand-color);
+        color: #fff;
+    }
+    body :is(.hover\:bg-blue-700, .hover\:bg-blue-800, .hover\:bg-indigo-700):hover,
+    body .filter-button:hover { background-color: var(--brand-dark); }
+    body :is(.bg-blue-50, .bg-indigo-50):not(.attendance-option):not(.attendance-badge),
+    body .filter-container,
+    body .note-container { background-color: var(--theme-soft); }
+    body :is(.bg-blue-100, .bg-indigo-100):not(.attendance-option):not(.attendance-badge) { background-color: #e1ebe0; }
+    body :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-blue-900, .text-indigo-600, .text-indigo-700, .text-indigo-800):not(.attendance-option):not(.attendance-badge) { color: var(--brand-color); }
+    body :is(.hover\:text-blue-600, .hover\:text-indigo-900):hover { color: var(--brand-dark); }
+    body :is(.hover\:bg-blue-50, .hover\:bg-blue-100, .hover\:bg-indigo-50):hover { background-color: #e2ecdf; }
+    body :is(.border-blue-200, .border-blue-100, .border-indigo-100, .border-gray-200, .border-slate-200) { border-color: var(--theme-line); }
+    body :is(.border-blue-500, .border-indigo-600) { border-color: var(--brand-color); }
+    body :is(.border-t-blue-600, .loading-spinner) { border-top-color: var(--theme-gold); }
+    body :is(.bg-gray-50, .bg-slate-50) { background-color: #f4f6ef; }
+    body :is(.text-gray-800, .text-slate-800, .text-gray-700, .text-slate-700) { color: var(--theme-ink); }
+    body :is(.text-gray-500, .text-slate-500, .text-gray-600, .text-slate-600) { color: var(--theme-muted); }
+    body :is(.header-gradient, .login-card > div:first-child) :is(.text-blue-100, .text-blue-200) { color: #cddcc9; }
+    body .hover\:bg-blue-200:not(.attendance-option):hover { background-color: #d7e5d1; }
+    body :is(.bg-blue-50\/50, .bg-blue-100\/40) { background-color: #edf2e8; }
+    body .from-blue-50 { background-image: linear-gradient(110deg, #edf3e7, #f4efdf); }
+    body.admin-page :is(#page-infografik, #page-pengaturan) > section:first-child :is(.text-blue-100, .text-blue-200) { color: #cddcc9; }
+    body #csvImportBtn { background-color: var(--brand-dark); }
+    body .inline-loading { border-top-color: var(--theme-gold); }
+    body .refresh-button { background: #e9eddc; color: #345540; border: 1px solid #cfd9bf; }
+    body .refresh-button:hover { background: #dce6d1; }
+
+    body :is(input, select, textarea):not([type="color"]):not([type="checkbox"]):not([type="radio"]) {
+        border-color: #ccd8cc;
+        accent-color: var(--brand-color);
+    }
+    body :is(input, select, textarea):focus {
+        border-color: var(--brand-color);
+        outline: 2px solid #21645440;
+        outline-offset: 2px;
+        --tw-ring-color: #21645426;
+    }
+    body :is(button, a):focus-visible { outline: 2px solid var(--theme-gold); outline-offset: 3px; }
+
+    body .teacher-card {
+        border: 1px solid var(--theme-line);
+        border-top: 3px solid #c7b58b;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #fdfcf7, #fff);
+        box-shadow: 0 5px 20px #153d3008;
+    }
+    body .teacher-card:hover { border-color: #b4c6ae; box-shadow: 0 12px 32px #153d3015; }
+    body .teacher-card > div:first-child { border: 3px solid #f3eddf; box-shadow: 0 0 0 1px #cfbc91; }
+    body .student-card { border: 1px solid var(--theme-line); border-radius: 16px; box-shadow: 0 4px 16px #153d3008; }
+    body .student-header { background: #eaf0e4; border-bottom: 1px solid #dce5d2; }
+    body .admin-panel { border: 1px solid var(--theme-line); box-shadow: 0 8px 28px #153d3008; }
+    body .thank-you-content { background: var(--theme-pattern), linear-gradient(135deg, #216454, #0c2724); color: #fff; border: 1px solid var(--theme-gold); }
+    body .selected-option { outline: 2px solid #94783f; outline-offset: 2px; }
+    body .selected-option::after { background-color: var(--brand-color); }
+
+    
+    body :is(.attendance-table, .monthly-report-table) th,
+    body.admin-page thead { background-color: #eaf0e4; color: #244d3b; }
+    body .monthly-report-table .student-name { background-color: #f6f7f0; }
+    body .monthly-report-table .summary-header { background-color: #e5e9d7; }
+    body .monthly-report-table .summary-cell { background-color: #f4f4e9; }
+    body .monthly-report-table .percentage-cell { background-color: #e2ecdc; color: #244d3b; }
+    body :is(.attendance-table, .monthly-report-table) :is(th, td) { border-color: #dce4d6; }
+    body .attendance-table tr:hover td { background-color: #f1f5ec; }
+
+    body.admin-page #sidebar {
+        background: var(--theme-pattern), linear-gradient(165deg, var(--brand-dark), #12392f);
+        color: #cddbc9;
+        border-right: 1px solid #d1b58138;
+    }
+    body.admin-page #sidebar :is(.bg-slate-950, .bg-slate-900) { background-color: #071c1a80; }
+    body.admin-page #sidebar .border-slate-800 { border-color: #d1b58124; }
+    body.admin-page #sidebar :is(.text-slate-300, .text-slate-400) { color: #b7cbb9; }
+    body.admin-page #sidebar .bg-indigo-600 {
+        background: #d1b58120;
+        color: #f0dbad;
+        box-shadow: inset 3px 0 var(--theme-gold);
+    }
+    body.admin-page #sidebar button:hover { background-color: #d1b58116; }
+    body.admin-page main > header { background: #fdfcf8; border-bottom-color: #d6dfcf; }
+    body.admin-page #sidebar #adminSchoolLogo { box-shadow: 0 0 0 2px #d1b58185; }
+    body.admin-page :is(#page-infografik, #page-pengaturan) > section:first-child {
+        background: var(--theme-pattern), linear-gradient(125deg, var(--brand-dark), var(--brand-color));
+        color: #f6f1e5;
+    }
+    body .mobile-menu-button { border-color: #d2ddcd; background: #f5f7ef; }
+    body .mobile-menu-button span { background: var(--brand-dark); }
+
+    
+    body.login-page, body.maintenance-page {
+        background: var(--theme-pattern), radial-gradient(ellipse at 50% 35%, #173d36, #071c1a 85%);
+        min-height: 100vh;
+        min-height: 100svh;
+    }
+    body.login-page .login-card { border: 1px solid #d1b58170; border-radius: 24px; box-shadow: 0 24px 80px #0004; background: #fdfcf7; }
+    body.login-page .login-card > div:first-child { padding-top: 36px; padding-bottom: 30px; }
+    body.login-page .login-card > div:first-child > div { box-shadow: 0 0 0 4px #d1b58130; }
+    body.maintenance-page { color: #f6f1e5; }
+    body.maintenance-page .maintenance-card { padding: 40px 28px; border: 1px solid #d1b58145; border-radius: 100px 100px 24px 24px; background: #0c2724a6; }
+    body.maintenance-page .bg-amber-400 { background-color: var(--theme-gold); color: var(--brand-dark); box-shadow: 0 0 30px #d1b58112; }
+    body.maintenance-page :is(.text-amber-300, .hover\:text-amber-200:hover) { color: #e2ca98; }
+    body.maintenance-page .text-slate-300 { color: #bacdbf; }
+    body.maintenance-page .bg-amber-300 { background-color: var(--theme-gold); }
+
+    @media (max-width: 480px) {
+        body.maintenance-page .maintenance-card { padding: 32px 20px; }
+        body.login-page .login-card { border-radius: 20px; }
+    }
+}
+
+@media screen {
+    .access-error { width: min(460px, calc(100% - 40px)); margin: 12vh auto; padding: 32px; border: 1px solid #d1b58166; border-radius: 22px; background: #fffef7; color: #284b38; box-shadow: 0 20px 70px #153d3012; }
+    .access-error h1 { font-size: 24px; margin-bottom: 12px; }
+    .access-error p { font-size: 13px; line-height: 1.8; }
+    .access-error a { display: inline-block; margin-top: 20px; padding: 12px 18px; background: #216454; color: #fff; border-radius: 10px; }
+    body.public-page #page1 > div:first-child { padding: 28px 16px; }
+    body.public-page #page1 h2 { font-size: clamp(23px, 3vw, 32px); letter-spacing: -.035em; font-weight: 500; }
+    body.public-page #page1 > div:first-child > p { font-size: 12px; color: #758167; margin-top: 12px; }
+    body.public-page .attendance-heading { flex-wrap: wrap; gap: 20px; padding: 22px 26px; border: 1px solid #dce4cd; background: #fffef8; border-radius: 18px; }
+    body.public-page #classTitle { font-size: 21px; font-weight: 500; }
+    body.public-page #currentDate { font-size: 11px; }
+    body.public-page #materiLinkBtn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 10px 14px; border-radius: 11px; white-space: nowrap; font-size: 11px; }
+    body.public-page #materiLinkBtn svg { display: block; width: 18px; height: 18px; flex-shrink: 0; margin: 0; }
+    body.public-page #backToHome { font-size: 11px; min-height: 42px; }
+    body.public-page .student-header { padding: 18px 20px; }
+    body.public-page .student-content { padding: 18px; }
+    body.public-page .attendance-options { gap: 8px; }
+    body.public-page .attendance-option { min-height: 36px; font-size: 11px; }
+    body.public-page .note-input { line-height: 1.7; background: #fffef9; }
+    body.public-page .save-btn { border-radius: 10px; min-height: 42px; }
+    @media (max-width: 480px) {
+        body.public-page .attendance-heading { padding: 18px; }
+        body.public-page .attendance-heading > div:last-child { width: 100%; justify-content: space-between; }
+        body.public-page #classTitle { font-size: 18px; }
+    }
+}
+
+.teacher-photo-circle {
+    display: block;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    flex-shrink: 0;
+}
+.teacher-photo-circle--public { width: 100%; height: 100%; }
+.teacher-photo-circle--preview { width: 80px; height: 80px; }
+.teacher-photo-circle--small { width: 36px; height: 36px; }
+.teacher-photo-circle--placeholder { object-fit: contain; padding: 5%; background: var(--theme-paper); }

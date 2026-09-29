@@ -1,0 +1,42 @@
+function buildAttendanceInsights(students, records, from, to, months = null, today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })) {
+    const text = value => String(value || '').trim();
+    const key = (teacher, kelas, name) => JSON.stringify([teacher, kelas, name].map(value => text(value).toLocaleLowerCase('id')));
+    const roster = new Map(students.map(row => [key(row['nama guru'], row.kelas, row['nama siswa']), row]));
+    const dates = new Set();
+    for (let day = new Date(from + 'T00:00:00Z'); Number.isFinite(day.getTime()) && day.toISOString().slice(0, 10) <= to; day.setUTCDate(day.getUTCDate() + 1)) {
+        const date = day.toISOString().slice(0, 10);
+        if (date <= today && (!months || months.includes(date.slice(5, 7))))
+            dates.add(date);
+    }
+    const empty = () => ({ hadir: 0, sakit: 0, izin: 0, alpha: 0, recorded: 0, missing: 0, total: 0 });
+    const classes = new Map();
+    for (const row of roster.values()) {
+        if (!classes.has(row.kelas))
+            classes.set(row.kelas, { name: row.kelas, students: 0, ...empty() });
+        classes.get(row.kelas).students++;
+    }
+    const unique = new Map();
+    for (const row of [...records].sort((a, b) => String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true }))) {
+        const date = text(row.date).slice(0, 10), identity = key(row.teacher, row.class, row.student);
+        if (dates.has(date) && roster.has(identity))
+            unique.set(JSON.stringify([date, identity]), row);
+    }
+    const statuses = { h: 'hadir', hadir: 'hadir', s: 'sakit', sakit: 'sakit', i: 'izin', izin: 'izin', a: 'alpha', alfa: 'alpha', alpha: 'alpha', '-': 'alpha' };
+    for (const row of unique.values()) {
+        const group = classes.get(roster.get(key(row.teacher, row.class, row.student)).kelas);
+        const status = statuses[text(row.status).toLowerCase()];
+        if (status) {
+            group[status]++;
+            group.recorded++;
+        }
+    }
+    const totals = empty();
+    const rows = [...classes.values()].map(group => {
+        group.total = group.students * dates.size;
+        group.missing = group.total - group.recorded;
+        group.alpha += group.missing;
+        Object.keys(totals).forEach(field => totals[field] += group[field]);
+        return { ...group, days: dates.size, rate: group.total ? group.hadir / group.total * 100 : null };
+    }).sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1) || String(a.name).localeCompare(String(b.name), 'id'));
+    return { totals, rows, students: roster.size, days: dates.size, rate: totals.total ? totals.hadir / totals.total * 100 : null };
+}

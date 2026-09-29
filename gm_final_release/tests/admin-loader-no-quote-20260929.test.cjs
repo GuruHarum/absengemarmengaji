@@ -1,0 +1,13 @@
+const fs=require('node:fs');
+const admin=fs.readFileSync('admin.html','utf8');
+const index=fs.readFileSync('index.html','utf8');
+const panel=fs.readFileSync('js/panel-start.js','utf8');
+const publicApp=fs.readFileSync('js/public-app.js','utf8');
+const maintenance=fs.readFileSync('maintenance.html','utf8');
+if(admin.includes('data-loader-quote-text')) throw new Error('Loader admin masih memiliki quote');
+if(!index.includes('data-loader-quote-text')) throw new Error('Loader index kehilangan quote');
+if(/waitForMinimum\(panelLoaderStartedAt,\s*5000\)/.test(panel) || /5000\s*-\s*\(performance\.now\(\)\s*-\s*panelLoaderStartedAt\)/.test(panel)) throw new Error('Loader admin masih dipaksa minimum 5 detik');
+if(!publicApp.includes('remainingMinimum(publicLoaderStartedAt, PUBLIC_LOADER_MIN_MS)')) throw new Error('Loader index harus tetap minimum 5 detik');
+if(!maintenance.includes('js/islamic-quotes.js')) throw new Error('Maintenance harus tetap memakai bank quote yang sama');
+if(!admin.includes('dashboardHeaderQuote')) throw new Error('Quote dashboard admin harus tetap ada');
+console.log('admin loader tanpa quote loader33 OK');

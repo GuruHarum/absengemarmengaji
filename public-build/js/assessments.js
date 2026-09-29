@@ -107,7 +107,11 @@ window.PeriodicAssessments = (() => {
         }
         const context = { subject: el('assessmentSubject').value, teacherId: String(teacher.id), teacherName: teacher.nama, year: Number(el('assessmentYear').value), period: el('assessmentPeriod').value };
         setBusy(true);
-        message('Memuat siswa dan nilai tersimpan...');
+        message('');
+        if (window.GMUX?.skeletonCards) {
+            el('assessmentWorkspace').hidden = false;
+            el('assessmentCards').innerHTML = window.GMUX.skeletonCards(3, { form: true });
+        } else message('Memuat siswa dan nilai tersimpan...');
         try {
             const students = await fetchAllRows(() => supabase.rpc('assessment_roster', {
                 teacher_key: String(teacher.id), year_key: context.year, subject_key: context.subject
@@ -271,6 +275,29 @@ window.PeriodicAssessments = (() => {
             state.busy = false;
         }
     }
+    async function openAttention(options = {}) {
+        for (let i = 0; i < 120 && state.busy; i++)
+            await new Promise(resolve => setTimeout(resolve, 25));
+        if (!state.initialized)
+            await open();
+        for (let i = 0; i < 120 && state.busy; i++)
+            await new Promise(resolve => setTimeout(resolve, 25));
+        const year = Number(options.year || (new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0)));
+        el('assessmentYear').value = String(year);
+        yearLabel();
+        el('assessmentSubject').value = options.subject || 'tahsin';
+        await refreshSubjectTeachers();
+        if (AppAccess.full() && options.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(options.teacherId)))
+            el('assessmentTeacher').value = String(options.teacherId);
+        el('assessmentPeriod').value = options.period || 'pts_ganjil';
+        await load();
+        if (options.className && state.students.some(student => student.kelas === options.className))
+            el('assessmentClass').value = options.className;
+        el('assessmentSearch').value = options.studentName || '';
+        state.page = 1;
+        render();
+        return true;
+    }
     function yearLabel() { const year = Number(el('assessmentYear').value); el('assessmentYearLabel').textContent = `Tahun ajaran ${year}/${year + 1}`; }
     document.addEventListener('panelready', () => {
         el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); return load(); });
@@ -350,5 +377,5 @@ window.PeriodicAssessments = (() => {
         event.preventDefault();
         event.returnValue = '';
     } });
-    return { open, classLabel, hasUnsavedChanges: () => dirtyStudents().length > 0 };
+    return { open, openAttention, classLabel, hasUnsavedChanges: () => dirtyStudents().length > 0 };
 })();

@@ -1,5 +1,5 @@
 window.AdminNotice = (() => {
-    let tray, dialog, pending;
+    let tray, dialog, pending, valueDialog, valuePending;
     const kindOf = text => /gagal|kesalahan|tidak ditemukan|tidak valid|ditolak|belum dapat|tidak sama|wajib|harus/i.test(text) ? 'error' : /berhasil|disimpan|diakhiri|dikirim/i.test(text) ? 'success' : 'info';
     function notify(text, kind = kindOf(String(text))) {
         if (!tray) {
@@ -65,6 +65,74 @@ window.AdminNotice = (() => {
     function finish(value) { const request = pending; if (!request)
         return; pending = null; dialog.close(); if (request.previous?.isConnected)
         request.previous.focus(); request.resolve(value); }
+
+    function requestValue(options = {}) {
+        if (valuePending) return Promise.resolve(null);
+        if (!valueDialog) {
+            valueDialog = document.createElement('dialog');
+            valueDialog.className = 'admin-confirm admin-value-dialog';
+            valueDialog.setAttribute('aria-labelledby', 'noticeValueTitle');
+            valueDialog.setAttribute('aria-describedby', 'noticeValueText');
+            valueDialog.innerHTML = '<form data-value-form><div class="confirm-emblem" aria-hidden="true">i</div><h2 id="noticeValueTitle">Masukkan data</h2><p id="noticeValueText"></p><label class="confirm-field-label" for="noticeValueField" data-value-label>Nilai</label><div data-value-field-host></div><div class="confirm-actions"><button type="button" data-value-cancel class="secondary-action">Batal</button><button type="submit" data-value-accept class="primary-action">Lanjutkan</button></div></form>';
+            document.body.append(valueDialog);
+            valueDialog.querySelector('[data-value-cancel]').onclick = () => finishValue(null);
+            valueDialog.querySelector('[data-value-form]').addEventListener('submit', event => {
+                event.preventDefault();
+                const field = valueDialog.querySelector('#noticeValueField');
+                finishValue(field ? field.value : null);
+            });
+            valueDialog.addEventListener('cancel', event => { event.preventDefault(); finishValue(null); });
+        }
+        const previous = document.activeElement;
+        const title = String(options.title || 'Masukkan data');
+        const message = String(options.message || '');
+        const label = String(options.label || 'Nilai');
+        const confirmLabel = String(options.confirmLabel || 'Lanjutkan');
+        const host = valueDialog.querySelector('[data-value-field-host]');
+        host.replaceChildren();
+        let field;
+        if (Array.isArray(options.choices) && options.choices.length) {
+            field = document.createElement('select');
+            const first = document.createElement('option');
+            first.value = ''; first.textContent = options.placeholder || 'Pilih';
+            field.append(first);
+            options.choices.forEach(choice => {
+                const option = document.createElement('option');
+                option.value = String(choice.value ?? '');
+                option.textContent = String(choice.label ?? choice.value ?? '');
+                field.append(option);
+            });
+        } else {
+            field = document.createElement('input');
+            field.type = options.type || 'text';
+            field.value = String(options.value || '');
+            field.placeholder = String(options.placeholder || '');
+            field.autocomplete = 'off';
+            field.spellcheck = false;
+        }
+        field.id = 'noticeValueField';
+        field.name = 'notice_value';
+        field.className = 'confirm-value-field';
+        field.required = options.required !== false;
+        host.append(field);
+        valueDialog.querySelector('#noticeValueTitle').textContent = title;
+        valueDialog.querySelector('#noticeValueText').textContent = message;
+        valueDialog.querySelector('[data-value-label]').textContent = label;
+        valueDialog.querySelector('[data-value-accept]').textContent = confirmLabel;
+        return new Promise(resolve => {
+            valuePending = { resolve, previous };
+            valueDialog.showModal();
+            requestAnimationFrame(() => field.focus());
+        });
+    }
+    function finishValue(value) {
+        const request = valuePending;
+        if (!request) return;
+        valuePending = null;
+        valueDialog.close();
+        if (request.previous?.isConnected) request.previous.focus();
+        request.resolve(value);
+    }
     document.addEventListener('panelready', () => {
         document.querySelectorAll('[id$="Feedback"]').forEach(node => {
             let previous = node.textContent;
@@ -80,5 +148,5 @@ window.AdminNotice = (() => {
             }).observe(node, { childList: true, characterData: true, subtree: true });
         });
     });
-    return { notify, confirm: confirmAction };
+    return { notify, confirm: confirmAction, request: requestValue };
 })();

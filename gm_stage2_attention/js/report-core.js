@@ -1,0 +1,236 @@
+window.ReportCore = (() => {
+    const periods = { pts_ganjil: 'Tengah Semester 1', pas_ganjil: 'Akhir Semester 1', pts_genap: 'Tengah Semester 2', pas_genap: 'Akhir Semester 2' };
+    const types = ['BUKU', 'JILID', "AL-QUR'AN", 'GHARIB', 'TAJWID', 'FINISHING', 'SYAHADAH', 'TAKHASSUS'];
+    const extraFields = ['tahsin_progress_type', 'tahsin_book_number', 'tahsin_jilid', 'tahsin_surah_number', 'tahsin_ayah', 'tahsin_material', 'tahsin_juz_last', 'tahsin_gharib_page', 'tahsin_tajwid_target_done', 'tahfidz_progress_type', 'tahfidz_juz', 'tahfidz_ayah_start', 'tahfidz_aspect_confirmed', 'teacher_note'];
+    const groupNumbers = { SURAT_1_3: [2, 3], SURAT_4: [3, 4], SURAT_5: [4], SURAT_6: [4, 5], SURAT_7: [5, 6], SURAT_8: [6, 7], SURAT_25: [42, 43, 44, 45], SURAT_26: [46, 47, 48, 49, 50, 51], SURAT_27: [51, 52, 53, 54, 55, 56, 57], SURAT_28: [58, 59, 60, 61, 62, 63, 64, 65, 66], SURAT_29: [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77], SURAT_30: Array.from({ length: 37 }, (_, i) => 78 + i) };
+    const surahNames = {};
+    Object.entries(groupNumbers).forEach(([group, numbers]) => numbers.forEach((number, i) => { surahNames[number] = ReportReference.surahGroups[group][i + 2].replace(/^QS\. /, ''); }));
+    let reference = ReportReference;
+    function useReference(value) { reference = value || ReportReference; }
+    function surahName(number) { return reference.surahNames?.[number] || surahNames[number] || QURAN_SURAHS.find(s => s.number === Number(number))?.name || ''; }
+    const juzRanges = [[1, 2], [2, 2], [2, 3], [3, 4], [4, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 11], [11, 12], [12, 14], [15, 16], [17, 18], [18, 20], [21, 22], [23, 25], [25, 27], [27, 29], [29, 33], [33, 36], [36, 39], [39, 41], [41, 45], [46, 51], [51, 57], [58, 66], [67, 77], [78, 114]];
+    function surahsForJuz(juz) { const range = juzRanges[Number(juz) - 1]; return range ? QURAN_SURAHS.filter(s => s.number >= range[0] && s.number <= range[1]) : []; }
+    const labels = { tahsin_makhraj: 'Makhorijul Huruf', tahsin_tajwid: 'Tajwid', tahsin_tartil: 'Tartil/Kelancaran', tahsin_gharib: 'Gharib Musykilat', tahfidz_makhraj: 'Makhorijul Huruf', tahfidz_tajwid: 'Tajwid', tahfidz_hafalan: 'Tartil/Kelancaran' };
+    function blank(value) { return value == null || typeof value === 'string' && value.trim() === ''; }
+    function number(value) { return blank(value) ? null : Number(value); }
+    function applicable(scores = {}, subject) {
+        if (subject === 'tahfidz')
+            return { known: true, keys: ['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'] };
+        const v = legacy(scores), type = v.tahsin_progress_type, known = types.includes(type) && (type !== 'BUKU' || [1, 2, 3].includes(Number(v.tahsin_book_number)));
+        const keys = ['tahsin_makhraj', 'tahsin_tartil'];
+        if (known && !(type === 'BUKU' && Number(v.tahsin_book_number) === 1))
+            keys.splice(1, 0, 'tahsin_tajwid');
+        if (type === 'FINISHING')
+            keys.push('tahsin_gharib');
+        return { known, keys };
+    }
+    function check(scores = {}, subject) {
+        const rule = applicable(scores, subject), missing = rule.keys.filter(k => blank(scores[k])), invalid = rule.keys.filter(k => !blank(scores[k]) && (!/^\d{1,3}(\.\d{1,2})?$/.test(String(scores[k]).trim()) || !Number.isFinite(Number(scores[k])) || Number(scores[k]) < 0 || Number(scores[k]) > 100));
+        const stage = rule.known ? [] : ['Tahap capaian Tahsin belum jelas; kewajiban Tajwid belum dapat ditentukan.'];
+        if (subject === 'tahfidz' && !blank(scores.tahfidz_hafalan) && ![true, 'true'].includes(scores.tahfidz_aspect_confirmed)) {
+            stage.push('Nilai Hafalan lama belum dipastikan sebagai Tartil/Kelancaran; isi ulang aspek ketiga.');
+        }
+        return { ...rule, missing, invalid, stage, complete: !missing.length && !invalid.length && !stage.length };
+    }
+    function stats(scores = {}, subject) { const checked = check(scores, subject), values = checked.keys.filter(k => !checked.invalid.includes(k) && !(k === 'tahfidz_hafalan' && checked.stage.length)).map(k => number(scores[k])).filter(v => v !== null && Number.isFinite(v)); const sum = values.reduce((a, b) => a + Math.round(b * 100), 0) / 100, average = values.length ? sum / values.length : null; const final = checked.complete && average !== null; return { ...checked, sum: values.length ? sum : null, average, grade: !final ? '-' : average >= 90 ? 'A' : average >= 85 ? 'B+' : average >= 80 ? 'B' : average >= 75 ? 'B-' : average >= 70 ? 'C+' : average >= 60 ? 'C' : 'D', predicate: !final ? '-' : average >= 90 ? 'MUMTAZ / SANGAT BAIK SEKALI' : average >= 80 ? 'JAYYID JIDDAN / BAIK SEKALI' : average >= 70 ? 'JAYYID / CUKUP BAIK' : 'NAQIS / KURANG' }; }
+    function reportCheck(row) { const missing = [], problems = [...(row.issues || [])]; for (const sub of ['tahsin', 'tahfidz']) {
+        const c = check(row[sub]?.scores || {}, sub);
+        if (c.missing.length)
+            missing.push({ student: row.student, subject: sub, fields: c.missing, teacher: row.teachers?.[sub] || row[sub]?.teacher_name || 'Pengampu Belum Ditetapkan' });
+        problems.push(...c.stage, ...c.invalid.map(k => labels[k] + ' ' + sub + ' di luar rentang 0–100'));
+    } return { missing, problems: [...new Set(problems)], complete: !missing.length && !problems.length }; }
+    function missingByStudent(reports = []) {
+        const students = new Map();
+        for (const report of reports) {
+            const missing = reportCheck(report).missing;
+            if (!missing.length)
+                continue;
+            const key = String(report.student.id);
+            if (!students.has(key))
+                students.set(key, { student: report.student, programs: [] });
+            students.get(key).programs.push(...missing.map(({ subject, fields, teacher }) => ({ subject, fields, teacher })));
+        }
+        return [...students.values()];
+    }
+    function aspect(value) {
+        if (blank(value))
+            return '-';
+        const raw = String(value).trim(), n = Number(raw);
+        if (!/^\d{1,3}(\.\d{1,2})?$/.test(raw) || !Number.isFinite(n) || n > 100)
+            return 'NILAI TIDAK VALID';
+        return n >= 90 ? 'SANGAT MEMUASKAN' : n >= 80 ? 'MEMUASKAN' : n >= 70 ? 'CUKUP MEMUASKAN' : 'KURANG MEMUASKAN';
+    }
+    function material(book, page) { return reference.books.find(r => r.book === Number(book) && r.page === Number(page))?.material || ''; }
+    function legacy(value) {
+        const out = { ...value };
+        if (!out.tahsin_progress_type && out.tahsin_book) {
+            const text = String(out.tahsin_book).trim().toUpperCase();
+            const match = text.match(/^(?:BUKU\s*)?([1-3])$/);
+            if (match) {
+                out.tahsin_progress_type = 'BUKU';
+                out.tahsin_book_number = match[1];
+            }
+            else if (types.includes(text) && !['BUKU', 'JILID', "AL-QUR'AN"].includes(text))
+                out.tahsin_progress_type = text;
+            else if (/^(?:JILID\s*)?(JUZ 27|4)$/.test(text)) {
+                out.tahsin_progress_type = 'JILID';
+                out.tahsin_jilid = text.replace(/^JILID\s*/, '');
+            }
+        }
+        return out;
+    }
+    function validateProgress(value, subject) {
+        const v = legacy(value), out = {};
+        const integer = (field, min, max) => { const n = Number(v[field]); if (!/^\d+$/.test(String(v[field] ?? '')) || n < min || n > max)
+            throw Error('Isian ' + field + ' tidak valid'); return n; };
+        if (subject === 'tahsin') {
+            const type = v.tahsin_progress_type;
+            if (!types.includes(type))
+                throw Error('Pilih jenis capaian Tahsin; verifikasi teks Buku/Jilid lama.');
+            out.tahsin_progress_type = type;
+            if (type === 'BUKU') {
+                out.tahsin_book_number = integer('tahsin_book_number', 1, 3);
+                out.tahsin_page = integer('tahsin_page', 1, 60);
+                out.tahsin_material = material(out.tahsin_book_number, out.tahsin_page);
+                if (!out.tahsin_material)
+                    throw Error('Materi buku/halaman belum tersedia');
+                out.tahsin_book = 'Buku ' + out.tahsin_book_number;
+            }
+            else if (type === 'JILID') {
+                if (!['JUZ 27', '4'].includes(v.tahsin_jilid))
+                    throw Error('Pilih materi Jilid');
+                out.tahsin_jilid = v.tahsin_jilid;
+                out.tahsin_book = 'Jilid ' + v.tahsin_jilid;
+                out.tahsin_material = v.tahsin_jilid === 'JUZ 27' ? 'Bacaan tilawah surat-surat dalam Juz 27' : 'Bacaan dengung ikhfa';
+            }
+            else if (type === "AL-QUR'AN") {
+                out.tahsin_surah_number = integer('tahsin_surah_number', 1, 114);
+                out.tahsin_ayah = integer('tahsin_ayah', 1, QURAN_SURAHS.find(s => s.number === out.tahsin_surah_number).ayahs);
+                out.tahsin_book = type;
+            }
+            else
+                out.tahsin_book = type;
+            if (["AL-QUR'AN",'GHARIB','TAJWID','FINISHING'].includes(type)) {
+                if (!blank(v.tahsin_juz_last)) out.tahsin_juz_last = integer('tahsin_juz_last',1,30);
+                if (!blank(v.tahsin_gharib_page)) out.tahsin_gharib_page = integer('tahsin_gharib_page',1,60);
+                if (!blank(v.tahsin_tajwid_target_done)) {
+                    if (!['true','false'].includes(String(v.tahsin_tajwid_target_done))) throw Error('Status ketuntasan Tajwid tidak valid');
+                    out.tahsin_tajwid_target_done = String(v.tahsin_tajwid_target_done) === 'true';
+                }
+            }
+        }
+        else {
+            out.tahfidz_progress_type = v.tahfidz_progress_type || 'SURAT';
+            if (!['SURAT', 'REVIEW', 'TES'].includes(out.tahfidz_progress_type))
+                throw Error('Jenis capaian Tahfidz tidak valid');
+            out.tahfidz_juz = integer('tahfidz_juz', 1, 30);
+            if (out.tahfidz_progress_type === 'SURAT') {
+                out.tahfidz_surah = integer('tahfidz_surah', 1, 114);
+                if (!surahsForJuz(out.tahfidz_juz).some(s => s.number === out.tahfidz_surah))
+                    throw Error('Surat tidak berada pada juz terpilih');
+                out.tahfidz_ayah = integer('tahfidz_ayah', 1, QURAN_SURAHS.find(s => s.number === out.tahfidz_surah).ayahs);
+                out.tahfidz_ayah_start = integer('tahfidz_ayah_start', 1, out.tahfidz_ayah);
+            }
+            out.tahfidz_aspect_confirmed = true;
+        }
+        out.teacher_note = String(v.teacher_note || '').trim();
+        if (out.teacher_note.length > 500)
+            throw Error('Catatan tambahan maksimal 500 karakter');
+        return out;
+    }
+    function progress(value, subject) {
+        if (window.CurriculumTargets && (value?.curriculum_mode || value?.curriculum_range))
+            return CurriculumTargets.label(value, subject);
+        const v = legacy(value);
+        if (subject === 'tahsin') {
+            switch (v.tahsin_progress_type) {
+                case 'BUKU': return 'Buku ' + v.tahsin_book_number + ' Halaman ' + v.tahsin_page;
+                case 'JILID': return 'Jilid ' + v.tahsin_jilid;
+                case 'GHARIB': return 'Gharib' + (v.tahsin_gharib_page ? ' halaman ' + v.tahsin_gharib_page : '') + (v.tahsin_juz_last ? ', juz ' + v.tahsin_juz_last : '');
+                case 'TAJWID': return 'Tajwid' + (v.tahsin_juz_last ? ', juz ' + v.tahsin_juz_last : '');
+                case "AL-QUR'AN": return "Al-Qur'an, QS. " + surahName(v.tahsin_surah_number) + ' ayat ' + v.tahsin_ayah;
+                default: return v.tahsin_progress_type || v.tahsin_book || '-';
+            }
+        }
+        return v.tahfidz_progress_type === 'TES' ? 'Tes Juz ' + v.tahfidz_juz : v.tahfidz_progress_type === 'REVIEW' ? 'Review persiapan tes Juz ' + v.tahfidz_juz : v.tahfidz_surah ? 'QS. ' + surahName(v.tahfidz_surah) + ' : ' + (v.tahfidz_ayah_start || '?') + ' - ' + v.tahfidz_ayah : '-';
+    }
+    function description(name, value, subject) {
+        try {
+            validateProgress(value, subject);
+        }
+        catch {
+            return 'Capaian belum lengkap atau perlu verifikasi.';
+        }
+        const v = legacy(value), a = stats(v, subject);
+        if (!a.complete)
+            return 'Penilaian belum lengkap.';
+        const good = a.average >= 80, t = reference.texts, prefix = 'Ananda ' + name;
+        if (subject === 'tahsin') {
+            if (v.tahsin_progress_type === 'TAKHASSUS')
+                return prefix + t.AE1 + 'Takhassus ' + t.AD1;
+            if (v.tahsin_progress_type === 'SYAHADAH')
+                return prefix + t.AB1 + 'Syahadah serta' + t.AA1 + t.AD1;
+            const detail = v.tahsin_progress_type === "AL-QUR'AN" ? progress(v, subject) : progress(v, subject) + (v.tahsin_material || material(v.tahsin_book_number, v.tahsin_page) ? ', materi ' + (v.tahsin_material || material(v.tahsin_book_number, v.tahsin_page)) : '');
+            return prefix + (good ? t.AA1 : t.AC1) + detail + ' ' + t.AD1;
+        }
+        if (v.tahfidz_progress_type === 'TES')
+            return prefix + (good ? t.AI1 : t.AJ1) + v.tahfidz_juz + t.AG1;
+        if (v.tahfidz_progress_type === 'REVIEW')
+            return prefix + (good ? t.AK1 : t.AL1) + progress(v, subject) + t.AG1;
+        return prefix + (good ? t.AF1 : t.AH1) + surahName(v.tahfidz_surah) + ' ayat ' + v.tahfidz_ayah_start + ' - ' + v.tahfidz_ayah + t.AG1;
+    }
+    function note(name, period) { const label = periods[period]; return `Ananda ${name} dapat mengikuti KBM tahsin dan tahfidz di ${label} dengan baik. Pencapaian nilai dalam laporan ini merupakan hasil dari kemampuan bacaan dan hafalan siswa pada akhir KBM ${label}. Kualitas dan pencapaian bacaan serta hafalan selanjutnya ditentukan dari rutinitas latihan membaca dan menghafal di rumah. Semoga hasil pencapaian ${label} ini dapat menjadi motivasi untuk terus berlatih agar bacaan dan hafalannya menjadi semakin lebih baik dari sebelumnya. Terima kasih.`; }
+    function attainment(actual, target, subject) {
+        if (window.CurriculumTargets && (target?.curriculum_mode || target?.curriculum_range)) {
+            try { validateProgress(actual, subject); }
+            catch { return 'BELUM DINILAI'; }
+            return CurriculumTargets.attainment(legacy(actual), target, subject);
+        }
+        if (!target)
+            return 'BELUM DINILAI';
+        try {
+            validateProgress(actual, subject);
+            validateProgress({ ...target, tahfidz_aspect_confirmed: true }, subject);
+        }
+        catch {
+            return 'BELUM DINILAI';
+        }
+        let reached = false;
+        if (subject === 'tahsin') {
+            const a = legacy(actual), b = legacy(target);
+            const rank = { 'BUKU': 1, 'JILID': 2, "AL-QUR'AN": 3, 'GHARIB': 3.5, 'TAJWID': 3.75, 'FINISHING': 4, 'SYAHADAH': 5, 'TAKHASSUS': 6 };
+            if (a.tahsin_progress_type !== b.tahsin_progress_type && (a.tahsin_progress_type === 'JILID' || b.tahsin_progress_type === 'JILID'))
+                return 'BELUM DINILAI';
+            if (a.tahsin_progress_type !== b.tahsin_progress_type)
+                reached = rank[a.tahsin_progress_type] > rank[b.tahsin_progress_type];
+            else if (a.tahsin_progress_type === 'BUKU')
+                reached = Number(a.tahsin_book_number) > Number(b.tahsin_book_number) || (Number(a.tahsin_book_number) === Number(b.tahsin_book_number) && Number(a.tahsin_page) >= Number(b.tahsin_page));
+            else if (a.tahsin_progress_type === "AL-QUR'AN")
+                reached = Number(a.tahsin_surah_number) > Number(b.tahsin_surah_number) || (Number(a.tahsin_surah_number) === Number(b.tahsin_surah_number) && Number(a.tahsin_ayah) >= Number(b.tahsin_ayah));
+            else if (a.tahsin_progress_type === 'JILID')
+                reached = a.tahsin_jilid === b.tahsin_jilid;
+            else
+                reached = true;
+        }
+        else {
+            const order = [30, 29, 28, 27, 26, 25, 1, 2, 3, 4, 5, 6, 7, 8], a = order.indexOf(Number(actual.tahfidz_juz)), b = order.indexOf(Number(target.tahfidz_juz));
+            if (a < 0 || b < 0)
+                return 'BELUM DINILAI';
+            if (a !== b)
+                reached = a > b;
+            else {
+                const rank = { SURAT: 0, REVIEW: 1, TES: 2 }, ak = actual.tahfidz_progress_type || 'SURAT', bk = target.tahfidz_progress_type || 'SURAT';
+                if (ak !== bk)
+                    reached = rank[ak] > rank[bk];
+                else if (ak !== 'SURAT')
+                    reached = true;
+                else {
+                    const reverse = Number(actual.tahfidz_juz) === 30;
+                    reached = Number(actual.tahfidz_surah) === Number(target.tahfidz_surah) ? Number(actual.tahfidz_ayah) >= Number(target.tahfidz_ayah) : reverse ? Number(actual.tahfidz_surah) < Number(target.tahfidz_surah) : Number(actual.tahfidz_surah) > Number(target.tahfidz_surah);
+                }
+            }
+        }
+        return reached ? 'TERCAPAI' : 'BELUM TERCAPAI';
+    }
+    return { blank, labels, applicable, check, reportCheck, missingByStudent, surahsForJuz, juzRanges, periods, types, extraFields, stats, aspect, material, legacy, validateProgress, progress, description, note, attainment, surahName, surahNames, useReference, get reference() { return reference; } };
+})();

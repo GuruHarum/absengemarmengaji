@@ -1,0 +1,223 @@
+/* Gemar Mengaji — penyederhanaan panel admin 28-09-2026 */
+body.admin-page {
+  --gm-radius: 16px;
+  --gm-gap: clamp(12px, 1.8vw, 20px);
+  --gm-border: var(--theme-line, #dce4d2);
+  --gm-paper: var(--theme-paper, #fffefb);
+  --gm-ink: var(--theme-ink, #234334);
+  --gm-muted: var(--theme-muted, #6b7b68);
+}
+body.admin-page .admin-workspace {
+  max-width: 1480px !important;
+  padding: clamp(14px, 2.1vw, 28px) !important;
+  gap: var(--gm-gap);
+}
+body.admin-page .admin-workspace > [id^="page-"] { min-width: 0; }
+body.admin-page .admin-workspace > [id^="page-"] > * + * { margin-top: var(--gm-gap); }
+body.admin-page .section-kicker { display: none !important; }
+body.admin-page :is(.report-panel,.comparison-section,.assessment-controls,.maintenance-control-card,.maintenance-preview-card,.manage-toolbar,.account-settings) {
+  border: 1px solid var(--gm-border);
+  border-radius: var(--gm-radius);
+  background: var(--gm-paper);
+  box-shadow: 0 3px 14px rgba(26, 62, 46, .045);
+}
+body.admin-page .section-heading { gap: 12px; align-items: center; flex-wrap: wrap; }
+body.admin-page .section-heading > * { min-width: 0; }
+/* Deskripsi dekoratif di bawah judul disembunyikan agar halaman tidak terasa penuh. */
+body.admin-page .section-heading > div > p:not(.section-kicker) { display: none; }
+body.admin-page .section-heading h2,
+body.admin-page .assessment-controls > h2,
+body.admin-page .report-panel > h2 { margin: 0; color: var(--gm-ink); font-size: clamp(17px, 1.8vw, 21px); }
+body.admin-page .section-heading p:not(.section-kicker) { color: var(--gm-muted); max-width: 72ch; }
+body.admin-page :is(.primary-action,.secondary-action,.danger-primary,.danger-action) {
+  min-height: 40px;
+  border-radius: 10px;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: center;
+}
+body.admin-page .danger-primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid #b42318; background: #b42318; color: #fff;
+  padding: 10px 15px; font-weight: 700; cursor: pointer;
+}
+body.admin-page .danger-primary:hover:not(:disabled) { background: #8f1d14; }
+body.admin-page .danger-primary:disabled { opacity: .45; cursor: not-allowed; }
+body.admin-page .danger-action { border-color: #fecaca !important; color: #b42318 !important; background: #fff7f7 !important; }
+body.admin-page .danger-action:hover { background: #fee2e2 !important; }
+body.admin-page :is(input,select,textarea) { min-width: 0; }
+body.admin-page .field-label { min-width: 0; }
+body.admin-page .field-label > :is(input,select,textarea) { width: 100%; }
+body.admin-page .assessment-help,
+body.admin-page .action-feedback,
+body.admin-page .settings-feedback { line-height: 1.6; }
+body.admin-page .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+body.admin-page table { max-width: 100%; }
+body.admin-page :is(.comparison-table,.assignment-table) th,
+body.admin-page :is(.comparison-table,.assignment-table) td { vertical-align: top; }
+
+
+/* Elemen aksi umum harus membungkus rapi pada lebar apa pun. */
+body.admin-page :is(.manage-toolbar,.assessment-toolbar,.report-submenu,.gm-account-link-tools,.school-identity-grid) {
+  min-width: 0;
+}
+body.admin-page :is(.manage-toolbar,.assessment-toolbar,.gm-account-link-tools) { flex-wrap: wrap; }
+body.admin-page :is(.manage-toolbar,.assessment-toolbar,.gm-account-link-tools) > * { min-width: 0; }
+body.admin-page .overflow-x-auto { max-width: 100%; }
+body.admin-page .comparison-section,
+body.admin-page .assessment-controls,
+body.admin-page .report-panel { min-width: 0; overflow: hidden; }
+
+/* Pengaturan sistem: pilihan ringkas, isi satu panel pada satu waktu. */
+body.admin-page .settings-intro { padding: clamp(14px, 2vw, 20px) !important; }
+body.admin-page .settings-intro .section-heading > div > p:last-child { display: none; }
+body.admin-page .settings-hub { gap: 10px; margin-top: 14px; }
+body.admin-page .settings-hub-button { min-height: 64px; padding: 12px 14px; }
+body.admin-page .settings-hub-button span { display: none; }
+body.admin-page .settings-hub-button strong { font-size: 13px; }
+
+/* Kelola Tahsin/Tahfidz: satu guru per halaman. */
+body.admin-page .gm-group-manager { padding: clamp(15px, 2.2vw, 24px); }
+body.admin-page .gm-compact-heading { margin-bottom: 14px; }
+body.admin-page .gm-group-pagebar {
+  display: grid;
+  grid-template-columns: minmax(230px, 1.2fr) minmax(150px, .55fr) auto;
+  gap: 12px; align-items: end;
+  padding: 14px; border: 1px solid var(--gm-border); border-radius: 14px;
+  background: color-mix(in srgb, var(--gm-paper) 88%, #edf3e8 12%);
+}
+body.admin-page .gm-group-page-summary {
+  margin-top: 12px; color: var(--gm-muted); font-size: 13px; font-weight: 600;
+}
+body.admin-page .gm-group-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,320px),1fr)); gap: 12px; margin-top: 16px; }
+body.admin-page .gm-group-card {
+  min-width: 0; display: flex; flex-direction: column; gap: 14px;
+  padding: 15px; border: 1px solid var(--gm-border); border-radius: 14px; background: #fff;
+}
+body.admin-page .gm-group-card h3 { margin: 0; font-size: 15px; color: var(--gm-ink); overflow-wrap: anywhere; }
+body.admin-page .gm-group-card p { margin: 5px 0 0; color: var(--gm-muted); font-size: 13px; }
+body.admin-page .gm-group-breakdown { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+body.admin-page .gm-group-breakdown span { border-radius: 999px; background: #f1f5f2; padding: 5px 8px; font-size: 11px; color: #536555; }
+body.admin-page .gm-group-card-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
+body.admin-page .gm-group-card-actions button { flex: 1 1 92px; font-size: 12px; padding: 8px 9px; }
+body.admin-page .gm-group-editor { margin-top: 16px; border: 1px solid var(--gm-border); border-radius: 14px; background: #fff; overflow: clip; }
+body.admin-page .gm-group-editor > summary { cursor: pointer; list-style: none; padding: 14px 16px; font-weight: 700; color: var(--gm-ink); display: flex; flex-direction: column; gap: 2px; }
+body.admin-page .gm-group-editor > summary::-webkit-details-marker { display: none; }
+body.admin-page .gm-group-editor > summary small { font-weight: 500; color: var(--gm-muted); }
+body.admin-page .gm-group-editor[open] > summary { border-bottom: 1px solid var(--gm-border); background: #f8faf8; }
+body.admin-page .gm-group-editor form { padding: 15px; }
+body.admin-page .gm-group-editor-head { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+body.admin-page .gm-group-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+body.admin-page .gm-member-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+body.admin-page .gm-member-tools strong { margin-left: auto; color: var(--gm-muted); font-size: 12px; }
+body.admin-page .gm-member-picker { max-height: min(45vh, 430px); overflow: auto; border: 1px solid var(--gm-border); border-radius: 12px; padding: 8px; }
+body.admin-page .gm-group-savebar { display: flex; justify-content: flex-end; margin-top: 12px; }
+body.admin-page .gm-empty-state { border: 1px dashed var(--gm-border); border-radius: 12px; padding: 18px; text-align: center; color: var(--gm-muted); background: #fbfcfb; }
+
+/* Reset tahunan */
+body.admin-page .gm-reset-panel { max-width: 980px; }
+body.admin-page .gm-danger-badge { border-radius: 999px; padding: 5px 9px; background: #fff1f0; color: #b42318; border: 1px solid #fecaca; font-size: 11px; font-weight: 800; }
+body.admin-page .gm-reset-preserved { margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: #f3f8f4; color: #365342; font-size: 13px; }
+body.admin-page .gm-reset-counts { display: grid; grid-template-columns: repeat(auto-fit,minmax(145px,1fr)); gap: 9px; margin: 14px 0; }
+body.admin-page .gm-reset-counts > div { padding: 11px 12px; border: 1px solid var(--gm-border); border-radius: 12px; background: #fff; }
+body.admin-page .gm-reset-counts span { display: block; color: var(--gm-muted); font-size: 11px; }
+body.admin-page .gm-reset-counts strong { display: block; margin-top: 2px; color: var(--gm-ink); font-size: 18px; }
+body.admin-page .gm-reset-actions { display: flex; justify-content: flex-end; }
+body.admin-page .gm-reset-confirm { margin-top: 16px; border-top: 1px solid var(--gm-border); padding-top: 14px; display: grid; gap: 10px; }
+body.admin-page .gm-reset-confirm > label:not(.field-label) { display: flex; gap: 9px; align-items: flex-start; color: #4f5f52; font-size: 13px; }
+body.admin-page .gm-reset-confirm input[type="checkbox"] { width: 18px; height: 18px; margin-top: 1px; flex: 0 0 auto; }
+body.admin-page .gm-reset-confirm .danger-primary { justify-self: start; }
+
+/* Kurangi kepadatan elemen umum. */
+body.admin-page .detail-filter-grid,
+body.admin-page .assessment-context-grid,
+body.admin-page .assessment-toolbar,
+body.admin-page .report-grid { gap: 12px !important; }
+body.admin-page .assessment-summary { gap: 10px; }
+body.admin-page .assessment-summary > div { min-width: 0; }
+body.admin-page #page-penilaian .assessment-help { margin-block: 8px 0; }
+body.admin-page #page-maintenance .maintenance-preview-card { display: none; }
+body.admin-page #page-infografik > section:first-child p:last-child { display: none; }
+body.admin-page #page-infografik .insight-method { font-size: 11px; color: var(--gm-muted); }
+body.admin-page #page-profil .assessment-help { font-size: 11px; }
+body.admin-page .report-submenu { position: sticky; top: 76px; z-index: 8; background: rgba(248,250,252,.92); backdrop-filter: blur(9px); padding-block: 7px; }
+
+@media (max-width: 900px) {
+  body.admin-page .gm-group-pagebar { grid-template-columns: minmax(0,1fr) minmax(130px,.55fr); }
+  body.admin-page .gm-group-pagebar > button { grid-column: 1 / -1; width: 100%; }
+}
+@media (max-width: 640px) {
+  body.admin-page .admin-welcome { padding: 14px 16px; }
+  body.admin-page .admin-welcome-emblem { display: none; }
+  body.admin-page .settings-hub { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  body.admin-page .settings-hub-button { min-height: 52px; padding: 10px; }
+  body.admin-page .gm-group-pagebar,
+  body.admin-page .gm-group-form-grid { grid-template-columns: minmax(0,1fr); }
+  body.admin-page .gm-group-pagebar > button { grid-column: auto; }
+  body.admin-page .gm-group-card-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  body.admin-page .gm-group-card-actions .danger-action { grid-column: 1 / -1; }
+  body.admin-page .gm-member-tools > * { flex: 1 1 calc(50% - 5px); }
+  body.admin-page .gm-member-tools strong { flex-basis: 100%; margin-left: 0; }
+  body.admin-page .gm-group-editor-head { align-items: stretch; flex-direction: column; }
+  body.admin-page .gm-group-editor-head button { width: 100%; }
+  body.admin-page .gm-reset-counts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  body.admin-page .gm-reset-confirm .danger-primary { width: 100%; }
+  body.admin-page :is(.comparison-table,.assignment-table) { font-size: 12px; }
+  body.admin-page :is(.comparison-table,.assignment-table) th,
+  body.admin-page :is(.comparison-table,.assignment-table) td { padding: 9px 8px; }
+  body.admin-page .report-submenu { top: 62px; overflow-x: auto; flex-wrap: nowrap; }
+  body.admin-page .report-submenu button { flex: 0 0 auto; }
+}
+
+/* Kelola Data: submenu lokal agar form pendaftaran akun tidak bercampur dengan direktori. */
+body.admin-page .gm-local-nav {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 7px; border: 1px solid var(--gm-border); border-radius: 14px;
+  background: color-mix(in srgb, var(--gm-paper) 92%, #edf3e8 8%);
+  width: fit-content; max-width: 100%;
+}
+body.admin-page .gm-local-nav-button {
+  min-height: 40px; padding: 9px 14px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--gm-muted); font-size: 13px; font-weight: 750;
+  cursor: pointer; transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+body.admin-page .gm-local-nav-button:hover { background: #fff; color: var(--gm-ink); }
+body.admin-page .gm-local-nav-button.active,
+body.admin-page .gm-local-nav-button[aria-pressed="true"] {
+  background: #fff; color: var(--gm-ink); box-shadow: 0 2px 8px rgba(26,62,46,.08);
+}
+body.admin-page .gm-manage-subpanel { padding: clamp(15px,2vw,22px); max-width: 980px; }
+body.admin-page .gm-manage-subpanel .assessment-help { margin: 0 0 14px; color: var(--gm-muted); font-size: 12px; }
+
+/* Kelompok: satu kartu per tingkat; rincian kelas dibuka hanya saat perlu mengelola. */
+body.admin-page .gm-grade-card { gap: 11px; }
+body.admin-page .gm-grade-card-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+body.admin-page .gm-grade-kicker { display: block; margin-bottom: 2px; color: var(--gm-muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+body.admin-page .gm-grade-card-head h3 { font-size: 18px; }
+body.admin-page .gm-grade-total { min-width: 58px; text-align: right; color: var(--gm-ink); font-size: 22px; line-height: 1; }
+body.admin-page .gm-grade-total small { display: block; margin-top: 4px; color: var(--gm-muted); font-size: 10px; font-weight: 700; }
+body.admin-page .gm-grade-details { margin-top: 2px; border-top: 1px solid var(--gm-border); }
+body.admin-page .gm-grade-details > summary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 11px 2px 2px; color: var(--gm-muted); font-size: 12px; font-weight: 700;
+}
+body.admin-page .gm-grade-details > summary::-webkit-details-marker { display: none; }
+body.admin-page .gm-grade-details > summary span { color: var(--gm-ink); }
+body.admin-page .gm-grade-group-list { display: grid; gap: 8px; margin-top: 10px; }
+body.admin-page .gm-grade-group-row {
+  display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 10px; align-items: center;
+  padding: 10px; border: 1px solid var(--gm-border); border-radius: 11px; background: #fbfcfb;
+}
+body.admin-page .gm-grade-group-row strong { display: block; color: var(--gm-ink); font-size: 12px; overflow-wrap: anywhere; }
+body.admin-page .gm-grade-group-row small { display: block; margin-top: 3px; color: var(--gm-muted); font-size: 10px; }
+body.admin-page .gm-grade-group-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+body.admin-page .gm-grade-group-actions button { min-height: 34px; padding: 7px 9px; font-size: 11px; }
+
+@media (max-width: 640px) {
+  body.admin-page .gm-local-nav { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  body.admin-page .gm-local-nav-button { width: 100%; padding-inline: 8px; }
+  body.admin-page .gm-grade-group-row { grid-template-columns: minmax(0,1fr); }
+  body.admin-page .gm-grade-group-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); justify-content: stretch; }
+  body.admin-page .gm-grade-group-actions .danger-action { grid-column: 1 / -1; }
+  body.admin-page .gm-grade-group-actions button { width: 100%; }
+}

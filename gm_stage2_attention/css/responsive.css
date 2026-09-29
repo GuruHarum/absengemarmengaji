@@ -1,0 +1,398 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --brand-color: #216454;
+    --brand-dark: #0c2724;
+}
+
+.islamic-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 40px 24px 76px;
+    background: radial-gradient(ellipse at 50% 40%, #173d36 0%, #0c2724 48%, #071c1a 100%);
+    color: #f5eddb;
+    font-family: 'Poppins', sans-serif;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.65s ease, visibility 0.65s ease;
+}
+
+.islamic-loader.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.public-page > header,
+.public-page > main,
+.public-page > footer {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.public-page.page-ready > header,
+.public-page.page-ready > main,
+.public-page.page-ready > footer {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.public-page:not(.page-ready) #teacherGrid {
+    opacity: 0;
+}
+
+.public-page.page-ready #teacherGrid {
+    opacity: 1;
+    transition: opacity 0.55s ease 0.12s;
+}
+
+.teacher-card {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+    animation: teacherCardReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes teacherCardReveal {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.loader-pattern {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cpath d='M48 0 62 34 96 48 62 62 48 96 34 62 0 48 34 34Z M0 0 96 96 M96 0 0 96' fill='none' stroke='%23e4c68c' stroke-width='.8'/%3E%3C/svg%3E");
+    mask-image: radial-gradient(ellipse at center, transparent 15%, #000 85%);
+}
+
+.loader-corner {
+    position: absolute;
+    width: 88px;
+    height: 88px;
+    border-color: rgba(211, 183, 127, .3);
+    border-style: solid;
+    pointer-events: none;
+}
+.loader-corner::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border: inherit;
+    border-color: rgba(211, 183, 127, .12);
+}
+.loader-corner-top { top: 24px; left: 24px; border-width: 1px 0 0 1px; }
+.loader-corner-bottom { bottom: 24px; right: 24px; border-width: 0 1px 1px 0; }
+
+.islamic-loader-card {
+    position: relative;
+    width: min(100%, 440px);
+    margin: auto;
+    text-align: center;
+    animation: loaderCardIn .8s ease both;
+}
+.loader-eyebrow {
+    color: #b7c5b6;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: .26em;
+}
+.loader-art { width: clamp(190px, 29vh, 260px); margin: 20px auto 10px; }
+.loader-art svg { display: block; width: 100%; height: auto; }
+.loader-rosette { transform-origin: 140px 140px; animation: loaderRosette 60s linear infinite; }
+.loader-stars { animation: loaderTwinkle 3.2s ease-in-out infinite; }
+.loader-crescent { animation: loaderMoon 4s ease-in-out infinite; }
+.loader-bismillah {
+    margin: 4px 0 16px;
+    color: #dcc491;
+    font-family: 'Traditional Arabic', 'Noto Naskh Arabic', 'Times New Roman', serif;
+    font-size: clamp(24px, 5vw, 30px);
+    line-height: 1.8;
+}
+.islamic-loader-title {
+    margin: 0;
+    color: #f6f1e5;
+    font-size: clamp(27px, 6vw, 36px);
+    line-height: 1.3;
+    font-weight: 500;
+    letter-spacing: -.035em;
+}
+.loader-school-name {
+    margin-top: 9px;
+    color: #b8c9be;
+    font-size: 11px;
+    line-height: 1.8;
+    letter-spacing: .04em;
+    overflow-wrap: anywhere;
+}
+.loader-progress {
+    width: 128px;
+    height: 2px;
+    margin: 30px auto 15px;
+    overflow: hidden;
+    background: rgba(220, 196, 145, .14);
+    border-radius: 3px;
+}
+.loader-progress span {
+    display: block;
+    width: 55%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, transparent, #ead3a1, transparent);
+    animation: loaderProgress 2.2s ease-in-out infinite;
+}
+.islamic-loader-text { color: #a5bdb0; font-size: 10px; letter-spacing: .025em; }
+.loader-ellipsis { display: inline-block; width: 10px; text-align: left; }
+.loader-footer {
+    position: absolute;
+    bottom: 30px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #8fa89a;
+    font-size: 8px;
+    letter-spacing: .18em;
+    text-align: center;
+}
+.loader-footer span { height: 1px; width: 24px; background: #b79d69; opacity: .4; }
+@keyframes loaderCardIn {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+@keyframes loaderRosette { to { transform: rotate(360deg); } }
+@keyframes loaderTwinkle { 50% { opacity: .3; } }
+@keyframes loaderMoon { 50% { opacity: .65; } }
+@keyframes loaderProgress { from { transform: translateX(-110%); } to { transform: translateX(290%); } }
+@media (max-height: 640px) {
+    .islamic-loader { padding-top: 24px; padding-bottom: 48px; }
+    .loader-art { width: 150px; margin-top: 10px; margin-bottom: 0; }
+    .loader-bismillah { margin-bottom: 8px; font-size: 24px; }
+    .loader-progress { margin-top: 20px; }
+    .loader-footer { bottom: 16px; font-size: 7px; }
+}
+@media (max-height: 440px) {
+    .loader-art { width: 96px; }
+    .loader-eyebrow, .loader-footer { display: none; }
+    .islamic-loader { padding: 16px 24px; }
+    .loader-bismillah { margin: 0 0 4px; font-size: 22px; }
+    .islamic-loader-title { font-size: 24px; }
+    .loader-progress { margin-top: 12px; margin-bottom: 10px; }
+}
+
+html {
+    min-width: 320px;
+}
+
+img,
+canvas,
+svg {
+    max-width: 100%;
+}
+
+button,
+a,
+select,
+input,
+textarea {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-menu-button,
+.mobile-sidebar-overlay {
+    display: none;
+}
+
+.page-animate-in {
+    animation: pageAnimateIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pageAnimateIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (max-width: 767px) {
+    body.admin-page {
+        display: block;
+        min-height: 100vh;
+    }
+
+    body.admin-page #sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(82vw, 320px);
+        min-height: 100vh;
+        max-height: none;
+        overflow: hidden;
+        z-index: 80;
+        transform: translateX(-105%);
+        transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.38s ease;
+    }
+
+    body.admin-page.drawer-open #sidebar {
+        transform: translateX(0);
+        box-shadow: 18px 0 48px rgba(15, 23, 42, 0.28);
+    }
+
+    body.admin-page #sidebar > div {
+        height: auto;
+    }
+
+    body.admin-page #sidebar nav,
+    body.admin-page #sidebar > div > div:last-child,
+    body.admin-page #toggleSidebar {
+        display: block;
+    }
+
+    body.admin-page #sidebar > div > div:first-child {
+        padding: 0.75rem 1rem;
+    }
+
+    body.admin-page #sidebar > div > div:last-child {
+        display: block;
+    }
+
+    .mobile-menu-button {
+        display: inline-flex;
+        width: 42px;
+        height: 42px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        transition: transform 0.25s ease, background-color 0.25s ease;
+    }
+
+    .mobile-menu-button:active { transform: scale(0.94); }
+    .mobile-menu-button span { width: 18px; height: 2px; border-radius: 4px; background: #334155; transition: transform 0.3s ease, opacity 0.3s ease; }
+    body.admin-page.drawer-open .mobile-menu-button span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    body.admin-page.drawer-open .mobile-menu-button span:nth-child(2) { opacity: 0; }
+    body.admin-page.drawer-open .mobile-menu-button span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    .mobile-sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        display: block;
+        background: rgba(15, 23, 42, 0.48);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.35s ease, visibility 0.35s ease;
+        backdrop-filter: blur(3px);
+    }
+
+    body.admin-page.drawer-open .mobile-sidebar-overlay {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    body.admin-page main {
+        width: 100%;
+        min-height: 100vh;
+        overflow: visible;
+    }
+
+    body.admin-page main > header {
+        padding: 1rem;
+    }
+
+    body.admin-page #page-absensi,
+    body.admin-page #page-kelola,
+    body.admin-page #page-infografik,
+    body.admin-page #page-pengaturan {
+        padding: 1rem;
+    }
+
+    body.admin-page .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body.admin-page .grid {
+        min-width: 0;
+    }
+
+    body.admin-page #page-infografik canvas {
+        max-height: 280px;
+    }
+
+    body.public-page main.container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    body.public-page header .container {
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    body.public-page header h1 {
+        font-size: 1rem;
+        line-height: 1.35;
+    }
+
+    body.public-page header p {
+        font-size: 0.7rem;
+        line-height: 1.4;
+    }
+
+    body.public-page .logo-circle {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+    }
+
+    body.public-page .student-card {
+        margin-bottom: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body.admin-page main > header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    body.admin-page main > header button,
+    body.admin-page main > header a {
+        width: 100%;
+        justify-content: center;
+    }
+
+    body.public-page .header-gradient .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+
+.loader-logo-badge { width: 68px; height: 68px; padding: 6px; margin: 0 auto 16px; border-radius: 50%; background: #fffdf3; border: 1px solid #d4b777; box-shadow: 0 0 0 5px #d4b77712; }
+.loader-logo-badge img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 50%; }
+.loader-logo-badge[hidden], .loader-logo-badge img[hidden] { display: none; }
+@media (max-height: 740px) { .loader-logo-badge { width: 52px; height: 52px; margin-bottom: 10px; padding: 5px; } }
+@media (max-height: 520px) { .loader-logo-badge { width: 40px; height: 40px; margin-bottom: 6px; padding: 3px; } }
+/* Logo sekolah v3: aset transparan berbentuk lingkaran. */
+#schoolLogo,.loader-logo-badge img{border-radius:50%!important;object-fit:contain!important;background:transparent!important}

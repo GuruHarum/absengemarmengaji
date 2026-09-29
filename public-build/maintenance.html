@@ -10,8 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/maintenance.css">
-<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="/css/pwa.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="/css/pwa.css">
     <link rel="stylesheet" href="css/layout-responsive.css">
+    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader33">
 </head>
 <body class="maintenance-page">
     <main class="maintenance-layout">
@@ -28,8 +29,8 @@
             <section id="quoteCarousel" class="quote-card" aria-label="Renungan Islami" aria-roledescription="karusel">
                 <p class="maintenance-kicker">TEMAN DALAM JEDA</p>
                 <h2>Sejenak untuk hati.</h2>
-                <div class="quote-window"><div id="quoteSlide"><span class="quote-mark" aria-hidden="true">&#8220;</span><p id="quoteTopic" class="quote-topic">SABAR</p><blockquote id="quoteText">Sabar bukan berhenti melangkah, melainkan menjaga hati tetap dekat kepada Allah saat jalan terasa panjang.</blockquote><p class="quote-source">Renungan Islami &middot; Gemar Mengaji</p></div></div>
-                <div class="quote-controls"><button id="quotePrev" type="button" aria-label="Renungan sebelumnya">&#8592;</button><span id="quoteCounter" aria-live="off">01 / 16</span><button id="quoteNext" type="button" aria-label="Renungan berikutnya">&#8594;</button><button id="quotePause" type="button" aria-pressed="false">Jeda</button></div>
+                <div class="quote-window"><div id="quoteSlide"><span class="quote-mark" aria-hidden="true">&#8220;</span><p id="quoteTopic" class="quote-topic">QUR’AN</p><blockquote id="quoteText">Sesungguhnya bersama kesulitan ada kemudahan.</blockquote><p id="quoteSource" class="quote-source">QS. Al-Insyirah: 5-6</p></div></div>
+                <div class="quote-controls"><button id="quotePrev" type="button" aria-label="Renungan sebelumnya">&#8592;</button><span id="quoteCounter" aria-live="off">01 / 192</span><button id="quoteNext" type="button" aria-label="Renungan berikutnya">&#8594;</button><button id="quotePause" type="button" aria-pressed="false">Jeda</button></div>
                 <p class="quote-hint">Renungan berganti setiap 9 detik</p>
             </section>
         </div>
@@ -53,7 +54,8 @@
             .then(enabled => { if (!enabled) window.location.replace('index.html'); })
             .catch(error => console.error('Gagal memeriksa status maintenance:', error));
     </script>
-    <script src="js/maintenance.js"></script>
-<script src="/js/pwa.js" defer></script>
+    <script src="js/islamic-quotes.js?v=20260929-quotes28"></script>
+    <script src="js/maintenance.js?v=20260929-quotes28"></script>
+<script src="/js/pwa.js?v=20260929-loader33" defer></script>
 </body>
 </html>

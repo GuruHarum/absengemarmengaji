@@ -1,0 +1,32 @@
+"use strict";
+const fs=require('node:fs');
+const assert=require('node:assert/strict');
+const read=p=>fs.readFileSync(p,'utf8');
+const manifest=JSON.parse(read('manifest.webmanifest'));
+assert.equal(manifest.display,'standalone');
+assert.equal(manifest.scope,'/');
+assert.ok(Array.isArray(manifest.shortcuts)&&manifest.shortcuts.length>=2);
+assert.ok(manifest.shortcuts.some(x=>/Absensi/i.test(x.name)));
+assert.ok(manifest.shortcuts.some(x=>/Panel/i.test(x.name)));
+const sw=read('sw.js');
+assert.match(sw,/loader33/);
+assert.match(sw,/navigationPreload/);
+assert.match(sw,/ACTIVATE/);
+assert.match(sw,/offline\.html/);
+assert.match(sw,/notificationclick/);
+const pwa=read('js/pwa.js');
+assert.match(pwa,/Pembaruan tersedia/);
+assert.match(pwa,/beforeinstallprompt/);
+assert.match(pwa,/30 \* 60 \* 1000/);
+assert.match(pwa,/navigator\.onLine/);
+const notifications=read('js/notifications.js');
+assert.match(notifications,/setAppBadge/);
+assert.match(notifications,/clearAppBadge/);
+const dashboard=read('js/dashboard.js');
+assert.match(dashboard,/return deleteStudentVerified\(id\)/);
+for (const file of ['index.html','admin.html','login.html','maintenance.html']) {
+  const html=read(file);
+  assert.match(html,/pwa\.js\?v=20260929-loader33/);
+  assert.match(html,/mobile-web-app-capable/);
+}
+console.log('stage7 PWA loader33 OK');

@@ -102,6 +102,11 @@
     .admin-confirm h2 { font-size: 20px; font-weight: 600; }
     .admin-confirm p { font-size: 13px; line-height: 1.8; margin: 12px 0 24px; }
     .confirm-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    .admin-value-dialog form { display: grid; gap: 0; }
+    .admin-value-dialog .confirm-field-label { display: block; margin: 0 0 7px; color: #365748; font-size: 12px; font-weight: 700; }
+    .admin-value-dialog [data-value-field-host] { margin: 0 0 22px; }
+    .admin-value-dialog .confirm-value-field { width: 100%; min-height: 44px; border: 1px solid #cdd9cf; border-radius: 12px; background: #fff; color: #203e31; padding: 10px 12px; font: inherit; outline: none; }
+    .admin-value-dialog .confirm-value-field:focus { border-color: #6d9a7e; box-shadow: 0 0 0 3px rgba(74,122,91,.12); }
     @media (max-width: 767px) { .admin-toasts { bottom: 12px; right: 16px; } .class-picker-options { max-width: calc(100vw - 72px); } }
 }
 @media print { .admin-toasts, .admin-confirm, .class-picker-options { display: none !important; } }

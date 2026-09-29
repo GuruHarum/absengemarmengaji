@@ -15,6 +15,9 @@ const notification = document.getElementById('notification');
 const thankYouModal = document.getElementById('thankYouModal');
 const classOptions = document.getElementById('classOptions');
 const loadingIndicator = document.getElementById('loadingIndicator');
+const publicLoaderStartedAt = Number(window.GM_INITIAL_LOADER_STARTED_AT || performance.now());
+const PUBLIC_LOADER_MIN_MS = 8000;
+window.GM_INITIAL_LOADER_ACTIVE = true;
 window.applySchoolProfile = function (profile) {
     if (!profile)
         return;
@@ -41,10 +44,28 @@ window.applySchoolProfile = function (profile) {
     document.documentElement.style.setProperty('--brand-color', resolveThemeColor(profile.theme_color));
 };
 function hideIslamicLoader() {
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    const finish = () => {
+        // Siapkan halaman di belakang loader terlebih dahulu.
+        // Ini mencegah jeda putih ketika loader ditutup sebelum browser
+        // sempat mengecat header/main/index.
         document.body.classList.add('page-ready');
-        loadingIndicator?.classList.add('is-hidden');
-    }));
+        loadingIndicator?.classList.remove('hidden');
+
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            // Beri sedikit waktu agar transisi konten sudah mulai saat
+            // loader mulai fade-out sehingga perpindahan terasa menyatu.
+            setTimeout(() => {
+                window.GM_INITIAL_LOADER_ACTIVE = false;
+                loadingIndicator?.classList.add('is-hidden');
+                window.setTimeout(() => loadingIndicator?.classList.add('hidden'), 700);
+            }, 180);
+        }));
+    };
+    const wait = window.GMIslamicQuotes
+        ? GMIslamicQuotes.remainingMinimum(publicLoaderStartedAt, PUBLIC_LOADER_MIN_MS)
+        : Math.max(0, PUBLIC_LOADER_MIN_MS - (performance.now() - publicLoaderStartedAt));
+    if (wait > 0) setTimeout(finish, wait);
+    else finish();
 }
 async function initApp() {
     try {

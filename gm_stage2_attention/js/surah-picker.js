@@ -1,0 +1,107 @@
+window.SurahPicker = (() => {
+    const normalize = value => String(value).toLocaleLowerCase('id').replace(/[^a-z0-9]/g, '').replace(/([aiu])\1+/g, '$1');
+    const label = row => `${row.number}. ${window.ReportCore ? ReportCore.surahName(row.number) : row.name}`;
+    const search = value => {
+        const query = normalize(value);
+        return QURAN_SURAHS.filter(row => !query || normalize(row.name).includes(query) || (window.ReportCore && [ReportCore.surahName(row.number), ...(ReportCore.reference.aliases?.[row.number] || [])].some(name => normalize(name).includes(query))) || normalize(label(row)).includes(query) || String(row.number) === query);
+    };
+    function markup(id, selected, studentName, allowed = null) {
+        const row = QURAN_SURAHS.find(row => String(row.number) === String(selected));
+        return `<div class="surah-picker" ${allowed ? `data-allowed="${allowed.join(',')}"` : ''}><label class="field-label" for="${id}">Surat terakhir</label><input id="${id}" type="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-options" aria-label="Surat terakhir untuk ${escapeHtml(studentName)}" data-surah-search="true" data-selected-surah="${row ? row.number : ''}" value="${escapeHtml(row ? label(row) : '')}" placeholder="Cari nama atau nomor surat" autocomplete="off" required><div id="${id}-options" class="surah-suggestions" role="listbox" aria-label="Pilihan surat" hidden></div></div>`;
+    }
+    function bind(root) {
+        const picker = target => target.closest('.surah-picker');
+        function close(box) {
+            if (!box)
+                return;
+            const input = box.querySelector('input');
+            box.querySelector('[role="listbox"]').hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
+            const selected = QURAN_SURAHS.find(row => String(row.number) === input.dataset.selectedSurah);
+            input.value = selected ? label(selected) : '';
+        }
+        function open(input) {
+            if (input.disabled || input.closest('fieldset')?.disabled)
+                return;
+            root.querySelectorAll('.surah-picker').forEach(box => { if (box !== picker(input))
+                close(box); });
+            const box = picker(input), list = box.querySelector('[role="listbox"]');
+            const selected = QURAN_SURAHS.find(row => String(row.number) === input.dataset.selectedSurah);
+            const allowed = box.dataset?.allowed === undefined ? null : box.dataset.allowed.split(',');
+            const rows = search(selected && input.value === label(selected) ? '' : input.value).filter(row => !allowed || allowed.includes(String(row.number)));
+            list.innerHTML = rows.length ? rows.map(row => `<button type="button" role="option" tabindex="-1" aria-selected="false" id="${input.id}-option-${row.number}" data-surah-number="${row.number}"><span class="surah-number">${row.number}</span><span class="surah-name">${escapeHtml(window.ReportCore ? ReportCore.surahName(row.number) : row.name)}</span><span class="surah-verses">${row.ayahs} ayat</span></button>`).join('') : '<p class="surah-no-results" role="status">Surat tidak ditemukan. Coba nama atau nomor lain.</p>';
+            list.hidden = false;
+            if (input.getBoundingClientRect && list.classList) {
+                const bounds = input.getBoundingClientRect();
+                list.classList.toggle('is-above', window.innerHeight - bounds.bottom < 280 && bounds.top > 280);
+            }
+            input.setAttribute('aria-expanded', 'true');
+            input.removeAttribute('aria-activedescendant');
+        }
+        function choose(input, number) {
+            const row = QURAN_SURAHS.find(row => String(row.number) === String(number));
+            if (!row || input.disabled || input.closest('fieldset')?.disabled)
+                return;
+            input.value = label(row);
+            input.dataset.selectedSurah = String(row.number);
+            input.dataset.surahCommit = 'true';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            delete input.dataset.surahCommit;
+            input.focus();
+            close(picker(input));
+        }
+        root.addEventListener('input', event => { if (event.target.dataset.surahSearch)
+            open(event.target); });
+        root.addEventListener('focusin', event => { if (event.target.dataset.surahSearch) {
+            open(event.target);
+            event.target.select?.();
+        } });
+        root.addEventListener('focusout', event => { const box = picker(event.target); if (box && !box.contains(event.relatedTarget))
+            close(box); });
+        root.addEventListener('pointerdown', event => { if (event.pointerType !== 'touch' && event.target.closest('[data-surah-number]'))
+            event.preventDefault(); });
+        document.addEventListener('pointerdown', event => {
+            root.querySelectorAll('.surah-picker').forEach(box => { if (!box.contains(event.target))
+                close(box); });
+        });
+        root.addEventListener('click', event => {
+            const option = event.target.closest('[data-surah-number]');
+            if (option)
+                choose(picker(option).querySelector('input'), option.dataset.surahNumber);
+        });
+        root.addEventListener('keydown', event => {
+            const input = event.target;
+            if (!input.dataset.surahSearch)
+                return;
+            const box = picker(input), list = box.querySelector('[role="listbox"]');
+            if (event.key === 'Escape' || event.key === 'Tab') {
+                if (event.key === 'Escape')
+                    event.preventDefault();
+                close(box);
+                return;
+            }
+            if (event.key === 'Enter' && !list.hidden) {
+                event.preventDefault();
+                const options = [...list.querySelectorAll('[role="option"]')];
+                const active = options.find(option => option.id === input.getAttribute('aria-activedescendant')) || (options.length === 1 ? options[0] : null);
+                if (active)
+                    choose(input, active.dataset.surahNumber);
+            }
+            if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')
+                return;
+            event.preventDefault();
+            if (list.hidden)
+                open(input);
+            const options = [...list.querySelectorAll('[role="option"]')];
+            if (!options.length)
+                return;
+            const current = options.findIndex(option => option.id === input.getAttribute('aria-activedescendant'));
+            const next = current < 0 ? (event.key === 'ArrowDown' ? 0 : options.length - 1) : (current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+            options.forEach((option, index) => option.setAttribute('aria-selected', String(index === next)));
+            input.setAttribute('aria-activedescendant', options[next].id);
+            options[next].scrollIntoView({ block: 'nearest' });
+        });
+    }
+    return { markup, bind, search };
+})();

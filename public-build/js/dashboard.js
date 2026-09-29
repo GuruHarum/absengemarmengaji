@@ -986,10 +986,6 @@ function closeManageModal() {
     setTimeout(() => {
         modal.classList.add('hidden');
         document.getElementById('manageForm').reset();
-        if (window.teacherPhotoPreviewUrl) {
-            URL.revokeObjectURL(window.teacherPhotoPreviewUrl);
-            window.teacherPhotoPreviewUrl = null;
-        }
         editingIndex = null;
     }, 200);
 }
@@ -1166,14 +1162,6 @@ async function openManageModal(id = null) {
     const fields = document.getElementById('formFields');
     if (currentManageTab === 'guru') {
         fields.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Guru</label><input id="inputGuruNama" required value="${manageEscape(item?.nama || item?.nama_guru || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>`;
-        if (currentTeacherGroup === 'tahsin' && (AppAccess.full() || (AppAccess.teacher() && item && String(AppAccess.profile.teacher_id) === String(item.id)))) {
-            fields.innerHTML += `<div class="rounded-xl border border-slate-200 p-4 space-y-3">
-                <label for="inputGuruFotoFile" class="block text-xs font-bold text-slate-600 uppercase">Foto Guru Tahsin</label>
-                <div class="flex gap-4 items-center flex-wrap"><img id="inputGuruFotoPreview" alt="Pratinjau foto guru" src="${manageEscape(item?.foto || 'assets/school-logo.png')}" class="teacher-photo-circle teacher-photo-circle--preview border border-slate-200${item?.foto ? '' : ' teacher-photo-circle--placeholder'}" onerror="this.onerror=null;this.classList.add('teacher-photo-circle--placeholder');this.src='assets/school-logo.png'">
-                <div class="flex-1 min-w-0"><input id="inputGuruFotoFile" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full text-sm" aria-describedby="fotoGuruHint"><p id="fotoGuruHint" class="mt-2 text-xs text-slate-500">JPG, PNG atau WebP. Maksimal 2 MB. Foto disimpan ke Supabase Storage dan ditampilkan pada halaman absensi.</p></div></div>
-                ${item?.foto ? '<label class="text-sm text-slate-600 flex gap-2 items-center"><input type="checkbox" id="inputGuruHapusFoto"> Hapus foto saat ini</label>' : ''}
-            </div>`;
-        }
         if (AppAccess.full())
             fields.innerHTML += `<div><label for="inputGuruNamaLengkap" class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama lengkap untuk rapor</label><input id="inputGuruNamaLengkap" maxlength="160" value="${manageEscape(item?.nama_lengkap || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Nama lengkap beserta gelar"><p class="mt-2 text-xs text-slate-500">Terpisah dari nama guru yang digunakan pada absensi.</p></div>`;
         if (AppAccess.full())
@@ -1202,37 +1190,6 @@ async function openManageModal(id = null) {
         }
 
     }
-    const photoFileInput = document.getElementById('inputGuruFotoFile');
-    photoFileInput?.addEventListener('change', event => {
-        const file = event.target.files?.[0];
-        if (!file)
-            return;
-        try {
-            TeacherPhoto.validate(file);
-        }
-        catch (error) {
-            event.target.value = '';
-            AdminNotice.notify(error.message, 'error');
-            return;
-        }
-        if (window.teacherPhotoPreviewUrl)
-            URL.revokeObjectURL(window.teacherPhotoPreviewUrl);
-        window.teacherPhotoPreviewUrl = URL.createObjectURL(file);
-        document.getElementById('inputGuruFotoPreview').src = window.teacherPhotoPreviewUrl;
-        const remove = document.getElementById('inputGuruHapusFoto');
-        if (remove)
-            remove.checked = false;
-    });
-    document.getElementById('inputGuruHapusFoto')?.addEventListener('change', event => {
-        if (event.target.checked) {
-            if (photoFileInput)
-                photoFileInput.value = '';
-            if (window.teacherPhotoPreviewUrl)
-                URL.revokeObjectURL(window.teacherPhotoPreviewUrl);
-            window.teacherPhotoPreviewUrl = null;
-            document.getElementById('inputGuruFotoPreview').src = 'assets/school-logo.png';
-        }
-    });
     if (AppAccess.teacher()) {
         const teacherInput = document.getElementById('inputSiswaGuru') || document.getElementById('inputGuruNama');
         if (teacherInput) {
@@ -1272,25 +1229,6 @@ async function handleFormSubmit(event) {
         }
         else
             payload['nama guru'] = AppAccess.profile.teacherName;
-    }
-    const photo = document.getElementById('inputGuruFotoFile')?.files?.[0];
-    const removePhoto = document.getElementById('inputGuruHapusFoto')?.checked === true;
-    if (teacherTab && (photo || removePhoto)) {
-        const ownTahsin = AppAccess.teacher() && String(AppAccess.profile.teacher_id) === String(id) && AppAccess.profile.attendanceEnabled !== false;
-        if (!(AppAccess.full() || ownTahsin) || currentTeacherGroup !== 'tahsin' || payload.attendance_enabled === false) {
-            return AdminNotice.notify('Foto profil hanya tersedia bagi guru Tahsin.', 'error');
-        }
-        if (photo) {
-            try {
-                TeacherPhoto.validate(photo);
-            }
-            catch (error) {
-                return AdminNotice.notify(error.message, 'error');
-            }
-        }
-    }
-    if (teacherTab && AppAccess.teacher() && !photo && !removePhoto) {
-        return AdminNotice.notify('Pilih foto untuk memperbarui profil guru Tahsin.');
     }
     button.disabled = true;
     const buttonText = button.textContent;
@@ -1334,13 +1272,6 @@ async function handleFormSubmit(event) {
                 throw error;
             saved = data;
         }
-        if (teacherTab && (photo || removePhoto)) {
-            const previous = getManageData().find(row => String(row.id) === String(saved.id)) || saved;
-            if (photo)
-                saved = await TeacherPhoto.save(previous, photo);
-            else if (removePhoto)
-                saved = await TeacherPhoto.remove(previous);
-        }
         if (teacherTab && id && payload.attendance_enabled === false) {
             const previous = getManageData().find(row => String(row.id) === String(id));
             if (previous?.foto_storage_path?.startsWith(`portraits/${id}/`)) {
@@ -1362,7 +1293,7 @@ async function handleFormSubmit(event) {
         AdminNotice.notify('Data berhasil disimpan.', 'success');
     }
     catch (error) {
-        AdminNotice.notify('Gagal menyimpan: ' + error.message + (photo ? ' Periksa apakah migrasi teacher-photos-storage.sql sudah dijalankan.' : ''), 'error');
+        AdminNotice.notify('Gagal menyimpan: ' + error.message, 'error');
     }
     finally {
         button.disabled = false;
@@ -1382,7 +1313,13 @@ async function deleteStudentVerified(id) {
     );
     if (!confirmed) return;
     const phrase = `HAPUS ${preview.id}`;
-    const typed = window.prompt(`KONFIRMASI 2/2\nKetik tepat: ${phrase}\nuntuk menghapus ${preview.name}.`);
+    const typed = await AdminNotice.request({
+        title: 'Konfirmasi penghapusan siswa',
+        message: `Ketik tepat “${phrase}” untuk menghapus ${preview.name}.`,
+        label: 'Konfirmasi',
+        placeholder: phrase,
+        confirmLabel: 'Hapus permanen'
+    });
     if (typed !== phrase) return AdminNotice.notify('Penghapusan dibatalkan: konfirmasi kedua tidak cocok.', 'error');
     try {
         const { error } = await supabase.rpc('gm_delete_student_verified', {
@@ -1396,11 +1333,9 @@ async function deleteStudentVerified(id) {
     } catch (error) { AdminNotice.notify('Penghapusan dibatalkan: ' + error.message, 'error'); }
 }
 async function deleteData(id) {
-    // Master siswa dikunci selama TA 2026/2027 agar absensi tetap utuh.
-    // Hapus massal siswa hanya melalui reset tahunan TERPISAH yang belum aktif.
     if (currentManageTab !== 'guru') {
-        AdminNotice.notify('Hapus siswa dinonaktifkan selama tahun ajaran berjalan. Koreksi data melalui Edit atau laporkan duplikasi ke koordinator. Reset hanya boleh dilakukan setelah semua rapor selesai dan backup diverifikasi.', 'warning');
-        return;
+        if (AppAccess.profile?.role !== 'koordinator') return;
+        return deleteStudentVerified(id);
     }
     if (AppAccess.teacher()) return;
     const item = getManageData().find(row => String(row.id) === String(id));
@@ -1934,7 +1869,7 @@ function switchPage(pageId) {
         rapor: ['Rapor Siswa', 'Laporan perkembangan siswa.', 'Periksa dan terbitkan rapor per tingkat kelas.'],
         kelompok: ['Kelola Tahfidz', 'Kelola kelompok Tahfidz.', ''],
         'kelompok-tahsin': ['Kelola Tahsin', 'Kelola kelompok Tahsin.', ''],
-        profil: ['Pengaturan Profil', 'Kelola akun Anda.', 'Perbarui nama profil dan password akun.'],
+        profil: ['Pengaturan Profil', 'Profil rapi, akses lebih personal.', 'Kelola nama profil, foto dan keamanan akun dalam satu tempat.'],
         absensi: ['Data Absensi', 'Catat kehadiran, dampingi kebaikan.', 'Pantau dan kelola rekap kehadiran siswa dalam satu tempat.'],
         penilaian: ['Penilaian Periodik', 'Catat perkembangan, rawat potensi.', 'Penilaian Tahsin dan Tahfidz untuk setiap tahap belajar siswa.'],
         kelola: ['Kelola Data', 'Data tertata, belajar lebih terarah.', 'Kelola data siswa dan guru untuk mendukung kegiatan mengaji.'],

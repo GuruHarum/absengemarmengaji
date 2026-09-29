@@ -1,10 +1,37 @@
 {
-  "id": "/", "name": "Gemar Mengaji", "short_name": "Gemar Ngaji",
-  "lang": "id-ID", "start_url": "/", "scope": "/", "display": "standalone",
-  "orientation": "any", "theme_color": "#216454", "background_color": "#faf9f4",
+  "id": "/",
+  "name": "Gemar Mengaji SDIT Harapan Umat",
+  "short_name": "Gemar Mengaji",
+  "description": "Absensi, kelompok, penilaian dan rapor Gemar Mengaji SDIT Harapan Umat Karawang.",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#216454",
+  "background_color": "#faf9f4",
+  "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {"src":"/assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
     {"src":"/assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
     {"src":"/assets/maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+  ],
+  "shortcuts": [
+    {
+      "name": "Absensi Gemar Mengaji",
+      "short_name": "Absensi",
+      "description": "Buka halaman absensi Gemar Mengaji.",
+      "url": "/?pwa=attendance",
+      "icons": [{"src":"/assets/icon-192.png","sizes":"192x192","type":"image/png"}]
+    },
+    {
+      "name": "Panel Guru dan Koordinator",
+      "short_name": "Panel",
+      "description": "Buka panel akun Gemar Mengaji.",
+      "url": "/admin.html?pwa=panel",
+      "icons": [{"src":"/assets/icon-192.png","sizes":"192x192","type":"image/png"}]
+    }
   ]
 }

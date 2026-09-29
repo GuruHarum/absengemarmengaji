@@ -273,6 +273,29 @@ window.StudentReports = (() => {
         changeTab(activeTab);
         el('reportYear').value ||= String(new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0));
     }
+    async function openMissing(options = {}) {
+        if (AppAccess.profile?.role !== 'koordinator')
+            return false;
+        const year = Number(options.year || (new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0)));
+        const [exam = 'pts', semester = 'ganjil'] = String(options.period || 'pts_ganjil').split('_');
+        const grade = String(options.className || '').match(/^\s*(?:kelas\s*)?(\d+)/i)?.[1] || '1';
+        el('reportYear').value = String(year);
+        el('reportExam').value = exam;
+        el('reportSemester').value = semester;
+        el('reportGrade').value = grade;
+        changeTab('missing');
+        const ok = await load();
+        if (!ok) return false;
+        if (options.className && [...el('missingClass').options].some(option => option.value === options.className))
+            el('missingClass').value = options.className;
+        if (options.subject)
+            el('missingSubject').value = options.subject;
+        if (options.teacher && [...el('missingTeacher').options].some(option => option.value === options.teacher))
+            el('missingTeacher').value = options.teacher;
+        el('missingSearch').value = options.studentName || '';
+        checks();
+        return true;
+    }
     document.addEventListener('panelready', () => {
         document.querySelectorAll('[data-rapor-view]').forEach(button =>
             button.addEventListener('click', () => changeTab(button.dataset.raporView)));
@@ -298,5 +321,5 @@ window.StudentReports = (() => {
             el('reportPdfLink').hidden = true;
         }));
     });
-    return { open, isBusy: () => busy };
+    return { open, openMissing, isBusy: () => busy };
 })();

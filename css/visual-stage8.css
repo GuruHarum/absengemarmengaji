@@ -1,0 +1,319 @@
+/* Gemar Mengaji — Tahap 8 visual consistency · visual30
+   Lapisan akhir: menjaga fungsi, menyatukan ritme, warna, kartu, tabel, modal, dan mobile. */
+
+:root{
+  --gm30-brand:#216454;
+  --gm30-brand-deep:#123c33;
+  --gm30-brand-soft:#edf5f0;
+  --gm30-gold:#c9aa6a;
+  --gm30-gold-soft:#faf4e7;
+  --gm30-ink:#203e35;
+  --gm30-muted:#6e8076;
+  --gm30-line:#dce7df;
+  --gm30-line-soft:#edf2ee;
+  --gm30-paper:#fffefb;
+  --gm30-bg:#f6f8f5;
+  --gm30-danger:#a8463d;
+  --gm30-shadow:0 10px 30px rgba(21,61,47,.055);
+  --gm30-shadow-hover:0 16px 36px rgba(21,61,47,.09);
+}
+
+/* =========================================================
+   ADMIN / KOORDINATOR / GURU
+   ========================================================= */
+body.admin-page{
+  background:
+    radial-gradient(circle at 85% 4%,rgba(201,170,106,.08),transparent 25%),
+    linear-gradient(180deg,#f8faf7 0%,#f4f7f4 100%)!important;
+  color:var(--gm30-ink);
+}
+body.admin-page #adminMain>header{
+  border-bottom:1px solid rgba(201,170,106,.20)!important;
+  background:rgba(255,254,250,.92)!important;
+  box-shadow:0 1px 0 rgba(33,100,84,.04),0 8px 28px rgba(23,63,50,.035)!important;
+}
+body.admin-page .admin-header-copy>p{letter-spacing:.02em;color:#688076}
+body.admin-page #adminHeaderTitle{font-weight:650;letter-spacing:-.015em}
+body.admin-page .admin-account-actions{gap:9px}
+body.admin-page :is(.admin-icon-button,.admin-profile-button,.admin-logout-button){
+  border-color:#dbe6de;background:rgba(255,255,255,.88);box-shadow:0 3px 12px rgba(23,63,50,.025)
+}
+body.admin-page :is(.admin-icon-button,.admin-profile-button):hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(24,66,51,.07)}
+body.admin-page .admin-notification-badge{width:9px;height:9px;top:6px;right:6px;box-shadow:0 0 0 2px #fff}
+body.admin-page .admin-profile-avatar{border:2px solid #fff;box-shadow:0 0 0 1px #d8e4dc,0 3px 10px rgba(24,67,52,.06)}
+
+body.admin-page .admin-workspace{max-width:1520px!important}
+body.admin-page .admin-workspace>[id^="page-"]{min-width:0}
+body.admin-page .admin-welcome{
+  border-radius:22px!important;
+  border-color:rgba(201,170,106,.40)!important;
+  box-shadow:0 16px 40px rgba(19,61,47,.10)!important;
+}
+body.admin-page:not([data-active-page="dashboard"]) .admin-welcome{
+  position:relative;overflow:hidden;padding:22px 26px!important;
+  background:
+    radial-gradient(circle at 93% 10%,rgba(255,255,255,.08),transparent 25%),
+    var(--theme-pattern),linear-gradient(118deg,#123c33,#216454)!important;
+}
+body.admin-page:not([data-active-page="dashboard"]) .admin-welcome::after{
+  content:"";position:absolute;right:-44px;bottom:-70px;width:150px;height:150px;border-radius:50%;
+  border:1px solid rgba(201,170,106,.17);box-shadow:0 0 0 25px rgba(201,170,106,.035);pointer-events:none
+}
+body.admin-page:not([data-active-page="dashboard"]) .admin-welcome-emblem{width:62px;height:62px;border-radius:20px 20px 9px 9px;background:rgba(255,255,255,.055)}
+body.admin-page:not([data-active-page="dashboard"]) .admin-welcome-emblem .admin-welcome-page-icon{width:31px!important;height:31px!important}
+body.admin-page .admin-eyebrow{font-weight:750!important}
+body.admin-page #adminPageTitle{font-weight:620!important}
+body.admin-page[data-active-page="dashboard"] .admin-welcome{box-shadow:0 18px 46px rgba(16,57,44,.14)!important}
+body.admin-page[data-active-page="dashboard"] .dashboard-header-quote{box-shadow:inset 0 1px rgba(255,255,255,.06),0 10px 28px rgba(8,35,27,.06)}
+
+/* Kartu halaman dan section disatukan tanpa membuat semuanya kaku. */
+body.admin-page :is(
+  .assessment-controls,.report-panel,.comparison-section,.maintenance-control-card,
+  .manage-toolbar,.account-settings,.gm-panel-card,.gm-dashboard-section,
+  #page-absensi>section,#page-infografik>section,#kelolaDataSection
+){
+  border-color:var(--gm30-line)!important;
+  background:linear-gradient(155deg,#fffefc 0%,#ffffff 65%,#fbfdfb 100%)!important;
+  box-shadow:var(--gm30-shadow)!important;
+}
+body.admin-page :is(.assessment-controls,.report-panel,.comparison-section,.gm-panel-card){border-radius:18px!important}
+body.admin-page .section-heading{margin-bottom:2px}
+body.admin-page .section-heading h2,
+body.admin-page .assessment-controls>h2,
+body.admin-page .report-panel>h2{font-weight:680!important;letter-spacing:-.02em!important;color:var(--gm30-ink)!important}
+body.admin-page .assessment-help{color:#77877e!important;font-size:10.5px!important}
+
+/* Tombol: satu bahasa visual, tetap mempertahankan warna makna. */
+body.admin-page :is(.primary-action,.secondary-action,.danger-action,.danger-primary){
+  border-radius:11px!important;min-height:40px!important;font-weight:680!important;letter-spacing:.005em;
+  box-shadow:none;transition:transform .14s ease,box-shadow .14s ease,background .14s ease,border-color .14s ease!important
+}
+body.admin-page .primary-action{background:linear-gradient(135deg,#216454,#1a5648)!important;box-shadow:0 5px 14px rgba(33,100,84,.10)!important}
+body.admin-page .primary-action:hover:not(:disabled){background:linear-gradient(135deg,#1b574a,#123c33)!important;box-shadow:0 8px 18px rgba(33,100,84,.15)!important;transform:translateY(-1px)}
+body.admin-page .secondary-action{background:#fbfdfb!important;border-color:#d5e1d8!important;color:#385e4e!important}
+body.admin-page .secondary-action:hover:not(:disabled){background:#f0f6f2!important;border-color:#bfd2c5!important}
+body.admin-page :is(.danger-action,.danger-primary){border-radius:11px!important}
+body.admin-page button:focus-visible,
+body.admin-page a:focus-visible,
+body.admin-page :is(input,select,textarea):focus-visible{
+  outline:3px solid rgba(70,145,116,.20)!important;outline-offset:2px!important
+}
+
+/* Form dan filter lebih tenang. */
+body.admin-page :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):not([type="color"]){
+  min-height:41px;border-radius:11px!important;border-color:#d5e1d8!important;background:#fffefc!important;color:#29493c!important;
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease
+}
+body.admin-page :is(input,select,textarea):not([type="checkbox"]):not([type="radio"]):focus{
+  border-color:#8eb8a6!important;background:#fff!important;box-shadow:0 0 0 3px rgba(33,100,84,.075)!important
+}
+body.admin-page .field-label{color:#60766a!important;font-weight:620!important}
+body.admin-page :is(.detail-filter-grid,.assessment-context-grid,.gm-filter-row){
+  padding:12px;border:1px solid #e5ece7;border-radius:14px;background:#fafcf9
+}
+body.admin-page .manage-search-row{padding:12px 0 2px}
+body.admin-page #manageRecordInfo{background:#eef5f0!important;color:#476c5c!important;border:1px solid #dde9e1}
+
+/* Tabs / submenu */
+body.admin-page :is(.manage-tabs,.gm-local-nav,.report-submenu){
+  border-color:#dbe5de!important;background:#eef4ef!important;box-shadow:inset 0 1px rgba(255,255,255,.6)
+}
+body.admin-page :is(.manage-tabs button,.gm-local-nav-button,.report-submenu button){transition:background .14s ease,color .14s ease,box-shadow .14s ease!important}
+body.admin-page .manage-tabs button[aria-pressed="true"],
+body.admin-page .gm-local-nav-button[aria-pressed="true"],
+body.admin-page .gm-local-nav-button.active{
+  background:#fffefb!important;color:#285544!important;box-shadow:0 4px 12px rgba(28,65,51,.06)!important
+}
+
+/* Dashboard lebih hidup tanpa menambah isi. */
+body.admin-page .gm-dashboard-main-grid{gap:18px!important}
+body.admin-page .gm-dashboard-section{border-radius:20px!important}
+body.admin-page .gm-stat-card{
+  border-color:#e0e9e3!important;box-shadow:0 6px 18px rgba(24,66,51,.035)!important;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease!important
+}
+body.admin-page .gm-stat-card:hover{transform:translateY(-2px);border-color:#cbdad0!important;box-shadow:var(--gm30-shadow-hover)!important}
+body.admin-page .gm-stat-copy>strong{letter-spacing:-.035em}
+body.admin-page .gm-quick-card{box-shadow:0 3px 12px rgba(25,65,51,.025);transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease!important}
+body.admin-page .gm-quick-card:hover{transform:translateX(2px);border-color:#cbdcd1!important;box-shadow:0 8px 20px rgba(25,65,51,.06)!important}
+body.admin-page .gm-quick-arrow{color:#87a194!important}
+
+/* Pusat Perlu Perhatian — ringkas untuk koordinator, detail guru tetap nyaman. */
+body.admin-page .gm-attention-center{border-color:#e1e6d7!important;background:linear-gradient(145deg,#fffdf7,#fff 50%,#f5faf6)!important}
+body.admin-page .gm-attention-card{box-shadow:0 4px 14px rgba(24,66,51,.025)}
+body.admin-page .gm-attention-teacher-summary{border-left:3px solid #d9bd82;padding-left:13px!important}
+body.admin-page .gm-attention-teacher-summary strong{color:#284f40}
+body.admin-page .gm-attention-list{gap:8px!important}
+
+/* Kelompok Tahsin/Tahfidz */
+body.admin-page .gm-group-pagebar{background:linear-gradient(145deg,#f6faf7,#fffaf0)!important;border-color:#dfe8e1!important}
+body.admin-page .gm-group-card,
+body.admin-page .gm-grade-group-row{
+  border-color:#dfe8e1!important;background:linear-gradient(155deg,#fff,#fcfdfb)!important;box-shadow:0 5px 16px rgba(24,66,51,.025)
+}
+body.admin-page .gm-group-card:hover{border-color:#c9dacd!important;box-shadow:0 10px 24px rgba(24,66,51,.055)}
+body.admin-page .gm-group-breakdown span{background:#eef5f0!important;color:#526f62!important}
+body.admin-page .gm-group-editor{border-color:#dde7df!important;box-shadow:0 5px 16px rgba(24,66,51,.025)}
+body.admin-page .gm-member-picker{background:#fbfdfb!important;border-color:#dce6df!important}
+
+/* Tabel */
+body.admin-page .gm-table-scroll-shell,
+body.admin-page .overflow-x-auto{scrollbar-color:#b8cbbf #f0f4f1}
+body.admin-page table{color:#344e43}
+body.admin-page thead{background:linear-gradient(180deg,#f2f6f3,#edf3ef)!important}
+body.admin-page thead th{color:#5b7166!important;font-weight:720!important}
+body.admin-page tbody tr{border-color:#edf2ee!important}
+body.admin-page tbody tr:hover{background:#f8fbf9!important}
+body.admin-page tbody td{border-color:#edf2ee!important}
+body.admin-page .gm-table-card-mode tr{box-shadow:0 5px 16px rgba(23,62,49,.035)!important}
+
+/* Modal / dialog internal */
+body.admin-page :is(#manageModal,.gm-dialog-backdrop,.gm-confirm-overlay){backdrop-filter:blur(5px)}
+body.admin-page :is(#manageModal .bg-white,.gm-dialog,.gm-confirm-dialog){
+  border:1px solid #dbe6df!important;border-radius:20px!important;background:#fffefb!important;box-shadow:0 28px 80px rgba(14,48,38,.20)!important
+}
+body.admin-page .gm-dialog-title{color:#254b3d;font-weight:720}
+
+/* Notifikasi */
+body.admin-page .admin-notification-popover{border-color:#d7e3db!important;box-shadow:0 24px 65px rgba(18,55,43,.18)!important}
+body.admin-page .admin-notification-item[data-unread="true"],
+body.admin-page .admin-notification-item.is-unread{background:linear-gradient(90deg,#f0f7f2,#fffefb)!important}
+body.admin-page .admin-notification-item:hover{background:#f6faf7!important}
+
+/* Settings / profile */
+body.admin-page .settings-hub-button{border:1px solid #dde7df!important;background:linear-gradient(155deg,#fff,#f8fbf8)!important;box-shadow:0 4px 14px rgba(25,64,51,.025)}
+body.admin-page .settings-hub-button:hover{transform:translateY(-1px);border-color:#c8d9cd!important;box-shadow:0 10px 22px rgba(25,64,51,.055)!important}
+body.admin-page .profile-photo-card{border-color:#dfe8e2!important;background:linear-gradient(135deg,#f6faf7,#fff8ec)!important}
+body.admin-page .profile-photo-preview{box-shadow:0 10px 22px rgba(24,67,52,.10)!important}
+
+/* Empty/skeleton */
+body.admin-page .gm-empty-state.gm-empty-rich{border-color:#d8e3db!important;background:linear-gradient(135deg,#fbfdfb,#fffaf2)!important}
+body.admin-page .gm-empty-state.gm-empty-rich .gm-empty-icon{background:#edf5f0!important;color:#3f755f!important}
+body.admin-page .gm-skeleton-line,
+body.admin-page .gm-skeleton-dot,
+body.admin-page .gm-skeleton-card{background:#edf2ee!important}
+
+/* =========================================================
+   PUBLIC ATTENDANCE
+   ========================================================= */
+body.public-page{
+  background:
+    radial-gradient(circle at 85% 0,rgba(201,170,106,.10),transparent 25%),
+    linear-gradient(180deg,#f7faf7 0%,#f6f7f3 100%)!important;
+  color:var(--gm30-ink)
+}
+body.public-page .header-gradient{
+  background:
+    radial-gradient(circle at 88% 5%,rgba(255,255,255,.09),transparent 28%),
+    var(--theme-pattern),linear-gradient(125deg,#123c33,#216454)!important;
+  border-bottom:1px solid rgba(201,170,106,.34);box-shadow:0 12px 34px rgba(17,55,43,.13)!important
+}
+body.public-page .header-gradient>.container{min-height:86px}
+body.public-page .logo-circle{width:58px;height:58px;border:3px solid rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(201,170,106,.35),0 6px 18px rgba(8,35,27,.15)}
+body.public-page #schoolName{font-weight:650;letter-spacing:-.02em}
+body.public-page #schoolAddress{color:#d0dfd6!important;font-size:11px}
+body.public-page #loginBtn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08)!important;border-radius:11px!important}
+body.public-page #loginBtn:hover{background:rgba(255,255,255,.15)!important}
+body.public-page #page1>div:first-child{padding-top:14px}
+body.public-page #page1 h2{color:#234c3d!important;font-weight:650!important}
+body.public-page #page1>div:first-child>p{color:#78877f!important}
+body.public-page #teacherGrid{gap:16px!important}
+body.public-page .teacher-card{
+  border:1px solid #dce7df!important;border-radius:18px!important;background:linear-gradient(155deg,#fffefc,#fbfdfb)!important;
+  box-shadow:0 8px 22px rgba(22,61,48,.045)!important;overflow:hidden
+}
+body.public-page .teacher-card:hover{transform:translateY(-3px)!important;border-color:#c8d9cd!important;box-shadow:0 15px 32px rgba(22,61,48,.085)!important}
+body.public-page .teacher-card img{border:3px solid #fff;box-shadow:0 0 0 1px #dce7df,0 5px 14px rgba(24,65,51,.08)}
+body.public-page .attendance-heading{border-color:#dce7df!important;background:linear-gradient(145deg,#fffefb,#f8fbf8)!important;box-shadow:0 8px 22px rgba(22,61,48,.04)}
+body.public-page #classTitle{color:#234c3d!important}
+body.public-page #materiLinkBtn,
+body.public-page #backToHome{border-radius:11px!important}
+body.public-page .student-row{
+  border:1px solid #dce7df!important;border-radius:16px!important;background:#fffefb!important;box-shadow:0 6px 18px rgba(22,61,48,.035)!important
+}
+body.public-page .student-row:hover{box-shadow:0 11px 26px rgba(22,61,48,.065)!important}
+body.public-page .student-header{background:linear-gradient(135deg,#eef5f0,#faf4e7)!important;border-bottom:1px solid #e3ebe5}
+body.public-page .attendance-option{border-radius:10px!important}
+body.public-page .save-btn{background:linear-gradient(135deg,#216454,#1a5648)!important;box-shadow:0 5px 14px rgba(33,100,84,.12)!important}
+body.public-page .footer{background:linear-gradient(135deg,#123c33,#216454)!important;border-top:1px solid rgba(201,170,106,.30)}
+body.public-page .modal-content{border:1px solid #dce7df;border-radius:18px!important;box-shadow:0 24px 70px rgba(13,47,37,.20)!important}
+body.public-page .thank-you-content{background:linear-gradient(135deg,#1b6a55,#2b8b6e)!important;border:1px solid rgba(255,255,255,.15)}
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+body.login-page{
+  background:
+    radial-gradient(circle at 20% 10%,rgba(201,170,106,.16),transparent 25%),
+    radial-gradient(circle at 90% 90%,rgba(33,100,84,.10),transparent 28%),
+    linear-gradient(135deg,#f7f9f5,#eef4ef)!important;
+}
+body.login-page .login-card{border:1px solid #d9e5dc!important;border-radius:24px!important;box-shadow:0 24px 70px rgba(20,58,46,.13)!important;background:#fffefb!important}
+body.login-page .login-card>div:first-child{
+  background:
+    radial-gradient(circle at 80% 10%,rgba(255,255,255,.09),transparent 30%),
+    var(--theme-pattern),linear-gradient(130deg,#123c33,#216454)!important;
+  padding-top:30px!important;padding-bottom:30px!important
+}
+body.login-page .login-card>div:first-child>div{border:3px solid rgba(255,255,255,.92);padding:0!important;overflow:hidden;box-shadow:0 0 0 1px rgba(201,170,106,.30),0 7px 20px rgba(8,34,27,.16)!important}
+body.login-page .login-card h3{font-weight:650;letter-spacing:-.02em}
+body.login-page .login-card form{padding:26px!important}
+body.login-page :is(#username,#password){border-color:#d5e1d8!important;background:#fffefb!important;border-radius:11px!important;box-shadow:none!important}
+body.login-page :is(#username,#password):focus{border-color:#87b09d!important;box-shadow:0 0 0 3px rgba(33,100,84,.08)!important}
+body.login-page button[type="submit"]{background:linear-gradient(135deg,#216454,#1a5648)!important;border-radius:11px!important;box-shadow:0 7px 18px rgba(33,100,84,.14)!important}
+body.login-page a{color:#5d7569!important}
+body.login-page a:hover{color:#216454!important}
+
+/* =========================================================
+   MAINTENANCE + OFFLINE
+   ========================================================= */
+body.maintenance-page .maintenance-layout{isolation:isolate}
+body.maintenance-page .maintenance-brand{border-bottom-color:rgba(201,170,106,.24)!important}
+body.maintenance-page .quote-card{border-color:rgba(201,170,106,.30)!important;box-shadow:0 22px 60px rgba(8,33,27,.12)!important}
+body.offline-page{
+  background:radial-gradient(circle at 50% 8%,#eef6f0 0,#faf9f4 44%,#faf9f4 100%)!important;
+  font-family:'Poppins',Arial,sans-serif!important
+}
+body.offline-page .offline-card{border-color:#d9e5dc!important;background:rgba(255,254,251,.94)!important;box-shadow:0 22px 62px rgba(22,63,50,.12)!important}
+body.offline-page .offline-card img{border-radius:50%;filter:drop-shadow(0 6px 12px rgba(20,58,46,.08))}
+body.offline-page .offline-card button{background:linear-gradient(135deg,#216454,#1a5648)!important}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media(max-width:900px){
+  body.admin-page :is(.detail-filter-grid,.assessment-context-grid,.gm-filter-row){padding:10px}
+  body.public-page #teacherGrid{gap:12px!important}
+}
+@media(max-width:767px){
+  body.admin-page #adminMain>header{box-shadow:0 5px 18px rgba(21,61,47,.055)!important}
+  body.admin-page .admin-workspace{padding:15px 13px 30px!important}
+  body.admin-page .admin-welcome{border-radius:18px!important}
+  body.admin-page:not([data-active-page="dashboard"]) .admin-welcome{padding:18px!important}
+  body.admin-page :is(.assessment-controls,.report-panel,.comparison-section,.gm-panel-card,.gm-dashboard-section){border-radius:15px!important}
+  body.admin-page :is(.detail-filter-grid,.assessment-context-grid,.gm-filter-row){border-radius:12px}
+  body.admin-page .gm-group-card{border-radius:13px}
+  body.public-page .header-gradient>.container{min-height:74px;padding-top:11px!important;padding-bottom:11px!important}
+  body.public-page .logo-circle{width:50px;height:50px;margin-right:10px!important}
+  body.public-page #schoolName{font-size:15px!important;line-height:1.35}
+  body.public-page #schoolAddress{display:none}
+  body.public-page main{padding-top:22px!important}
+  body.public-page #teacherGrid{gap:10px!important}
+}
+@media(max-width:480px){
+  body.admin-page .admin-account-actions{gap:5px}
+  body.admin-page :is(.admin-icon-button,.admin-profile-avatar,.admin-logout-button){width:38px!important;height:38px!important;min-height:38px!important}
+  body.admin-page .admin-profile-button{min-height:38px!important}
+  body.admin-page #adminHeaderTitle{max-width:118px}
+  body.admin-page .admin-welcome #adminPageTitle{font-size:21px!important}
+  body.admin-page .gm-dashboard-main-grid{gap:12px!important}
+  body.public-page #loginBtn{padding:8px 10px!important;font-size:11px!important}
+  body.login-page{padding:14px!important}
+  body.login-page .login-card form{padding:22px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.admin-page .gm-stat-card:hover,
+  body.admin-page .gm-quick-card:hover,
+  body.public-page .teacher-card:hover{transform:none!important}
+}

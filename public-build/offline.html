@@ -1,1 +1,31 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#216454"><title>Koneksi diperlukan • Gemar Mengaji</title><link rel="stylesheet" href="/css/theme.css"><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#faf9f4;color:#203e35;font-family:Arial,sans-serif}main{max-width:420px;padding:32px;text-align:center}img{width:90px}button{padding:12px 24px;border:0;border-radius:12px;background:#216454;color:white;font:inherit;cursor:pointer}p{line-height:1.7}</style></head><body><main><img src="/assets/school-logo.png" alt="Logo sekolah"><h1>Koneksi internet diperlukan</h1><p>Sambungkan perangkat ke internet untuk membuka Gemar Mengaji. Absensi dan penilaian hanya dapat diisi serta disimpan saat terhubung.</p><button onclick="location.reload()">Coba Lagi</button></main></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#216454">
+<meta name="robots" content="noindex">
+<title>Offline • Gemar Mengaji</title>
+<link rel="stylesheet" href="/css/theme.css">
+<link rel="stylesheet" href="/css/visual-stage8.css?v=20260929-loader33">
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 10%,#edf5ef 0,#faf9f4 42%,#faf9f4 100%);color:#203e35;font-family:Arial,sans-serif}.offline-card{width:min(430px,100%);padding:30px 26px;text-align:center;border:1px solid #dce6df;border-radius:26px;background:rgba(255,255,255,.9);box-shadow:0 18px 55px rgba(25,68,56,.11)}img{width:82px;height:82px;object-fit:contain;margin-bottom:12px}h1{font-size:22px;margin:0 0 8px}p{margin:0 auto 20px;max-width:330px;color:#60736c;line-height:1.65;font-size:14px}.offline-state{display:inline-flex;align-items:center;gap:7px;margin-bottom:18px;padding:6px 10px;border-radius:999px;background:#fff5d8;color:#755b10;font-size:11px;font-weight:700}.offline-state:before{content:"";width:7px;height:7px;border-radius:50%;background:#d59d1c}button{min-height:42px;padding:0 18px;border:0;border-radius:12px;background:#216454;color:#fff;font:700 13px Arial,sans-serif;cursor:pointer}small{display:block;margin-top:15px;color:#89968f;font-size:11px}
+</style>
+</head>
+<body class="offline-page">
+<main class="offline-card">
+<img src="/assets/school-logo.png" alt="Logo SDIT Harapan Umat">
+<div class="offline-state" id="offlineState">Tidak ada koneksi</div>
+<h1>Koneksi internet diperlukan</h1>
+<p>Gemar Mengaji membutuhkan koneksi untuk memuat data terbaru dan menyimpan perubahan.</p>
+<button id="retry" type="button">Coba lagi</button>
+<small>Halaman akan mencoba tersambung kembali saat internet tersedia.</small>
+</main>
+<script>
+const retry=document.getElementById('retry'),state=document.getElementById('offlineState');
+function sync(){if(navigator.onLine){state.textContent='Koneksi tersedia';location.reload()}else state.textContent='Tidak ada koneksi'}
+retry.addEventListener('click',()=>location.reload());
+window.addEventListener('online',sync);window.addEventListener('offline',sync);
+</script>
+</body>
+</html>

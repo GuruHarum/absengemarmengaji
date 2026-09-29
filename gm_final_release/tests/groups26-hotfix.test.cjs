@@ -1,0 +1,16 @@
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+const read = p => fs.readFileSync(p, 'utf8');
+const groups = read('js/learning-groups.js');
+const dashboard = read('js/dashboard.js');
+const notices = read('js/admin-notices.js');
+const sql = read('supabase/20260929-22-fix-kelompok-class-name-ambiguity.sql');
+assert.doesNotMatch(groups, /window\.prompt\s*\(/);
+assert.doesNotMatch(dashboard, /window\.prompt\s*\(/);
+assert.match(groups, /AdminNotice\.request/);
+assert.match(notices, /requestValue/);
+assert.match(notices, /noticeValueField/);
+assert.match(sql, /v_student_class_name/);
+assert.doesNotMatch(sql, /DECLARE[\s\S]{0,120}\bclass_name text;/);
+assert.match(sql, /sc\.normalized_name/);
+console.log('groups26 hotfix OK');
