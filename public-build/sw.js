@@ -1,4 +1,4 @@
-const VERSION = 'loader33';
+const VERSION = 'loader35';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -19,7 +19,8 @@ const PRECACHE = [
   '/assets/icon-192.png',
   '/assets/icon-512.png',
   '/assets/maskable-512.png',
-  '/assets/apple-touch-icon.png'
+  '/assets/apple-touch-icon.png',
+  '/assets/notification-badge-96.png'
 ];
 
 function normalizedRequest(url) {
@@ -62,14 +63,17 @@ self.addEventListener('push', event => {
   let payload = {};
   try { payload = event.data?.json?.() || {}; }
   catch (_) { payload = { body: event.data?.text?.() || '' }; }
-  const title = payload.title || 'Gemar Mengaji';
+  const title = String(payload.title || 'Gemar Mengaji').trim() || 'Gemar Mengaji';
+  const body = String(payload.body || 'Ada informasi baru di Gemar Mengaji. Buka aplikasi untuk melihat detail.').trim();
+  const data = { ...(payload.data || {}) };
+  data.url ||= '/admin.html?pwa=notification';
   const options = {
-    body: payload.body || '',
+    body,
     icon: payload.icon || '/assets/icon-192.png',
-    badge: payload.badge || '/assets/icon-192.png',
+    badge: payload.badge || '/assets/notification-badge-96.png',
     tag: payload.tag || 'gemar-mengaji',
-    renotify: false,
-    data: payload.data || { url: '/admin.html' }
+    renotify: Boolean(payload.renotify),
+    data
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
@@ -77,19 +81,31 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const data = event.notification.data || {};
-  const targetUrl = new URL(data.url || '/admin.html', self.location.origin).href;
+  const targetUrl = new URL(data.url || '/admin.html?pwa=notification', self.location.origin).href;
   event.waitUntil((async () => {
-    const clientsList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    for (const client of clientsList) {
-      const clientUrl = new URL(client.url);
-      if (clientUrl.origin !== self.location.origin || !clientUrl.pathname.endsWith('/admin.html')) continue;
-      await client.focus();
-      if (data.notificationId) {
-        client.postMessage({ type: 'OPEN_NOTIFICATION', notificationId: String(data.notificationId) });
+    // openWindow pada URL yang masih berada di scope PWA memberi Chromium kesempatan
+    // merutekan klik ke WebAPK/standalone Gemar Mengaji, bukan memaksa tab Chrome lama.
+    if (clients.openWindow) {
+      const opened = await clients.openWindow(targetUrl);
+      if (opened) {
+        if ('focus' in opened) await opened.focus();
+        if (data.notificationId) {
+          opened.postMessage({ type: 'OPEN_NOTIFICATION', notificationId: String(data.notificationId) });
+        }
+        return;
       }
-      return;
     }
-    await clients.openWindow(targetUrl);
+    const clientsList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const fallback = clientsList.find(client => {
+      try { return new URL(client.url).origin === self.location.origin; } catch (_) { return false; }
+    });
+    if (fallback) {
+      if ('navigate' in fallback) await fallback.navigate(targetUrl);
+      await fallback.focus();
+      if (data.notificationId) {
+        fallback.postMessage({ type: 'OPEN_NOTIFICATION', notificationId: String(data.notificationId) });
+      }
+    }
   })());
 });
 

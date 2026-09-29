@@ -16,7 +16,7 @@ for (const name of entries) {
 }
 
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/profile.js', 'js/push-notifications.js', 'js/notifications.js', 'js/attention-center.js', 'js/learning-groups.js', 'js/assessments.js', 'js/ux-stage5.js', 'js/islamic-quotes.js', 'js/pwa.js', 'js/notifications.js', 'js/dashboard.js', 'js/gm-upgrade-20260928.js', 'js/database.js', 'js/ui.js', 'js/utils.js', 'js/public-app.js', 'css/ui-polish-20260928.css', 'css/ux-stage5.css', 'css/pwa.css', 'css/visual-stage8.css', 'manifest.webmanifest', 'offline.html']) {
+for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/profile.js', 'js/push-notifications.js', 'js/notifications.js', 'js/attention-center.js', 'js/learning-groups.js', 'js/assessments.js', 'js/assessments-core.js', 'js/progress-form.js', 'js/report-cards.js', 'js/report-zip.js', 'js/ux-stage5.js', 'js/islamic-quotes.js', 'js/pwa.js', 'js/notifications.js', 'js/dashboard.js', 'js/gm-upgrade-20260928.js', 'js/database.js', 'js/ui.js', 'js/utils.js', 'js/public-app.js', 'css/ui-polish-20260928.css', 'css/ux-stage5.css', 'css/pwa.css', 'css/visual-stage8.css', 'manifest.webmanifest', 'offline.html', 'assets/notification-badge-96.png']) {
     const source = path.resolve(rel);
     const built = path.join(out, rel);
     if (hash(source) !== hash(built)) {
@@ -24,4 +24,4 @@ for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/prof
     }
 }
 
-console.log('Static website prepared in public-build (loader33)');
+console.log('Static website prepared in public-build (loader35)');

@@ -11,7 +11,43 @@ window.StudentReports = (() => {
         busy = value;
         el('reportControls').disabled = value;
         ['checkMissingScores','downloadReports'].forEach(id => { el(id).disabled = value; });
+        ['reportDownloadMode','reportDownloadClass'].forEach(id => { if (el(id)) el(id).disabled = value; });
         el('reportSelection').disabled = value;
+    }
+    function refreshDownloadScope() {
+        const classMode = el('reportDownloadMode')?.value === 'class';
+        const classField = el('reportDownloadClassField');
+        if (classField) classField.hidden = !classMode;
+        const button = el('downloadReports');
+        const summary = el('reportDownloadSummary');
+        if (!classMode) {
+            if (button) button.textContent = 'Unduh ZIP Satu Tingkat';
+            if (summary) {
+                summary.textContent = rows.length
+                    ? `${rows.length} siswa dari seluruh rombel tingkat ${el('reportGrade').value} akan dimasukkan.`
+                    : 'Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.';
+                summary.classList.remove('is-warning');
+            }
+            return;
+        }
+        if (button) button.textContent = 'Unduh ZIP Satu Rombel';
+        const className = el('reportDownloadClass')?.value || '';
+        const count = className ? rows.filter(row => row.student.class === className).length : 0;
+        if (summary) {
+            summary.textContent = !className
+                ? 'Pilih satu rombel yang akan diunduh.'
+                : `${count} siswa dari ${className} akan dimasukkan.`;
+            summary.classList.toggle('is-warning', !className || !count);
+        }
+    }
+    function downloadSelection() {
+        const mode = el('reportDownloadMode')?.value || 'grade';
+        if (mode !== 'class') return { rows: [...rows], label: `Kelas ${el('reportGrade').value}` };
+        const className = el('reportDownloadClass')?.value || '';
+        if (!className) throw Error('Pilih rombel yang akan diunduh terlebih dahulu.');
+        const selectedRows = rows.filter(row => row.student.class === className);
+        if (!selectedRows.length) throw Error('Tidak ada siswa pada rombel yang dipilih.');
+        return { rows: selectedRows, label: className };
     }
     function updateNavigationButtons() {
         const candidates = visible();
@@ -83,9 +119,20 @@ window.StudentReports = (() => {
             }
             rows = ReportPDF.sorted(all);
             const classes = [...new Set(rows.map(row => row.student.class))];
+            const previousReportClass = el('reportClass').value;
+            const previousDownloadClass = el('reportDownloadClass')?.value || '';
             for (const id of ['reportClass', 'missingClass']) {
+                const previous = el(id).value;
                 el(id).replaceChildren(new Option('Semua rombel', ''));
                 classes.forEach(name => el(id).add(new Option(name, name)));
+                if (classes.includes(previous)) el(id).value = previous;
+            }
+            if (classes.includes(previousReportClass)) el('reportClass').value = previousReportClass;
+            if (el('reportDownloadClass')) {
+                el('reportDownloadClass').replaceChildren(new Option('Pilih rombel', ''));
+                classes.forEach(name => el('reportDownloadClass').add(new Option(name, name)));
+                if (classes.includes(previousDownloadClass)) el('reportDownloadClass').value = previousDownloadClass;
+                refreshDownloadScope();
             }
             el('missingTeacher').replaceChildren(new Option('Semua guru', ''));
             [...new Set(ReportCore.missingByStudent(rows).flatMap(pupil => pupil.programs.map(p => p.teacher)))].sort()
@@ -231,10 +278,12 @@ window.StudentReports = (() => {
     }
     async function download() {
         if (busy || !await load() || !rows.length) return;
-        const selectedRows = visible();
-        if (!selectedRows.length) { tell('Tidak ada siswa sesuai filter aktif.'); return; }
+        let selection;
+        try { selection = downloadSelection(); }
+        catch (error) { tell(error.message); refreshDownloadScope(); return; }
+        const selectedRows = selection.rows;
         if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
-            checks(); tell('Lengkapi nilai wajib, identitas dan masalah pengaturan sebelum menerbitkan rapor.'); return;
+            checks(); tell(`Belum dapat mengunduh ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`); return;
         }
         setBusy(true);
         try {
@@ -243,14 +292,14 @@ window.StudentReports = (() => {
             if (issued.error) throw issued.error;
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
             pdfUrl = URL.createObjectURL(blob);
-            const cls = el('reportClass').value || `Tingkat ${el('reportGrade').value}`;
             const link = el('reportPdfLink');
             link.href = pdfUrl;
-            link.download = `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${cls} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
+            const scope = ReportZip.safe(selection.label);
+            link.download = `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${scope} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
             link.hidden = false; link.textContent = 'Simpan ZIP Rapor'; link.click();
-            tell(`ZIP selesai: ${selectedRows.length} PDF siswa.`);
+            tell(`ZIP selesai: ${selectedRows.length} PDF siswa · ${selection.label}.`);
         } catch (error) { tell(error.message); }
-        finally { setBusy(false); }
+        finally { setBusy(false); refreshDownloadScope(); }
     }
     function changeTab(tab) {
         if (!['preview','missing','print'].includes(tab)) return;
@@ -311,6 +360,9 @@ window.StudentReports = (() => {
         el('reportPrevious').addEventListener('click', () => step(-1));
         el('reportNext').addEventListener('click', () => step(1));
         el('downloadReports').addEventListener('click', download);
+        el('reportDownloadMode')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
+        el('reportDownloadClass')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
+        refreshDownloadScope();
         ['missingSearch', 'missingClass', 'missingTeacher', 'missingSubject']
             .forEach(id => el(id).addEventListener('input', checks));
         ['reportYear', 'reportExam', 'reportSemester', 'reportGrade'].forEach(id => el(id).addEventListener('change', () => {
@@ -319,6 +371,8 @@ window.StudentReports = (() => {
             el('reportChecks').textContent = 'Filter berubah. Muat rapor kembali.';
             checks();
             el('reportPdfLink').hidden = true;
+            if (el('reportDownloadClass')) el('reportDownloadClass').value = '';
+            refreshDownloadScope();
         }));
     });
     return { open, openMissing, isBusy: () => busy };

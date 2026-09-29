@@ -30,7 +30,7 @@ window.ProgressForm = (() => {
             }
         }
         else {
-            html = select('tahfidz_progress_type', 'Jenis capaian', [['SURAT', 'Surat dan ayat'], ['REVIEW', 'Review persiapan tes juz'], ['TES', 'Tes juz']]) + select('tahfidz_juz', 'Juz', Array.from({ length: 30 }, (_, i) => i + 1));
+            html = select('tahfidz_progress_type', 'Jenis capaian', [['SURAT', 'Surat dan ayat'], ['REVIEW', 'Review persiapan tes juz'], ['TES', 'Tes juz']]) + select('tahfidz_juz', 'Juz', Array.from({ length: 30 }, (_, i) => 30 - i));
             if ((v.tahfidz_progress_type || 'SURAT') === 'SURAT')
                 html += input('tahfidz_ayah_start', 'Ayat awal', QURAN_SURAHS.find(s => s.number === Number(v.tahfidz_surah))?.ayahs || 286);
         }
@@ -39,7 +39,7 @@ window.ProgressForm = (() => {
     function changed(draft, field) { if (field === 'tahfidz_juz') {
         draft.tahfidz_surah = '';
         draft.tahfidz_ayah = '';
-        draft.tahfidz_ayah_start = '';
+        draft.tahfidz_ayah_start = '1';
     } if (field === 'tahsin_surah_number')
         draft.tahsin_ayah = ''; if (field === 'tahsin_book_number')
         draft.tahsin_page = ''; return ['tahsin_progress_type', 'tahsin_book_number', 'tahsin_page', 'tahsin_surah_number', 'tahfidz_progress_type', 'tahfidz_juz'].includes(field); }

@@ -49,7 +49,7 @@
     <link rel="stylesheet" href="css/gm-upgrade-20260928.css?v=20260928-1">
     <link rel="stylesheet" href="css/ui-polish-20260928.css?v=20260929-groups26">
     <link rel="stylesheet" href="css/ux-stage5.css?v=20260929-ux27">
-    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader33">
+    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader35">
 </head>
 <body class="admin-page sidebar-collapsed flex min-h-screen overflow-x-hidden">
 
@@ -489,9 +489,14 @@
     </section>
     <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Cetak rapor" hidden>
         <h3>Download Rapor</h3>
-        <p>Satu file ZIP berisi satu PDF untuk setiap siswa sesuai filter aktif. Lengkapi nilai wajib sebelum mengunduh.</p>
+        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Setiap siswa tetap dibuat sebagai satu PDF di dalam ZIP.</p>
+        <div class="report-grid report-download-grid">
+            <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
+            <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
+        </div>
+        <p id="reportDownloadSummary" class="report-download-summary" role="status">Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.</p>
         <div id="reportActions" class="report-actions">
-            <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Rapor</button>
+            <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Satu Tingkat</button>
             <a id="reportPdfLink" class="secondary-action" target="_blank" rel="noopener" hidden>Simpan ZIP Rapor</a>
         </div>
         <p class="report-paper-note">Latar PDF transparan, termasuk sel tabel. Saat dicetak di kertas berwarna, bagian yang tidak bertinta tetap mengikuti warna kertas. Coba satu lembar terlebih dahulu sesuai pengaturan printer.</p>
@@ -631,10 +636,10 @@
     <p id="assessmentFeedback" class="assessment-feedback" role="status"></p>
     <div id="assessmentWorkspace" hidden>
         <section class="assessment-summary"><div><span>PERIODE AKTIF</span><strong id="assessmentActivePeriod"></strong></div><div><span>SISWA</span><strong id="assessmentTotal">0</strong></div><div><span>TERSIMPAN</span><strong id="assessmentSaved">0</strong></div><div><span>BELUM DISIMPAN</span><strong id="assessmentDirty">0</strong></div></section>
-        <div class="assessment-toolbar"><label class="field-label" for="assessmentLevel">Tingkat kelas<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label><label class="field-label" for="assessmentClass">Kelas<select id="assessmentClass"><option value="">Pilih kelas</option></select></label><label class="field-label" for="assessmentSearch">Cari siswa<input id="assessmentSearch" type="search" placeholder="Ketik nama siswa..." autocomplete="off"></label><button id="assessmentSaveAll" type="button" class="primary-action">Simpan Semua</button></div>
-        <p class="assessment-help">Simpan Semua berlaku untuk kelas yang sedang dipilih. Tajwid Buku 1 dan Gharib sebelum Finishing tidak wajib.</p>
+        <div class="assessment-toolbar"><label class="field-label" for="assessmentLevel">Tingkat kelas<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label><label class="field-label" for="assessmentClass">Kelas<select id="assessmentClass"><option value="">Pilih kelas</option></select></label><label class="field-label" for="assessmentSearch">Cari siswa<input id="assessmentSearch" type="search" placeholder="Ketik nama siswa..." autocomplete="off"></label></div>
         <div id="assessmentCards"></div>
         <div class="assessment-pagination"><button id="assessmentPrev" type="button" class="secondary-action">Sebelumnya</button><span id="assessmentPageInfo"></span><button id="assessmentNext" type="button" class="secondary-action">Berikutnya</button></div>
+        <div class="assessment-save-all-bottom"><p class="assessment-help">Simpan Semua berlaku untuk kelas yang sedang dipilih. Tajwid Buku 1 dan Gharib sebelum Finishing tidak wajib.</p><button id="assessmentSaveAll" type="button" class="primary-action">Simpan Semua</button></div>
     </div>
 </div>
 
@@ -717,7 +722,7 @@
     
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260929-loader33"></script>
+    <script src="js/panel-start.js?v=20260929-loader35"></script>
     <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
     
 
@@ -728,6 +733,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260929-loader33" defer></script>
+<script src="/js/pwa.js?v=20260929-loader35" defer></script>
 </body>
 </html>

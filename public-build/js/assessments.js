@@ -329,10 +329,10 @@ window.PeriodicAssessments = (() => {
                     draft.tahfidz_surah = next;
                     draft.tahfidz_ayah = '';
                     if (window.ReportCore) {
-                        draft.tahfidz_ayah_start = '';
+                        draft.tahfidz_ayah_start = '1';
                         const start = card.querySelector('[data-field="tahfidz_ayah_start"]');
                         if (start)
-                            start.value = '';
+                            start.value = '1';
                     }
                     card.querySelector('[data-field="tahfidz_ayah"]').innerHTML = optionsAyah(next, '');
                 }
@@ -355,10 +355,10 @@ window.PeriodicAssessments = (() => {
             if (field === 'tahfidz_surah') {
                 draft.tahfidz_ayah = '';
                 if (window.ReportCore) {
-                    draft.tahfidz_ayah_start = '';
+                    draft.tahfidz_ayah_start = '1';
                     const start = card.querySelector('[data-field="tahfidz_ayah_start"]');
                     if (start)
-                        start.value = '';
+                        start.value = '1';
                 }
                 card.querySelector('[data-field="tahfidz_ayah"]').innerHTML = optionsAyah(draft.tahfidz_surah, '');
             }

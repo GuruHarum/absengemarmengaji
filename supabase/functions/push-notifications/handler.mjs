@@ -79,13 +79,13 @@ export function createHandler(admin, webpush, vapid) {
                 let notificationFailed = 0;
                 const payload = JSON.stringify({
                     title: notification.title || 'Gemar Mengaji',
-                    body: notification.message || '',
+                    body: notification.message || 'Ada informasi baru di Gemar Mengaji. Buka aplikasi untuk melihat detail.',
                     icon: '/assets/icon-192.png',
-                    badge: '/assets/icon-192.png',
+                    badge: '/assets/notification-badge-96.png',
                     tag: `gm-notification-${notification.id}`,
                     data: {
                         notificationId: String(notification.id),
-                        url: `/admin.html?notification=${encodeURIComponent(notification.id)}`,
+                        url: `/admin.html?pwa=notification&notification=${encodeURIComponent(notification.id)}`,
                         targetPage: notification.target_page || 'dashboard',
                         payload: notification.payload || {},
                     },

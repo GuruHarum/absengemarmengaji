@@ -8,7 +8,10 @@ window.AssessmentData = (() => {
             if (record.version && ![true, 'true'].includes(record.tahfidz_aspect_confirmed))
                 record.tahfidz_hafalan = '';
         }
-        return Object.fromEntries(fields.map(field => [field, record[field] == null ? '' : String(record[field])]));
+        const value = Object.fromEntries(fields.map(field => [field, record[field] == null ? '' : String(record[field])]));
+        if (!['REVIEW', 'TES'].includes(value.tahfidz_progress_type) && !String(value.tahfidz_ayah_start || '').trim())
+            value.tahfidz_ayah_start = '1';
+        return value;
     }
     function dirty(value, record) {
         const previous = draft(record);

@@ -62,3 +62,7 @@
 .account-email-pick { color: var(--brand-dark, #175844); text-align: left; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .account-email-pick:hover { text-decoration-thickness: 2px; }
 @media(max-width: 680px) { #page-rapor .report-submenu button { flex: 1 1 auto; font-size: 12px; padding: 10px 7px; } #page-rapor .report-panel { padding: 16px; } }
+
+#page-rapor .report-download-grid { margin-bottom: 8px; }
+#page-rapor .report-download-summary { margin: 8px 0 16px; padding: 10px 12px; border-radius: 10px; background: #f1f5ef; color: var(--brand-dark, #174b3c); font-size: 12px; }
+#page-rapor .report-download-summary.is-warning { background: #fff8e9; color: #7c5524; }

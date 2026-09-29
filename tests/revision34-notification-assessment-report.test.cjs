@@ -1,0 +1,11 @@
+const fs=require('node:fs');const assert=require('node:assert/strict');
+const read=p=>fs.readFileSync(p,'utf8');
+const sw=read('sw.js'), manifest=read('manifest.webmanifest'), edge=read('supabase/functions/push-notifications/handler.mjs');
+const form=read('js/progress-form.js'), core=read('js/assessments-core.js'), assess=read('js/assessments.js'), admin=read('admin.html'), reports=read('js/report-cards.js');
+assert.match(sw,/notification-badge-96\.png/);assert.match(sw,/Ada informasi baru di Gemar Mengaji/);assert.match(sw,/clients\.openWindow\(targetUrl\)/);assert.match(sw,/const VERSION = 'loader35'/);
+assert.match(manifest,/"launch_handler"\s*:\s*\{"client_mode":"navigate-existing"\}/);assert.match(edge,/notification-badge-96\.png/);assert.match(edge,/pwa=notification&notification=/);
+assert.match(form,/Array\.from\(\{ length: 30 \}, \(_, i\) => 30 - i\)/);assert.match(form,/draft\.tahfidz_ayah_start = '1'/);assert.match(core,/value\.tahfidz_ayah_start = '1'/);assert.doesNotMatch(assess,/start\.value = ''/);
+const savePos=admin.indexOf('id="assessmentSaveAll"'),cardsPos=admin.indexOf('id="assessmentCards"');assert.ok(savePos>cardsPos,'Simpan Semua harus setelah daftar siswa');
+assert.match(admin,/reportDownloadMode/);assert.match(admin,/Satu tingkat \(semua rombel\)/);assert.match(admin,/Satu rombel/);assert.match(reports,/function downloadSelection\(\)/);assert.match(reports,/mode !== 'class'/);assert.match(reports,/row\.student\.class === className/);assert.doesNotMatch(admin,/Per guru pembimbing dalam rombel/);assert.doesNotMatch(reports,/reportDownloadTeacher/);
+assert.ok(fs.existsSync('assets/notification-badge-96.png'));
+console.log('revision34 notification assessment report OK');
