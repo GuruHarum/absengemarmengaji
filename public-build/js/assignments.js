@@ -86,7 +86,7 @@ window.TeachingAssignments = (() => {
             const teacher = teachers.find(item => String(item.id) === row.teacher_id);
             const ids = new Set(members.filter(member => member.assignment_id === row.id).map(member => member.student_id));
             const names = students.filter(student => ids.has(String(student.id))).map(student => `${student['nama siswa']} (${student.kelas})`);
-            return `<tr><td>${escape(row.class_name)}</td><td><details><summary>${ids.size} siswa</summary>${escape(names.join(', ') || 'Siswa tidak tersedia pada master saat ini')}</details></td><td>${escape(teacher?.nama_lengkap || teacher?.nama || 'Guru tidak tersedia')}</td><td><button type="button" class="secondary-action" data-end="${escape(row.id)}">Akhiri kelompok</button></td></tr>`;
+            return `<tr><td>${escape(row.class_name)}</td><td><details><summary>${ids.size} siswa</summary>${escape(names.join(', ') || 'Siswa tidak tersedia pada master saat ini')}</details></td><td>${escape(teacher?.nama_lengkap || teacher?.nama || 'Guru tidak tersedia')}</td><td><button type="button" class="secondary-action" data-delete="${escape(row.id)}">Hapus kelompok</button></td></tr>`;
         }).join('') : '<tr><td colspan="4">Belum ada kelompok Tahfidz untuk tahun ajaran ini.</td></tr>';
     }
     async function open() {
@@ -203,18 +203,24 @@ window.TeachingAssignments = (() => {
             }
         });
         el('assignmentRows').addEventListener('click', async (event) => {
-            const target = event.target.closest('[data-end]');
+            const target = event.target.closest('[data-delete]');
             if (!target || busy || !AppAccess.full())
                 return;
-            if (!(await AdminNotice.confirm('Akhiri kelompok Tahfidz ini? Nilai tetap tersimpan. Anggotanya dapat ditugaskan ke kelompok lain.')))
+            const groupId = target.dataset.delete;
+            if (!(await AdminNotice.confirm('Hapus permanen kelompok Tahfidz ini? Kelompok dan seluruh keanggotaannya akan dihapus. Data master siswa, guru, nilai, dan rapor tetap aman.')))
+                return;
+            if (!(await AdminNotice.confirm('Konfirmasi kedua: benar-benar hapus kelompok ini secara permanen? Tindakan ini tidak dapat dibatalkan.')))
                 return;
             lock(true);
             try {
-                const { error } = await supabase.rpc('manage_tahfidz_group', { action: 'end', target_id: target.dataset.end });
+                const { data, error } = await supabase.rpc('gm_delete_tahfidz_group_verified', {
+                    p_group_id: groupId,
+                    p_confirmation: `HAPUS ${groupId}`
+                });
                 if (error)
                     throw error;
                 await list();
-                feedback('Kelompok diakhiri. Nilai tetap tersimpan.');
+                feedback(`Kelompok dihapus permanen. ${Number(data?.deleted_members || 0)} relasi anggota dibersihkan; nilai siswa tetap aman.`);
             }
             catch (error) {
                 feedback(error.message, true);

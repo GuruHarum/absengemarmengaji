@@ -24,4 +24,4 @@ for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/prof
     }
 }
 
-console.log('Static website prepared in public-build (loader35)');
+console.log('Static website prepared in public-build (loader36)');
