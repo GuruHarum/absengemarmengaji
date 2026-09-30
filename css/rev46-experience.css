@@ -1,0 +1,356 @@
+/* REV46 — pengalaman mobile/desktop, dark mode, analitik koordinator, dan optimasi interaksi. */
+:root{
+  --gm-bg:#f5f7f2;--gm-surface:#fff;--gm-surface-2:#f8faf6;--gm-text:#18392f;--gm-muted:#6c7b72;--gm-border:#dce5dc;--gm-shadow:0 12px 34px rgba(21,61,48,.08);--gm-accent:#216454;--gm-accent-soft:#eaf3ed;
+}
+html[data-gm-theme="dark"]{
+  --gm-bg:#0f1714;--gm-surface:#17211d;--gm-surface-2:#1d2a25;--gm-text:#e7f1eb;--gm-muted:#a5b7ad;--gm-border:#33443b;--gm-shadow:0 14px 40px rgba(0,0,0,.28);--gm-accent:#73b99c;--gm-accent-soft:#20372d;
+  background:#0f1714;color-scheme:dark;
+}
+html[data-gm-theme="dark"] body.admin-page,
+html[data-gm-theme="dark"] #adminMain{background:var(--gm-bg)!important;color:var(--gm-text)}
+html[data-gm-theme="dark"] .bg-white,
+html[data-gm-theme="dark"] .gm-panel-card,
+html[data-gm-theme="dark"] .report-panel,
+html[data-gm-theme="dark"] .assessment-controls,
+html[data-gm-theme="dark"] .assessment-student,
+html[data-gm-theme="dark"] .school-identity-form,
+html[data-gm-theme="dark"] header.bg-white{background-color:var(--gm-surface)!important;color:var(--gm-text)!important;border-color:var(--gm-border)!important}
+html[data-gm-theme="dark"] .bg-slate-50{background-color:var(--gm-surface-2)!important}
+html[data-gm-theme="dark"] .border-slate-200,html[data-gm-theme="dark"] .border-slate-100{border-color:var(--gm-border)!important}
+html[data-gm-theme="dark"] .text-slate-800,html[data-gm-theme="dark"] .text-slate-700,html[data-gm-theme="dark"] .text-slate-600{color:var(--gm-text)!important}
+html[data-gm-theme="dark"] .text-slate-500,html[data-gm-theme="dark"] .text-slate-400{color:var(--gm-muted)!important}
+html[data-gm-theme="dark"] input,html[data-gm-theme="dark"] select,html[data-gm-theme="dark"] textarea{background:var(--gm-surface-2)!important;color:var(--gm-text)!important;border-color:var(--gm-border)!important}
+html[data-gm-theme="dark"] .assessment-filter-memory,
+html[data-gm-theme="dark"] .assessment-work-toolbar,
+html[data-gm-theme="dark"] .assessment-draft-state,
+html[data-gm-theme="dark"] .assessment-student .assessment-result-summary,
+html[data-gm-theme="dark"] .report-pdf-progress{background:var(--gm-surface-2)!important;border-color:var(--gm-border)!important;color:var(--gm-text)!important}
+html[data-gm-theme="dark"] .secondary-action{background:transparent;color:var(--gm-text);border-color:var(--gm-border)}
+html[data-gm-theme="dark"] .primary-action{background:#2d7e65;color:#fff}
+html[data-gm-theme="dark"] .admin-welcome{background:linear-gradient(135deg,#182720,#22372e)!important;color:var(--gm-text)!important;border-color:var(--gm-border)!important}
+html[data-gm-theme="dark"] .admin-welcome p,html[data-gm-theme="dark"] .admin-welcome blockquote{color:#c6d5cd!important}
+html[data-gm-theme="dark"] canvas{filter:none}
+
+.gm-theme-toggle svg{width:19px;height:19px}.gm-theme-toggle{flex:0 0 auto}
+
+/* Penilaian: action bar mobile ringkas, paste Excel, bantuan kecil, lazy render. */
+.assessment-period-nav{display:flex;gap:6px;align-items:center}.assessment-period-nav select{flex:1}.assessment-period-nav button{width:34px;min-width:34px;height:34px;padding:0;border-radius:9px}
+.assessment-inline-help{position:relative}.assessment-help-button{width:34px;height:34px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid var(--gm-border);background:var(--gm-surface);color:var(--gm-accent);font-weight:800}.assessment-help-popover{position:absolute;right:0;top:42px;z-index:25;width:min(330px,calc(100vw - 32px));padding:12px 13px;border:1px solid var(--gm-border);border-radius:12px;background:var(--gm-surface);box-shadow:var(--gm-shadow);font-size:11px;line-height:1.6;color:var(--gm-muted)}
+.assessment-help-popover strong{display:block;color:var(--gm-text);margin-bottom:4px}.assessment-help-popover[hidden]{display:none!important}
+.assessment-lazy-sentinel{padding:14px;text-align:center;color:var(--gm-muted);font-size:11px}.assessment-lazy-sentinel button{margin-left:8px}
+.assessment-student{content-visibility:auto;contain-intrinsic-size:550px}.assessment-student input[type="number"]{font-variant-numeric:tabular-nums}
+.assessment-paste-dialog{border:0;padding:0;border-radius:18px;width:min(640px,calc(100vw - 28px));max-height:90dvh;background:var(--gm-surface);color:var(--gm-text);box-shadow:0 30px 80px rgba(0,0,0,.28)}.assessment-paste-dialog::backdrop{background:rgba(9,24,19,.62);backdrop-filter:blur(3px)}
+.assessment-paste-shell{padding:20px;display:grid;gap:14px}.assessment-paste-shell header h3{margin:0 0 4px;font-size:18px}.assessment-paste-shell header p{margin:0;color:var(--gm-muted);font-size:12px;line-height:1.6}.assessment-paste-shell textarea{min-height:180px;width:100%;resize:vertical;border:1px solid var(--gm-border);border-radius:12px;padding:12px;font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}.assessment-paste-preview{max-height:220px;overflow:auto;border:1px solid var(--gm-border);border-radius:12px;background:var(--gm-surface-2);padding:10px;font-size:11px}.assessment-paste-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.assessment-mobile-bar{display:none}
+
+/* Analitik & presentasi koordinator */
+.gm-analytics-toolbar,.gm-presentation-toolbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:end}
+.gm-analytics-period-nav{display:grid;grid-template-columns:34px minmax(0,1fr) 34px;gap:6px;align-items:end}.gm-analytics-period-nav button{height:40px;padding:0}
+.gm-analytics-kpis,.gm-presentation-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:16px 0}.gm-analytics-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.gm-analytics-kpis article,.gm-presentation-kpis article{padding:18px;border:1px solid var(--gm-border);border-radius:16px;background:var(--gm-surface);box-shadow:var(--gm-shadow)}
+.gm-analytics-kpis span,.gm-presentation-kpis span{display:block;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gm-muted);font-weight:800}.gm-analytics-kpis strong,.gm-presentation-kpis strong{display:block;margin:7px 0 4px;font-size:27px;line-height:1;color:var(--gm-text)}.gm-analytics-kpis small,.gm-presentation-kpis small{color:var(--gm-muted);font-size:10px;line-height:1.5}
+.gm-analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.gm-analytics-chart-card,.gm-presentation-card{padding:18px;border:1px solid var(--gm-border);border-radius:17px;background:var(--gm-surface);box-shadow:var(--gm-shadow)}.gm-analytics-chart-card{height:340px}.gm-presentation-card h3,.gm-analytics-grid h3{margin:0 0 13px;font-size:14px;color:var(--gm-text)}
+.gm-table-wrap{overflow:auto;max-width:100%}.gm-compact-table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}.gm-compact-table th,.gm-compact-table td{padding:10px 11px;border-bottom:1px solid var(--gm-border);text-align:left;white-space:nowrap}.gm-compact-table th{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--gm-muted);background:var(--gm-surface-2);position:sticky;top:0}
+.gm-presentation-page{max-width:1440px;margin:0 auto}.gm-presentation-hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;padding:26px;border-radius:20px;background:linear-gradient(135deg,#163e32,#2f725d);color:#fff;box-shadow:0 20px 50px rgba(20,70,55,.18)}.gm-presentation-hero span{font-size:10px;letter-spacing:.16em;font-weight:800;opacity:.75}.gm-presentation-hero h2{margin:6px 0 4px;font-size:28px}.gm-presentation-hero p{margin:0;font-size:12px;opacity:.82}.gm-presentation-date{font-size:11px;opacity:.8;white-space:nowrap}.gm-presentation-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}.gm-span-2{grid-column:1/-1}.gm-chart-shell{height:320px}.gm-grade-bars{display:grid;gap:10px}.gm-grade-bars>div{display:grid;grid-template-columns:80px 1fr 62px;align-items:center;gap:10px;font-size:11px}.gm-grade-bars>div>div{height:10px;border-radius:999px;background:var(--gm-accent-soft);overflow:hidden}.gm-grade-bars i{display:block;height:100%;border-radius:inherit;background:var(--gm-accent)}.gm-grade-bars strong{text-align:right}.gm-rev46-skeleton{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.gm-rev46-skeleton span{height:120px;border-radius:16px;background:linear-gradient(100deg,var(--gm-surface-2),var(--gm-surface),var(--gm-surface-2));background-size:200% 100%;animation:gmShimmer 1.2s linear infinite}@keyframes gmShimmer{to{background-position:-200% 0}}
+
+/* Preview mobile/desktop dan responsivitas umum */
+html[data-gm-preview="mobile"] .admin-workspace{max-width:430px!important;margin-inline:auto!important;border-inline:1px dashed var(--gm-border)}
+html[data-gm-preview="desktop"] .admin-workspace{max-width:1440px!important}
+.gm-device-preview{display:flex;gap:5px}.gm-device-preview button{min-height:32px;padding:0 9px;border-radius:8px;border:1px solid var(--gm-border);background:var(--gm-surface);color:var(--gm-muted);font-size:10px}.gm-device-preview button.active{background:var(--gm-accent);color:#fff;border-color:var(--gm-accent)}
+
+/* Report direct print */
+.report-direct-print-note{font-size:10px;color:var(--gm-muted);margin:6px 0 0}.report-actions{align-items:center;flex-wrap:wrap}
+
+/* Footer */
+.gm-app-footnote{margin:22px auto 10px;padding:8px 12px;text-align:center;color:var(--gm-muted);font-size:10px;letter-spacing:.02em}.gm-app-footnote strong{font-weight:700;color:var(--gm-text)}
+
+/* Tablet fullscreen fallback */
+html.gm-tablet-fullscreen #sidebar,html.gm-tablet-fullscreen header{display:none!important}html.gm-tablet-fullscreen #adminMain{margin:0!important;width:100vw!important;height:100dvh!important}html.gm-tablet-fullscreen .admin-workspace{max-width:none!important;padding-top:calc(12px + env(safe-area-inset-top))!important}
+
+/* Smooth but respectful motion */
+@media (prefers-reduced-motion:no-preference){.gm-panel-card,.assessment-student,.gm-presentation-card,.gm-analytics-kpis article,.gm-presentation-kpis article{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.gm-panel-card:hover,.gm-presentation-card:hover{transform:translateY(-1px)}}
+
+/* Safe area: iPhone Dynamic Island/notch + Android display cutouts when exposed by browser. */
+@supports(padding:max(0px)){
+  .admin-page header{padding-top:max(12px,env(safe-area-inset-top));padding-right:max(18px,env(safe-area-inset-right));padding-left:max(18px,env(safe-area-inset-left))}
+  .admin-workspace{padding-left:max(16px,env(safe-area-inset-left))!important;padding-right:max(16px,env(safe-area-inset-right))!important;padding-bottom:max(18px,env(safe-area-inset-bottom))!important}
+  .assessment-mobile-bar{padding-bottom:max(7px,env(safe-area-inset-bottom))}
+}
+
+/* Landscape optimization */
+@media (orientation:landscape) and (max-height:650px){
+  .admin-welcome{padding-block:12px!important}.admin-welcome-emblem{display:none!important}.admin-workspace{padding-top:14px!important}.assessment-context-card{padding:14px!important}.assessment-summary>div{padding:10px 12px!important}.assessment-student header{padding-block:10px!important}.gm-presentation-hero{padding:18px}.gm-presentation-kpis article{padding:13px}.gm-chart-shell{height:245px}
+}
+
+@media(max-width:1180px){
+  .gm-analytics-toolbar,.gm-presentation-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.gm-analytics-toolbar>button,.gm-presentation-toolbar>button{grid-column:1/-1}.gm-presentation-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.gm-analytics-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:767px){
+  .admin-page .admin-workspace{padding:14px!important}.admin-page header{padding-block:10px!important;padding-inline:12px!important}.admin-profile-name,.admin-logout-button span{display:none!important}
+  .assessment-save-all-bottom{display:none!important}.assessment-mobile-bar{position:sticky;bottom:calc(6px + env(safe-area-inset-bottom));z-index:50;display:flex;align-items:center;gap:7px;padding:7px 8px;border:1px solid var(--gm-border);border-radius:13px;background:color-mix(in srgb,var(--gm-surface) 94%,transparent);box-shadow:0 10px 30px rgba(15,45,36,.18);backdrop-filter:blur(12px)}.assessment-mobile-bar button{min-height:36px;padding:0 11px;font-size:10px;flex:1}.assessment-mobile-bar .gm-mobile-status{font-size:9px;color:var(--gm-muted);max-width:34%;line-height:1.3}
+  .assessment-student{contain-intrinsic-size:700px}.assessment-score-grid{grid-template-columns:1fr 1fr!important}.assessment-subjects{grid-template-columns:1fr!important}.assessment-attainment{grid-template-columns:1fr!important}
+  .gm-analytics-toolbar,.gm-presentation-toolbar{grid-template-columns:1fr}.gm-analytics-kpis,.gm-presentation-kpis{grid-template-columns:1fr 1fr}.gm-analytics-grid,.gm-presentation-charts{grid-template-columns:1fr}.gm-span-2{grid-column:auto}.gm-presentation-hero{align-items:flex-start;flex-direction:column}.gm-presentation-date{white-space:normal}.gm-chart-shell{height:260px}.gm-presentation-kpis article:nth-child(5){grid-column:1/-1}.gm-analytics-chart-card{height:300px}
+  .gm-device-preview{display:none}
+}
+@media(max-width:480px){
+  .assessment-score-grid{grid-template-columns:1fr!important}.gm-analytics-kpis,.gm-presentation-kpis{grid-template-columns:1fr}.gm-presentation-kpis article:nth-child(5){grid-column:auto}.gm-grade-bars>div{grid-template-columns:65px 1fr 54px}.assessment-paste-shell{padding:15px}
+}
+
+/* Dark mode coverage for dialogs, popovers, navigation and helper surfaces. */
+html[data-gm-theme="dark"] .admin-notification-popover,
+html[data-gm-theme="dark"] .admin-confirm,
+html[data-gm-theme="dark"] .admin-value-dialog,
+html[data-gm-theme="dark"] #manageModal>div,
+html[data-gm-theme="dark"] .pwa-update,
+html[data-gm-theme="dark"] .pwa-connection,
+html[data-gm-theme="dark"] .pwa-install-chip,
+html[data-gm-theme="dark"] .pwa-status-chip:not([data-mode="pwa"]),
+html[data-gm-theme="dark"] .assessment-help-popover{
+  background:var(--gm-surface)!important;color:var(--gm-text)!important;border-color:var(--gm-border)!important;
+}
+html[data-gm-theme="dark"] .admin-notification-head,
+html[data-gm-theme="dark"] .admin-notification-list,
+html[data-gm-theme="dark"] .confirm-actions,
+html[data-gm-theme="dark"] #manageModal .border-slate-100{border-color:var(--gm-border)!important}
+html[data-gm-theme="dark"] .admin-nav-item:not([aria-current="page"]){color:#d7e6df}
+html[data-gm-theme="dark"] .sidebar-note{color:#b9cdc4}
+html[data-gm-theme="dark"] a{color:inherit}
+html[data-gm-theme="dark"] .assessment-feedback,
+html[data-gm-theme="dark"] .report-action-feedback,
+html[data-gm-theme="dark"] .assessment-help{color:var(--gm-muted)}
+html[data-gm-theme="dark"] .manage-tabs{background:var(--gm-surface-2);border-color:var(--gm-border)}
+html[data-gm-theme="dark"] .manage-tabs button{color:var(--gm-muted)}
+html[data-gm-theme="dark"] .manage-tabs button.active{background:var(--gm-surface);color:var(--gm-text)}
+html[data-gm-theme="dark"] .report-preview{background:#222d28;border-color:var(--gm-border)}
+html[data-gm-theme="dark"] .gm-presentation-hero{background:linear-gradient(135deg,#19392f,#285948)}
+@media(max-width:760px){
+  body.admin-page .pwa-tools{bottom:calc(58px + env(safe-area-inset-bottom))}
+}
+
+/* REV47 — presentasi koordinator profesional + sidebar desktop hover-open. */
+.gm-presentation-kpis-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gm-presentation-kpis-4 article{position:relative;overflow:hidden;padding:20px 20px 18px}
+.gm-presentation-kpis-4 article::after{content:"";position:absolute;right:-18px;bottom:-28px;width:88px;height:88px;border-radius:999px;background:radial-gradient(circle,color-mix(in srgb,var(--gm-accent) 14%,transparent),transparent 68%);pointer-events:none}
+.gm-presentation-kpis-4 strong{font-size:30px;letter-spacing:-.025em}
+.gm-presentation-carousel{margin-top:16px;border:1px solid var(--gm-border);border-radius:22px;background:var(--gm-surface);box-shadow:var(--gm-shadow);overflow:hidden}
+.gm-carousel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--gm-border);background:linear-gradient(180deg,var(--gm-surface),var(--gm-surface-2))}
+.gm-carousel-head h3{margin:2px 0 0;font-size:17px;color:var(--gm-text)}
+.gm-carousel-head .section-kicker{margin:0 0 4px}
+.gm-carousel-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}.gm-carousel-actions button{min-height:34px;width:36px;padding:0;border-radius:10px}.gm-carousel-actions span{min-width:50px;text-align:center;color:var(--gm-muted);font-size:10px;font-variant-numeric:tabular-nums}
+.gm-presentation-track{position:relative;min-height:430px}.gm-presentation-slide{display:none;padding:22px 22px 18px;min-height:430px}.gm-presentation-slide.is-active{display:block;animation:gmPresentationSlide .34s ease both}.gm-presentation-slide[aria-hidden="true"]{pointer-events:none}
+@keyframes gmPresentationSlide{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+.gm-slide-copy{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:14px}.gm-slide-copy strong{font-size:14px;color:var(--gm-text)}.gm-slide-copy span{max-width:620px;text-align:right;color:var(--gm-muted);font-size:10.5px;line-height:1.6}
+.gm-chart-shell-large{height:350px}.gm-chart-note{margin:13px 0 0;padding-top:11px;border-top:1px solid var(--gm-border);color:var(--gm-muted);font-size:9.5px;line-height:1.65}
+.gm-carousel-dots{display:flex;justify-content:center;gap:7px;padding:0 20px 16px}.gm-carousel-dots button{width:7px;height:7px;padding:0;border:0;border-radius:99px;background:color-mix(in srgb,var(--gm-muted) 35%,transparent);transition:width .25s ease,background .25s ease}.gm-carousel-dots button.active{width:24px;background:var(--gm-accent)}
+.gm-stage-grade-tabs{display:flex;gap:6px;overflow:auto;padding:2px 0 12px;scrollbar-width:none}.gm-stage-grade-tabs::-webkit-scrollbar{display:none}.gm-stage-grade-tabs button{flex:0 0 auto;min-height:33px;padding:0 11px;border:1px solid var(--gm-border);border-radius:999px;background:var(--gm-surface-2);color:var(--gm-muted);font-size:10px;font-weight:700}.gm-stage-grade-tabs button.active{background:var(--gm-accent);border-color:var(--gm-accent);color:#fff}
+.gm-stage-pane[hidden]{display:none!important}.gm-stage-pane-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 14px;margin-bottom:12px;border-radius:14px;background:var(--gm-surface-2);border:1px solid var(--gm-border)}.gm-stage-pane-head>div{display:flex;align-items:baseline;gap:8px}.gm-stage-pane-head span{font-size:10px;color:var(--gm-muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em}.gm-stage-pane-head strong{font-size:18px;color:var(--gm-text)}.gm-stage-pane-head small{font-size:10px;color:var(--gm-muted)}
+.gm-stage-rows{display:grid;gap:9px}.gm-stage-row{display:grid;grid-template-columns:minmax(145px,.7fr) minmax(0,1.6fr);gap:14px;align-items:center}.gm-stage-copy{display:flex;justify-content:space-between;align-items:center;gap:8px}.gm-stage-copy strong{font-size:10.5px;color:var(--gm-text)}.gm-stage-copy span{font-size:9.5px;color:var(--gm-muted);white-space:nowrap}.gm-stage-meter{height:11px;border-radius:999px;background:var(--gm-accent-soft);overflow:hidden}.gm-stage-meter i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2c6d59,#5fa98a);transition:width .82s cubic-bezier(.2,.8,.2,1)}.gm-presentation-slide.is-animated .gm-stage-meter i{width:var(--gm-stage-width)}
+.gm-stage-legend{display:flex;flex-wrap:wrap;gap:7px 12px;margin-top:15px;padding-top:12px;border-top:1px solid var(--gm-border)}.gm-stage-legend span{display:inline-flex;align-items:center;gap:5px;color:var(--gm-muted);font-size:9.5px}.gm-stage-legend i{width:7px;height:7px;border-radius:50%;background:var(--gm-accent)}.gm-stage-legend strong{color:var(--gm-text);font-weight:700}.gm-presentation-empty{padding:30px 18px;text-align:center;color:var(--gm-muted);border:1px dashed var(--gm-border);border-radius:14px;background:var(--gm-surface-2);font-size:11px}
+.gm-attendance-layout{display:grid;grid-template-columns:minmax(250px,.82fr) minmax(0,1.18fr);gap:22px;align-items:start}.gm-attendance-donut{position:relative;min-width:0}.gm-attendance-donut .gm-chart-shell{height:250px}.gm-attendance-center{position:absolute;left:50%;top:125px;transform:translate(-50%,-50%);display:grid;text-align:center;pointer-events:none}.gm-attendance-center strong{font-size:24px;color:var(--gm-text);letter-spacing:-.03em}.gm-attendance-center span{font-size:8.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--gm-muted)}
+.gm-attendance-legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin-top:4px}.gm-attendance-legend span{display:flex;align-items:center;gap:6px;color:var(--gm-muted);font-size:9.5px}.gm-attendance-legend i{width:8px;height:8px;border-radius:3px;flex:0 0 auto}.gm-attendance-legend .is-h{background:#2f7d63}.gm-attendance-legend .is-s{background:#d7a247}.gm-attendance-legend .is-i{background:#4d7fbf}.gm-attendance-legend .is-a{background:#b95e58}.gm-attendance-legend strong{color:var(--gm-text)}
+.gm-attendance-grades{display:grid;gap:11px}.gm-attendance-grade{padding:10px 12px;border:1px solid var(--gm-border);border-radius:13px;background:var(--gm-surface-2)}.gm-attendance-grade-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}.gm-attendance-grade-head strong{font-size:10.5px;color:var(--gm-text)}.gm-attendance-grade-head span,.gm-attendance-grade small{font-size:9px;color:var(--gm-muted)}.gm-attendance-grade small{display:block;margin-top:6px}.gm-attendance-stack{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--gm-accent-soft)}.gm-attendance-stack i{display:block;width:0;height:100%;transition:width .82s cubic-bezier(.2,.8,.2,1)}.gm-presentation-slide.is-animated .gm-attendance-stack i{width:var(--gm-stack)}.gm-attendance-stack .is-h{background:#2f7d63}.gm-attendance-stack .is-s{background:#d7a247}.gm-attendance-stack .is-i{background:#4d7fbf}.gm-attendance-stack .is-a{background:#b95e58}
+.gm-presentation-summary{margin-top:16px}.gm-presentation-table td:nth-child(n+2){font-variant-numeric:tabular-nums}.gm-presentation-table tbody tr:hover{background:var(--gm-surface-2)}
+
+@media(min-width:768px) and (hover:hover) and (pointer:fine){
+  body.admin-page.sidebar-collapsed #sidebar:hover,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within{width:264px;flex-basis:264px;box-shadow:12px 0 32px rgba(7,28,26,.16)}
+  body.admin-page.sidebar-collapsed #sidebar:hover .sidebar-text,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-text{display:block!important}
+  body.admin-page.sidebar-collapsed #sidebar:hover .sidebar-brand,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-brand{width:auto!important;padding:26px 20px!important;justify-content:flex-start!important;gap:12px!important}
+  body.admin-page.sidebar-collapsed #sidebar:hover .admin-navigation,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .admin-navigation{padding:12px!important}
+  body.admin-page.sidebar-collapsed #sidebar:hover .admin-nav-item,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .admin-nav-item{justify-content:flex-start!important;padding:11px 13px!important}
+  body.admin-page.sidebar-collapsed #sidebar:hover .sidebar-section-label.sidebar-text,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-section-label.sidebar-text{height:auto!important;line-height:normal!important;font-size:8px!important;overflow:visible!important;padding:0!important;margin:14px 12px 10px!important;border-top:0!important}
+  body.admin-page.sidebar-collapsed #sidebar:hover #maintenanceStatus,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within #maintenanceStatus{position:static!important;margin-left:auto!important;font-size:9px!important}
+  body.admin-page.sidebar-collapsed #sidebar:hover .sidebar-bottom,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-bottom{padding:12px!important}
+}
+
+@media(max-width:1180px){.gm-presentation-kpis-4{grid-template-columns:repeat(2,minmax(0,1fr))}.gm-attendance-layout{grid-template-columns:1fr}}
+@media(max-width:767px){
+  .gm-presentation-carousel{border-radius:17px}.gm-carousel-head{padding:14px}.gm-carousel-head h3{font-size:14px}.gm-carousel-actions span{display:none}.gm-presentation-slide{padding:16px 14px;min-height:420px}.gm-presentation-track{min-height:420px}.gm-slide-copy{display:block}.gm-slide-copy span{display:block;text-align:left;margin-top:4px}.gm-chart-shell-large{height:285px}.gm-stage-row{grid-template-columns:1fr;gap:5px}.gm-stage-copy{gap:12px}.gm-stage-pane-head{align-items:flex-start}.gm-stage-pane-head small{text-align:right}.gm-attendance-layout{gap:14px}.gm-attendance-donut .gm-chart-shell{height:230px}.gm-attendance-center{top:115px}.gm-presentation-summary{padding:14px}.gm-presentation-table{min-width:650px}
+}
+@media(max-width:480px){.gm-presentation-kpis-4{grid-template-columns:1fr 1fr;gap:8px}.gm-presentation-kpis-4 article{padding:14px}.gm-presentation-kpis-4 strong{font-size:23px}.gm-presentation-kpis-4 span{font-size:8px}.gm-presentation-kpis-4 small{font-size:8.5px}.gm-stage-pane-head{display:block}.gm-stage-pane-head small{display:block;text-align:left;margin-top:4px}.gm-attendance-legend{grid-template-columns:1fr}.gm-attendance-grade-head{align-items:flex-start;flex-direction:column;gap:2px}}
+@media(prefers-reduced-motion:reduce){.gm-presentation-slide.is-active{animation:none}.gm-stage-meter i,.gm-attendance-stack i,.gm-carousel-dots button{transition:none!important}}
+
+/* REV48 — grafik ketercapaian lebih natural, grafik per kelas terpisah,
+   tren absensi satu tahun ajaran, dan hover sidebar yang lebih halus. */
+.gm-class-target-section{margin-top:18px}
+.gm-class-target-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 2px 12px}
+.gm-class-target-heading h3{margin:3px 0 0;color:var(--gm-text);font-size:18px;letter-spacing:-.015em}
+.gm-class-target-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.gm-class-target-card{padding:18px;min-width:0}
+.gm-class-grade-tabs{display:flex;gap:6px;overflow-x:auto;padding:1px 0 12px;scrollbar-width:none}
+.gm-class-grade-tabs::-webkit-scrollbar{display:none}
+.gm-class-grade-tabs button{flex:0 0 auto;min-height:32px;padding:0 10px;border:1px solid var(--gm-border);border-radius:999px;background:var(--gm-surface-2);color:var(--gm-muted);font-size:9.5px;font-weight:800;transition:background .22s ease,color .22s ease,border-color .22s ease,transform .22s ease}
+.gm-class-grade-tabs button:hover{transform:translateY(-1px)}
+.gm-class-grade-tabs button.active{background:var(--gm-accent);border-color:var(--gm-accent);color:#fff}
+.gm-class-chart-shell{position:relative;height:300px;min-height:250px;transition:height .3s cubic-bezier(.2,.8,.2,1)}
+.gm-class-chart-shell canvas{width:100%!important;height:100%!important}
+.gm-class-chart-shell .gm-presentation-empty{position:absolute;inset:0;display:grid;place-items:center}
+.gm-attendance-month-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:11px 13px;border:1px solid var(--gm-border);border-radius:13px;background:var(--gm-surface-2)}
+.gm-attendance-month-meta strong{font-size:11px;color:var(--gm-text)}
+.gm-attendance-month-meta span{font-size:9.5px;color:var(--gm-muted);text-align:right}
+.gm-monthly-attendance-chart{height:330px}
+.gm-presentation-slide .gm-chart-note{display:none!important}
+
+/* Sidebar desktop: animasi hover dibuka melalui class JS agar tidak meloncat saat pointer masuk/keluar. */
+@media(min-width:768px) and (hover:hover) and (pointer:fine){
+  body.admin-page #sidebar{
+    transition:width .34s cubic-bezier(.22,.8,.25,1),flex-basis .34s cubic-bezier(.22,.8,.25,1),box-shadow .28s ease!important;
+    will-change:width,flex-basis;
+  }
+  body.admin-page.sidebar-collapsed #sidebar .sidebar-text{
+    display:block!important;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;pointer-events:none;
+    transform:translateX(-5px);
+    transition:max-width .28s cubic-bezier(.22,.8,.25,1),opacity .16s ease,transform .28s cubic-bezier(.22,.8,.25,1)!important;
+  }
+  body.admin-page.sidebar-collapsed #sidebar .sidebar-brand,
+  body.admin-page.sidebar-collapsed #sidebar .admin-navigation,
+  body.admin-page.sidebar-collapsed #sidebar .admin-nav-item,
+  body.admin-page.sidebar-collapsed #sidebar .sidebar-bottom{
+    transition:padding .32s cubic-bezier(.22,.8,.25,1),gap .32s cubic-bezier(.22,.8,.25,1),background-color .2s ease,color .2s ease!important;
+  }
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within{
+    width:264px;flex-basis:264px;box-shadow:12px 0 34px rgba(7,28,26,.15)
+  }
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar .sidebar-text,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-text{
+    max-width:210px;opacity:1;transform:translateX(0);pointer-events:auto;
+    transition:max-width .32s cubic-bezier(.22,.8,.25,1),opacity .2s ease .07s,transform .32s cubic-bezier(.22,.8,.25,1)!important;
+  }
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar .sidebar-brand,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-brand{width:auto!important;padding:26px 20px!important;justify-content:flex-start!important;gap:12px!important}
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar .admin-navigation,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .admin-navigation{padding:12px!important}
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar .admin-nav-item,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .admin-nav-item{justify-content:flex-start!important;padding:11px 13px!important}
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar .sidebar-section-label.sidebar-text,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-section-label.sidebar-text{height:auto!important;line-height:normal!important;font-size:8px!important;padding:0!important;margin:14px 12px 10px!important;border-top:0!important}
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar #maintenanceStatus,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within #maintenanceStatus{position:static!important;margin-left:auto!important;font-size:9px!important}
+  body.admin-page.sidebar-collapsed.sidebar-hover-expanded #sidebar .sidebar-bottom,
+  body.admin-page.sidebar-collapsed #sidebar:focus-within .sidebar-bottom{padding:12px!important}
+  /* Nonaktifkan ekspansi instan REV47 berbasis :hover; ekspansi kini dikendalikan JS dengan jeda halus. */
+  body.admin-page.sidebar-collapsed:not(.sidebar-hover-expanded) #sidebar:hover{width:80px;flex-basis:80px;box-shadow:none}
+}
+
+@media(max-width:980px){
+  .gm-class-target-grid{grid-template-columns:1fr}
+}
+@media(max-width:767px){
+  .gm-class-target-heading{display:block}.gm-class-target-heading h3{font-size:15px}
+  .gm-class-target-card{padding:14px}.gm-class-chart-shell{height:280px}
+  .gm-monthly-attendance-chart{height:285px}
+  .gm-attendance-month-meta{align-items:flex-start;flex-direction:column}.gm-attendance-month-meta span{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+  .gm-class-grade-tabs button,.gm-class-chart-shell{transition:none!important}
+}
+@media(min-width:768px) and (hover:hover) and (pointer:fine){
+  body.admin-page.sidebar-collapsed:not(.sidebar-hover-expanded) #sidebar:hover .admin-navigation{padding:16px 10px!important}
+  body.admin-page.sidebar-collapsed:not(.sidebar-hover-expanded) #sidebar:hover .admin-nav-item{justify-content:center!important;padding:12px!important}
+  body.admin-page.sidebar-collapsed:not(.sidebar-hover-expanded) #sidebar:hover .sidebar-bottom{padding:10px!important}
+}
+
+/* REV49 — presentasi lebih cepat, legenda ketercapaian, tombol status, dan mobile chart. */
+.gm-presentation-toolbar #gmPresentationLoad{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:154px;transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease,transform .2s ease}
+.gm-presentation-toolbar #gmPresentationLoad.is-loading{cursor:progress;opacity:.9}
+.gm-presentation-toolbar #gmPresentationLoad.is-loaded{background:#e7f6ee!important;border-color:#9bd5b8!important;color:#176244!important;box-shadow:inset 0 0 0 1px rgba(23,98,68,.04)}
+html[data-gm-theme="dark"] .gm-presentation-toolbar #gmPresentationLoad.is-loaded{background:#173d31!important;border-color:#2e6e56!important;color:#bce8d1!important}
+.gm-button-spinner{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:gmRev49Spin .7s linear infinite}@keyframes gmRev49Spin{to{transform:rotate(360deg)}}
+
+.gm-target-count-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.gm-target-count-item{display:grid;grid-template-columns:8px minmax(58px,.65fr) minmax(0,1.35fr);align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--gm-border);border-radius:11px;background:var(--gm-surface-2);min-width:0}
+.gm-target-count-item>i{width:8px;height:8px;border-radius:999px;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 9%,transparent)}
+.gm-target-count-item strong{font-size:9.5px;color:var(--gm-text);white-space:nowrap}
+.gm-target-count-item span{font-size:9px;color:var(--gm-muted);min-width:0}
+.gm-target-count-item b{color:var(--gm-text);font-weight:800}
+.gm-target-count-grid-class{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:10px}
+
+.gm-attendance-month-strip{display:flex;gap:7px;overflow-x:auto;padding:10px 1px 2px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.gm-month-chip{flex:0 0 auto;min-width:82px;padding:8px 9px;border:1px solid var(--gm-border);border-radius:11px;background:var(--gm-surface-2);scroll-snap-align:start;position:relative;overflow:hidden}
+.gm-month-chip::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--gm-month-color)}
+.gm-month-chip span,.gm-month-chip strong{display:block;padding-left:3px}.gm-month-chip span{font-size:8.5px;color:var(--gm-muted)}.gm-month-chip strong{margin-top:2px;font-size:11px;color:var(--gm-text)}
+
+.gm-stage-pane-head{justify-content:flex-start}
+
+@media(max-width:900px){
+  .gm-target-count-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:640px){
+  .gm-monthly-attendance-chart{height:270px}
+  .gm-target-count-grid,.gm-target-count-grid-class{grid-template-columns:1fr}
+  .gm-target-count-item{grid-template-columns:8px 70px minmax(0,1fr);padding:7px 9px}
+  .gm-presentation-toolbar #gmPresentationLoad{width:100%}
+  .gm-attendance-month-strip{margin-inline:-2px;padding-bottom:5px}
+  .gm-month-chip{min-width:76px}
+}
+@media(prefers-reduced-motion:reduce){.gm-button-spinner{animation:none}}
+
+/* REV50 — rapikan legenda grafik ketercapaian agar tidak bertumpuk. */
+.gm-target-count-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px 10px;
+  margin-top:14px;
+}
+.gm-target-count-item{
+  display:grid;
+  grid-template-columns:9px minmax(0,1fr);
+  grid-template-rows:auto auto;
+  align-items:start;
+  column-gap:8px;
+  row-gap:3px;
+  min-width:0;
+  min-height:54px;
+  padding:9px 11px;
+}
+.gm-target-count-item>i{
+  grid-column:1;
+  grid-row:1;
+  margin-top:3px;
+}
+.gm-target-count-item>strong{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  line-height:1.28;
+  font-size:9.5px;
+}
+.gm-target-count-item>span{
+  grid-column:2;
+  grid-row:2;
+  display:block;
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.38;
+  font-size:9px;
+}
+.gm-target-count-grid-class{
+  grid-template-columns:1fr;
+  gap:8px;
+  margin-top:12px;
+}
+.gm-target-count-grid-class .gm-target-count-item{
+  min-height:50px;
+}
+@media(min-width:1500px){
+  .gm-target-count-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .gm-target-count-grid-class{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  .gm-target-count-grid{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .gm-target-count-item{min-height:0;padding:8px 9px}
+  .gm-target-count-item>strong{font-size:9.2px}
+  .gm-target-count-item>span{font-size:8.8px;line-height:1.35}
+}

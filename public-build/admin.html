@@ -4,7 +4,8 @@
     <style>html { visibility: hidden; }</style>
     <meta charset="UTF-8">
     <script>window.GM_INITIAL_LOADER_STARTED_AT = performance.now();</script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script>(function(){try{var t=localStorage.getItem('gm_theme_v46')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.gmTheme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){}})();</script>
     <title>Dashboard Admin - SDIT Harapan Umat Karawang</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,7 +44,7 @@
     <link rel="stylesheet" href="css/assessments.css">
     <link rel="stylesheet" href="css/admin-polish.css?v=20260928-filter-id-3">
 <link rel="stylesheet" href="css/report-cards.css">
-<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="/css/pwa.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="/css/pwa.css">
     <link rel="stylesheet" href="css/layout-responsive.css">
     <link rel="stylesheet" href="css/admin-refinement.css?v=20260928-submenu-level-1">
     <link rel="stylesheet" href="css/gm-upgrade-20260928.css?v=20260928-1">
@@ -51,6 +52,8 @@
     <link rel="stylesheet" href="css/ux-stage5.css?v=20260929-ux27">
     <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader37">
     <link rel="stylesheet" href="css/rev37-visual-fixes.css?v=20260929-rev37">
+    <link rel="stylesheet" href="css/rev45-workflow.css?v=20260929-rev45">
+    <link rel="stylesheet" href="css/rev46-experience.css?v=20260930-rev50">
 </head>
 <body class="admin-page sidebar-collapsed flex min-h-screen overflow-x-hidden">
 
@@ -128,6 +131,8 @@
 <button id="menu-penilaian" type="button" onclick="switchPage('penilaian')" class="admin-nav-item" aria-label="Penilaian Periodik" title="Penilaian Periodik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 4H5v17h14V4h-3 M8 3h8v4H8z M8 12l2 2 5-5 M8 18h7"/></svg><span class="sidebar-text">Penilaian Periodik</span></button>
 <button id="menu-rapor" hidden type="button" onclick="switchPage('rapor')" class="admin-nav-item" aria-label="Rapor Siswa" title="Rapor Siswa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8M8 16h8"/></svg><span class="sidebar-text">Rapor Siswa</span></button>
 <button id="menu-laporan" hidden type="button" onclick="switchPage('laporan')" class="admin-nav-item" aria-label="Laporan" title="Laporan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20h16M6 16V8M12 16V4M18 16v-6"/></svg><span class="sidebar-text">Laporan</span></button>
+<button id="menu-analitik" hidden type="button" onclick="switchPage('analitik')" class="admin-nav-item" aria-label="Analitik Periode" title="Analitik Periode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/><path d="m4 7 5-3 6 4 5-3"/></svg><span class="sidebar-text">Analitik Periode</span></button>
+<button id="menu-presentasi" hidden type="button" onclick="switchPage('presentasi')" class="admin-nav-item" aria-label="Laman Presentasi" title="Laman Presentasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 12l3-3 2 2 4-5"/></svg><span class="sidebar-text">Presentasi</span></button>
 <button id="menu-arsip" hidden type="button" onclick="switchPage('arsip')" class="admin-nav-item" aria-label="Arsip Rapor" title="Arsip Rapor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6"/></svg><span class="sidebar-text">Arsip Rapor</span></button>
     <p class="sidebar-section-label sidebar-text">PENGATURAN &amp; AKSES</p>
 <button id="menu-identitas" type="button" onclick="switchPage('identitas')" class="admin-nav-item" aria-label="Identitas Sekolah" title="Identitas Sekolah"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M8 10h1M15 10h1"/></svg><span class="sidebar-text">Identitas Sekolah</span></button>
@@ -490,7 +495,7 @@
     </section>
     <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Cetak rapor" hidden>
         <h3>Download Rapor</h3>
-        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Setiap siswa tetap dibuat sebagai satu PDF di dalam ZIP.</p>
+        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Hasil tetap satu PDF dengan satu halaman per siswa di dalam ZIP.</p>
         <div class="report-grid report-download-grid">
             <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
             <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
@@ -498,8 +503,16 @@
         <p id="reportDownloadSummary" class="report-download-summary" role="status">Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.</p>
         <div id="reportActions" class="report-actions">
             <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Satu Tingkat</button>
+            <button id="reportDirectPrint" type="button" class="secondary-action">Cetak Langsung</button>
+            <button id="reportRetryDownload" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button>
             <a id="reportPdfLink" class="secondary-action" target="_blank" rel="noopener" hidden>Simpan ZIP Rapor</a>
         </div>
+        <div id="reportPdfProgress" class="report-pdf-progress" hidden aria-live="polite">
+            <div class="report-progress-heading"><strong id="reportPdfProgressTitle">Menyiapkan PDF</strong><span id="reportPdfProgressPercent">0%</span></div>
+            <progress id="reportPdfProgressBar" max="100" value="0">0%</progress>
+            <p id="reportPdfProgressDetail">Menunggu proses dimulai.</p>
+        </div>
+        <p class="report-direct-print-note">Cetak Langsung membuka PDF final pada dialog cetak browser/printer tanpa mengubah isi rapor.</p>
         <p class="report-paper-note">Latar PDF transparan, termasuk sel tabel. Saat dicetak di kertas berwarna, bagian yang tidak bertinta tetap mengikuti warna kertas. Coba satu lembar terlebih dahulu sesuai pengaturan printer.</p>
     </section>
 </div>
@@ -622,26 +635,89 @@
 <div id="page-kelompok-tahsin" class="hidden space-y-6"><div id="learningGroupTahsin"></div></div>
 <div id="page-kelompok" class="hidden space-y-6"><div id="learningGroupTahfidz"></div></div>
 <div id="page-penilaian" class="hidden space-y-6">
-    <section class="assessment-controls">
-        <div class="section-heading"><div><p class="section-kicker">TAHSIN & TAHFIDZ</p><h2>Penilaian Periodik</h2></div><span class="assessment-scale">Skala nilai 0-100</span></div>
+    <section class="assessment-controls assessment-context-card">
+        <div class="section-heading"><div><p class="section-kicker">TAHSIN & TAHFIDZ</p><h2>Penilaian Periodik</h2><p>Isi nilai per kelas dengan draf sementara otomatis dan indikator kelengkapan yang lebih jelas.</p></div><span class="assessment-scale">Skala nilai 0-100</span></div>
         <form id="assessmentLoadForm"><fieldset id="assessmentContextFields" class="assessment-context-grid">
             <label class="field-label" for="assessmentYear">Tahun awal ajaran<input id="assessmentYear" type="number" min="2000" max="2200" step="1" required><small id="assessmentYearLabel"></small></label>
-            <label class="field-label" for="assessmentPeriod">Periode penilaian<select id="assessmentPeriod" required><option value="pts_ganjil">Tengah Semester Ganjil</option><option value="pas_ganjil">Akhir Semester Ganjil</option><option value="pts_genap">Tengah Semester Genap</option><option value="pas_genap">Akhir Semester Genap</option></select></label>
+            <label class="field-label" for="assessmentPeriod">Periode penilaian
+<div class="assessment-period-nav"><button id="assessmentPeriodPrev" type="button" class="secondary-action" aria-label="Periode sebelumnya">←</button><select id="assessmentPeriod" required><option value="pts_ganjil">Tengah Semester Ganjil</option><option value="pas_ganjil">Akhir Semester Ganjil</option><option value="pts_genap">Tengah Semester Genap</option><option value="pas_genap">Akhir Semester Genap</option></select><button id="assessmentPeriodNext" type="button" class="secondary-action" aria-label="Periode berikutnya">→</button></div></label>
             <label class="field-label" for="assessmentTeacher">Guru pengampu<select id="assessmentTeacher" required><option value="">Pilih guru</option></select></label>
             <label class="field-label" for="assessmentSubject">Pelajaran<select id="assessmentSubject" required><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label>
             <button id="assessmentLoad" type="submit" class="primary-action">Tampilkan Siswa</button>
         </fieldset></form>
+        <div class="assessment-filter-memory">
+            <div><strong>Filter cepat</strong><span id="assessmentFavoriteStatus">Belum ada filter favorit.</span></div>
+            <div class="assessment-filter-memory-actions"><button id="assessmentFavoriteSave" type="button" class="secondary-action">Simpan sebagai Favorit</button><button id="assessmentFavoriteUse" type="button" class="secondary-action">Pakai Favorit</button></div>
+        </div>
         <p id="assessmentScopeNote" class="assessment-help"></p>
+        <p id="assessmentDraftState" class="assessment-draft-state" data-state="clean">Autosave draf sementara aktif di perangkat ini.</p>
     </section>
 
     <p id="assessmentFeedback" class="assessment-feedback" role="status"></p>
     <div id="assessmentWorkspace" hidden>
-        <section class="assessment-summary"><div><span>PERIODE AKTIF</span><strong id="assessmentActivePeriod"></strong></div><div><span>SISWA</span><strong id="assessmentTotal">0</strong></div><div><span>TERSIMPAN</span><strong id="assessmentSaved">0</strong></div><div><span>BELUM DISIMPAN</span><strong id="assessmentDirty">0</strong></div></section>
-        <div class="assessment-toolbar"><label class="field-label" for="assessmentLevel">Tingkat kelas<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label><label class="field-label" for="assessmentClass">Kelas<select id="assessmentClass"><option value="">Pilih kelas</option></select></label><label class="field-label" for="assessmentSearch">Cari siswa<input id="assessmentSearch" type="search" placeholder="Ketik nama siswa..." autocomplete="off"></label></div>
+        <section class="assessment-summary">
+            <div><span>PERIODE AKTIF</span><strong id="assessmentActivePeriod"></strong></div>
+            <div><span>SISWA TAMPIL</span><strong id="assessmentTotal">0</strong></div>
+            <div><span>TERSIMPAN</span><strong id="assessmentSaved">0</strong></div>
+            <div><span>BELUM DISIMPAN</span><strong id="assessmentDirty">0</strong></div>
+            <div><span>BERMASALAH</span><strong id="assessmentProblems">0</strong></div>
+        </section>
+        <section class="assessment-work-toolbar" aria-label="Filter dan tindakan penilaian">
+            <div class="assessment-toolbar">
+                <label class="field-label" for="assessmentLevel">Tingkat kelas<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label>
+                <label class="field-label" for="assessmentClass">Kelas<select id="assessmentClass"><option value="">Pilih kelas</option></select></label>
+                <label class="field-label" for="assessmentSearch">Cari siswa<input id="assessmentSearch" type="search" placeholder="Ketik nama siswa..." autocomplete="off"></label>
+            </div>
+            <div class="assessment-quick-actions">
+                <button id="assessmentProblemOnly" type="button" class="secondary-action" aria-pressed="false">Hanya bermasalah</button>
+                <button id="assessmentPasteExcel" type="button" class="secondary-action" title="Tempel nilai dari Excel tanpa mengubah capaian akhir">Tempel dari Excel</button>
+                <label class="field-label assessment-export-scope" for="assessmentExportScope">Export<select id="assessmentExportScope"><option value="view">Tampilan saat ini</option><option value="class">Seluruh kelas aktif</option><option value="all">Semua siswa guru ini</option></select></label>
+                <button id="assessmentExport" type="button" class="secondary-action">Export Excel</button>
+                <div class="assessment-inline-help"><button id="assessmentRuleHelp" type="button" class="assessment-help-button" aria-expanded="false" aria-controls="assessmentRuleHelpText" title="Mengapa field tertentu tidak muncul?">?</button><div id="assessmentRuleHelpText" class="assessment-help-popover" hidden><strong>Mengapa field tertentu tidak muncul?</strong><span>Tajwid tidak wajib ketika capaian aktual masih Buku 1. Gharib hanya tampil dan wajib pada tahap Finishing. Form mengikuti aturan capaian siswa agar nilai yang tidak berlaku tidak ikut dihitung.</span></div></div>
+            </div>
+        </section>
         <div id="assessmentCards"></div>
         <div class="assessment-pagination"><button id="assessmentPrev" type="button" class="secondary-action">Sebelumnya</button><span id="assessmentPageInfo"></span><button id="assessmentNext" type="button" class="secondary-action">Berikutnya</button></div>
-        <div class="assessment-save-all-bottom"><p class="assessment-help">Simpan Semua berlaku untuk kelas yang sedang dipilih. Tajwid Buku 1 dan Gharib sebelum Finishing tidak wajib.</p><button id="assessmentSaveAll" type="button" class="primary-action">Simpan Semua</button></div>
+        <div class="assessment-save-all-bottom">
+            <div><strong>Simpan nilai kelas aktif</strong><p class="assessment-help">Simpan Semua mengikuti siswa yang sedang tampil. Tajwid Buku 1 dan Gharib sebelum Finishing tidak wajib. Draf sementara tidak menggantikan penyimpanan ke database.</p></div>
+            <div class="assessment-save-actions"><button id="assessmentRetrySave" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button><button id="assessmentSaveAll" type="button" class="primary-action">Simpan Semua</button></div>
+        </div>
+        <div id="assessmentSaveSummary" class="assessment-save-summary" hidden></div>
+        <div id="assessmentMobileBar" class="assessment-mobile-bar" aria-label="Aksi cepat penilaian">
+            <span class="gm-mobile-status" id="assessmentMobileStatus">Draf aman di perangkat</span>
+            <button id="assessmentMobileProblems" type="button" class="secondary-action">Bermasalah</button>
+            <button id="assessmentMobileSave" type="button" class="primary-action">Simpan</button>
+        </div>
     </div>
+</div>
+
+<div id="page-analitik" class="hidden space-y-6">
+    <section class="gm-panel-card">
+        <div class="section-heading"><div><p class="section-kicker">KHUSUS KOORDINATOR</p><h2>Analitik Periode</h2><p>Bandingkan jumlah ketercapaian target antarperiode tanpa menampilkan nama siswa.</p></div></div>
+        <div class="gm-analytics-toolbar">
+            <label class="field-label">Tahun awal ajaran<input id="gmAnalyticsYear" type="number" min="2000" max="2200"></label>
+            <label class="field-label">Program<select id="gmAnalyticsSubject"><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label>
+            <label class="field-label">Periode pembanding<select id="gmAnalyticsPeriodA"><option value="pts_ganjil">PTS Ganjil</option><option value="pas_ganjil">PAS Ganjil</option><option value="pts_genap">PTS Genap</option><option value="pas_genap">PAS Genap</option></select></label>
+            <label class="field-label">Periode utama<div class="gm-analytics-period-nav"><button id="gmAnalyticsPrev" type="button" class="secondary-action" aria-label="Periode sebelumnya">←</button><select id="gmAnalyticsPeriodB"><option value="pts_ganjil">PTS Ganjil</option><option value="pas_ganjil" selected>PAS Ganjil</option><option value="pts_genap">PTS Genap</option><option value="pas_genap">PAS Genap</option></select><button id="gmAnalyticsNext" type="button" class="secondary-action" aria-label="Periode berikutnya">→</button></div></label>
+            <button id="gmAnalyticsLoad" type="button" class="primary-action">Tampilkan Analitik</button>
+        </div>
+        <p id="gmAnalyticsStatus" class="assessment-help">Pilih dua periode untuk membandingkan ketercapaian target.</p>
+    </section>
+    <div id="gmAnalyticsBody"></div>
+</div>
+
+<div id="page-presentasi" class="hidden space-y-6 gm-presentation-page">
+    <section class="gm-panel-card">
+        <div class="section-heading"><div><p class="section-kicker">KHUSUS KOORDINATOR</p><h2>Laman Presentasi</h2><p>Ringkasan profesional target Tahsin, target Tahfidz, capaian Tahsin, dan Absensi Gemar Mengaji berbasis tingkat. Tidak menampilkan identitas siswa.</p></div></div>
+        <div class="gm-presentation-toolbar">
+            <label class="field-label">Tahun awal ajaran<input id="gmPresentationYear" type="number" min="2000" max="2200"></label>
+            <label class="field-label">Periode<select id="gmPresentationPeriod"><option value="pts_ganjil">PTS Ganjil</option><option value="pas_ganjil">PAS Ganjil</option><option value="pts_genap">PTS Genap</option><option value="pas_genap">PAS Genap</option></select></label>
+            <button id="gmPresentationLoad" type="button" class="primary-action">Tampilkan Data</button>
+            <button id="gmPresentationFullscreen" type="button" class="secondary-action">Mode Presentasi</button>
+        </div>
+        <p id="gmPresentationStatus" class="assessment-help">Gunakan layar penuh pada tablet/monitor saat presentasi.</p>
+    </section>
+    <div id="gmPresentationBody"></div>
 </div>
 
 <div id="page-maintenance" class="hidden space-y-6">
@@ -723,7 +799,7 @@
     
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260929-loader35"></script>
+    <script src="js/panel-start.js?v=20260930-loader50"></script>
     <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
     
 
@@ -734,6 +810,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260929-loader35" defer></script>
+<script src="/js/pwa.js?v=20260930-loader50" defer></script>
 </body>
 </html>

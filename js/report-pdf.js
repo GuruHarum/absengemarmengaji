@@ -101,10 +101,10 @@ window.ReportPDF = (() => {
         return match ? `SDIT ${match[1] || ''}`.trim() : raw;
     }
 
-    async function render(report, { draft = false, date = new Date(), scale = 5.35, normalWeight = '500' } = {}) {
-        draft = draft || !ReportCore.reportCheck(report).complete;
+    async function render(report, { draft = false, date = new Date(), scale = 5.35, normalWeight = '500', canvas: reusableCanvas = null, validated = false } = {}) {
+        draft = draft || (!validated && !ReportCore.reportCheck(report).complete);
         ReportCore.useReference(report.reference);
-        const canvas = document.createElement('canvas');
+        const canvas = reusableCanvas || document.createElement('canvas');
         const outputScale = Math.max(4.2, Number(scale) || 5.35);
         canvas.width = Math.round(210 * outputScale);
         canvas.height = Math.round(297 * outputScale);
@@ -231,17 +231,29 @@ window.ReportPDF = (() => {
     }
     function sorted(rows) { const ids = new Set(); return [...rows].map(row => { if (ids.has(row.student.id))
         throw Error('Siswa ganda dalam daftar cetak'); ids.add(row.student.id); return row; }).sort((a, b) => a.student.class.localeCompare(b.student.class, 'id', { numeric: true }) || a.student.name.localeCompare(b.student.name, 'id') || String(a.student.id).localeCompare(String(b.student.id))); }
-    async function build(rows, { draft = false, onProgress = () => { } } = {}) { if (!rows.length)
-        throw Error('Tidak ada siswa'); const list = sorted(rows); if (!draft && list.some(row => !ReportCore.reportCheck(row).complete))
-        throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap'); const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true }); const date = new Date(); for (let i = 0; i < list.length; i++) {
-        if (i)
-            pdf.addPage('a4', 'portrait');
-        const canvas = await render(list[i], { draft, date, scale: draft ? 5.05 : 4.75, normalWeight: '500' });
-        // PNG mempertahankan alpha; halaman PDF tidak pernah digambar putih.
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
-        onProgress(i + 1, list.length);
-        await new Promise(resolve => setTimeout(resolve, 0));
-    } if (pdf.getNumberOfPages() !== list.length)
-        throw Error('Jumlah halaman tidak sesuai'); return pdf; }
+    async function build(rows, { draft = false, onProgress = () => { } } = {}) {
+        if (!rows.length) throw Error('Tidak ada siswa');
+        const list = sorted(rows);
+        // Validasi satu kali sebelum render. Sebelumnya pemeriksaan yang sama dilakukan lagi di setiap halaman.
+        if (!draft && list.some(row => !ReportCore.reportCheck(row).complete))
+            throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap');
+        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+        const date = new Date();
+        // Satu canvas dipakai ulang untuk seluruh halaman. Ukuran, skala, PNG, dan koordinat tetap sama,
+        // sehingga hasil visual tidak berubah tetapi pembuatan ratusan elemen canvas dapat dihindari.
+        const workCanvas = document.createElement('canvas');
+        for (let i = 0; i < list.length; i++) {
+            if (i) pdf.addPage('a4', 'portrait');
+            const canvas = await render(list[i], { draft, date, scale: draft ? 5.05 : 4.75, normalWeight: '500', canvas: workCanvas, validated: !draft });
+            // PNG mempertahankan alpha; halaman PDF tidak pernah digambar putih.
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
+            onProgress(i + 1, list.length, list[i]);
+            // Beri kesempatan UI menggambar progress berkala, bukan setiap halaman.
+            if ((i + 1) % 4 === 0 || i === list.length - 1)
+                await new Promise(resolve => setTimeout(resolve, 0));
+        }
+        if (pdf.getNumberOfPages() !== list.length) throw Error('Jumlah halaman tidak sesuai');
+        return pdf;
+    }
     return { render, build, sorted, dateLabel, personName, normalizeDegree, naturalName, schoolHeader, signatureSchoolName };
 })();

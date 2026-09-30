@@ -1,7 +1,16 @@
 (() => {
+    function ensureFootnote() {
+        if (document.querySelector('.gm-app-footnote')) return;
+        const foot = document.createElement('footer');
+        foot.className = 'gm-app-footnote';
+        foot.innerHTML = 'aplikasi dibuat oleh <strong>Geys Amadda Dien</strong>';
+        const target = document.querySelector('.admin-workspace') || document.querySelector('main') || document.body;
+        target?.append?.(foot);
+    }
+    ensureFootnote();
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'loader40';
+    const BUILD = 'loader50';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;
@@ -9,6 +18,8 @@
     let updateCheckTimer = null;
     let onlineToastTimer = null;
 
+    const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isSafari = () => /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(navigator.userAgent);
     const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
     const dirty = () => Boolean(
         window.StudentReports?.isBusy?.() ||
@@ -28,6 +39,11 @@
     installButton.textContent = 'Instal aplikasi';
     installButton.hidden = true;
 
+    const statusButton = document.createElement('button');
+    statusButton.type = 'button';
+    statusButton.className = 'pwa-status-chip';
+    statusButton.setAttribute('aria-label', 'Buka pusat pembaruan aplikasi');
+
     const connection = document.createElement('div');
     connection.className = 'pwa-connection';
     connection.setAttribute('role', 'status');
@@ -40,9 +56,49 @@
     notice.setAttribute('role', 'status');
     notice.setAttribute('aria-live', 'polite');
 
-    tools.append(installButton, connection, notice);
+    tools.append(statusButton, installButton, connection, notice);
     document.body.append(tools);
 
+    function modeLabel() {
+        if (standalone()) return isIOS() ? 'PWA iPhone/iPad' : 'PWA';
+        return 'Browser';
+    }
+    function updateStatusChip() {
+        statusButton.textContent = `${modeLabel()} · 48`;
+        statusButton.dataset.mode = standalone() ? 'pwa' : 'browser';
+    }
+    function setPreview(mode) {
+        if (!document.body?.classList.contains('admin-page')) return;
+        if (!mode || mode === 'auto') delete document.documentElement.dataset.gmPreview;
+        else document.documentElement.dataset.gmPreview = mode;
+        try { localStorage.setItem('gm_preview_mode_v46', mode || 'auto'); } catch (_) {}
+    }
+    async function toggleFullscreen() {
+        if (window.GMRev46?.toggleFullscreen) return GMRev46.toggleFullscreen();
+        try {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await document.documentElement.requestFullscreen?.({ navigationUI: 'hide' });
+        } catch (_) { }
+    }
+    function showCenter() {
+        const installed = standalone();
+        const lines = [
+            `Mode: ${modeLabel()}.`,
+            `Versi aplikasi: ${BUILD}.`,
+            navigator.onLine ? 'Koneksi: online.' : 'Koneksi: offline.'
+        ];
+        const buttons = [
+            { label: 'Periksa update', action: async () => { await checkForUpdate(); showCenter(); }, primary: true }
+        ];
+        if (!installed) buttons.push({ label: isIOS() ? 'Cara pasang iPhone' : 'Instal aplikasi', action: () => installButton.click() });
+        if (document.body?.classList.contains('admin-page')) {
+            buttons.push({ label: 'Preview mobile', action: () => { setPreview('mobile'); hideNotice(); } });
+            buttons.push({ label: 'Preview desktop', action: () => { setPreview('desktop'); hideNotice(); } });
+            buttons.push({ label: 'Preview otomatis', action: () => { setPreview('auto'); hideNotice(); } });
+            if (document.documentElement.requestFullscreen || window.GMRev46?.toggleFullscreen) buttons.push({ label: 'Layar penuh', action: toggleFullscreen });
+        }
+        showNotice('Pusat aplikasi', lines.join(' '), buttons);
+    }
     function hideNotice() {
         notice.hidden = true;
     }
@@ -104,9 +160,9 @@
     }
 
     function updateInstallVisibility() {
-        const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const ios = isIOS();
         installButton.hidden = standalone() || (!pendingInstall && !ios);
-        if (ios && !pendingInstall && !standalone()) installButton.textContent = 'Pasang di layar utama';
+        if (ios && !pendingInstall && !standalone()) installButton.textContent = 'Pasang di iPhone/iPad';
         else installButton.textContent = 'Instal aplikasi';
     }
 
@@ -144,8 +200,11 @@
     window.addEventListener('appinstalled', () => {
         pendingInstall = null;
         updateInstallVisibility();
+        updateStatusChip();
         hideNotice();
     });
+
+    statusButton.addEventListener('click', showCenter);
 
     installButton.addEventListener('click', async () => {
         if (pendingInstall) {
@@ -156,9 +215,12 @@
             updateInstallVisibility();
             return;
         }
+        const safariHint = isSafari()
+            ? 'Ketuk tombol Bagikan (kotak dengan panah ke atas), pilih Tambahkan ke Layar Utama, lalu ketuk Tambah.'
+            : 'Di iPhone/iPad, buka halaman ini di Safari. Ketuk Bagikan (kotak dengan panah ke atas), pilih Tambahkan ke Layar Utama, lalu ketuk Tambah.';
         showNotice(
-            'Pasang Gemar Mengaji',
-            'Di Safari, ketuk Bagikan lalu pilih Tambahkan ke Layar Utama.',
+            'Pasang Gemar Mengaji di iPhone/iPad',
+            safariHint + ' Setelah terpasang, buka dari ikon Gemar Mengaji di Layar Utama agar mode aplikasi dan notifikasi web dapat bekerja sesuai dukungan iOS.',
             [{ label: 'Mengerti', primary: true, action: hideNotice }]
         );
     });
@@ -169,6 +231,7 @@
         if (document.visibilityState === 'visible') void checkForUpdate();
     });
     window.addEventListener('focus', () => void checkForUpdate());
+    window.addEventListener('pageshow', () => { updateInstallVisibility(); updateStatusChip(); void checkForUpdate(); });
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (reloading) {
@@ -210,6 +273,11 @@
         .catch(error => console.warn('PWA belum aktif:', error?.message || error));
 
     updateInstallVisibility();
+    updateStatusChip();
+    try {
+        const preview = localStorage.getItem('gm_preview_mode_v46') || 'auto';
+        if (document.body?.classList.contains('admin-page')) setPreview(preview);
+    } catch (_) { }
     if (!navigator.onLine) setConnectionState();
 
     window.GMPWA = {

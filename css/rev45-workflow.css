@@ -1,0 +1,109 @@
+/* REV45 — penyempurnaan alur kerja tanpa perubahan skema/database. */
+@media screen {
+  .admin-page main [id^="page-"] { min-width: 0; }
+  .admin-page main [id^="page-"] > section,
+  .admin-page main [id^="page-"] > .report-panel,
+  .admin-page main [id^="page-"] > .assessment-controls { scroll-margin-top: 92px; }
+  .admin-page input:focus-visible,
+  .admin-page select:focus-visible,
+  .admin-page textarea:focus-visible,
+  .admin-page button:focus-visible,
+  .admin-page summary:focus-visible { outline: 3px solid rgba(33,100,84,.2); outline-offset: 2px; }
+
+  /* Penilaian Periodik */
+  #page-penilaian { max-width: 1180px; margin-inline: auto; }
+  #page-penilaian .assessment-context-card { padding: 22px; box-shadow: 0 10px 30px rgba(23,75,60,.055); }
+  #page-penilaian .assessment-context-card .section-heading { align-items: flex-start; gap: 18px; }
+  #page-penilaian .assessment-context-card .section-heading h2 { margin-bottom: 5px; }
+  #page-penilaian .assessment-context-card .section-heading p:not(.section-kicker) { margin: 0; color: #697a6c; font-size: 12px; line-height: 1.65; }
+  #page-penilaian .assessment-context-grid { grid-template-columns: repeat(4,minmax(0,1fr)) auto; gap: 12px; padding-top: 18px; }
+  #page-penilaian .assessment-context-grid > button { min-height: 42px; align-self: end; margin-top: 0; }
+  .assessment-filter-memory { margin-top: 14px; padding: 12px 14px; border: 1px solid #dde6d8; border-radius: 12px; background: #fbfcf7; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .assessment-filter-memory > div:first-child { display: grid; gap: 3px; }
+  .assessment-filter-memory strong { color: #244f3b; font-size: 12px; }
+  .assessment-filter-memory span { color: #73806f; font-size: 10px; }
+  .assessment-filter-memory-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .assessment-filter-memory-actions button { min-height: 36px; padding: 8px 12px; font-size: 10px; }
+  .assessment-draft-state { margin: 10px 0 0; padding: 9px 11px; border-radius: 10px; font-size: 10px; line-height: 1.5; color: #516d5a; background: #eef4ea; border: 1px solid #dae6d4; }
+  .assessment-draft-state[data-state="restored"] { color: #6c5621; background: #fff8e7; border-color: #ecd8a8; }
+  .assessment-draft-state[data-state="saved"] { color: #2e6846; background: #eef8f0; border-color: #cfe4d4; }
+
+  #page-penilaian .assessment-summary { grid-template-columns: minmax(250px,2.2fr) repeat(4,minmax(105px,1fr)); border-radius: 14px; box-shadow: 0 8px 24px rgba(23,75,60,.04); }
+  #page-penilaian .assessment-summary > div { padding: 17px 18px; }
+  #page-penilaian .assessment-summary strong { margin-top: 6px; font-size: 24px; }
+  #page-penilaian .assessment-summary > div:first-child strong { font-size: 12px; line-height: 1.6; }
+
+  .assessment-work-toolbar { margin: 18px 0; padding: 14px; border: 1px solid #dbe5d6; border-radius: 14px; background: #fbfcf8; display: grid; gap: 12px; }
+  #assessmentWorkspace .assessment-toolbar { margin: 0; grid-template-columns: minmax(150px,.8fr) minmax(190px,1fr) minmax(230px,1.4fr); }
+  .assessment-quick-actions { display: flex; align-items: end; gap: 10px; justify-content: flex-end; flex-wrap: wrap; padding-top: 10px; border-top: 1px dashed #dce5d8; }
+  .assessment-quick-actions > button { min-height: 38px; }
+  #assessmentProblemOnly.active { background: #174b3c; color: #fff; border-color: #174b3c; }
+  .assessment-export-scope { min-width: 185px; margin: 0; }
+  .assessment-export-scope select { min-height: 38px; }
+  #assessmentCards { gap: 16px; }
+  .assessment-student[data-problem="true"] { border-color: #d8bd7d; border-left-color: #b8802e; }
+  .assessment-student[data-problem="false"] { border-left-color: #568a69; }
+  .assessment-student .assessment-result-summary { display: block; min-height: 32px; padding: 8px 16px; background: #f7f9f4; border-top: 1px dashed #e0e7da; color: #627365; font-size: 10px; line-height: 1.55; }
+  .assessment-save-all-bottom { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 8; margin-top: 16px; padding: 14px 16px; box-shadow: 0 12px 35px rgba(21,61,48,.12); background: rgba(250,252,247,.96); backdrop-filter: blur(10px); }
+  .assessment-save-all-bottom > div:first-child { min-width: 0; }
+  .assessment-save-all-bottom > div:first-child > strong { display: block; margin-bottom: 3px; color: #244e3b; font-size: 12px; }
+  .assessment-save-all-bottom .assessment-help { line-height: 1.55; }
+  .assessment-save-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .assessment-save-summary { margin-top: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid #cfe1d2; background: #f0f8f1; color: #315b40; display: grid; gap: 3px; font-size: 11px; }
+  .assessment-save-summary strong { font-size: 12px; }
+  .assessment-save-summary[hidden] { display: none !important; }
+
+  /* Rapor: progress dan retry lebih jelas tanpa mengubah layout PDF. */
+  #page-rapor .report-print-panel { box-shadow: 0 9px 28px rgba(23,75,60,.045); }
+  .report-pdf-progress { margin: 14px 0; padding: 14px; border: 1px solid #d7e3d7; border-radius: 12px; background: #f8faf6; }
+  .report-pdf-progress[hidden] { display: none !important; }
+  .report-progress-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #244e3b; font-size: 12px; }
+  .report-progress-heading span { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .report-pdf-progress progress { width: 100%; height: 10px; margin: 10px 0 7px; accent-color: #216454; }
+  .report-pdf-progress p { margin: 0 !important; color: #68796d; font-size: 11px; }
+  #reportRetryDownload[hidden] { display: none !important; }
+
+  /* Dialog dengan tiga pilihan untuk draf penilaian. */
+  .admin-choice-dialog .confirm-actions-three { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; }
+  .admin-choice-dialog .confirm-actions-three button { min-width: 0; }
+
+  /* Sentuhan konsistensi umum pada halaman admin yang tidak mengubah struktur. */
+  .admin-page .secondary-action,
+  .admin-page .primary-action { transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease, border-color .12s ease; }
+  .admin-page .secondary-action:active:not(:disabled),
+  .admin-page .primary-action:active:not(:disabled) { transform: translateY(1px); }
+  .admin-page .field-label > input,
+  .admin-page .field-label > select,
+  .admin-page .field-label > textarea { min-width: 0; }
+
+  @media (max-width: 1100px) {
+    #page-penilaian .assessment-context-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    #page-penilaian .assessment-context-grid > button { grid-column: 1 / -1; }
+    #page-penilaian .assessment-summary { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    #page-penilaian .assessment-summary > div:first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 767px) {
+    #page-penilaian .assessment-context-card { padding: 16px; }
+    #page-penilaian .assessment-context-grid { grid-template-columns: 1fr; }
+    .assessment-filter-memory { align-items: stretch; flex-direction: column; }
+    .assessment-filter-memory-actions { justify-content: stretch; }
+    .assessment-filter-memory-actions button { flex: 1 1 140px; }
+    #page-penilaian .assessment-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    #page-penilaian .assessment-summary > div:first-child { grid-column: 1 / -1; }
+    #page-penilaian .assessment-summary > div { padding: 13px; }
+    #page-penilaian .assessment-summary strong { font-size: 20px; }
+    #assessmentWorkspace .assessment-toolbar { grid-template-columns: 1fr; }
+    .assessment-quick-actions { align-items: stretch; justify-content: stretch; }
+    .assessment-quick-actions > button, .assessment-export-scope { flex: 1 1 100%; width: 100%; }
+    .assessment-save-all-bottom { position: static; align-items: stretch; }
+    .assessment-save-actions { width: 100%; }
+    .assessment-save-actions button { flex: 1 1 145px; }
+    .admin-choice-dialog .confirm-actions-three { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    #page-penilaian .assessment-summary { grid-template-columns: 1fr 1fr; }
+    #page-penilaian .assessment-summary > div:first-child { grid-column: 1 / -1; }
+    .assessment-work-toolbar { padding: 11px; }
+    .assessment-student .assessment-result-summary { padding-inline: 10px; }
+  }
+}

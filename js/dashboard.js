@@ -1858,7 +1858,18 @@ async function showInfographic() {
     }
 }
 function switchPage(pageId) {
-    const pages = ['dashboard','rapor','laporan','arsip','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
+    const currentPage = document.body?.dataset?.activePage || '';
+    const leaveApproved = document.body?.dataset?.assessmentLeaveApproved === 'true';
+    if (!leaveApproved && currentPage === 'penilaian' && pageId !== 'penilaian' && window.PeriodicAssessments?.hasUnsavedChanges?.()) {
+        Promise.resolve(PeriodicAssessments.confirmLeave?.()).then(ok => {
+            if (!ok) return;
+            if (document.body?.dataset) document.body.dataset.assessmentLeaveApproved = 'true';
+            try { switchPage(pageId); }
+            finally { if (document.body?.dataset) delete document.body.dataset.assessmentLeaveApproved; }
+        });
+        return;
+    }
+    const pages = ['dashboard','rapor','laporan','arsip','analitik','presentasi','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
     if (!pages.includes(pageId) || !AppAccess.canPage(pageId))
         return;
     if (document.body?.dataset) document.body.dataset.activePage = pageId;
@@ -1866,6 +1877,8 @@ function switchPage(pageId) {
         dashboard: ['Dashboard', 'Ringkasan Gemar Mengaji.', ''],
         laporan: ['Laporan', 'Target Tahsin dan Tahfidz.', ''],
         arsip: ['Arsip Rapor', 'Riwayat rapor siswa.', ''],
+        analitik: ['Analitik Periode', 'Bandingkan ketercapaian target secara agregat.', 'Tanpa menampilkan identitas siswa.'],
+        presentasi: ['Laman Presentasi', 'Ringkasan data Gemar Mengaji untuk presentasi.', 'Data ditampilkan per tingkat dan kelas.'],
         rapor: ['Rapor Siswa', 'Laporan perkembangan siswa.', 'Periksa dan terbitkan rapor per tingkat kelas.'],
         kelompok: ['Kelola Tahfidz', 'Kelola kelompok Tahfidz.', ''],
         'kelompok-tahsin': ['Kelola Tahsin', 'Kelola kelompok Tahsin.', ''],
@@ -1902,7 +1915,7 @@ function switchPage(pageId) {
             requestAnimationFrame(() => page.classList.add('page-animate-in'));
         }
     });
-    ['menu-dashboard','menu-rapor','menu-laporan','menu-arsip','menu-kelompok','menu-kelompok-tahsin','menu-profil','menu-absensi','menu-kelola','menu-penilaian','menu-infografik','menu-identitas','menu-pengaturan','menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
+    ['menu-dashboard','menu-rapor','menu-laporan','menu-arsip','menu-analitik','menu-presentasi','menu-kelompok','menu-kelompok-tahsin','menu-profil','menu-absensi','menu-kelola','menu-penilaian','menu-infografik','menu-identitas','menu-pengaturan','menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
     const active = document.getElementById(`menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
     if (pageId === 'dashboard')
@@ -1931,6 +1944,10 @@ function switchPage(pageId) {
     }
     if (pageId === 'maintenance')
         loadMaintenanceMode();
+    if (pageId === 'analitik')
+        window.GMRev46?.loadAnalytics?.();
+    if (pageId === 'presentasi')
+        window.GMRev46?.loadPresentation?.();
     setMobileDrawer(false);
 }
 document.addEventListener('panelready', () => {

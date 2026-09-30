@@ -7,10 +7,14 @@
     const mobile = window.matchMedia('(max-width: 767px)');
     let collapsed = true;
     let opened = false;
+    let hoverTimer = null;
+    let pointerInside = false;
+    const finePointer = window.matchMedia('(min-width: 768px) and (hover: hover) and (pointer: fine)');
     function render() {
         const drawerOpen = mobile.matches && opened;
         document.body.classList.toggle('drawer-open', drawerOpen);
         document.body.classList.toggle('sidebar-collapsed', !mobile.matches && collapsed);
+        if (mobile.matches || !collapsed) document.body.classList.remove('sidebar-hover-expanded');
         sidebar.inert = mobile.matches && !opened;
         main.inert = drawerOpen;
         sidebar.setAttribute('aria-hidden', String(sidebar.inert));
@@ -32,6 +36,7 @@
             window.setMobileDrawer(!opened);
         else {
             collapsed = !collapsed;
+            document.body.classList.remove('sidebar-hover-expanded');
             render();
         }
     });
@@ -65,6 +70,32 @@
             }
         }
     });
+    const scheduleHover = (expand, delay) => {
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => {
+            if (!finePointer.matches || mobile.matches || !collapsed)
+                return document.body.classList.remove('sidebar-hover-expanded');
+            if (expand && (pointerInside || sidebar.contains(document.activeElement)))
+                document.body.classList.add('sidebar-hover-expanded');
+            else if (!expand && !pointerInside && !sidebar.contains(document.activeElement))
+                document.body.classList.remove('sidebar-hover-expanded');
+        }, delay);
+    };
+    sidebar.addEventListener('pointerenter', () => {
+        pointerInside = true;
+        scheduleHover(true, 70);
+    });
+    sidebar.addEventListener('pointerleave', () => {
+        pointerInside = false;
+        scheduleHover(false, 130);
+    });
+    sidebar.addEventListener('focusin', () => scheduleHover(true, 0));
+    sidebar.addEventListener('focusout', () => scheduleHover(false, 100));
+    finePointer.addEventListener?.('change', () => {
+        if (!finePointer.matches)
+            document.body.classList.remove('sidebar-hover-expanded');
+    });
+
     mobile.addEventListener('change', () => {
         const focusWasInside = sidebar.contains(document.activeElement);
         opened = false;

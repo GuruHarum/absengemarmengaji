@@ -1,8 +1,21 @@
 window.ReportPDF = (() => {
     const labels = ['MAKHORIJUL HURUF', 'TAJWID', 'TARTIL / KELANCARAN', 'GHARIB MUSYKILAT'];
     const dateLabel = (date = new Date()) => new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' }).format(date).toUpperCase();
-    async function logo(url) { if (!url)
-        return null; const image = new Image(); image.crossOrigin = 'anonymous'; await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(Error('Logo sekolah gagal dimuat. Periksa URL dan izin akses logo.')); image.src = url; }); return image; }
+    const logoCache = new Map();
+    async function logo(url) {
+        if (!url) return null;
+        if (logoCache.has(url)) return logoCache.get(url);
+        const promise = new Promise((resolve, reject) => {
+            const image = new Image();
+            image.crossOrigin = 'anonymous';
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(Error('Logo sekolah gagal dimuat. Periksa URL dan izin akses logo.'));
+            image.src = url;
+        });
+        logoCache.set(url, promise);
+        try { return await promise; }
+        catch (error) { logoCache.delete(url); throw error; }
+    }
     function wrap(ctx, text, width) { const lines = []; for (const paragraph of String(text ?? '-').split('\n')) {
         let line = '';
         for (const word of paragraph.split(/\s+/)) {
@@ -88,25 +101,27 @@ window.ReportPDF = (() => {
         return match ? `SDIT ${match[1] || ''}`.trim() : raw;
     }
 
-    async function render(report, { draft = false, date = new Date() } = {}) {
-        draft = draft || !ReportCore.reportCheck(report).complete;
+    async function render(report, { draft = false, date = new Date(), scale = 5.35, normalWeight = '500', canvas: reusableCanvas = null, validated = false } = {}) {
+        draft = draft || (!validated && !ReportCore.reportCheck(report).complete);
         ReportCore.useReference(report.reference);
-        const canvas = document.createElement('canvas'), scale = 6;
-        canvas.width = 210 * scale;
-        canvas.height = 297 * scale;
+        const canvas = reusableCanvas || document.createElement('canvas');
+        const outputScale = Math.max(4.2, Number(scale) || 5.35);
+        canvas.width = Math.round(210 * outputScale);
+        canvas.height = Math.round(297 * outputScale);
         const c = canvas.getContext('2d');
-        c.scale(scale, scale);
+        c.scale(outputScale, outputScale);
+        c.imageSmoothingEnabled = true;
         // Tidak melukis latar putih: PNG ber-alpha di atas halaman PDF yang tidak diberi warna.
         // Area kosong akan mengikuti warna kertas saat dicetak, termasuk kepala tabel.
         c.strokeStyle = '#161616';
-        c.lineWidth = .34;
+        c.lineWidth = .38;
         const box = (x, y, w, h) => { c.strokeRect(x, y, w, h); };
         const filledBox = (x, y, w, h, color) => { c.save(); c.fillStyle = color; c.fillRect(x, y, w, h); c.restore(); c.strokeRect(x, y, w, h); };
         // Label/judul tetap kapital. Nama orang dibuat kapital, sedangkan gelar akademik dipertahankan dalam bentuk normal seperti S. Pd / M. Pd.
-        const text = (value, x, y, w, h, { size = 2.82, bold = false, align = 'left', min = 2.4, preserveCase = false } = {}) => {
+        const text = (value, x, y, w, h, { size = 2.88, bold = false, align = 'left', min = 2.45, preserveCase = false } = {}) => {
             const display = preserveCase ? String(value ?? '-') : String(value ?? '-').toLocaleUpperCase('id-ID');
             for (let font = size;; font -= .1) {
-                c.font = `${bold ? '700 ' : '400 '}${font}px Arial, Helvetica, sans-serif`;
+                c.font = `${bold ? '700' : normalWeight} ${font}px Arial, Helvetica, sans-serif`;
                 const lines = wrap(c, display, w - 2.8), lineHeight = font * 1.24, total = lines.length * lineHeight;
                 if (total <= h - (h <= 7 ? 1.2 : 2.2)) {
                     c.fillStyle = '#111';
@@ -138,7 +153,7 @@ window.ReportPDF = (() => {
         text((ReportCore.periods[report.period] || '') + ' - TAHUN AJARAN ' + report.year + ' / ' + (report.year + 1), 39, 17, 158, 7, { size: 3.35, bold: true, align: 'center' });
         text(schoolHeader(school.name), 39, 24.5, 158, 15, { size: 4.15, bold: true, align: 'center', min: 3.7 });
         c.save();
-        c.lineWidth = .48;
+        c.lineWidth = .54;
         c.beginPath();
         c.moveTo(10, 42);
         c.lineTo(200, 42);
@@ -216,17 +231,29 @@ window.ReportPDF = (() => {
     }
     function sorted(rows) { const ids = new Set(); return [...rows].map(row => { if (ids.has(row.student.id))
         throw Error('Siswa ganda dalam daftar cetak'); ids.add(row.student.id); return row; }).sort((a, b) => a.student.class.localeCompare(b.student.class, 'id', { numeric: true }) || a.student.name.localeCompare(b.student.name, 'id') || String(a.student.id).localeCompare(String(b.student.id))); }
-    async function build(rows, { draft = false, onProgress = () => { } } = {}) { if (!rows.length)
-        throw Error('Tidak ada siswa'); const list = sorted(rows); if (!draft && list.some(row => !ReportCore.reportCheck(row).complete))
-        throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap'); const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true }); const date = new Date(); for (let i = 0; i < list.length; i++) {
-        if (i)
-            pdf.addPage('a4', 'portrait');
-        const canvas = await render(list[i], { draft, date });
-        // PNG mempertahankan alpha; halaman PDF tidak pernah digambar putih.
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
-        onProgress(i + 1, list.length);
-        await new Promise(resolve => setTimeout(resolve, 0));
-    } if (pdf.getNumberOfPages() !== list.length)
-        throw Error('Jumlah halaman tidak sesuai'); return pdf; }
+    async function build(rows, { draft = false, onProgress = () => { } } = {}) {
+        if (!rows.length) throw Error('Tidak ada siswa');
+        const list = sorted(rows);
+        // Validasi satu kali sebelum render. Sebelumnya pemeriksaan yang sama dilakukan lagi di setiap halaman.
+        if (!draft && list.some(row => !ReportCore.reportCheck(row).complete))
+            throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap');
+        const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+        const date = new Date();
+        // Satu canvas dipakai ulang untuk seluruh halaman. Ukuran, skala, PNG, dan koordinat tetap sama,
+        // sehingga hasil visual tidak berubah tetapi pembuatan ratusan elemen canvas dapat dihindari.
+        const workCanvas = document.createElement('canvas');
+        for (let i = 0; i < list.length; i++) {
+            if (i) pdf.addPage('a4', 'portrait');
+            const canvas = await render(list[i], { draft, date, scale: draft ? 5.05 : 4.75, normalWeight: '500', canvas: workCanvas, validated: !draft });
+            // PNG mempertahankan alpha; halaman PDF tidak pernah digambar putih.
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
+            onProgress(i + 1, list.length, list[i]);
+            // Beri kesempatan UI menggambar progress berkala, bukan setiap halaman.
+            if ((i + 1) % 4 === 0 || i === list.length - 1)
+                await new Promise(resolve => setTimeout(resolve, 0));
+        }
+        if (pdf.getNumberOfPages() !== list.length) throw Error('Jumlah halaman tidak sesuai');
+        return pdf;
+    }
     return { render, build, sorted, dateLabel, personName, normalizeDegree, naturalName, schoolHeader, signatureSchoolName };
 })();

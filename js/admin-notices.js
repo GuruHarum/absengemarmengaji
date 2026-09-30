@@ -1,5 +1,5 @@
 window.AdminNotice = (() => {
-    let tray, dialog, pending, valueDialog, valuePending;
+    let tray, dialog, pending, valueDialog, valuePending, choiceDialog, choicePending;
     const kindOf = text => /gagal|kesalahan|tidak ditemukan|tidak valid|ditolak|belum dapat|tidak sama|wajib|harus/i.test(text) ? 'error' : /berhasil|disimpan|diakhiri|dikirim/i.test(text) ? 'success' : 'info';
     function notify(text, kind = kindOf(String(text))) {
         if (!tray) {
@@ -65,6 +65,47 @@ window.AdminNotice = (() => {
     function finish(value) { const request = pending; if (!request)
         return; pending = null; dialog.close(); if (request.previous?.isConnected)
         request.previous.focus(); request.resolve(value); }
+
+
+    function choose(options = {}) {
+        if (choicePending) return Promise.resolve(null);
+        if (!choiceDialog) {
+            choiceDialog = document.createElement('dialog');
+            choiceDialog.className = 'admin-confirm admin-choice-dialog';
+            choiceDialog.setAttribute('aria-labelledby', 'noticeChoiceTitle');
+            choiceDialog.setAttribute('aria-describedby', 'noticeChoiceText');
+            choiceDialog.innerHTML = '<div class="confirm-emblem" aria-hidden="true">!</div><h2 id="noticeChoiceTitle">Perubahan belum disimpan</h2><p id="noticeChoiceText"></p><div class="confirm-actions confirm-actions-three"><button type="button" data-choice-cancel class="secondary-action">Batal</button><button type="button" data-choice-secondary class="secondary-action">Keluar & simpan draf</button><button type="button" data-choice-primary class="primary-action">Simpan sekarang</button></div>';
+            document.body.append(choiceDialog);
+            choiceDialog.querySelector('[data-choice-cancel]').onclick = () => finishChoice(null);
+            choiceDialog.querySelector('[data-choice-secondary]').onclick = () => finishChoice('secondary');
+            choiceDialog.querySelector('[data-choice-primary]').onclick = () => finishChoice('primary');
+            choiceDialog.addEventListener('cancel', event => { event.preventDefault(); finishChoice(null); });
+        }
+        const previous = document.activeElement;
+        const title = String(options.title || 'Perubahan belum disimpan');
+        const message = String(options.message || 'Ada perubahan yang belum disimpan.');
+        const primaryLabel = String(options.primaryLabel || 'Simpan sekarang');
+        const secondaryLabel = String(options.secondaryLabel || 'Keluar & simpan draf');
+        const cancelLabel = String(options.cancelLabel || 'Batal');
+        choiceDialog.querySelector('#noticeChoiceTitle').textContent = title;
+        choiceDialog.querySelector('#noticeChoiceText').textContent = message;
+        choiceDialog.querySelector('[data-choice-primary]').textContent = primaryLabel;
+        choiceDialog.querySelector('[data-choice-secondary]').textContent = secondaryLabel;
+        choiceDialog.querySelector('[data-choice-cancel]').textContent = cancelLabel;
+        return new Promise(resolve => {
+            choicePending = { resolve, previous };
+            choiceDialog.showModal();
+            choiceDialog.querySelector('[data-choice-primary]').focus();
+        });
+    }
+    function finishChoice(value) {
+        const request = choicePending;
+        if (!request) return;
+        choicePending = null;
+        choiceDialog.close();
+        if (request.previous?.isConnected) request.previous.focus();
+        request.resolve(value);
+    }
 
     function requestValue(options = {}) {
         if (valuePending) return Promise.resolve(null);
@@ -148,5 +189,5 @@ window.AdminNotice = (() => {
             }).observe(node, { childList: true, characterData: true, subtree: true });
         });
     });
-    return { notify, confirm: confirmAction, request: requestValue };
+    return { notify, confirm: confirmAction, request: requestValue, choose };
 })();

@@ -1,5 +1,5 @@
 window.StudentReports = (() => {
-    let rows = [], busy = false, previewToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '';
+    let rows = [], busy = false, previewToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0;
     const currentLoadKey = () => `${Number(el('reportYear').value || 0)}|${period()}|${String(el('reportGrade').value || '')}`;
     const el = id => document.getElementById(id);
     const esc = value => escapeHtml(String(value ?? ''));
@@ -11,10 +11,38 @@ window.StudentReports = (() => {
     function setBusy(value) {
         busy = value;
         el('reportControls').disabled = value;
-        ['checkMissingScores','downloadReports'].forEach(id => { el(id).disabled = value; });
+        ['checkMissingScores','downloadReports','reportDirectPrint','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
         ['reportDownloadMode','reportDownloadClass'].forEach(id => { if (el(id)) el(id).disabled = value; });
         el('reportSelection').disabled = value;
     }
+    function formatDuration(ms) {
+        const seconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
+        if (seconds < 60) return `${seconds} detik`;
+        const minutes = Math.floor(seconds / 60), rest = seconds % 60;
+        return `${minutes} menit${rest ? ` ${rest} detik` : ''}`;
+    }
+    function updatePdfProgress({ visible = true, title = 'Menyiapkan PDF', n = 0, total = 0, row = null, done = false, error = '' } = {}) {
+        const box = el('reportPdfProgress');
+        if (!box) return;
+        box.hidden = !visible;
+        if (!visible) return;
+        const percent = total ? Math.min(100, Math.round((n / total) * 100)) : 0;
+        if (el('reportPdfProgressTitle')) el('reportPdfProgressTitle').textContent = title;
+        if (el('reportPdfProgressPercent')) el('reportPdfProgressPercent').textContent = done ? '100%' : `${percent}%`;
+        if (el('reportPdfProgressBar')) el('reportPdfProgressBar').value = done ? 100 : percent;
+        const detail = el('reportPdfProgressDetail');
+        if (!detail) return;
+        if (error) { detail.textContent = error; box.dataset.state = 'error'; return; }
+        box.dataset.state = done ? 'done' : 'working';
+        if (done) { detail.textContent = total ? `${total} halaman selesai disusun.` : 'PDF selesai disusun.'; return; }
+        if (!n || !total) { detail.textContent = 'Memeriksa data dan menyiapkan halaman pertama...'; return; }
+        const elapsed = Date.now() - downloadStartedAt;
+        const perPage = elapsed / n;
+        const remaining = Math.max(0, (total - n) * perPage);
+        const student = row?.student?.name ? ` · ${row.student.name}` : '';
+        detail.textContent = `Halaman ${n} dari ${total}${student} · berjalan ${formatDuration(elapsed)}${n < total ? ` · perkiraan sisa ${formatDuration(remaining)}` : ''}`;
+    }
+
     function refreshDownloadScope() {
         const classMode = el('reportDownloadMode')?.value === 'class';
         const classField = el('reportDownloadClassField');
@@ -287,8 +315,68 @@ window.StudentReports = (() => {
         el('reportStudent').value = String(list[Math.max(0, Math.min(list.length - 1, index + amount))].student.id);
         preview();
     }
-    async function download() {
-        if (busy || !await load(false) || !rows.length) return;
+    async function directPrint() {
+        if (busy) return;
+        if (!await load(false) || !rows.length) return;
+        let selection;
+        try { selection = downloadSelection(); }
+        catch (error) { tell(error.message); refreshDownloadScope(); return; }
+        const selectedRows = selection.rows;
+        if (window.AdminNotice?.confirm) {
+            const ok = await AdminNotice.confirm(`Cetak langsung ${selection.label}? ${selectedRows.length} halaman rapor final akan disiapkan dan dibuka pada dialog cetak perangkat.`);
+            if (!ok) return;
+        }
+        if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
+            checks();
+            tell(`Belum dapat mencetak ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`);
+            return;
+        }
+        const popup = window.open('', '_blank');
+        if (popup) {
+            popup.document.write('<title>Menyiapkan Rapor</title><p style="font-family:sans-serif;padding:24px">Menyiapkan PDF untuk dicetak…</p>');
+        }
+        downloadStartedAt = Date.now();
+        updatePdfProgress({ visible: true, title: `Menyiapkan cetak ${selection.label}`, total: selectedRows.length });
+        setBusy(true);
+        try {
+            const pdf = await ReportPDF.build(selectedRows, {
+                draft: false,
+                onProgress: (n, total, row) => {
+                    updatePdfProgress({ visible: true, title: 'Menyusun halaman untuk cetak', n, total, row });
+                    tell(`Menyiapkan cetak ${n}/${total} halaman (${Math.round(n / total * 100)}%)...`);
+                }
+            });
+            pdf.autoPrint?.();
+            const blob = pdf.output('blob');
+            const url = URL.createObjectURL(blob);
+            if (popup && !popup.closed) {
+                popup.location.replace(url);
+                setTimeout(() => { try { popup.focus(); popup.print?.(); } catch (_) { } }, 1200);
+            } else {
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.target = '_blank';
+                anchor.rel = 'noopener';
+                anchor.click();
+            }
+            updatePdfProgress({ visible: true, title: 'PDF siap dicetak', n: selectedRows.length, total: selectedRows.length, row: selectedRows.at(-1) });
+            tell(`PDF ${selection.label} siap dicetak langsung · ${selectedRows.length} halaman.`);
+            setTimeout(() => URL.revokeObjectURL(url), 120000);
+        } catch (error) {
+            if (popup && !popup.closed) popup.close();
+            tell(`Cetak langsung gagal: ${error.message}`);
+            updatePdfProgress({ visible: false });
+        } finally { setBusy(false); }
+    }
+
+    async function download(retry = false) {
+        if (busy) return;
+        if (retry && lastDownloadAttempt) {
+            if (el('reportDownloadMode')) el('reportDownloadMode').value = lastDownloadAttempt.mode;
+            if (el('reportDownloadClass')) el('reportDownloadClass').value = lastDownloadAttempt.className || '';
+            refreshDownloadScope();
+        }
+        if (!await load(false) || !rows.length) return;
         let selection;
         try { selection = downloadSelection(); }
         catch (error) { tell(error.message); refreshDownloadScope(); return; }
@@ -296,10 +384,26 @@ window.StudentReports = (() => {
         if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
             checks(); tell(`Belum dapat mengunduh ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`); return;
         }
+        lastDownloadAttempt = {
+            mode: el('reportDownloadMode')?.value || 'grade',
+            className: el('reportDownloadClass')?.value || '',
+            label: selection.label
+        };
+        if (el('reportRetryDownload')) el('reportRetryDownload').hidden = true;
+        if (el('reportPdfLink')) el('reportPdfLink').hidden = true;
+        downloadStartedAt = Date.now();
+        updatePdfProgress({ visible: true, title: `Menyiapkan ${selection.label}`, total: selectedRows.length });
         setBusy(true);
         try {
             const pdfName = `Rapor ${selection.label} - ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1' : '2'} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.pdf`;
-            const blob = await ReportZip.build(selectedRows, { fileName: pdfName, onProgress: (n,total)=>tell(n ? `Menyusun rapor ${n}/${total} halaman...` : 'Menyiapkan dokumen rapor...') });
+            const blob = await ReportZip.build(selectedRows, {
+                fileName: pdfName,
+                onProgress: (n, total, row) => {
+                    updatePdfProgress({ visible: true, title: 'Menyusun halaman rapor', n, total, row });
+                    tell(n ? `Menyusun rapor ${n}/${total} halaman (${Math.round(n / total * 100)}%)...` : 'Menyiapkan dokumen rapor...');
+                }
+            });
+            updatePdfProgress({ visible: true, title: 'Mencatat penerbitan rapor', n: selectedRows.length, total: selectedRows.length, row: selectedRows.at(-1) });
             const issued = await supabase.rpc('record_report_issuance', { entries: selectedRows.map(row => ({ student_id: row.student.id, year: row.year, period: row.period, fingerprint: row.fingerprint })) });
             if (issued.error) throw issued.error;
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -307,11 +411,21 @@ window.StudentReports = (() => {
             const link = el('reportPdfLink');
             link.href = pdfUrl;
             const scope = ReportZip.safe(selection.label);
-            link.download = `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${scope} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
+            link.download = window.GMFileName?.report?.({
+                exam: el('reportExam').value,
+                semester: el('reportSemester').value === 'ganjil' ? '1' : '2',
+                scope,
+                year: Number(el('reportYear').value),
+                ext: 'zip'
+            }) || `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${scope} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
             link.hidden = false; link.textContent = 'Simpan ZIP Rapor'; link.click();
-            tell(`ZIP selesai: 1 PDF berisi ${selectedRows.length} halaman rapor · ${selection.label}.`);
-        } catch (error) { tell(error.message); }
-        finally { setBusy(false); refreshDownloadScope(); }
+            updatePdfProgress({ visible: true, title: 'PDF selesai', n: selectedRows.length, total: selectedRows.length, done: true });
+            tell(`ZIP selesai: 1 PDF berisi ${selectedRows.length} halaman rapor · ${selection.label} · ${formatDuration(Date.now() - downloadStartedAt)}.`);
+        } catch (error) {
+            if (el('reportRetryDownload')) el('reportRetryDownload').hidden = false;
+            updatePdfProgress({ visible: true, title: 'Pembuatan PDF terhenti', n: 0, total: selectedRows.length, error: `${error.message} Data rapor yang sudah dimuat tetap tersedia; tekan Coba Lagi yang Gagal.` });
+            tell(`${error.message}. Tekan Coba Lagi yang Gagal untuk mengulang tanpa memuat ulang data yang masih valid.`);
+        } finally { setBusy(false); refreshDownloadScope(); }
     }
     function changeTab(tab) {
         if (!['preview','missing','print'].includes(tab)) return;
@@ -371,7 +485,9 @@ window.StudentReports = (() => {
         el('reportStudent').addEventListener('change', preview);
         el('reportPrevious').addEventListener('click', () => step(-1));
         el('reportNext').addEventListener('click', () => step(1));
-        el('downloadReports').addEventListener('click', download);
+        el('downloadReports').addEventListener('click', () => download(false));
+        el('reportDirectPrint')?.addEventListener('click', directPrint);
+        el('reportRetryDownload')?.addEventListener('click', () => download(true));
         el('reportDownloadMode')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
         el('reportDownloadClass')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
         refreshDownloadScope();
@@ -384,6 +500,8 @@ window.StudentReports = (() => {
             el('reportChecks').textContent = 'Filter berubah. Muat rapor kembali.';
             checks();
             el('reportPdfLink').hidden = true;
+            if (el('reportRetryDownload')) el('reportRetryDownload').hidden = true;
+            updatePdfProgress({ visible: false });
             if (el('reportDownloadClass')) el('reportDownloadClass').value = '';
             refreshDownloadScope();
         }));

@@ -1,0 +1,14 @@
+const fs=require('fs'),path=require('path'),assert=require('assert');
+const root=path.resolve(__dirname,'..');
+const css=fs.readFileSync(path.join(root,'css/rev46-experience.css'),'utf8');
+const admin=fs.readFileSync(path.join(root,'admin.html'),'utf8');
+const pwa=fs.readFileSync(path.join(root,'js/pwa.js'),'utf8');
+const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
+assert(css.includes('REV50 — rapikan legenda grafik ketercapaian'));
+assert(css.includes('grid-template-rows:auto auto'));
+assert(css.includes('.gm-target-count-grid-class{\n  grid-template-columns:1fr'));
+assert(css.includes('overflow-wrap:anywhere'));
+assert(admin.includes('loader50'));
+assert(pwa.includes("BUILD = 'loader50'"));
+assert(sw.includes("VERSION = 'loader50'"));
+console.log('REV50 presentation legibility checks: OK');

@@ -3,7 +3,7 @@ window.AppAccess = (() => {
     const full = () => ['admin', 'koordinator'].includes(profile?.role);
     const teacher = () => profile?.role === 'guru';
     const linkedTeacher = () => Boolean(profile?.teacher_id && profile?.teacherName);
-    const canPage = page => ['rapor','laporan','arsip','pengaturan','identitas','maintenance'].includes(page) ? profile?.role === 'koordinator' : page === 'dashboard' ? Boolean(profile) : full() || (teacher() && ['absensi','kelola','kelompok','kelompok-tahsin','penilaian','profil'].includes(page) && (page !== 'absensi' || profile.attendanceEnabled !== false));
+    const canPage = page => ['rapor','laporan','arsip','pengaturan','identitas','maintenance','analitik','presentasi'].includes(page) ? profile?.role === 'koordinator' : page === 'dashboard' ? Boolean(profile) : full() || (teacher() && ['absensi','kelola','kelompok','kelompok-tahsin','penilaian','profil'].includes(page) && (page !== 'absensi' || profile.attendanceEnabled !== false));
 
     async function loadTeacherProfile() {
         if (!profile?.teacher_id)
@@ -68,7 +68,7 @@ window.AppAccess = (() => {
         if (badge)
             badge.textContent = teacher() ? `Guru · ${profile.teacherName}` :
                 (profile.role === 'koordinator' ? (linkedTeacher() ? `Koordinator · ${profile.teacherName}` : 'Koordinator') : 'Admin');
-        ['dashboard','rapor','laporan','arsip','kelompok','kelompok-tahsin','absensi','infografik','identitas','pengaturan','maintenance'].forEach(page => {
+        ['dashboard','rapor','laporan','arsip','analitik','presentasi','kelompok','kelompok-tahsin','absensi','infografik','identitas','pengaturan','maintenance'].forEach(page => {
             const item = document.getElementById(`menu-${page}`);
             if (item)
                 item.hidden = !canPage(page);

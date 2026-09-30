@@ -16,7 +16,7 @@ for (const name of entries) {
 }
 
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/profile.js', 'js/push-notifications.js', 'js/notifications.js', 'js/attention-center.js', 'js/learning-groups.js', 'js/assessments.js', 'js/assessments-core.js', 'js/progress-form.js', 'js/report-cards.js', 'js/report-pdf.js', 'js/report-zip.js', 'js/ux-stage5.js', 'js/islamic-quotes.js', 'js/pwa.js', 'js/notifications.js', 'js/dashboard.js', 'js/gm-upgrade-20260928.js', 'js/database.js', 'js/ui.js', 'js/utils.js', 'js/public-app.js', 'css/ui-polish-20260928.css', 'css/ux-stage5.css', 'css/pwa.css', 'css/visual-stage8.css', 'css/rev37-visual-fixes.css', 'manifest.webmanifest', 'offline.html', 'assets/notification-badge-96.png', 'css/admin-polish.css']) {
+for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/admin-notices.js', 'js/profile.js', 'js/push-notifications.js', 'js/notifications.js', 'js/attention-center.js', 'js/learning-groups.js', 'js/assessments.js', 'js/assessments-core.js', 'js/progress-form.js', 'js/report-cards.js', 'js/report-pdf.js', 'js/report-zip.js', 'js/ux-stage5.js', 'js/islamic-quotes.js', 'js/pwa.js', 'js/notifications.js', 'js/dashboard.js', 'js/rev46-experience.js', 'js/gm-upgrade-20260928.js', 'js/database.js', 'js/ui.js', 'js/utils.js', 'js/public-app.js', 'css/ui-polish-20260928.css', 'css/ux-stage5.css', 'css/pwa.css', 'css/visual-stage8.css', 'css/rev37-visual-fixes.css', 'manifest.webmanifest', 'offline.html', 'assets/notification-badge-96.png', 'css/admin-polish.css', 'css/rev45-workflow.css', 'css/rev46-experience.css']) {
     const source = path.resolve(rel);
     const built = path.join(out, rel);
     if (hash(source) !== hash(built)) {
@@ -24,4 +24,4 @@ for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/prof
     }
 }
 
-console.log('Static website prepared in public-build (loader43)');
+console.log('Static website prepared in public-build (loader50)');
