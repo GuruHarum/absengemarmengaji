@@ -4,7 +4,10 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 
 const out = path.resolve('public-build');
-const entries = ['index.html', 'admin.html', 'login.html', 'maintenance.html', 'offline.html', 'manifest.webmanifest', 'sw.js', '_headers', 'js', 'css', 'assets'];
+if (path.dirname(out) !== process.cwd() || path.basename(out) !== 'public-build') {
+    throw new Error('Build output must stay inside the project workspace');
+}
+const entries = ['index.html', 'admin.html', 'guru.html', 'login.html', 'maintenance.html', 'offline.html', 'manifest.webmanifest', 'sw.js', '_headers', 'js', 'css', 'assets'];
 
 // Penting: public-build adalah artefak hasil build, bukan sumber kedua.
 // Selalu hapus versi lama agar tidak ada JS lama yang tertinggal saat deploy Netlify.
@@ -16,7 +19,7 @@ for (const name of entries) {
 }
 
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/admin-notices.js', 'js/profile.js', 'js/push-notifications.js', 'js/notifications.js', 'js/attention-center.js', 'js/learning-groups.js', 'js/assessments.js', 'js/assessments-core.js', 'js/progress-form.js', 'js/report-cards.js', 'js/report-pdf.js', 'js/report-zip.js', 'js/ux-stage5.js', 'js/islamic-quotes.js', 'js/pwa.js', 'js/notifications.js', 'js/dashboard.js', 'js/rev46-experience.js', 'js/gm-upgrade-20260928.js', 'js/database.js', 'js/ui.js', 'js/utils.js', 'js/public-app.js', 'css/ui-polish-20260928.css', 'css/ux-stage5.css', 'css/pwa.css', 'css/visual-stage8.css', 'css/rev37-visual-fixes.css', 'manifest.webmanifest', 'offline.html', 'assets/notification-badge-96.png', 'css/admin-polish.css', 'css/rev45-workflow.css', 'css/rev46-experience.css']) {
+for (const rel of ['index.html', 'admin.html', 'guru.html', 'sw.js', 'js/access.js', 'js/panel-preboot.js', 'js/panel-start-guru.js', 'js/admin-notices.js', 'js/profile.js', 'js/push-notifications.js', 'js/notifications.js', 'js/attention-center.js', 'js/learning-groups.js', 'js/assessments.js', 'js/assessments-core.js', 'js/progress-form.js', 'js/report-cards.js', 'js/report-pdf.js', 'js/report-zip.js', 'js/ux-stage5.js', 'js/islamic-quotes.js', 'js/pwa.js', 'js/notifications.js', 'js/dashboard.js', 'js/rev46-experience.js', 'js/gm-upgrade-20260928.js', 'js/database.js', 'js/ui.js', 'js/utils.js', 'js/public-app.js', 'css/ui-polish-20260928.css', 'css/ux-stage5.css', 'css/pwa.css', 'css/visual-stage8.css', 'css/rev37-visual-fixes.css', 'manifest.webmanifest', 'offline.html', 'assets/notification-badge-96.png', 'css/admin-polish.css', 'css/rev45-workflow.css', 'css/rev46-experience.css', 'css/rev51-responsive.css', 'css/rev54-panels.css']) {
     const source = path.resolve(rel);
     const built = path.join(out, rel);
     if (hash(source) !== hash(built)) {
@@ -24,4 +27,6 @@ for (const rel of ['index.html', 'admin.html', 'sw.js', 'js/access.js', 'js/admi
     }
 }
 
-console.log('Static website prepared in public-build (loader51)');
+// Verify source copies above before optimizing the generated HTML.
+require('./bundle-panel-css.cjs').bundlePanelCss(out);
+console.log('Static website prepared in public-build (loader54, bundled panel CSS)');

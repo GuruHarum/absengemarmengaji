@@ -1951,15 +1951,18 @@ function switchPage(pageId) {
     setMobileDrawer(false);
 }
 document.addEventListener('panelready', () => {
-    document.getElementById('showInfographicBtn').addEventListener('click', showInfographic);
-    document.getElementById('infoLevel').addEventListener('change', () => {
-        document.getElementById('infoClass').value = '';
+    document.getElementById('showInfographicBtn')?.addEventListener('click', showInfographic);
+    document.getElementById('infoLevel')?.addEventListener('change', () => {
+        const classFilter = document.getElementById('infoClass');
+        if (classFilter) classFilter.value = '';
     });
-    document.getElementById('topLogoutBtn').addEventListener('click', () => document.getElementById('logoutBtn').click());
-    document.getElementById('schoolSettingsForm').addEventListener('submit', saveSchoolSettings);
-    document.getElementById('settingsThemeColor').addEventListener('input', event => {
-        document.getElementById('settingsThemeColorValue').textContent = event.target.value;
-        document.getElementById('settingsColorPreview').style.backgroundColor = event.target.value;
+    document.getElementById('topLogoutBtn')?.addEventListener('click', () => document.getElementById('logoutBtn')?.click());
+    document.getElementById('schoolSettingsForm')?.addEventListener('submit', saveSchoolSettings);
+    document.getElementById('settingsThemeColor')?.addEventListener('input', event => {
+        const value = document.getElementById('settingsThemeColorValue');
+        const preview = document.getElementById('settingsColorPreview');
+        if (value) value.textContent = event.target.value;
+        if (preview) preview.style.backgroundColor = event.target.value;
     });
     // Pengaturan identitas sekolah dimuat saat menu Identitas dibuka.
 });

@@ -10,7 +10,7 @@
     ensureFootnote();
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'loader51';
+    const BUILD = 'loader54';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;
@@ -59,12 +59,20 @@
     tools.append(statusButton, installButton, connection, notice);
     document.body.append(tools);
 
+    // REV52: pada aplikasi yang sudah terpasang (standalone/PWA), kontrol PWA
+    // tidak ditampilkan agar tidak menutupi antarmuka. Service worker tetap aktif
+    // dan pembaruan dijalankan diam-diam ketika tidak ada pekerjaan belum disimpan.
+    function updateToolsVisibility() {
+        tools.hidden = standalone();
+    }
+    updateToolsVisibility();
+
     function modeLabel() {
         if (standalone()) return isIOS() ? 'PWA iPhone/iPad' : 'PWA';
         return 'Browser';
     }
     function updateStatusChip() {
-        statusButton.textContent = `${modeLabel()} · 48`;
+        statusButton.textContent = `${modeLabel()} · 53`;
         statusButton.dataset.mode = standalone() ? 'pwa' : 'browser';
     }
     function setPreview(mode) {
@@ -129,8 +137,16 @@
         notice.hidden = false;
     }
 
+    function activateWaitingSilently() {
+        if (!waitingWorker || !standalone() || dirty()) return false;
+        reloading = true;
+        waitingWorker.postMessage({ type: 'ACTIVATE' });
+        return true;
+    }
+
     function showUpdate() {
         if (!waitingWorker) return;
+        if (standalone()) { activateWaitingSilently(); return; }
         showNotice(
             'Pembaruan tersedia',
             'Versi terbaru Gemar Mengaji sudah siap digunakan.',
@@ -179,6 +195,7 @@
 
     function setConnectionState() {
         const online = navigator.onLine;
+        updateToolsVisibility();
         connection.hidden = online;
         document.documentElement.classList.toggle('pwa-offline', !online);
         if (online) {
@@ -201,6 +218,7 @@
         pendingInstall = null;
         updateInstallVisibility();
         updateStatusChip();
+        updateToolsVisibility();
         hideNotice();
     });
 
@@ -228,10 +246,21 @@
     window.addEventListener('online', setConnectionState);
     window.addEventListener('offline', setConnectionState);
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') void checkForUpdate();
+        if (document.visibilityState === 'visible') {
+            updateToolsVisibility();
+            if (!activateWaitingSilently()) void checkForUpdate();
+        }
     });
-    window.addEventListener('focus', () => void checkForUpdate());
-    window.addEventListener('pageshow', () => { updateInstallVisibility(); updateStatusChip(); void checkForUpdate(); });
+    window.addEventListener('focus', () => {
+        updateToolsVisibility();
+        if (!activateWaitingSilently()) void checkForUpdate();
+    });
+    window.addEventListener('pageshow', () => {
+        updateInstallVisibility();
+        updateStatusChip();
+        updateToolsVisibility();
+        if (!activateWaitingSilently()) void checkForUpdate();
+    });
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (reloading) {

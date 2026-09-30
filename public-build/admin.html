@@ -41,22 +41,12 @@
     </style>
     <link rel="stylesheet" href="css/theme.css">
     <link rel="stylesheet" href="css/admin.css?v=20260928-complete-1">
-    <link rel="stylesheet" href="css/assessments.css">
+    <link rel="stylesheet" href="css/assessments.css?v=20260930-rev54">
     <link rel="stylesheet" href="css/admin-polish.css?v=20260928-filter-id-3">
 <link rel="stylesheet" href="css/report-cards.css">
-<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="/css/pwa.css">
-    <link rel="stylesheet" href="css/layout-responsive.css">
-    <link rel="stylesheet" href="css/admin-refinement.css?v=20260928-submenu-level-1">
-    <link rel="stylesheet" href="css/gm-upgrade-20260928.css?v=20260928-1">
-    <link rel="stylesheet" href="css/ui-polish-20260928.css?v=20260929-groups26">
-    <link rel="stylesheet" href="css/ux-stage5.css?v=20260929-ux27">
-    <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader37">
-    <link rel="stylesheet" href="css/rev37-visual-fixes.css?v=20260929-rev37">
-    <link rel="stylesheet" href="css/rev45-workflow.css?v=20260929-rev45">
-    <link rel="stylesheet" href="css/rev46-experience.css?v=20260930-rev51">
-    <link rel="stylesheet" href="css/rev51-responsive.css?v=20260930-rev51">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="css/panel-d4aba464a5ec.css">
 </head>
-<body class="admin-page sidebar-collapsed flex min-h-screen overflow-x-hidden">
+<body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="coordinator">
 
     <div id="loadingIndicator" class="islamic-loader" role="status" aria-live="polite" aria-label="Memuat panel administrasi">
         <div class="loader-pattern" aria-hidden="true"></div>
@@ -680,7 +670,6 @@
         <div id="assessmentCards"></div>
         <div class="assessment-pagination"><button id="assessmentPrev" type="button" class="secondary-action">Sebelumnya</button><span id="assessmentPageInfo"></span><button id="assessmentNext" type="button" class="secondary-action">Berikutnya</button></div>
         <div class="assessment-save-all-bottom">
-            <div><strong>Simpan nilai kelas aktif</strong><p class="assessment-help">Simpan Semua mengikuti siswa yang sedang tampil. Tajwid Buku 1 dan Gharib sebelum Finishing tidak wajib. Draf sementara tidak menggantikan penyimpanan ke database.</p></div>
             <div class="assessment-save-actions"><button id="assessmentRetrySave" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button><button id="assessmentSaveAll" type="button" class="primary-action">Simpan Semua</button></div>
         </div>
         <div id="assessmentSaveSummary" class="assessment-save-summary" hidden></div>
@@ -792,6 +781,7 @@
     <script src="js/islamic-quotes.js?v=20260929-quotes28"></script>
     <script src="js/config.js"></script>
     <script src="js/access.js?v=20260928-profile21"></script>
+    <script src="js/panel-preboot.js?v=20260930-rev54"></script>
     <script src="js/utils.js"></script>
     <script src="js/ux-stage5.js?v=20260929-ux27"></script>
     <script src="js/filter-identity.js?v=20260928-filter-id-1"></script>
@@ -800,7 +790,7 @@
     
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260930-loader51"></script>
+    <script src="js/panel-start.js?v=20260930-loader54"></script>
     <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
     
 
@@ -811,6 +801,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260930-loader51" defer></script>
+<script src="/js/pwa.js?v=20260930-loader54" defer></script>
 </body>
 </html>

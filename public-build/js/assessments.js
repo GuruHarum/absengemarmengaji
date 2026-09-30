@@ -225,10 +225,10 @@ window.PeriodicAssessments = (() => {
         const start = state.renderLimit;
         if (start >= rows.length) return;
         const task = () => {
-            rows.slice(start, Math.min(rows.length, start + 12)).forEach(student => {
+            rows.slice(start, Math.min(rows.length, start + 12)).forEach((student, offset) => {
                 const idx = state.students.indexOf(student);
                 if (!state.prefetchedMarkup.has(String(student.id)))
-                    state.prefetchedMarkup.set(String(student.id), cardMarkup(student, idx));
+                    state.prefetchedMarkup.set(String(student.id), cardMarkup(student, idx, start + offset + 1));
             });
         };
         if ('requestIdleCallback' in window) requestIdleCallback(task, { timeout: 800 });
@@ -293,15 +293,16 @@ window.PeriodicAssessments = (() => {
         const surah = QURAN_SURAHS.find(row => String(row.number) === String(surahNumber));
         return '<option value="">Pilih ayat terakhir</option>' + (surah ? Array.from({ length: surah.ayahs }, (_, index) => `<option value="${index + 1}" ${String(index + 1) === selected ? 'selected' : ''}>Ayat ${index + 1}</option>`).join('') : '');
     }
-    function cardMarkup(student, index) {
+    function cardMarkup(student, index, orderNumber = index + 1) {
         const draft = state.drafts.get(String(student.id));
+        const displayOrder = String(Math.max(1, Number(orderNumber) || 1)).padStart(2, '0');
         const input = (field, label, attributes) => `<label class="field-label" for="assessment-${index}-${field}">${label}<input id="assessment-${index}-${field}" data-field="${field}" value="${escape(draft[field])}" ${attributes}></label>`;
         const score = field => input(field, AssessmentData.scores[field].replace(' Tahsin', '').replace(' Tahfidz', ''), `type="number" min="0" max="100" step="0.01" inputmode="decimal" enterkeyhint="next" placeholder="0–100" required`);
-        const markup = `<form novalidate class="assessment-student" data-student-index="${index}"><header><div><p>${escape(classLabel(student.kelas))}</p><h3>${escape(student['nama siswa'])}</h3></div><span class="assessment-state"></span></header>
-            <div class="assessment-subjects"><fieldset data-subject="tahsin"><legend><span>01</span> Tahsin</legend><div class="assessment-score-grid">${(window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']).map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div></fieldset>
-            <fieldset data-subject="tahfidz"><legend><span>02</span> Tahfidz</legend><div class="assessment-score-grid">${['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'].map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div ${['REVIEW', 'TES'].includes(draft.tahfidz_progress_type) ? 'hidden' : ''}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div></fieldset></div>
+        const markup = `<form novalidate class="assessment-student" data-student-index="${index}"><header><div class="assessment-student-identity"><span class="assessment-card-order" aria-label="Nomor urut ${displayOrder}">${displayOrder}</span><div><p>${escape(classLabel(student.kelas))}</p><h3>${escape(student['nama siswa'])}</h3></div></div><span class="assessment-state"></span></header>
+            <div class="assessment-subjects"><fieldset data-subject="tahsin" aria-label="Penilaian Tahsin"><div class="assessment-score-grid">${(window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']).map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div></fieldset>
+            <fieldset data-subject="tahfidz" aria-label="Penilaian Tahfidz"><div class="assessment-score-grid">${['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'].map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div ${['REVIEW', 'TES'].includes(draft.tahfidz_progress_type) ? 'hidden' : ''}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div></fieldset></div>
             <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Nilai lama: pengelola perlu memeriksa dan menyimpan untuk verifikasi pengampu.' : state.context.subject === 'tahsin' ? 'Nilai mengikuti capaian aktual siswa.' : 'Tahfidz'}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
-        const selectedMarkup = markup.replace(/<fieldset data-subject="(tahsin|tahfidz)">[\s\S]*?<\/fieldset>/g, (block, subject) => subject === state.context.subject ? block : '');
+        const selectedMarkup = markup.replace(/<fieldset data-subject="(tahsin|tahfidz)"[^>]*>[\s\S]*?<\/fieldset>/g, (block, subject) => subject === state.context.subject ? block : '');
         return state.saved.get(String(student.id))?.needs_review && !AppAccess.full()
             ? selectedMarkup.replace('<form ', '<form data-review-locked="true" ').replace('<fieldset ', '<fieldset disabled ').replace('type="submit"', 'type="submit" disabled')
             : selectedMarkup;
@@ -312,9 +313,9 @@ window.PeriodicAssessments = (() => {
         const allRows = visible();
         const rows = allRows.slice(0, state.renderLimit);
         if (el('assessmentCards')) {
-            const markup = rows.length ? rows.map(student => {
+            const markup = rows.length ? rows.map((student, visibleIndex) => {
                 const cached = state.prefetchedMarkup.get(String(student.id));
-                return cached || cardMarkup(student, state.students.indexOf(student));
+                return cached || cardMarkup(student, state.students.indexOf(student), visibleIndex + 1);
             }).join('') : `<div class="assessment-empty">${state.problemOnly ? 'Tidak ada siswa bermasalah pada kelas ini.' : 'Tidak ada siswa pada kelas ini.'}</div>`;
             const more = rows.length < allRows.length ? `<div id="assessmentLazySentinel" class="assessment-lazy-sentinel">Menyiapkan siswa berikutnya… <button type="button" class="secondary-action">Muat berikutnya</button></div>` : '';
             el('assessmentCards').innerHTML = markup + more;

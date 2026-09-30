@@ -1,10 +1,11 @@
-const VERSION = 'loader51';
+const VERSION = 'loader54';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
   OFFLINE_URL,
+  '/guru.html',
   '/manifest.webmanifest',
   '/css/theme.css',
   '/css/layout-responsive.css',
@@ -18,7 +19,10 @@ const PRECACHE = [
   '/css/rev45-workflow.css',
   '/css/rev46-experience.css',
   '/css/rev51-responsive.css',
+  '/css/rev54-panels.css',
   '/js/pwa.js',
+  '/js/panel-preboot.js',
+  '/js/panel-start-guru.js',
   '/js/rev46-experience.js',
   '/js/islamic-quotes.js',
   '/assets/school-logo.png',

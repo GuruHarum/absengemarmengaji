@@ -112,7 +112,7 @@
                     return;
                 }
                 errorDiv.classList.add('hidden');
-                window.location.href = 'admin.html';
+                window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
             } else {
                 errorDiv.textContent = 'Email atau password salah.';
                 errorDiv.classList.remove('hidden');
@@ -129,6 +129,6 @@
     </script>
 
 
-<script src="/js/pwa.js?v=20260930-loader51" defer></script>
+<script src="/js/pwa.js?v=20260930-loader54" defer></script>
 </body>
 </html>

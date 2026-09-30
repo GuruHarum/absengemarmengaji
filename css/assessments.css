@@ -15,7 +15,7 @@
     .assessment-summary strong { display: block; font-size: 28px; font-weight: 500; margin-top: 10px; font-variant-numeric: tabular-nums; }
     .assessment-summary > div:first-child strong { font-size: 14px; line-height: 1.8; }
     .assessment-toolbar { display: grid; grid-template-columns: 1fr 2fr auto; gap: 16px; align-items: end; margin-top: 24px; }
-    #assessmentCards { display: grid; gap: 24px; counter-reset: student; }
+    #assessmentCards { display: grid; gap: 24px; }
     .assessment-student { border: 1px solid #d7e2cc; border-radius: 18px; background: #fffef9; overflow: hidden; box-shadow: 0 4px 18px #153d3005; }
     .assessment-student > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; background: #eff4e7; border-bottom: 1px solid #dce5d0; }
     .assessment-student header p { font-size: 9px; color: #7b875e; margin-bottom: 6px; letter-spacing: .07em; }
@@ -54,8 +54,9 @@
     
     .assessment-student { border: 1px solid #a8bcad; border-left: 4px solid #b59a58; border-radius: 12px; box-shadow: 0 4px 12px #153d3010; }
     .assessment-student > header { padding: 10px 16px; background: #174b3c; border-bottom: 2px solid #b59a58; }
-    .assessment-student header > div { position: relative; padding-left: 38px; }
-    .assessment-student header > div::before { counter-increment: student; content: counter(student, decimal-leading-zero); position: absolute; left: 0; top: 50%; transform: translateY(-50%); color: #e4ce93; font-size: 18px; font-variant-numeric: tabular-nums; }
+    .assessment-student .assessment-student-identity { display:flex; align-items:center; gap:12px; min-width:0; flex:1; }
+    .assessment-student .assessment-student-identity > div { min-width:0; }
+    .assessment-card-order { display:inline-flex; align-items:center; justify-content:center; flex:0 0 30px; width:30px; height:30px; border-radius:9px; background:rgba(228,206,147,.10); color:#e4ce93; font-size:17px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
     .assessment-student header p { color: #d7e5d6; margin-bottom: 2px; }
     .assessment-student h3 { color: #fffdf5; font-size: 15px; }
     .assessment-subjects > fieldset { padding: 12px 16px; }
@@ -94,4 +95,17 @@
         .assessment-state { white-space: normal; max-width: 92px; text-align: center; }
         .assessment-student h3 { overflow-wrap: anywhere; }
     }
+}
+
+@media screen {
+  .assessment-subjects > fieldset > legend { display:none !important; }
+  .assessment-save-all-bottom { justify-content:flex-end; padding:12px 16px; background:transparent; border-style:dashed; }
+  .assessment-save-actions { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-left:auto; }
+  @media (max-width: 767px) {
+    .assessment-card-order { flex-basis:28px; width:28px; height:28px; font-size:15px; border-radius:8px; }
+    .assessment-student .assessment-student-identity { gap:10px; }
+    .assessment-save-all-bottom { padding:10px 0 0; border:0; background:transparent; }
+    .assessment-save-actions { width:100%; }
+    .assessment-save-actions .primary-action { flex:1; }
+  }
 }

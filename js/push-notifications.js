@@ -100,16 +100,17 @@ window.GMPush = (() => {
         }
     }
 
-    async function enable() {
-        if (!supported()) return AdminNotice?.notify?.('Push tidak didukung di perangkat ini.', 'info');
-        if (!linkedTeacher()) return AdminNotice?.notify?.('Akun belum tertaut dengan data guru.', 'info');
+    async function enable({ quiet = false } = {}) {
+        if (!supported()) { if (!quiet) AdminNotice?.notify?.('Push tidak didukung di perangkat ini.', 'info'); return null; }
+        if (!linkedTeacher()) { if (!quiet) AdminNotice?.notify?.('Akun belum tertaut dengan data guru.', 'info'); return null; }
         state.syncing = true;
         renderProfile();
         try {
             const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
             if (permission !== 'granted') {
                 renderProfile();
-                return AdminNotice?.notify?.('Izin notifikasi belum diberikan.', 'info');
+                if (!quiet) AdminNotice?.notify?.('Izin notifikasi belum diberikan.', 'info');
+                return null;
             }
             const registration = await getRegistration();
             let subscription = await registration.pushManager.getSubscription();
@@ -122,10 +123,10 @@ window.GMPush = (() => {
             }
             await registerSubscription(subscription);
             state.subscription = subscription;
-            AdminNotice?.notify?.('Notifikasi perangkat aktif.', 'success');
+            if (!quiet) AdminNotice?.notify?.('Notifikasi perangkat aktif.', 'success');
         } catch (error) {
             console.error('Aktivasi Web Push gagal:', error);
-            AdminNotice?.notify?.('Notifikasi perangkat belum dapat diaktifkan.', 'error');
+            if (!quiet) AdminNotice?.notify?.('Notifikasi perangkat belum dapat diaktifkan.', 'error');
         } finally {
             state.syncing = false;
             renderProfile();
@@ -188,9 +189,14 @@ window.GMPush = (() => {
     }
 
     document.addEventListener('panelready', () => {
-        el('profilePushEnable')?.addEventListener('click', enable);
+        el('profilePushEnable')?.addEventListener('click', () => enable());
         el('profilePushDisable')?.addEventListener('click', disable);
-        void syncExisting({ quiet: true });
+        if (window.GM_PUSH_BOOT_PERMISSION === 'granted') {
+            void enable({ quiet: window.GM_PUSH_BOOT_QUIET !== false });
+            window.GM_PUSH_BOOT_PERMISSION = null;
+        } else {
+            void syncExisting({ quiet: true });
+        }
         handleDeepLink();
     });
 

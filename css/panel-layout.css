@@ -1,0 +1,132 @@
+/* Shared screen layout for admin and teacher panels. Keep print rules untouched. */
+@media screen {
+  body.admin-page {
+    --gm-border: #dce5dc;
+    --gm-muted: #64766c;
+    --gm-ink: var(--gm-text);
+    --gm-paper: var(--gm-surface);
+    --panel-space: clamp(14px, 1.8vw, 24px);
+  }
+
+  html[data-gm-theme="dark"] body.admin-page {
+    --gm-border: #33443b;
+    --gm-muted: #a5b7ad;
+  }
+
+  body.admin-page .admin-workspace {
+    width: 100%;
+    padding: var(--panel-space) !important;
+    padding-bottom: max(28px, env(safe-area-inset-bottom)) !important;
+  }
+
+  body.admin-page .admin-workspace > [id^="page-"] {
+    /* The workspace already supplies the page gutter. */
+    padding-inline: 0 !important;
+  }
+
+  body.admin-page #adminMain > header {
+    gap: 12px;
+    padding-inline: var(--panel-space);
+    background: var(--gm-surface) !important;
+    border-color: var(--gm-border);
+    backdrop-filter: none;
+  }
+
+  body.admin-page #adminMain > header > .flex,
+  body.admin-page .admin-header-copy {
+    min-width: 0;
+  }
+
+  body.admin-page #adminHeaderTitle {
+    color: var(--gm-text);
+    font-size: clamp(14px, 1.4vw, 18px);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  body.admin-page .admin-account-actions { flex-shrink: 0; gap: 8px; }
+  body.admin-page .admin-header-copy > p { color: var(--gm-muted); }
+
+  body.admin-page :is(.manage-toolbar, .assessment-controls, .report-panel,
+    .comparison-section, .account-settings, .gm-group-manager) {
+    padding: var(--panel-space);
+    border-radius: 16px;
+    border-color: var(--gm-border);
+    background: var(--gm-surface);
+    box-shadow: 0 2px 8px rgb(20 50 35 / 4%);
+  }
+
+  body.admin-page :is(.section-heading, .profile-section-heading) {
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  body.admin-page :is(.section-heading, .profile-section-heading) h2 {
+    font-size: clamp(17px, 1.6vw, 21px);
+    line-height: 1.4;
+    color: var(--gm-text);
+  }
+
+  body.admin-page :is(.detail-filter-grid, .info-filter-grid,
+    .assessment-context-grid, .gm-analytics-toolbar, .gm-presentation-toolbar) {
+    gap: 14px;
+  }
+
+  body.admin-page :is(.field-label, .detail-filter-grid > *,
+    .assessment-context-grid > *, .gm-group-pagebar > *) { min-width: 0; }
+
+  body.admin-page :is(.field-label, .detail-filter-grid, .assessment-context-grid,
+    #page-absensi, .gm-group-pagebar) :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea) {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    border-radius: 10px;
+    line-height: 1.5;
+  }
+
+  body.admin-page :is(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--gm-accent);
+    outline-offset: 3px;
+  }
+
+  body.admin-page :is(.assessment-work-toolbar, .report-actions,
+    .gm-account-link-tools, .assessment-save-all-bottom) {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  body.admin-page :is(.manage-tabs, .report-submenu) { gap: 8px; }
+  body.admin-page :is(.manage-tabs, .report-submenu) button { min-height: 42px; }
+  body.admin-page :is(.gm-table-wrap, .overflow-x-auto) { overscroll-behavior-x: contain; }
+  body.admin-page :is(.comparison-table, .assignment-table) :is(th, td) { line-height: 1.55; }
+
+  @media (min-width: 768px) and (max-width: 1180px) {
+    body.admin-page :is(.gm-analytics-toolbar, .gm-presentation-toolbar, .gm-group-pagebar) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    body.admin-page .gm-presentation-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 767px) {
+    body.admin-page :is(.gm-analytics-toolbar, .gm-presentation-toolbar,
+      .gm-group-pagebar, .gm-analytics-grid, .gm-presentation-charts) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    body.admin-page :is(.gm-analytics-kpis, .gm-presentation-kpis) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    body.admin-page .assessment-context-grid > button { margin-top: 0; }
+    body.admin-page .admin-welcome { padding: 20px; gap: 12px; }
+    body.admin-page :is(.field-label, .detail-filter-grid, .assessment-context-grid,
+      #page-absensi, .gm-group-pagebar) :is(input, select, textarea) { font-size: 16px; }
+  }
+
+  @media (max-width: 420px) {
+    body.admin-page #adminMain > header { flex-wrap: wrap; }
+    body.admin-page .admin-account-actions { margin-left: auto; max-width: 100%; flex-wrap: wrap; }
+    body.admin-page :is(.gm-analytics-kpis, .gm-presentation-kpis) { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page .section-heading > :is(.primary-action, .secondary-action) { width: 100%; }
+  }
+}
