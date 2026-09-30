@@ -1,0 +1,264 @@
+/* REV51 — responsive polish across admin pages */
+
+/* Prevent content from overflowing its cards/panels */
+body.admin-page main,
+body.admin-page main > *,
+body.admin-page [id^="page-"],
+body.admin-page .gm-panel-card,
+body.admin-page .report-panel,
+body.admin-page .comparison-section,
+body.admin-page .manage-toolbar,
+body.admin-page .account-settings,
+body.admin-page .target-cards,
+body.admin-page .report-workspace,
+body.admin-page .report-selection-card,
+body.admin-page .report-preview-panel,
+body.admin-page .assessment-shell,
+body.admin-page .learning-group-shell,
+body.admin-page .gm-presentation-card {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+body.admin-page img,
+body.admin-page canvas,
+body.admin-page svg { max-width: 100%; }
+
+body.admin-page input,
+body.admin-page select,
+body.admin-page textarea,
+body.admin-page button { max-width: 100%; }
+
+/* Manage data gets an intentionally designed mobile card layout. */
+#manageDirectoryTable table { width:100%; }
+#manageDirectoryTable .gm-manage-class-row td {
+  background: linear-gradient(90deg,#edf7f0,#f6fbf7);
+  color:#28634f;
+  font-weight:800;
+  letter-spacing:.01em;
+}
+#manageDirectoryTable .gm-manage-actions { white-space:normal!important; }
+#manageDirectoryTable .gm-manage-actions button {
+  min-height:36px;
+  padding:.45rem .72rem;
+  border-radius:10px;
+  margin:0!important;
+  transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+#manageDirectoryTable .gm-manage-actions button:active { transform:scale(.98); }
+
+@media (max-width: 700px) {
+  #manageDirectoryTable { overflow:visible!important; }
+  #manageDirectoryTable table.gm-table-card-mode tbody {
+    display:flex!important;
+    flex-direction:column;
+    gap:12px!important;
+  }
+  #manageDirectoryTable table.gm-table-card-mode tr:not(.gm-manage-class-row) {
+    border:1px solid #dfe8e2!important;
+    border-radius:16px!important;
+    background:#fff!important;
+    box-shadow:0 7px 20px rgba(23,55,43,.055)!important;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-class-row {
+    border:0!important;
+    border-radius:12px!important;
+    box-shadow:none!important;
+    margin:4px 0 -3px;
+    overflow:hidden;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-class-row td {
+    display:block!important;
+    padding:10px 13px!important;
+    text-align:left!important;
+    border:1px solid #dcebe1!important;
+    border-radius:12px!important;
+    font-size:.77rem!important;
+    line-height:1.35;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-class-row td::before { display:none!important; }
+
+  #manageDirectoryTable table.gm-table-card-mode tr:not(.gm-manage-class-row) td {
+    grid-template-columns:minmax(82px,29%) minmax(0,1fr)!important;
+    gap:12px!important;
+    align-items:center!important;
+    padding:10px 13px!important;
+    min-height:42px;
+  }
+  #manageDirectoryTable table.gm-table-card-mode tr:not(.gm-manage-class-row) td::before {
+    font-size:.64rem!important;
+    line-height:1.25;
+    color:#789087!important;
+  }
+  #manageDirectoryTable table.gm-table-card-mode tr:not(.gm-manage-class-row) td:nth-child(2) {
+    font-size:.92rem;
+    line-height:1.4;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-actions {
+    display:flex!important;
+    grid-template-columns:none!important;
+    gap:8px!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    flex-wrap:wrap;
+    background:#fafcfb;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-actions::before {
+    margin-right:auto;
+    align-self:center;
+  }
+  #manageDirectoryTable .gm-manage-actions button {
+    flex:0 1 auto;
+    min-width:78px;
+    font-size:.72rem!important;
+    border:1px solid #dfe7e2;
+    background:#fff;
+  }
+  #manageDirectoryTable .gm-manage-actions button.text-red-600 {
+    color:#b42318!important;
+    border-color:#f3d1cd;
+    background:#fff8f7;
+  }
+  #manageDirectoryPagination {
+    justify-content:space-between!important;
+    gap:8px!important;
+    padding:12px!important;
+  }
+  #manageDirectoryPagination button { min-width:0; flex:1; }
+  #manageDirectoryPagination #managePageInfo { flex:0 0 auto; white-space:nowrap; }
+}
+
+@media (max-width: 420px) {
+  #manageDirectoryTable table.gm-table-card-mode tr:not(.gm-manage-class-row) td {
+    grid-template-columns:1fr!important;
+    gap:4px!important;
+    align-items:start!important;
+  }
+  #manageDirectoryTable table.gm-table-card-mode tr:not(.gm-manage-class-row) td::before {
+    display:block!important;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-actions {
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+  #manageDirectoryTable table.gm-table-card-mode .gm-manage-actions::before {
+    grid-column:1/-1;
+  }
+  #manageDirectoryTable .gm-manage-actions button { width:100%; }
+}
+
+/* Global small-screen consistency */
+@media (max-width: 767px) {
+  body.admin-page main > header {
+    gap:10px;
+    min-width:0;
+  }
+  body.admin-page main > header > * { min-width:0; }
+  body.admin-page main > header h1,
+  body.admin-page main > header h2 { overflow-wrap:anywhere; }
+
+  body.admin-page [id^="page-"] {
+    padding-left:clamp(10px,3.3vw,16px)!important;
+    padding-right:clamp(10px,3.3vw,16px)!important;
+  }
+
+  body.admin-page .section-heading,
+  body.admin-page .gm-section-heading {
+    gap:12px;
+    align-items:flex-start;
+  }
+  body.admin-page .section-heading > *,
+  body.admin-page .gm-section-heading > * { min-width:0; }
+  body.admin-page .section-heading h2,
+  body.admin-page .section-heading h3,
+  body.admin-page .gm-section-heading h2,
+  body.admin-page .gm-section-heading h3 { overflow-wrap:anywhere; }
+
+  body.admin-page .detail-filter-grid,
+  body.admin-page .report-grid,
+  body.admin-page .info-filter-grid,
+  body.admin-page .gm-filter-row {
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;
+  }
+
+  body.admin-page .manage-tabs,
+  body.admin-page .report-submenu {
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    scrollbar-width:none;
+    flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
+    padding-bottom:2px;
+  }
+  body.admin-page .manage-tabs::-webkit-scrollbar,
+  body.admin-page .report-submenu::-webkit-scrollbar { display:none; }
+  body.admin-page .manage-tabs button,
+  body.admin-page .report-submenu button { flex:0 0 auto; white-space:nowrap; }
+
+  body.admin-page .primary-action,
+  body.admin-page .secondary-action { min-height:42px; }
+
+  body.admin-page .comparison-section,
+  body.admin-page .gm-panel-card,
+  body.admin-page .report-panel,
+  body.admin-page .manage-toolbar,
+  body.admin-page .account-settings {
+    border-radius:16px!important;
+  }
+
+  /* Keep chart/table pages readable: tables may scroll rather than crush columns. */
+  body.admin-page .comparison-table:not(.gm-table-card-mode),
+  body.admin-page table.gm-table-scroll-mode { font-size:.78rem; }
+
+  body.admin-page dialog,
+  body.admin-page .admin-confirm-card,
+  body.admin-page .gm-modal-card,
+  body.admin-page .modal-content {
+    width:min(94vw,680px)!important;
+    max-height:min(88dvh,760px)!important;
+    overflow:auto!important;
+    margin:auto!important;
+  }
+
+  body.admin-page .gm-presentation-card,
+  body.admin-page .gm-presentation-slide,
+  body.admin-page .gm-presentation-chart-card { min-width:0!important; }
+  body.admin-page .gm-presentation-chart-card canvas { width:100%!important; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  body.admin-page { font-size:14px; }
+  body.admin-page main > header { padding-inline:10px!important; }
+  body.admin-page [id^="page-"] { padding-inline:9px!important; }
+  body.admin-page .primary-action,
+  body.admin-page .secondary-action { padding-inline:10px!important; font-size:.75rem!important; }
+}
+
+/* Tablet portrait/landscape: use available width without making cards oversized */
+@media (min-width:768px) and (max-width:1180px) {
+  body.admin-page .detail-filter-grid,
+  body.admin-page .report-grid,
+  body.admin-page .info-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+  body.admin-page .gm-presentation-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; }
+}
+
+/* Landscape phones/tablets with little vertical space */
+@media (max-height:560px) and (orientation:landscape) {
+  body.admin-page main > header { padding-block:8px!important; }
+  body.admin-page [id^="page-"] { padding-top:10px!important; padding-bottom:10px!important; }
+  body.admin-page .gm-mobile-action-bar { min-height:44px!important; }
+}
+
+@supports (padding:max(0px)) {
+  @media (max-width:767px) {
+    body.admin-page main > header { padding-top:max(12px,env(safe-area-inset-top))!important; }
+    body.admin-page [id^="page-"] {
+      padding-left:max(10px,env(safe-area-inset-left))!important;
+      padding-right:max(10px,env(safe-area-inset-right))!important;
+      padding-bottom:max(16px,env(safe-area-inset-bottom))!important;
+    }
+  }
+}

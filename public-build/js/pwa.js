@@ -10,7 +10,7 @@
     ensureFootnote();
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'loader50';
+    const BUILD = 'loader51';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;

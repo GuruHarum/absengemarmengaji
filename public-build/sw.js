@@ -1,4 +1,4 @@
-const VERSION = 'loader50';
+const VERSION = 'loader51';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -17,6 +17,7 @@ const PRECACHE = [
   '/css/rev37-visual-fixes.css',
   '/css/rev45-workflow.css',
   '/css/rev46-experience.css',
+  '/css/rev51-responsive.css',
   '/js/pwa.js',
   '/js/rev46-experience.js',
   '/js/islamic-quotes.js',

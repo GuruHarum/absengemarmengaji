@@ -53,7 +53,8 @@
     <link rel="stylesheet" href="css/visual-stage8.css?v=20260929-loader37">
     <link rel="stylesheet" href="css/rev37-visual-fixes.css?v=20260929-rev37">
     <link rel="stylesheet" href="css/rev45-workflow.css?v=20260929-rev45">
-    <link rel="stylesheet" href="css/rev46-experience.css?v=20260930-rev50">
+    <link rel="stylesheet" href="css/rev46-experience.css?v=20260930-rev51">
+    <link rel="stylesheet" href="css/rev51-responsive.css?v=20260930-rev51">
 </head>
 <body class="admin-page sidebar-collapsed flex min-h-screen overflow-x-hidden">
 
@@ -356,6 +357,7 @@
                 </div>
                 <div id="manageIdentifierActions" class="mt-4 flex flex-wrap items-center gap-3" hidden>
                     <button type="button" id="manageCheckIdentifiersBtn" class="secondary-action">Cek NIS/NISN Kosong</button>
+                    <span class="text-xs text-slate-500">Daftar seluruh siswa dengan NIS, NISN, atau keduanya belum terisi.</span>
                 </div>
                 <section id="manageIdentifierAudit" class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4" hidden aria-live="polite">
                     <div class="flex flex-wrap items-center justify-between gap-3"><h3 class="font-semibold text-slate-800">Hasil pemeriksaan NIS/NISN</h3><button type="button" id="manageCopyMissingBtn" class="secondary-action" hidden>Salin daftar nama</button></div>
@@ -494,6 +496,7 @@
     </section>
     <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Cetak rapor" hidden>
         <h3>Download Rapor</h3>
+        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Hasil tetap satu PDF dengan satu halaman per siswa di dalam ZIP.</p>
         <div class="report-grid report-download-grid">
             <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
             <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
@@ -511,6 +514,7 @@
             <p id="reportPdfProgressDetail">Menunggu proses dimulai.</p>
         </div>
         <p class="report-direct-print-note">Cetak Langsung membuka PDF final pada dialog cetak browser/printer tanpa mengubah isi rapor.</p>
+        <p class="report-paper-note">Latar PDF transparan, termasuk sel tabel. Saat dicetak di kertas berwarna, bagian yang tidak bertinta tetap mengikuti warna kertas. Coba satu lembar terlebih dahulu sesuai pengaturan printer.</p>
     </section>
 </div>
     <div id="page-identitas" class="hidden space-y-6">
@@ -796,7 +800,7 @@
     
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260930-loader50"></script>
+    <script src="js/panel-start.js?v=20260930-loader51"></script>
     <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
     
 
@@ -807,6 +811,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260930-loader50" defer></script>
+<script src="/js/pwa.js?v=20260930-loader51" defer></script>
 </body>
 </html>
