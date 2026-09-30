@@ -1,16 +1,7 @@
 (() => {
-    function ensureFootnote() {
-        if (document.querySelector('.gm-app-footnote')) return;
-        const foot = document.createElement('footer');
-        foot.className = 'gm-app-footnote';
-        foot.innerHTML = 'aplikasi dibuat oleh <strong>Geys Amadda Dien</strong>';
-        const target = document.querySelector('.admin-workspace') || document.querySelector('main') || document.body;
-        target?.append?.(foot);
-    }
-    ensureFootnote();
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'loader54';
+    const BUILD = 'footer2';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;

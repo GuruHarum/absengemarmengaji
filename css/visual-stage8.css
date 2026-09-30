@@ -248,7 +248,7 @@ body.login-page{
     radial-gradient(circle at 90% 90%,rgba(33,100,84,.10),transparent 28%),
     linear-gradient(135deg,#f7f9f5,#eef4ef)!important;
 }
-body.login-page .login-card{border:1px solid #d9e5dc!important;border-radius:24px!important;box-shadow:0 24px 70px rgba(20,58,46,.13)!important;background:#fffefb!important}
+body.login-page .login-card{border:1px solid #d9e5dc!important;border-radius:24px!important;box-shadow:0 20px 60px rgba(20,58,46,.10),0 2px 8px rgba(20,58,46,.04)!important;background:#fff!important;overflow:hidden}
 body.login-page .login-card>div:first-child{
   background:
     radial-gradient(circle at 80% 10%,rgba(255,255,255,.09),transparent 30%),
@@ -257,8 +257,12 @@ body.login-page .login-card>div:first-child{
 }
 body.login-page .login-card>div:first-child>div{border:3px solid rgba(255,255,255,.92);padding:0!important;overflow:hidden;box-shadow:0 0 0 1px rgba(201,170,106,.30),0 7px 20px rgba(8,34,27,.16)!important}
 body.login-page .login-card h3{font-weight:650;letter-spacing:-.02em}
-body.login-page .login-card form{padding:26px!important}
-body.login-page :is(#username,#password){border-color:#d5e1d8!important;background:#fffefb!important;border-radius:11px!important;box-shadow:none!important}
+body.login-page .login-card form{padding:28px 28px 24px!important;background:#fff}
+body.login-page .login-card form label{color:#344d43;line-height:1.5}
+body.login-page :is(#username,#password){min-height:46px;border-color:#d5e1d8!important;background:#f7faf8!important;border-radius:11px!important;box-shadow:none!important;transition:background-color .2s,border-color .2s,box-shadow .2s}
+body.login-page :is(#username,#password):focus{background:#fff!important}
+body.login-page .login-card button[type="submit"]{min-height:46px}
+body.login-page .login-card > .site-footer{width:100%;margin:0;padding:18px 22px 20px;background:#f7faf8;border-top:1px solid #e4ebe6;font-size:10px;line-height:1.8}
 body.login-page :is(#username,#password):focus{border-color:#87b09d!important;box-shadow:0 0 0 3px rgba(33,100,84,.08)!important}
 body.login-page button[type="submit"]{background:linear-gradient(135deg,#216454,#1a5648)!important;border-radius:11px!important;box-shadow:0 7px 18px rgba(33,100,84,.14)!important}
 body.login-page a{color:#5d7569!important}

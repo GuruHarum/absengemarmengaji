@@ -11,6 +11,7 @@
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 10%,#edf5ef 0,#faf9f4 42%,#faf9f4 100%);color:#203e35;font-family:Arial,sans-serif}.offline-card{width:min(430px,100%);padding:30px 26px;text-align:center;border:1px solid #dce6df;border-radius:26px;background:rgba(255,255,255,.9);box-shadow:0 18px 55px rgba(25,68,56,.11)}img{width:82px;height:82px;object-fit:contain;margin-bottom:12px}h1{font-size:22px;margin:0 0 8px}p{margin:0 auto 20px;max-width:330px;color:#60736c;line-height:1.65;font-size:14px}.offline-state{display:inline-flex;align-items:center;gap:7px;margin-bottom:18px;padding:6px 10px;border-radius:999px;background:#fff5d8;color:#755b10;font-size:11px;font-weight:700}.offline-state:before{content:"";width:7px;height:7px;border-radius:50%;background:#d59d1c}button{min-height:42px;padding:0 18px;border:0;border-radius:12px;background:#216454;color:#fff;font:700 13px Arial,sans-serif;cursor:pointer}small{display:block;margin-top:15px;color:#89968f;font-size:11px}
 </style>
+    <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
 </head>
 <body class="offline-page">
 <main class="offline-card">
@@ -20,6 +21,10 @@
 <p>Gemar Mengaji membutuhkan koneksi untuk memuat data terbaru dan menyimpan perubahan.</p>
 <button id="retry" type="button">Coba lagi</button>
 <small>Halaman akan mencoba tersambung kembali saat internet tersedia.</small>
+<footer class="site-footer" aria-label="Hak cipta dan pengelola situs">
+    <p>&copy; 2026 SDIT Harapan Umat. All rights reserved.</p>
+    <p>Web Design &amp; Management By <span class="site-footer-credit">Geys Amadda Dien.</span></p>
+</footer>
 </main>
 <script>
 const retry=document.getElementById('retry'),state=document.getElementById('offlineState');

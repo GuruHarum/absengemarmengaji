@@ -1,4 +1,4 @@
-const VERSION = 'loader54';
+const VERSION = 'footer2';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -14,6 +14,7 @@ const PRECACHE = [
   '/css/ui-polish-20260928.css',
   '/css/ux-stage5.css',
   '/css/pwa.css',
+  '/css/site-footer.css',
   '/css/visual-stage8.css',
   '/css/rev37-visual-fixes.css',
   '/css/rev45-workflow.css',
