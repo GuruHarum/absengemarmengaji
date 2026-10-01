@@ -1,7 +1,7 @@
 (() => {
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'footer2';
+    const BUILD = 'log56';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;
@@ -47,7 +47,7 @@
     notice.setAttribute('role', 'status');
     notice.setAttribute('aria-live', 'polite');
 
-    tools.append(statusButton, installButton, connection, notice);
+    tools.append(installButton, connection, notice);
     document.body.append(tools);
 
     // REV52: pada aplikasi yang sudah terpasang (standalone/PWA), kontrol PWA

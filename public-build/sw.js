@@ -1,4 +1,4 @@
-const VERSION = 'footer2';
+const VERSION = 'log56';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -14,6 +14,8 @@ const PRECACHE = [
   '/css/ui-polish-20260928.css',
   '/css/ux-stage5.css',
   '/css/pwa.css',
+  '/css/page-refinements.css',
+  '/js/page-refinements.js',
   '/css/site-footer.css',
   '/css/visual-stage8.css',
   '/css/rev37-visual-fixes.css',
@@ -139,6 +141,10 @@ async function staleWhileRevalidate(request, url) {
     if (response.ok && response.type === 'basic') await cache.put(key, response.clone());
     return response;
   }).catch(() => null);
+  // Check current application code before falling back to an offline copy.
+  if (['script', 'style'].includes(request.destination)) {
+    return (await network) || cached || (await caches.match(key)) || Response.error();
+  }
   if (cached) {
     void network;
     return cached;

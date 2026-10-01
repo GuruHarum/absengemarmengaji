@@ -113,14 +113,20 @@ async function getAttendance(filters = {}) {
     return all;
 }
 async function getMaintenanceMode() {
-    const { data, error } = await supabase
-        .from('maintenance_settings')
-        .select('enabled')
-        .eq('id', true)
-        .maybeSingle();
-    if (error)
-        throw error;
-    return data?.enabled === true;
+    // Public status must not depend on an old login session or cached response.
+    const url = new URL('/rest/v1/maintenance_settings', SUPABASE_URL);
+    url.searchParams.set('select', 'enabled');
+    url.searchParams.set('id', 'eq.true');
+    const response = await fetch(url.href, {
+        cache: 'no-store',
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    });
+    if (!response.ok) throw new Error('Gagal memeriksa status maintenance (' + response.status + ')');
+    const rows = await response.json();
+    if (!Array.isArray(rows) || rows.length !== 1 || typeof rows[0].enabled !== 'boolean') {
+        throw new Error('Status maintenance tidak tersedia');
+    }
+    return rows[0].enabled;
 }
 async function setMaintenanceMode(enabled) {
     const { data, error } = await supabase
@@ -416,6 +422,7 @@ if (!window.__gemarMengajiRealtimeChannel) {
     const handleRealtimeChange = async (payload) => {
         const table = payload.table;
         if (table === 'maintenance_settings') {
+            if (payload.new?.id !== true && payload.old?.id !== true) return;
             const enabled = payload.eventType !== 'DELETE' && payload.new?.enabled === true;
             if (typeof window.handleMaintenanceRealtime === 'function') {
                 window.handleMaintenanceRealtime(enabled);
@@ -453,7 +460,9 @@ if (!window.__gemarMengajiRealtimeChannel) {
                     currentAttendance[index] = changedRecord;
                 syncAttendanceIndex(changedRecord, previousRecord);
             }
-            if (typeof renderAdminData === 'function') {
+            if (typeof loadAttendanceLog === 'function' && document.getElementById('attendanceLogDate')) {
+                await loadAttendanceLog();
+            } else if (typeof renderAdminData === 'function') {
                 if (typeof filteredAttendanceData !== 'undefined') {
                     filteredAttendanceData = typeof getFilteredAttendanceRecords === 'function'
                         ? getFilteredAttendanceRecords(currentAttendance) : [...currentAttendance];

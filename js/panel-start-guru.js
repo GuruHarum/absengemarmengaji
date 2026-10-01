@@ -31,7 +31,7 @@
         await Promise.all(modules.map(source => new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.async = false;
-            script.src = versioned.has(source) ? `${source}?v=20260930-rev54` : source;
+            script.src = versioned.has(source) ? `${source}?v=20261001-refine1` : source;
             script.onload = resolve;
             script.onerror = () => reject(new Error(`Gagal memuat ${source}`));
             document.body.appendChild(script);

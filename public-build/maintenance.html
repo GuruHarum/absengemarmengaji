@@ -41,7 +41,7 @@
 </footer>
     </main>
     <script src="js/config.js"></script>
-    <script src="js/database.js"></script>
+    <script src="js/database.js?v=20261001-refine1"></script>
     <script>
         supabase.from('school_profile').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
             if (!data) return;
@@ -50,16 +50,23 @@
             if (title && data.name) title.textContent = data.name;
         });
 
-        window.handleMaintenanceRealtime = function(enabled) {
-            if (!enabled) window.location.replace('index.html');
-        };
-
-        getMaintenanceMode()
-            .then(enabled => { if (!enabled) window.location.replace('index.html'); })
-            .catch(error => console.error('Gagal memeriksa status maintenance:', error));
+        let checkingMaintenance = false;
+        async function checkMaintenanceStatus() {
+            if (checkingMaintenance) return;
+            checkingMaintenance = true;
+            try { if (!(await getMaintenanceMode())) window.location.replace('index.html'); }
+            catch (error) { console.warn('Status maintenance belum dapat diperiksa:', error); }
+            finally { checkingMaintenance = false; }
+        }
+        window.handleMaintenanceRealtime = checkMaintenanceStatus;
+        checkMaintenanceStatus();
+        setInterval(checkMaintenanceStatus, 15000);
+        window.addEventListener('online', checkMaintenanceStatus);
+        window.addEventListener('pageshow', checkMaintenanceStatus);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) checkMaintenanceStatus(); });
     </script>
     <script src="js/islamic-quotes.js?v=20260929-quotes28"></script>
     <script src="js/maintenance.js?v=20260929-quotes28"></script>
-<script src="/js/pwa.js?v=20260930-footer1" defer></script>
+<script src="/js/pwa.js?v=20261001-refine1" defer></script>
 </body>
 </html>

@@ -52,8 +52,8 @@ assert.match(assessments, /\$\{displayOrder\}<\/span>/, 'header kartu harus mema
 assert.ok(!assessments.includes('<legend><span>${displayOrder}</span> Tahsin</legend>'), 'legend bernomor Tahsin harus dihapus');
 assert.ok(!assessments.includes('<legend><span>${displayOrder}</span> Tahfidz</legend>'), 'legend bernomor Tahfidz harus dihapus');
 
-assert.match(sw, /loader54/, 'service worker harus loader54');
+assert.equal(sw.match(/const VERSION = '([^']+)'/)[1], read('js/pwa.js').match(/const BUILD = '([^']+)'/)[1], 'versi service worker dan aplikasi harus sama');
 assert.match(sw, /'\/guru\.html'/, 'guru.html harus ikut shell PWA');
 assert.match(build, /'guru\.html'/, 'build harus menyertakan guru.html');
-assert.match(build, /loader54/, 'build harus ditandai loader54');
+assert.ok(build.includes('bundlePanelCss(out)'), 'build harus menyiapkan CSS panel');
 console.log('REV53 split panels / push onboarding / assessment order: OK');

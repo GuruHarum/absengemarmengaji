@@ -7,13 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <script>(function(){try{var t=localStorage.getItem('gm_theme_v46')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.gmTheme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){}})();</script>
     <title>Dashboard Admin - SDIT Harapan Umat Karawang</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/responsive.css">
 
-    
+
     <style>
         body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
         .sidebar-link.active { background-color: #1e3a8a; color: white; }
@@ -23,7 +23,7 @@
             animation: shimmer 1.5s infinite;
         }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        
+
         .custom-scrollbar::-webkit-scrollbar {
             height: 8px;
         }
@@ -44,7 +44,8 @@
     <link rel="stylesheet" href="css/assessments.css?v=20260930-rev54">
     <link rel="stylesheet" href="css/admin-polish.css?v=20260928-filter-id-3">
 <link rel="stylesheet" href="css/report-cards.css">
-<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="css/panel-4852cd832a15.css">
+<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"><meta name="theme-color" content="#216454"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Gemar Mengaji"><link rel="stylesheet" href="css/panel-ad4a5d5c8110.css">
+<script src="js/page-refinements.js?v=20261001-1" defer></script>
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="coordinator">
 
@@ -114,15 +115,15 @@
 <button id="menu-dashboard" type="button" onclick="switchPage('dashboard')" class="admin-nav-item bg-indigo-600 text-white" aria-label="Dashboard" title="Dashboard" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg><span class="sidebar-text">Dashboard</span></button>
 <p class="sidebar-section-label sidebar-text">KEHADIRAN &amp; LAPORAN</p>
 <button id="menu-absensi" type="button" onclick="switchPage('absensi')" class="admin-nav-item bg-indigo-600 text-white" aria-label="Data Absensi" title="Data Absensi" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v15H4z M8 3v4 M16 3v4 M4 10h16 M8 14h2 M14 14h2 M8 17h2"/></svg><span class="sidebar-text">Data Absensi</span></button>
-<button id="menu-infografik" type="button" onclick="switchPage('infografik')" class="admin-nav-item" aria-label="Infografik Absensi" title="Infografik Absensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16 M7 16v-5 M12 16V4 M17 16V8"/></svg><span class="sidebar-text">Infografik Absensi</span></button>
+
     <p class="sidebar-section-label sidebar-text">PEMBELAJARAN &amp; DATA</p>
 <button id="menu-kelola" type="button" onclick="switchPage('kelola')" class="admin-nav-item" aria-label="Kelola Data" title="Kelola Data"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 4 16 4 16 0V5M4 12v7c0 4 16 4 16 0v-7"/></svg><span class="sidebar-text">Kelola Data</span></button>
 <button id="menu-kelompok-tahsin" type="button" onclick="switchPage('kelompok-tahsin')" class="admin-nav-item" aria-label="Kelola Tahsin" title="Kelola Tahsin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3zM12 6v15M6 9h3M15 9h3M6 13h3M15 13h3"/></svg><span class="sidebar-text">Kelola Tahsin</span></button>
 <button id="menu-kelompok" type="button" onclick="switchPage('kelompok')" class="admin-nav-item" title="Kelola Tahfidz" aria-label="Kelola Tahfidz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3zM12 6v15M6 9h3M15 9h3M6 13h3M15 13h3"/></svg><span class="sidebar-text">Kelola Tahfidz</span></button>
 <button id="menu-penilaian" type="button" onclick="switchPage('penilaian')" class="admin-nav-item" aria-label="Penilaian Periodik" title="Penilaian Periodik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 4H5v17h14V4h-3 M8 3h8v4H8z M8 12l2 2 5-5 M8 18h7"/></svg><span class="sidebar-text">Penilaian Periodik</span></button>
 <button id="menu-rapor" hidden type="button" onclick="switchPage('rapor')" class="admin-nav-item" aria-label="Rapor Siswa" title="Rapor Siswa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8M8 16h8"/></svg><span class="sidebar-text">Rapor Siswa</span></button>
-<button id="menu-laporan" hidden type="button" onclick="switchPage('laporan')" class="admin-nav-item" aria-label="Laporan" title="Laporan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20h16M6 16V8M12 16V4M18 16v-6"/></svg><span class="sidebar-text">Laporan</span></button>
-<button id="menu-analitik" hidden type="button" onclick="switchPage('analitik')" class="admin-nav-item" aria-label="Analitik Periode" title="Analitik Periode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/><path d="m4 7 5-3 6 4 5-3"/></svg><span class="sidebar-text">Analitik Periode</span></button>
+
+
 <button id="menu-presentasi" hidden type="button" onclick="switchPage('presentasi')" class="admin-nav-item" aria-label="Laman Presentasi" title="Laman Presentasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 12l3-3 2 2 4-5"/></svg><span class="sidebar-text">Presentasi</span></button>
 <button id="menu-arsip" hidden type="button" onclick="switchPage('arsip')" class="admin-nav-item" aria-label="Arsip Rapor" title="Arsip Rapor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6"/></svg><span class="sidebar-text">Arsip Rapor</span></button>
     <p class="sidebar-section-label sidebar-text">PENGATURAN &amp; AKSES</p>
@@ -181,9 +182,9 @@
         <div id="dashboardHeaderQuote" class="dashboard-header-quote" hidden><span class="dashboard-quote-label">RENUNGAN HARI INI</span><blockquote id="dashboardQuoteText"></blockquote><cite id="dashboardQuoteDalil"></cite></div>
         <div class="admin-welcome-emblem" aria-hidden="true"><img src="assets/school-logo.png" alt="" width="64" height="64"><svg class="admin-welcome-page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M4 20h16 M6 20v-8h12v8 M5 12c0-4 5-5 7-9 2 4 7 5 7 9 M10 20v-5h4v5"/></svg></div>
     </section>
-    
+
     <div id="page-absensi" class="block space-y-6">
-        
+
         <section class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-blue-600 rounded-full inline-block"></span>
@@ -218,14 +219,14 @@
                     </select>
                 </div>
             </div>
-            
+
             <div class="mt-4" id="filterClassNameContainer">
                 <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Nama Ruang Kelas</label>
                 <select id="filterClassName" class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
                     <option value="">Semua Nama Kelas</option>
                 </select>
             </div>
-            
+
             <button id="filterBtn" class="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-6 py-2.5 rounded-xl transition-all shadow-md shadow-blue-500/10 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" /></svg>
                 Terapkan Filter Data
@@ -242,7 +243,7 @@
                         <p>Bulan: <span id="metaBulan" class="text-slate-800 font-semibold">-</span></p>
                     </div>
                 </div>
-                
+
                 <div class="flex items-center gap-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-4 rounded-2xl shadow-sm self-start lg:self-center">
                     <div class="p-3 bg-blue-600 text-white rounded-xl shadow-md">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -278,15 +279,12 @@
             <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <span class="w-1.5 h-5 bg-indigo-600 rounded-full inline-block"></span>
                 Log Riwayat Absensi
-            </h3>
+            </h3><label class="field-label attendance-log-date">Tanggal log<input id="attendanceLogDate" type="date"></label><p id="attendanceLogStatus" role="status" class="assessment-help"></p>
             <div class="overflow-x-auto rounded-xl border border-slate-200">
-                <table class="w-full text-sm text-left border-collapse">
+                <table id="attendanceLogTable" data-table-layout="scroll" class="w-full text-sm text-left border-collapse">
                     <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold tracking-wider border-b border-slate-200">
                         <tr>
-                            <th class="px-6 py-3.5">Tanggal</th>
-                            <th class="px-6 py-3.5">Guru</th>
-                            <th class="px-6 py-3.5">Kelas</th>
-                            <th class="px-6 py-3.5">Siswa</th>
+                            <th scope="col" class="log-student">Siswa</th><th scope="col">Kelas</th>
                             <th class="px-6 py-3.5">Status</th>
                             <th class="px-6 py-3.5">Catatan</th>
                         </tr>
@@ -311,7 +309,7 @@
                 </div>
             </div>
         </section>
-        
+
     </div>
 
 
@@ -394,39 +392,10 @@
 
     </div>
 
-    <div id="page-infografik" class="hidden space-y-6">
-        <section class="rounded-2xl bg-gradient-to-r from-indigo-700 via-blue-700 to-cyan-600 p-7 text-white shadow-lg">
-            <p class="text-xs font-bold uppercase tracking-[.18em] text-blue-100">Analitik Kehadiran</p>
-            <h2 class="mt-2 text-2xl font-extrabold">Infografik Absensi Siswa</h2>
-            <p class="mt-2 text-sm text-blue-100">Pilih filter terlebih dahulu untuk melihat ringkasan dan perbandingan kehadiran.</p>
-        </section>
-        <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div class="info-filter-grid">
-                <label class="field-label" for="infoYear">Tahun<select id="infoYear" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Pilih tahun</option></select></label>
-                <label class="field-label" for="infoMonth">Bulan<select multiple size="4" aria-describedby="infoMonthHelp" id="infoMonth" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option><option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option><option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select><span id="infoMonthHelp">Pilih satu atau beberapa bulan (Ctrl/Command + klik).</span></label>
-                <label class="field-label" for="infoTeacher">Guru pengajar<select id="infoTeacher" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua guru</option></select></label>
-                <label class="field-label" for="infoLevel">Tingkat kelas<select id="infoLevel" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua tingkat</option></select></label>
-                <label class="field-label" for="infoClass">Nama kelas<select id="infoClass" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"><option value="">Semua nama kelas</option></select></label>
-            </div>
-            <button id="showInfographicBtn" class="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700">Tampilkan Infografik</button>
-        </section>
-        <div id="infoEmptyState" class="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">Terapkan filter untuk melihat infografik kehadiran.</div>
-        <div id="infoContent" class="hidden space-y-6">
-            <section class="insight-summary"><div><span>TINGKAT KEHADIRAN</span><strong id="infoRate">-</strong><p id="infoScope"></p></div><div><span>JUMLAH SISWA</span><strong id="infoStudents">0</strong></div><div><span>ABSENSI TERCATAT</span><strong id="infoRecorded">0</strong></div><div><span>TIDAK MENGISI</span><strong id="infoMissing">0</strong></div></section>
-            <p class="insight-method">Kehadiran = Hadir ÷ (jumlah siswa × jumlah hari yang sudah berjalan) × 100%. Sabtu dan Minggu dihitung. Tidak mengisi termasuk Alfa; tanggal mendatang tidak dihitung. Gabungan bulan memakai total hari, bukan rata-rata persentase bulanan.</p>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-5"><p class="text-xs font-bold text-emerald-700">HADIR</p><p id="infoHadir" class="mt-2 text-3xl font-black text-emerald-800">0</p></div>
-                <div class="rounded-2xl bg-amber-50 border border-amber-100 p-5"><p class="text-xs font-bold text-amber-700">SAKIT</p><p id="infoSakit" class="mt-2 text-3xl font-black text-amber-800">0</p></div>
-                <div class="rounded-2xl bg-sky-50 border border-sky-100 p-5"><p class="text-xs font-bold text-sky-700">IZIN</p><p id="infoIzin" class="mt-2 text-3xl font-black text-sky-800">0</p></div>
-                <div class="rounded-2xl bg-rose-50 border border-rose-100 p-5"><p class="text-xs font-bold text-rose-700">ALFA</p><p id="infoAlpha" class="mt-2 text-3xl font-black text-rose-800">0</p></div>
-            </div>
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6"><section class="rounded-2xl border border-slate-200 bg-white p-5"><h3 class="font-bold text-slate-800">Komposisi Kehadiran</h3><div class="donut-layout"><div class="donut-canvas"><canvas id="attendanceDonut"></canvas></div><div id="attendanceDonutLegend" class="donut-legend"></div></div></section><section class="rounded-2xl border border-slate-200 bg-white p-5"><h3 class="font-bold text-slate-800">Perbandingan Kelas</h3><p class="mt-1 text-xs text-slate-500">Gunakan filter tingkat (misalnya kelas 1) untuk membandingkan semua kelasnya.</p><div class="h-80 mt-4"><canvas id="classComparisonChart"></canvas></div></section></div>
-            <section class="comparison-section"><h3>Perbandingan per Kelas</h3><p>Diurutkan menurut persentase kehadiran. Tanda - berarti belum ada data.</p><div class="overflow-x-auto"><table class="comparison-table"><thead><tr><th>Kelas</th><th>Siswa</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alfa</th><th>Tidak mengisi</th><th>Kehadiran</th></tr></thead><tbody id="classComparisonRows"></tbody></table></div></section>
-        </div>
-    </div>
+
 
 <div id="page-dashboard" class="hidden space-y-4"></div>
-<div id="page-laporan" class="hidden space-y-4"><section class="gm-panel-card"><div class="section-heading"><div><h2>Target Tahsin &amp; Tahfidz</h2></div></div><div class="gm-filter-row"><label class="field-label">Tahun awal ajaran<input id="gmReportYear" type="number" min="2000" max="2200"></label><label class="field-label">Periode<select id="gmReportPeriod"><option value="pts_ganjil">PTS Semester 1</option><option value="pas_ganjil">PAS Semester 1</option><option value="pts_genap">PTS Semester 2</option><option value="pas_genap">PAS Semester 2</option></select></label><label class="field-label">Laporan<select id="gmReportSubject"><option value="all">Tahsin & Tahfidz</option><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label><button id="gmExportTargets" class="primary-action" type="button">Unduh Excel</button></div><p id="gmReportStatus" class="gm-muted" role="status"></p></section></div>
+
 <div id="page-arsip" class="hidden space-y-4"><section class="gm-panel-card"><div class="section-heading"><div><h2>Arsip Rapor</h2></div></div><p class="gm-muted">Arsip rapor final dipertahankan saat reset tahun ajaran. Pencarian arsip akan menggunakan snapshot rapor yang tersimpan.</p><div id="gmArchiveStatus" class="gm-muted">Gunakan filter rapor untuk melihat dokumen periode terkait.</div></section></div>
 <div id="page-rapor" class="hidden space-y-5">
     <section class="report-panel report-period-panel">
@@ -681,22 +650,11 @@
     </div>
 </div>
 
-<div id="page-analitik" class="hidden space-y-6">
-    <section class="gm-panel-card">
-        <div class="section-heading"><div><p class="section-kicker">KHUSUS KOORDINATOR</p><h2>Analitik Periode</h2><p>Bandingkan jumlah ketercapaian target antarperiode tanpa menampilkan nama siswa.</p></div></div>
-        <div class="gm-analytics-toolbar">
-            <label class="field-label">Tahun awal ajaran<input id="gmAnalyticsYear" type="number" min="2000" max="2200"></label>
-            <label class="field-label">Program<select id="gmAnalyticsSubject"><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label>
-            <label class="field-label">Periode pembanding<select id="gmAnalyticsPeriodA"><option value="pts_ganjil">PTS Ganjil</option><option value="pas_ganjil">PAS Ganjil</option><option value="pts_genap">PTS Genap</option><option value="pas_genap">PAS Genap</option></select></label>
-            <label class="field-label">Periode utama<div class="gm-analytics-period-nav"><button id="gmAnalyticsPrev" type="button" class="secondary-action" aria-label="Periode sebelumnya">←</button><select id="gmAnalyticsPeriodB"><option value="pts_ganjil">PTS Ganjil</option><option value="pas_ganjil" selected>PAS Ganjil</option><option value="pts_genap">PTS Genap</option><option value="pas_genap">PAS Genap</option></select><button id="gmAnalyticsNext" type="button" class="secondary-action" aria-label="Periode berikutnya">→</button></div></label>
-            <button id="gmAnalyticsLoad" type="button" class="primary-action">Tampilkan Analitik</button>
-        </div>
-        <p id="gmAnalyticsStatus" class="assessment-help">Pilih dua periode untuk membandingkan ketercapaian target.</p>
-    </section>
-    <div id="gmAnalyticsBody"></div>
-</div>
+
 
 <div id="page-presentasi" class="hidden space-y-6 gm-presentation-page">
+ <nav class="manage-tabs" aria-label="Submenu presentasi"><button type="button" data-presentation-tab="overview" aria-pressed="true" onclick="switchPresentationTab('overview')">Ringkasan</button><button type="button" data-presentation-tab="reports" aria-pressed="false" onclick="switchPresentationTab('reports')">Laporan</button></nav>
+ <div id="presentationOverview" class="space-y-6">
     <section class="gm-panel-card">
         <div class="section-heading"><div><p class="section-kicker">KHUSUS KOORDINATOR</p><h2>Laman Presentasi</h2><p>Ringkasan profesional target Tahsin, target Tahfidz, capaian Tahsin, dan Absensi Gemar Mengaji berbasis tingkat. Tidak menampilkan identitas siswa.</p></div></div>
         <div class="gm-presentation-toolbar">
@@ -708,6 +666,8 @@
         <p id="gmPresentationStatus" class="assessment-help">Gunakan layar penuh pada tablet/monitor saat presentasi.</p>
     </section>
     <div id="gmPresentationBody"></div>
+ </div>
+<div id="presentationReports" class="space-y-4" hidden><section class="gm-panel-card"><div class="section-heading"><div><h2>Target Tahsin &amp; Tahfidz</h2></div></div><div class="gm-filter-row"><label class="field-label">Tahun awal ajaran<input id="gmReportYear" type="number" min="2000" max="2200"></label><label class="field-label">Periode<select id="gmReportPeriod"><option value="pts_ganjil">PTS Semester 1</option><option value="pas_ganjil">PAS Semester 1</option><option value="pts_genap">PTS Semester 2</option><option value="pas_genap">PAS Semester 2</option></select></label><label class="field-label">Laporan<select id="gmReportSubject"><option value="all">Tahsin & Tahfidz</option><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label><button id="gmExportTargets" class="primary-action" type="button">Unduh Excel</button></div><p id="gmReportStatus" class="gm-muted" role="status"></p></section></div>
 </div>
 
 <div id="page-maintenance" class="hidden space-y-6">
@@ -730,7 +690,7 @@
                 </svg>
             </button>
         </div>
-        
+
         <form id="manageForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
             <input type="hidden" id="entityId">
 
@@ -787,16 +747,16 @@
     <script src="js/access.js?v=20260928-profile21"></script>
     <script src="js/panel-preboot.js?v=20260930-rev54"></script>
     <script src="js/utils.js"></script>
-    <script src="js/ux-stage5.js?v=20260929-ux27"></script>
+    <script src="js/ux-stage5.js?v=20261001-log2"></script>
     <script src="js/filter-identity.js?v=20260928-filter-id-1"></script>
-    <script src="js/database.js?v=20260928-roster20-pagination"></script>
+    <script src="js/database.js?v=20261001-refine1"></script>
     <script src="js/report.js"></script>
-    
+
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20260930-loader54"></script>
-    <script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
-    
+    <script src="js/panel-start.js?v=20261001-refine1"></script>
+    <script src="js/gm-upgrade-20260928.js?v=20261001-refine1"></script>
+
 
 
 <div class="hidden" style="display: none;">
@@ -805,6 +765,6 @@
     <span id="currentPage">1</span>
     <span id="totalPages">1</span>
 </div>
-<script src="/js/pwa.js?v=20260930-footer1" defer></script>
+<script src="/js/pwa.js?v=20261001-refine1" defer></script>
 </body>
 </html>

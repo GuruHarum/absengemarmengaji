@@ -16,7 +16,7 @@ const thankYouModal = document.getElementById('thankYouModal');
 const classOptions = document.getElementById('classOptions');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const publicLoaderStartedAt = Number(window.GM_INITIAL_LOADER_STARTED_AT || performance.now());
-const PUBLIC_LOADER_MIN_MS = 8000;
+const PUBLIC_LOADER_MIN_MS = 5000;
 window.GM_INITIAL_LOADER_ACTIVE = true;
 window.applySchoolProfile = function (profile) {
     if (!profile)
@@ -84,9 +84,9 @@ async function initApp() {
         hideIslamicLoader();
     }
 }
-window.handleMaintenanceRealtime = function (enabled) {
-    if (enabled)
-        window.location.replace('maintenance.html');
+window.handleMaintenanceRealtime = async function () {
+    try { if (await getMaintenanceMode()) window.location.replace('maintenance.html'); }
+    catch (error) { console.warn('Status maintenance belum dapat dikonfirmasi:', error); }
 };
 document.addEventListener('DOMContentLoaded', () => {
     initApp();

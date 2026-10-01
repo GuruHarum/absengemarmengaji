@@ -56,6 +56,8 @@
 <link href="css/rev54-panels.css?v=20260930-rev54" rel="stylesheet"/>
     <link rel="stylesheet" href="css/panel-layout.css?v=20260930-layout1">
     <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
+<link rel="stylesheet" href="css/page-refinements.css?v=20261001-log2">
+<script src="js/page-refinements.js?v=20261001-1" defer></script>
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="teacher">
 <div aria-label="Memuat panel guru" aria-live="polite" class="islamic-loader" id="loadingIndicator" role="status">
@@ -265,15 +267,12 @@
 <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
 <span class="w-1.5 h-5 bg-indigo-600 rounded-full inline-block"></span>
                 Log Riwayat Absensi
-            </h3>
+            </h3><label class="field-label attendance-log-date">Tanggal log<input id="attendanceLogDate" type="date"></label><p id="attendanceLogStatus" role="status" class="assessment-help"></p>
 <div class="overflow-x-auto rounded-xl border border-slate-200">
-<table class="w-full text-sm text-left border-collapse">
+<table id="attendanceLogTable" data-table-layout="scroll" class="w-full text-sm text-left border-collapse">
 <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold tracking-wider border-b border-slate-200">
 <tr>
-<th class="px-6 py-3.5">Tanggal</th>
-<th class="px-6 py-3.5">Guru</th>
-<th class="px-6 py-3.5">Kelas</th>
-<th class="px-6 py-3.5">Siswa</th>
+<th scope="col" class="log-student">Siswa</th><th scope="col">Kelas</th>
 <th class="px-6 py-3.5">Status</th>
 <th class="px-6 py-3.5">Catatan</th>
 </tr>
@@ -529,19 +528,19 @@
 <script src="js/access.js?v=20260928-profile21"></script>
 <script src="js/panel-preboot.js?v=20260930-rev54"></script>
 <script src="js/utils.js"></script>
-<script src="js/ux-stage5.js?v=20260929-ux27"></script>
+<script src="js/ux-stage5.js?v=20261001-log2"></script>
 <script src="js/filter-identity.js?v=20260928-filter-id-1"></script>
-<script src="js/database.js?v=20260928-roster20-pagination"></script>
+<script src="js/database.js?v=20261001-refine1"></script>
 
 <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
-<script src="js/panel-start-guru.js?v=20260930-loader54"></script>
-<script src="js/gm-upgrade-20260928.js?v=20260929-quotes28"></script>
+<script src="js/panel-start-guru.js?v=20261001-refine1"></script>
+<script src="js/gm-upgrade-20260928.js?v=20261001-refine1"></script>
 <div class="hidden" style="display: none;">
 <button id="prevBtn"></button>
 <button id="nextBtn"></button>
 <span id="currentPage">1</span>
 <span id="totalPages">1</span>
 </div>
-<script defer="" src="/js/pwa.js?v=20260930-footer1"></script>
+<script defer="" src="/js/pwa.js?v=20261001-refine1"></script>
 </body>
 </html>

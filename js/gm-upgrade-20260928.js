@@ -85,7 +85,7 @@ window.GMUpgrade = (()=>{
      {label:'Absensi',page:'absensi',icon:'attendance',hint:'Rekap kehadiran'},
      {label:'Penilaian',page:'penilaian',icon:'score',hint:'Nilai Tahsin & Tahfidz'},
      {label:'Rapor',page:'rapor',icon:'report',hint:'Kelola dan unduh rapor'},
-     {label:'Laporan',page:'laporan',icon:'chart',hint:'Target & rekap Excel'},
+     {label:'Presentasi',page:'presentasi',icon:'chart',hint:'Ringkasan & laporan'},
      {label:'Pengaturan',page:'pengaturan',icon:'settings',hint:'Sistem dan backup'}
    ];
    const statHtml=stats.map((s,i)=>`<article class="gm-stat-card gm-tone-${s.tone}" ${s.key?`data-gm-stat="${s.key}"`:''} style="--gm-delay:${i*35}ms"><div class="gm-stat-icon">${icon(s.icon)}</div><div class="gm-stat-copy"><span>${s.label}</span><strong>${s.value}</strong>${s.sub?`<small>${s.sub}</small>`:''}</div></article>`).join('');

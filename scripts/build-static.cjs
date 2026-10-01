@@ -29,4 +29,4 @@ for (const rel of ['index.html', 'admin.html', 'guru.html', 'sw.js', 'js/access.
 
 // Verify source copies above before optimizing the generated HTML.
 require('./bundle-panel-css.cjs').bundlePanelCss(out);
-console.log('Static website prepared in public-build (loader54, bundled panel CSS)');
+console.log('Static website prepared in public-build (bundled panel CSS)');

@@ -233,100 +233,11 @@ async function renderMonthlyReportTable(selectedMonth, selectedYear, selectedTea
     }
     showLoading(false);
 }
-function renderLocalAdminLogTable(filterTeacher = "", filterClass = "", isInitialLoad = false) {
-    const adminDataList = document.getElementById('adminDataList');
-    const recordCount = document.getElementById('recordCount');
-    if (!adminDataList)
-        return;
-    if (isInitialLoad === true) {
-        adminDataList.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                            Silakan terapkan filter terlebih dahulu untuk menampilkan log riwayat absensi.
-                        </td>
-                    </tr>
-                `;
-        if (recordCount)
-            recordCount.innerText = "0";
-        return;
-    }
-    if (!attendanceData || attendanceData.length === 0) {
-        adminDataList.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-400">
-                            Belum ada riwayat data absensi yang terekam.
-                        </td>
-                    </tr>
-                `;
-        if (recordCount)
-            recordCount.innerText = "0";
-        return;
-    }
-    let filteredLogs = [...attendanceData];
-    if (filterTeacher) {
-        filteredLogs = filteredLogs.filter(item => {
-            const guru = item.teacher || item.guru || "";
-            return window.GMFilter ? GMFilter.teacherMatches(item, filterTeacher) : guru.toString().toLowerCase() === filterTeacher.toLowerCase();
-        });
-    }
-    if (filterClass) {
-        filteredLogs = filteredLogs.filter(item => {
-            const kelas = item.class || item.kelas || "";
-            return window.GMFilter && !/^\d+$/.test(String(filterClass)) ? GMFilter.classMatches(item,filterClass) : (String(filterClass).match(/^\d+$/) ? extractClassNumber(kelas) === String(filterClass) : kelas.toString().toLowerCase() === filterClass.toLowerCase());
-        });
-    }
-    filteredLogs.sort((a, b) => {
-        const dateA = new Date(a.date || a.tanggal || 0);
-        const dateB = new Date(b.date || b.tanggal || 0);
-        return dateB - dateA;
-    });
-    if (filteredLogs.length === 0) {
-        adminDataList.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="px-6 py-8 text-center text-slate-400">
-                            Tidak ada data riwayat yang cocok dengan filter.
-                        </td>
-                    </tr>
-                `;
-        if (recordCount)
-            recordCount.innerText = "0";
-        return;
-    }
-    let html = "";
-    filteredLogs.forEach(item => {
-        const formattedDate = item.date || item.tanggal || "-";
-        const guru = item.teacher || item.guru || "-";
-        const kelas = item.class || item.kelas || "-";
-        const siswa = item.student || item.siswa || "-";
-        const statusRaw = item.status || "-";
-        const status = statusRaw.toUpperCase().trim();
-        const catatan = item.note || item.catatan || "-";
-        let badgeClass = "bg-slate-100 text-slate-800";
-        if (status === 'HADIR' || status === 'H')
-            badgeClass = "bg-emerald-100 text-emerald-800 font-bold";
-        else if (status === 'SAKIT' || status === 'S')
-            badgeClass = "bg-amber-100 text-amber-800 font-bold";
-        else if (status === 'IZIN' || status === 'I')
-            badgeClass = "attendance-badge bg-blue-100 text-blue-800 font-bold";
-        else if (status === 'ALFA' || status === 'A' || status === 'ABSEN')
-            badgeClass = "bg-red-100 text-red-800 font-bold";
-        html += `
-                    <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="px-6 py-4 whitespace-nowrap font-medium text-slate-600">${formattedDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap font-semibold text-slate-700">${guru}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-slate-600">${kelas}</td>
-                        <td class="px-6 py-4 whitespace-nowrap font-bold text-slate-800">${siswa}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2.5 py-1 rounded-full text-xs ${badgeClass}">${status}</span>
-                        </td>
-                        <td class="px-6 py-4 text-slate-500 max-w-[200px] truncate">${catatan}</td>
-                    </tr>
-                `;
-    });
-    adminDataList.innerHTML = html;
-    if (recordCount) {
-        recordCount.innerText = filteredLogs.length;
-    }
+function renderLocalAdminLogTable(filterTeacher = '', filterClass = '', isInitialLoad = false) {
+    if (!isInitialLoad) return loadAttendanceLog();
+    const list = document.getElementById('adminDataList');
+    if (list) list.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center">Buka Data Absensi untuk melihat log hari ini.</td></tr>';
+    if (document.body.dataset.activePage === 'absensi') void loadAttendanceLog();
 }
 function formatTanggalCetak(dateObj) {
     const hari = String(dateObj.getDate()).padStart(2, '0');
@@ -838,11 +749,7 @@ document.getElementById('filterBtn').addEventListener('click', async (event) => 
         if (c && !/^\d+$/.test(c)) { if (!classId) throw new Error('Kelas tidak ditemukan dalam master. Muat ulang daftar kelas.'); filter.class_id=classId; }
         await fetchAttendanceData(filter);
         await renderMonthlyReportTable(month, year, t, c, false);
-        if (typeof getFilteredAttendanceRecords === 'function' && typeof renderAdminData === 'function') {
-            filteredAttendanceData = getFilteredAttendanceRecords(attendanceData);
-            currentPage = 1;
-            renderAdminData();
-        } else renderLocalAdminLogTable(t,c,false);
+        await loadAttendanceLog();
     }
     catch (err) {
         console.error('Filter Data Absensi:',err);
@@ -1858,6 +1765,8 @@ async function showInfographic() {
     }
 }
 function switchPage(pageId) {
+    if (pageId === 'laporan') { switchPage('presentasi'); switchPresentationTab('reports'); return; }
+    if (['infografik', 'analitik'].includes(pageId)) pageId = 'presentasi';
     const currentPage = document.body?.dataset?.activePage || '';
     const leaveApproved = document.body?.dataset?.assessmentLeaveApproved === 'true';
     if (!leaveApproved && currentPage === 'penilaian' && pageId !== 'penilaian' && window.PeriodicAssessments?.hasUnsavedChanges?.()) {
@@ -1918,6 +1827,7 @@ function switchPage(pageId) {
     ['menu-dashboard','menu-rapor','menu-laporan','menu-arsip','menu-analitik','menu-presentasi','menu-kelompok','menu-kelompok-tahsin','menu-profil','menu-absensi','menu-kelola','menu-penilaian','menu-infografik','menu-identitas','menu-pengaturan','menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
     const active = document.getElementById(`menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
+    if (pageId === 'absensi') void loadAttendanceLog();
     if (pageId === 'dashboard')
         GMUpgrade.dashboard();
     if (pageId === 'kelola')
@@ -1946,8 +1856,7 @@ function switchPage(pageId) {
         loadMaintenanceMode();
     if (pageId === 'analitik')
         window.GMRev46?.loadAnalytics?.();
-    if (pageId === 'presentasi')
-        window.GMRev46?.loadPresentation?.();
+    if (pageId === 'presentasi') { switchPresentationTab('overview'); window.GMRev46?.loadPresentation?.(); }
     setMobileDrawer(false);
 }
 document.addEventListener('panelready', () => {

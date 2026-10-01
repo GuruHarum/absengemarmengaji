@@ -26,7 +26,9 @@ window.GMUX = (() => {
         if (!headers.length) return;
         table.dataset.gmTableEnhanced = '1';
         table.classList.add('gm-enhanced-table');
-        table.classList.add(headers.length <= 5 ? 'gm-table-card-mode' : 'gm-table-scroll-mode');
+        const scroll = table.dataset.tableLayout === 'scroll' || headers.length > 5;
+        table.classList.remove('gm-table-card-mode', 'gm-table-scroll-mode');
+        table.classList.add(scroll ? 'gm-table-scroll-mode' : 'gm-table-card-mode');
         table.querySelectorAll('tbody tr').forEach(row => {
             [...row.children].forEach((cell, index) => {
                 if (cell.tagName === 'TD' && !cell.hasAttribute('colspan')) cell.dataset.label = headers[index] || '';

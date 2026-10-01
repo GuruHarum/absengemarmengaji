@@ -1,0 +1,48 @@
+/* Compact attendance log with only the student's name pinned. */
+body.admin-page #attendanceLogTable { min-width: 520px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+body.admin-page #attendanceLogTable :is(th, td) {
+    position: static;
+    padding: 12px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+body.admin-page #attendanceLogTable .log-student {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+    background: var(--gm-surface, #fcfdf7);
+    box-shadow: 1px 0 0 var(--gm-border, #dce4da);
+    font-weight: 600;
+}
+body.admin-page #attendanceLogTable thead .log-student { z-index: 2; }
+body.admin-page #attendanceLogTable thead th { background: #e9efdf; padding-block: 14px; }
+body.admin-page #attendanceLogTable th:nth-child(2) { width: 85px; }
+body.admin-page #attendanceLogTable th:nth-child(3) { width: 110px; }
+.attendance-log-date { max-width: 220px; margin-bottom: 8px; }
+#presentationOverview[hidden], #presentationReports[hidden] { display: none !important; }
+
+/* Keep the school identity and account action aligned on narrow screens. */
+body.public-page > .header-gradient > .container { gap: 16px; padding-block: 16px !important; }
+body.public-page .public-brand { min-width: 0; flex: 1; gap: 14px; }
+body.public-page .public-brand-copy { min-width: 0; }
+body.public-page .public-brand .logo-circle { flex-shrink: 0; margin-right: 0 !important; width: 56px; height: 56px; }
+body.public-page #schoolName { font-size: clamp(14px, 2vw, 20px) !important; line-height: 1.4; overflow-wrap: anywhere; }
+body.public-page #schoolAddress { margin-top: 4px; font-size: 11px; line-height: 1.6; max-width: 600px; }
+body.public-page #adminHeaderActions { flex-shrink: 0; }
+body.public-page #loginBtn { white-space: nowrap; min-height: 40px; justify-content: center; }
+@media (max-width: 480px) {
+    body.public-page > .header-gradient > .container { gap: 10px; padding-block: 12px !important; }
+    body.public-page .public-brand { gap: 10px; }
+    body.public-page .public-brand .logo-circle { width: 44px; height: 44px; }
+}
+
+@media (max-width: 640px) {
+    body.admin-page #attendanceLogTable :is(th, td) { padding: 8px 6px; font-size: 10px; line-height: 1.35; }
+    body.admin-page #attendanceLogTable .log-student { width: 92px; min-width: 92px; max-width: 92px; padding: 8px 5px; }
+}
+@media (max-width: 480px) {
+    body.admin-page #attendanceLogTable .log-student { width: 76px; min-width: 76px; max-width: 76px; font-size: 9px; line-height: 1.3; }
+}

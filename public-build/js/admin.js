@@ -94,9 +94,7 @@ async function filterAttendanceData() {
             console.error('Gagal fetch data untuk filter bulan:', e);
         }
     }
-    filteredAttendanceData = getFilteredAttendanceRecords(attendanceData);
-    currentPage = 1;
-    renderAdminData();
+    await loadAttendanceLog();
     if (monthVal && reportContainer) {
         if (typeof window.renderMonthlyReportTable !== 'function') {
             reportContainer.style.display = 'block';
@@ -126,7 +124,7 @@ function renderAdminData() {
     if (currentRecords.length === 0) {
         adminDataList.innerHTML = `
             <tr>
-                <td colspan="6" class="py-8 text-center text-slate-400 font-medium">
+                <td colspan="4" class="py-8 text-center text-slate-400 font-medium">
                     Tidak ada arsip log riwayat absensi tersedia.
                 </td>
             </tr>
@@ -135,10 +133,8 @@ function renderAdminData() {
     }
     adminDataList.innerHTML = currentRecords.map(record => `
         <tr class="hover:bg-slate-50 transition-all border-b border-slate-100">
-            <td class="px-6 py-3.5 font-medium text-slate-800">${formatDateForDisplay(record.date)}</td>
-            <td class="px-6 py-3.5 text-slate-600">${escapeHtml(record.teacher || record.nama_guru || '-')}</td>
-            <td class="px-6 py-3.5 text-slate-600">${escapeHtml(record.class || record.kelas_nama || '-')}</td>
-            <td class="px-6 py-3.5 font-semibold text-slate-700">${escapeHtml(record.student || record.nama_siswa || '-')}</td>
+            <td class="log-student">${escapeHtml(record.student || record.nama_siswa || '-')}</td>
+            <td class="px-4 py-3.5">${escapeHtml(record.class || record.kelas_nama || '-')}</td>
             <td class="px-6 py-3.5">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1
                     ${String(record.status).toLowerCase() === 'hadir' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
@@ -384,6 +380,7 @@ if (filterBtn && !window.GM_DASHBOARD_OWNS_FILTER) {
 window.addEventListener(document.body.classList.contains('admin-page') ? 'panelready' : 'DOMContentLoaded', () => {
     setTimeout(() => {
         if (typeof attendanceData !== 'undefined' && attendanceData.length > 0) {
+            if (document.getElementById('attendanceLogDate')) { void loadAttendanceLog(); return; }
             filteredAttendanceData = [...attendanceData];
             populateAdminDropdowns();
             renderAdminData();
