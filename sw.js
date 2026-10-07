@@ -1,4 +1,4 @@
-const VERSION = 'log56';
+const VERSION = 'log59-word-zip-fix';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';

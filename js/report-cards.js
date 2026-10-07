@@ -395,9 +395,9 @@ window.StudentReports = (() => {
         updatePdfProgress({ visible: true, title: `Menyiapkan ${selection.label}`, total: selectedRows.length });
         setBusy(true);
         try {
-            const pdfName = `Rapor ${selection.label} - ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1' : '2'} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.pdf`;
+            const pdfName = `Rapor ${selection.label} - ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1' : '2'} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.docx`;
             const blob = await ReportZip.build(selectedRows, {
-                fileName: pdfName,
+                fileName: pdfName, format: 'word',
                 onProgress: (n, total, row) => {
                     updatePdfProgress({ visible: true, title: 'Menyusun halaman rapor', n, total, row });
                     tell(n ? `Menyusun rapor ${n}/${total} halaman (${Math.round(n / total * 100)}%)...` : 'Menyiapkan dokumen rapor...');
@@ -419,11 +419,11 @@ window.StudentReports = (() => {
                 ext: 'zip'
             }) || `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${scope} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
             link.hidden = false; link.textContent = 'Simpan ZIP Rapor'; link.click();
-            updatePdfProgress({ visible: true, title: 'PDF selesai', n: selectedRows.length, total: selectedRows.length, done: true });
-            tell(`ZIP selesai: 1 PDF berisi ${selectedRows.length} halaman rapor · ${selection.label} · ${formatDuration(Date.now() - downloadStartedAt)}.`);
+            updatePdfProgress({ visible: true, title: 'Word selesai', n: selectedRows.length, total: selectedRows.length, done: true });
+            tell(`ZIP selesai: 1 Word berisi ${selectedRows.length} halaman rapor · ${selection.label} · ${formatDuration(Date.now() - downloadStartedAt)}.`);
         } catch (error) {
             if (el('reportRetryDownload')) el('reportRetryDownload').hidden = false;
-            updatePdfProgress({ visible: true, title: 'Pembuatan PDF terhenti', n: 0, total: selectedRows.length, error: `${error.message} Data rapor yang sudah dimuat tetap tersedia; tekan Coba Lagi yang Gagal.` });
+            updatePdfProgress({ visible: true, title: 'Pembuatan Word terhenti', n: 0, total: selectedRows.length, error: `${error.message} Data rapor yang sudah dimuat tetap tersedia; tekan Coba Lagi yang Gagal.` });
             tell(`${error.message}. Tekan Coba Lagi yang Gagal untuk mengulang tanpa memuat ulang data yang masih valid.`);
         } finally { setBusy(false); refreshDownloadScope(); }
     }

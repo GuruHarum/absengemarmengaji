@@ -244,7 +244,7 @@ window.ReportPDF = (() => {
         const workCanvas = document.createElement('canvas');
         for (let i = 0; i < list.length; i++) {
             if (i) pdf.addPage('a4', 'portrait');
-            const canvas = await render(list[i], { draft, date, scale: draft ? 5.05 : 4.75, normalWeight: '500', canvas: workCanvas, validated: !draft });
+            const canvas = await render(list[i], { draft, date, scale: 300 / 25.4, normalWeight: '500', canvas: workCanvas, validated: !draft });
             // PNG mempertahankan alpha; halaman PDF tidak pernah digambar putih.
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
             onProgress(i + 1, list.length, list[i]);

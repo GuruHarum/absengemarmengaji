@@ -124,7 +124,7 @@ function renderAdminData() {
     if (currentRecords.length === 0) {
         adminDataList.innerHTML = `
             <tr>
-                <td colspan="4" class="py-8 text-center text-slate-400 font-medium">
+                <td colspan="5" class="py-8 text-center text-slate-400 font-medium">
                     Tidak ada arsip log riwayat absensi tersedia.
                 </td>
             </tr>
@@ -148,8 +148,55 @@ function renderAdminData() {
                 </span>
             </td>
             <td class="px-6 py-3.5 text-slate-500 italic">${escapeHtml(record.note || record.catatan || '-')}</td>
+            <td class="px-6 py-3.5"><div class="flex gap-2"><button type="button" class="secondary-action" data-log-edit="${escapeHtml(String(record.id))}">Edit</button><button type="button" class="secondary-action" data-log-delete="${escapeHtml(String(record.id))}">Hapus</button></div></td>
         </tr>
     `).join('');
+    adminDataList.querySelectorAll('[data-log-edit], [data-log-delete]').forEach(button => {
+        button.onclick = () => attendanceLogAction(button);
+    });
+}
+async function attendanceLogAction(button) {
+    const deleting = button.hasAttribute('data-log-delete');
+    const id = deleting ? button.dataset.logDelete : button.dataset.logEdit;
+    const record = filteredAttendanceData.find(row => String(row.id) === id);
+    if (!record) return AdminNotice.notify('Data absensi tidak ditemukan. Muat ulang log.', 'error');
+    if (!deleting) {
+        const dialog = document.createElement('dialog');
+        dialog.className = 'admin-confirm';
+        dialog.setAttribute('aria-label', 'Edit absensi');
+        dialog.innerHTML = `<form><h2>Edit absensi</h2><p>${escapeHtml(record.student || record.nama_siswa || '-')} · ${escapeHtml(record.date || '')}</p><label class="field-label">Status<select name="status"><option value="hadir">Hadir</option><option value="sakit">Sakit</option><option value="izin">Izin</option><option value="alpha">Alpha</option></select></label><label class="field-label">Catatan<textarea name="note" rows="3"></textarea></label><p data-error role="alert"></p><div class="confirm-actions"><button type="button" class="secondary-action" data-cancel>Batal</button><button type="submit" class="primary-action">Simpan</button></div></form>`;
+        const form = dialog.querySelector('form');
+        form.elements.status.value = String(record.status || 'hadir').toLowerCase();
+        form.elements.note.value = record.note || record.catatan || '';
+        let saving = false;
+        dialog.querySelector('[data-cancel]').onclick = () => { if (!saving) dialog.close(); };
+        dialog.oncancel = event => { if (saving) event.preventDefault(); };
+        dialog.onclose = () => dialog.remove();
+        form.onsubmit = async event => {
+            event.preventDefault();
+            if (saving) return;
+            saving = true;
+            form.querySelectorAll('button').forEach(b => b.disabled = true);
+            try {
+                await updateAttendance(id, { status: form.elements.status.value, note: form.elements.note.value.trim() });
+                dialog.close();
+                await loadAttendanceLog();
+                AdminNotice.notify('Absensi berhasil diperbarui.', 'success');
+            } catch (error) { dialog.querySelector('[data-error]').textContent = error.message || 'Gagal memperbarui absensi.'; }
+            finally { saving = false; form.querySelectorAll('button').forEach(b => b.disabled = false); }
+        };
+        document.body.append(dialog);
+        dialog.showModal();
+        return;
+    }
+    if (!await AdminNotice.confirm(`Hapus absensi ${record.student || record.nama_siswa || '-'} tanggal ${record.date}?`)) return;
+    button.disabled = true;
+    try {
+        await deleteAttendance(id);
+        await loadAttendanceLog();
+        AdminNotice.notify('Absensi berhasil dihapus.', 'success');
+    } catch (error) { AdminNotice.notify(error.message || 'Gagal menghapus absensi.', 'error'); }
+    finally { button.disabled = false; }
 }
 function renderAdminTable() {
     const tbody = document.getElementById('monthlyReportTable');

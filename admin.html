@@ -300,7 +300,7 @@
                         <tr>
                             <th scope="col" class="log-student">Siswa</th><th scope="col">Kelas</th>
                             <th class="px-6 py-3.5">Status</th>
-                            <th class="px-6 py-3.5">Catatan</th>
+                            <th class="px-6 py-3.5">Catatan</th><th scope="col" class="px-6 py-3.5">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="adminDataList" class="divide-y divide-slate-100 text-slate-700">
@@ -469,7 +469,7 @@
     </section>
     <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Cetak rapor" hidden>
         <h3>Download Rapor</h3>
-        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Hasil tetap satu PDF dengan satu halaman per siswa di dalam ZIP.</p>
+        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Hasil berupa satu dokumen Word dengan satu halaman A4 per siswa di dalam ZIP. Desain rapor tetap sama, dengan teks dan tabel Word yang dapat diedit serta logo yang jelas.</p>
         <div class="report-grid report-download-grid">
             <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
             <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
@@ -486,7 +486,7 @@
             <progress id="reportPdfProgressBar" max="100" value="0">0%</progress>
             <p id="reportPdfProgressDetail">Menunggu proses dimulai.</p>
         </div>
-        <p class="report-direct-print-note">Cetak Langsung membuka PDF final pada dialog cetak browser/printer tanpa mengubah isi rapor.</p>
+        <p class="report-direct-print-note">Buka dokumen Word untuk mencetak rapor. Cetak Langsung juga tersedia dengan kualitas 300 dpi dan desain yang sama.</p>
         <p class="report-paper-note">Latar PDF transparan, termasuk sel tabel. Saat dicetak di kertas berwarna, bagian yang tidak bertinta tetap mengikuti warna kertas. Coba satu lembar terlebih dahulu sesuai pengaturan printer.</p>
     </section>
 </div>
@@ -768,7 +768,7 @@
 
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20261001-refine1"></script>
+    <script src="js/panel-start.js?v=20261007-word-zip-fix3"></script>
     <script src="js/gm-upgrade-20260928.js?v=20261001-refine1"></script>
 
 
