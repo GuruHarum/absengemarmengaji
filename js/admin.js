@@ -113,11 +113,12 @@ async function filterAttendanceData() {
 function renderAdminData() {
     if (!adminDataList)
         return;
-    const startIndex = (currentPage - 1) * recordsPerPage;
+    const paged = window.GM_ATTENDANCE_LOG_PAGE;
+    const startIndex = paged ? 0 : (currentPage - 1) * recordsPerPage;
     const endIndex = Math.min(startIndex + recordsPerPage, filteredAttendanceData.length);
     const currentRecords = filteredAttendanceData.slice(startIndex, endIndex);
     if (recordCount)
-        recordCount.textContent = filteredAttendanceData.length;
+        recordCount.textContent = paged ? paged.total : filteredAttendanceData.length;
     if (pageIndicator)
         pageIndicator.textContent = currentPage;
     updatePaginationButtons();
@@ -131,8 +132,8 @@ function renderAdminData() {
         `;
         return;
     }
-    adminDataList.innerHTML = currentRecords.map(record => `
-        <tr class="hover:bg-slate-50 transition-all border-b border-slate-100">
+    const markup = currentRecords.map(record => `
+        <tr data-log-row="${escapeHtml(String(record.id))}" class="hover:bg-slate-50 transition-all border-b border-slate-100">
             <td class="log-student">${escapeHtml(record.student || record.nama_siswa || '-')}</td>
             <td class="px-4 py-3.5">${escapeHtml(record.class || record.kelas_nama || '-')}</td>
             <td class="px-6 py-3.5">
@@ -151,6 +152,21 @@ function renderAdminData() {
             <td class="px-6 py-3.5"><div class="flex gap-2"><button type="button" class="secondary-action" data-log-edit="${escapeHtml(String(record.id))}">Edit</button><button type="button" class="secondary-action" data-log-delete="${escapeHtml(String(record.id))}">Hapus</button></div></td>
         </tr>
     `).join('');
+    const staging = document.createElement('tbody');
+    staging.innerHTML = markup;
+    const previous = new Map([...adminDataList.querySelectorAll('[data-log-row]')].map(row => [row.dataset.logRow, row]));
+    const next = [...staging.children].map(row => {
+        const signature = row.outerHTML;
+        const existing = previous.get(row.dataset.logRow);
+        if (existing?.dataset.logMarkup === signature) return existing;
+        row.dataset.logMarkup = signature;
+        return row;
+    });
+    const retained = new Set(next);
+    [...adminDataList.children].forEach(row => { if (!retained.has(row)) row.remove(); });
+    next.forEach((row, index) => {
+        if (adminDataList.children[index] !== row) adminDataList.insertBefore(row, adminDataList.children[index] || null);
+    });
     adminDataList.querySelectorAll('[data-log-edit], [data-log-delete]').forEach(button => {
         button.onclick = () => attendanceLogAction(button);
     });
@@ -180,7 +196,7 @@ async function attendanceLogAction(button) {
             try {
                 await updateAttendance(id, { status: form.elements.status.value, note: form.elements.note.value.trim() });
                 dialog.close();
-                await loadAttendanceLog();
+                await loadAttendanceLog(currentPage);
                 AdminNotice.notify('Absensi berhasil diperbarui.', 'success');
             } catch (error) { dialog.querySelector('[data-error]').textContent = error.message || 'Gagal memperbarui absensi.'; }
             finally { saving = false; form.querySelectorAll('button').forEach(b => b.disabled = false); }
@@ -193,7 +209,7 @@ async function attendanceLogAction(button) {
     button.disabled = true;
     try {
         await deleteAttendance(id);
-        await loadAttendanceLog();
+        await loadAttendanceLog(currentPage);
         AdminNotice.notify('Absensi berhasil dihapus.', 'success');
     } catch (error) { AdminNotice.notify(error.message || 'Gagal menghapus absensi.', 'error'); }
     finally { button.disabled = false; }
@@ -353,7 +369,7 @@ function renderAdminTable() {
 function updatePaginationButtons() {
     if (!prevPage || !nextPage)
         return;
-    const maxPage = Math.ceil(filteredAttendanceData.length / recordsPerPage) || 1;
+    const maxPage = Math.ceil((window.GM_ATTENDANCE_LOG_PAGE?.total ?? filteredAttendanceData.length) / recordsPerPage) || 1;
     prevPage.disabled = (currentPage === 1);
     nextPage.disabled = (currentPage >= maxPage);
 }
@@ -406,6 +422,7 @@ function populateAdminDropdowns() {
 if (prevPage) {
     prevPage.addEventListener('click', () => {
         if (currentPage > 1) {
+            if (window.GM_ATTENDANCE_LOG_PAGE) { void loadAttendanceLog(currentPage - 1); return; }
             currentPage--;
             renderAdminData();
         }
@@ -413,8 +430,9 @@ if (prevPage) {
 }
 if (nextPage) {
     nextPage.addEventListener('click', () => {
-        const maxPage = Math.ceil(filteredAttendanceData.length / recordsPerPage) || 1;
+        const maxPage = Math.ceil((window.GM_ATTENDANCE_LOG_PAGE?.total ?? filteredAttendanceData.length) / recordsPerPage) || 1;
         if (currentPage < maxPage) {
+            if (window.GM_ATTENDANCE_LOG_PAGE) { void loadAttendanceLog(currentPage + 1); return; }
             currentPage++;
             renderAdminData();
         }

@@ -11,7 +11,7 @@ window.StudentReports = (() => {
     function setBusy(value) {
         busy = value;
         el('reportControls').disabled = value;
-        ['checkMissingScores','downloadReports','reportDirectPrint','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
+        ['checkMissingScores','downloadReports','downloadReportsExcel','reportDirectPrint','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
         ['reportDownloadMode','reportDownloadClass'].forEach(id => { if (el(id)) el(id).disabled = value; });
         el('reportSelection').disabled = value;
     }
@@ -21,7 +21,7 @@ window.StudentReports = (() => {
         const minutes = Math.floor(seconds / 60), rest = seconds % 60;
         return `${minutes} menit${rest ? ` ${rest} detik` : ''}`;
     }
-    function updatePdfProgress({ visible = true, title = 'Menyiapkan PDF', n = 0, total = 0, row = null, done = false, error = '' } = {}) {
+    function updatePdfProgress({ visible = true, title = 'Menyiapkan rapor', n = 0, total = 0, row = null, done = false, error = '' } = {}) {
         const box = el('reportPdfProgress');
         if (!box) return;
         box.hidden = !visible;
@@ -50,7 +50,7 @@ window.StudentReports = (() => {
         const button = el('downloadReports');
         const summary = el('reportDownloadSummary');
         if (!classMode) {
-            if (button) button.textContent = 'Unduh ZIP Satu Tingkat';
+            if (button) button.textContent = 'Unduh ZIP Word';
             if (summary) {
                 summary.textContent = rows.length
                     ? `${rows.length} siswa dari seluruh rombel tingkat ${el('reportGrade').value} akan dimasukkan.`
@@ -59,7 +59,7 @@ window.StudentReports = (() => {
             }
             return;
         }
-        if (button) button.textContent = 'Unduh ZIP Satu Rombel';
+        if (button) button.textContent = 'Unduh ZIP Word';
         const className = el('reportDownloadClass')?.value || '';
         const count = className ? rows.filter(row => row.student.class === className).length : 0;
         if (summary) {
@@ -369,9 +369,10 @@ window.StudentReports = (() => {
         } finally { setBusy(false); }
     }
 
-    async function download(retry = false) {
+    async function download(retry = false, format = 'word') {
         if (busy) return;
         if (retry && lastDownloadAttempt) {
+            format = lastDownloadAttempt.format || 'word';
             if (el('reportDownloadMode')) el('reportDownloadMode').value = lastDownloadAttempt.mode;
             if (el('reportDownloadClass')) el('reportDownloadClass').value = lastDownloadAttempt.className || '';
             refreshDownloadScope();
@@ -384,7 +385,9 @@ window.StudentReports = (() => {
         if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
             checks(); tell(`Belum dapat mengunduh ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`); return;
         }
+        const formatName = format === 'excel' ? 'Excel' : 'Word';
         lastDownloadAttempt = {
+            format,
             mode: el('reportDownloadMode')?.value || 'grade',
             className: el('reportDownloadClass')?.value || '',
             label: selection.label
@@ -395,9 +398,9 @@ window.StudentReports = (() => {
         updatePdfProgress({ visible: true, title: `Menyiapkan ${selection.label}`, total: selectedRows.length });
         setBusy(true);
         try {
-            const pdfName = `Rapor ${selection.label} - ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1' : '2'} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.docx`;
+            const pdfName = `Rapor ${selection.label} - ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1' : '2'} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.${format === 'excel' ? 'xlsx' : 'docx'}`;
             const blob = await ReportZip.build(selectedRows, {
-                fileName: pdfName, format: 'word',
+                fileName: pdfName, format,
                 onProgress: (n, total, row) => {
                     updatePdfProgress({ visible: true, title: 'Menyusun halaman rapor', n, total, row });
                     tell(n ? `Menyusun rapor ${n}/${total} halaman (${Math.round(n / total * 100)}%)...` : 'Menyiapkan dokumen rapor...');
@@ -418,12 +421,13 @@ window.StudentReports = (() => {
                 year: Number(el('reportYear').value),
                 ext: 'zip'
             }) || `Rapor ${el('reportExam').value.toUpperCase()} Semester ${el('reportSemester').value === 'ganjil' ? '1':'2'} - ${scope} - ${el('reportYear').value}-${Number(el('reportYear').value)+1}.zip`;
-            link.hidden = false; link.textContent = 'Simpan ZIP Rapor'; link.click();
-            updatePdfProgress({ visible: true, title: 'Word selesai', n: selectedRows.length, total: selectedRows.length, done: true });
-            tell(`ZIP selesai: 1 Word berisi ${selectedRows.length} halaman rapor · ${selection.label} · ${formatDuration(Date.now() - downloadStartedAt)}.`);
+            link.download = link.download.replace(/\.zip$/i, ` - ${formatName}.zip`);
+            link.hidden = false; link.textContent = `Simpan ZIP ${formatName}`; link.click();
+            updatePdfProgress({ visible: true, title: `${formatName} selesai`, n: selectedRows.length, total: selectedRows.length, done: true });
+            tell(`ZIP selesai: 1 ${formatName} berisi ${selectedRows.length} ${format === 'excel' ? 'lembar' : 'halaman'} rapor · ${selection.label} · ${formatDuration(Date.now() - downloadStartedAt)}.`);
         } catch (error) {
             if (el('reportRetryDownload')) el('reportRetryDownload').hidden = false;
-            updatePdfProgress({ visible: true, title: 'Pembuatan Word terhenti', n: 0, total: selectedRows.length, error: `${error.message} Data rapor yang sudah dimuat tetap tersedia; tekan Coba Lagi yang Gagal.` });
+            updatePdfProgress({ visible: true, title: `Pembuatan ${formatName} terhenti`, n: 0, total: selectedRows.length, error: `${error.message} Data rapor yang sudah dimuat tetap tersedia; tekan Coba Lagi yang Gagal.` });
             tell(`${error.message}. Tekan Coba Lagi yang Gagal untuk mengulang tanpa memuat ulang data yang masih valid.`);
         } finally { setBusy(false); refreshDownloadScope(); }
     }
@@ -438,6 +442,7 @@ window.StudentReports = (() => {
             const chosen = button.dataset.raporView === tab;
             button.classList.toggle('active', chosen);
             button.setAttribute('aria-selected', String(chosen));
+            button.tabIndex = chosen ? 0 : -1;
         });
         if (tab === 'preview' && selected() && !el('reportPreview').firstChild) preview();
         if (tab === 'missing' && rows.length) checks();
@@ -471,9 +476,19 @@ window.StudentReports = (() => {
         checks();
         return true;
     }
-    document.addEventListener('panelready', () => {
-        document.querySelectorAll('[data-rapor-view]').forEach(button =>
-            button.addEventListener('click', () => changeTab(button.dataset.raporView)));
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
+        const tabs = [...document.querySelectorAll('[data-rapor-view]')];
+        tabs.forEach((button, index) => {
+            button.addEventListener('click', () => changeTab(button.dataset.raporView));
+            button.addEventListener('keydown', event => {
+                if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+                event.preventDefault();
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
+                    (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+                changeTab(tabs[next].dataset.raporView);
+                tabs[next].focus();
+            });
+        });
         el('reportPaperTint').addEventListener('change', event => {
             el('reportPreview').classList.toggle('paper-tint', event.target.checked);
         });
@@ -485,7 +500,8 @@ window.StudentReports = (() => {
         el('reportStudent').addEventListener('change', preview);
         el('reportPrevious').addEventListener('click', () => step(-1));
         el('reportNext').addEventListener('click', () => step(1));
-        el('downloadReports').addEventListener('click', () => download(false));
+        el('downloadReports').addEventListener('click', () => download(false, 'word'));
+        el('downloadReportsExcel')?.addEventListener('click', () => download(false, 'excel'));
         el('reportDirectPrint')?.addEventListener('click', directPrint);
         el('reportRetryDownload')?.addEventListener('click', () => download(true));
         el('reportDownloadMode')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });

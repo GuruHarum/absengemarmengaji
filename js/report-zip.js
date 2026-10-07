@@ -15,6 +15,11 @@ window.ReportZip = (() => {
       const document = await word(rows, onProgress);
       return pack([{name: safe(fileName).replace(/\.(?:zip|pdf|docx)$/i,'') + '.docx', bytes: new Uint8Array(await document.arrayBuffer())}]);
     }
+    if(format === 'excel') {
+      if(window.GMPanel) await GMPanel.load('excel');
+      const workbook = await ReportExcel.build(rows, {onProgress});
+      return pack([{name: safe(fileName).replace(/\.(?:zip|pdf|docx|xlsx)$/i,'') + '.xlsx', bytes: new Uint8Array(await workbook.arrayBuffer())}]);
+    }
     const pdf = await ReportPDF.build(rows,{draft:false,onProgress});
     const bytes=new Uint8Array(pdf.output('arraybuffer'));
     const file = {
@@ -52,7 +57,7 @@ window.ReportZip = (() => {
     const central=join(centrals);
     return new Blob([...locals,central,join([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(central.length),u32(offset),u16(0)])],{type});
   }
-  async function word(rows,onProgress=()=>{}) {
+  async function word(rows,onProgress=()=>{}, {capture=false}={}) {
     const list=ReportPDF.sorted(rows);
     if(!list.length) throw Error('Tidak ada siswa');
     if(list.some(row=>!ReportCore.reportCheck(row).complete)) throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap');
@@ -60,9 +65,9 @@ window.ReportZip = (() => {
     const esc=value=>String(value??'-').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const mm=value=>Math.round(value*1440/25.4);
     const empty='<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="1" w:lineRule="exact"/></w:pPr></w:p>';
-    let pageShapes=[],shapeId=0;
+    let pageShapes=[],pageTables=[],shapeId=0; const pages=[];
     const measure=document.createElement('canvas').getContext('2d');
-    function p(value,{bold=false,size=2.88,align='left',preserveCase=false,width=190,height=7,contentHeight=height,min=2.35}={}) {
+    function p(value,{bold=false,size=2.88,align='left',preserveCase=false,width=190,height=7,contentHeight=height,min=2.35,onFit=()=>{}}={}) {
       const text=preserveCase?String(value??'-'):String(value??'-').toLocaleUpperCase('id-ID');
       let lines;
       for(;;size-=.1) {
@@ -87,14 +92,17 @@ window.ReportZip = (() => {
         if(lines.length*size*1.24<=contentHeight-(contentHeight<=7?1.2:2.2)) break;
         if(size<=min) throw Error('Teks terlalu panjang untuk satu halaman: '+String(value).slice(0,60)+'. Ringkas catatan atau nama pada pengaturan.');
       }
+      onFit({size,lines,text});
       return '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="'+mm(size*1.24)+'" w:lineRule="exact"/><w:jc w:val="'+align+'"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>'+(bold?'<w:b/>':'')+'<w:color w:val="111111"/><w:sz w:val="'+Math.round(size*144/25.4)+'"/></w:rPr>'+lines.map(line=>'<w:t xml:space="preserve">'+esc(line)+'</w:t>').join('<w:br/>')+'</w:r></w:p>';
     }
     const cell=(text,width,options={})=>({text,width,...options});
     // Native tables sit in editable text boxes at the existing millimetre coordinates.
     // All boxes share one paragraph anchor per pupil, keeping each report on one A4 page.
     function positionedTable(x,y,width,grid,rows,{border=false,inside=true,rule=false}={}) {
+      // No cell shading: the same editable layout is printed directly onto coloured paper.
       const edge=border?'<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(side=>'<w:'+side+' w:val="'+((rule&&side!=='bottom')||(!inside&&side.startsWith('inside'))?'nil':'single')+'" w:sz="9" w:color="161616"/>').join('')+'</w:tblBorders>':'<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(side=>'<w:'+side+' w:val="nil"/>').join('')+'</w:tblBorders>';
-      const tableXml='<w:tbl><w:tblPr><w:tblW w:w="'+mm(width)+'" w:type="dxa"/>'+edge+'<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="'+mm(1.4)+'" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="'+mm(1.4)+'" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'+grid.map(w=>'<w:gridCol w:w="'+mm(w)+'"/>').join('')+'</w:tblGrid>'+rows.map(row=>'<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="'+mm(row.height)+'" w:hRule="exact"/></w:trPr>'+row.cells.map(c=>'<w:tc><w:tcPr><w:tcW w:w="'+mm(c.width)+'" w:type="dxa"/>'+(c.span?'<w:gridSpan w:val="'+c.span+'"/>':'')+(c.merge?'<w:vMerge w:val="'+c.merge+'"/>':'')+(c.fill?'<w:shd w:val="clear" w:fill="'+c.fill+'"/>':'')+'<w:vAlign w:val="center"/></w:tcPr>'+(c.xml||p(c.text,{height:row.height,...c}))+'</w:tc>').join('')+'</w:tr>').join('')+'</w:tbl>'+empty;
+      const tableXml='<w:tbl><w:tblPr><w:tblW w:w="'+mm(width)+'" w:type="dxa"/>'+edge+'<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="'+mm(1.4)+'" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="'+mm(1.4)+'" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'+grid.map(w=>'<w:gridCol w:w="'+mm(w)+'"/>').join('')+'</w:tblGrid>'+rows.map(row=>'<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val="'+mm(row.height)+'" w:hRule="exact"/></w:trPr>'+row.cells.map(c=>'<w:tc><w:tcPr><w:tcW w:w="'+mm(c.width)+'" w:type="dxa"/>'+(c.span?'<w:gridSpan w:val="'+c.span+'"/>':'')+(c.merge?'<w:vMerge w:val="'+c.merge+'"/>':'')+'<w:vAlign w:val="center"/></w:tcPr>'+(c.xml||p(c.text,{height:row.height,...c,onFit:fit=>c.rendered=fit}))+'</w:tc>').join('')+'</w:tr>').join('')+'</w:tbl>'+empty;
+      if(capture) pageTables.push({x,y,width,grid,rows,border,inside,rule});
       const height=rows.reduce((sum,row)=>sum+row.height,0);
       const definition=shapeId===0?'<v:shapetype id="_x0000_t202" coordsize="21600,21600" o:spt="202" path="m,l,21600r21600,l21600,xe"><v:stroke joinstyle="miter"/><v:path gradientshapeok="t" o:connecttype="rect"/></v:shapetype>':'';
       pageShapes.push('<w:r><w:pict>'+definition+'<v:shape id="raporShape'+(++shapeId)+'" type="#_x0000_t202" style="position:absolute;margin-left:'+x+'mm;margin-top:'+y+'mm;width:'+width+'mm;height:'+height+'mm;mso-position-horizontal-relative:page;mso-position-vertical-relative:page;mso-wrap-style:none" stroked="f" filled="f"><v:textbox inset="0,0,0,0" style="mso-fit-shape-to-text:t"><w:txbxContent>'+tableXml+'</w:txbxContent></v:textbox></v:shape></w:pict></w:r>');
@@ -102,7 +110,7 @@ window.ReportZip = (() => {
     const text=(value,x,y,w,h,opts={})=>positionedTable(x,y,w,[w],[{height:h,cells:[cell(value,w,opts)]}]);
     for(let i=0;i<list.length;i++) {
       const report=list[i]; ReportCore.useReference(report.reference);
-      pageShapes=[];
+      pageShapes=[]; pageTables=[];
       const school=report.school||{}, student=report.student, officials=report.officials||{};
       const logoUrl=school.logo_url&&String(school.logo_url).includes('FjF61ou.png')?'assets/school-logo.png':school.logo_url;
       if(logoUrl) {
@@ -126,7 +134,7 @@ window.ReportZip = (() => {
           } finally {image.close();}
         }
         const drawing='<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="900000" cy="900000"/><wp:docPr id="'+(i+1)+'" name="Logo sekolah"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="Logo sekolah"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="'+asset.id+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="900000" cy="900000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
-        positionedTable(10.6,9,28,[28],[{height:25,cells:[cell('',28,{xml:drawing})]}]);
+        positionedTable(10.6,9,28,[28],[{height:25,cells:[cell('',28,{xml:drawing,image:asset.name})]}]);
       }
       text('LAPORAN PENILAIAN HASIL BELAJAR TAHSIN & TAHFIDZ',39,8.5,158,8,{size:3.85,bold:true,align:'center'});
       text((ReportCore.periods[report.period]||'')+' - TAHUN AJARAN '+report.year+' / '+(report.year+1),39,17,158,7,{size:3.35,bold:true,align:'center'});
@@ -170,9 +178,11 @@ window.ReportZip = (() => {
       signer(10,'ORANG TUA / WALI\nSISWA','','');
       signer(75,'KEPALA SEKOLAH\n'+ReportPDF.signatureSchoolName(school.name),[officials.principal_name,officials.principal_degree].filter(Boolean).join(', '),officials.principal_niy);
       signer(140,"KOORDINATOR STUDI\nAL-QUR'AN",[officials.coordinator_name,officials.coordinator_degree].filter(Boolean).join(', '),officials.coordinator_niy);
+      if(capture) pages.push({student:{...student},tables:pageTables});
       body.push('<w:p><w:pPr>'+(i?'<w:pageBreakBefore/>':'')+'<w:spacing w:before="0" w:after="0" w:line="1" w:lineRule="exact"/></w:pPr>'+pageShapes.join('')+'</w:p>');
       onProgress(i+1,list.length,list[i]);await new Promise(resolve=>setTimeout(resolve,0));
     }
+    if(capture) return {pages,images:files.filter(file=>file.name.startsWith('word/media/')).map(file=>({name:file.name.split('/').at(-1),bytes:file.bytes}))};
     const xml=(name,text)=>files.push({name,bytes:enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+text)});
     xml('[Content_Types].xml','<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/></Types>');
     xml('_rels/.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="document" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
@@ -181,5 +191,5 @@ window.ReportZip = (() => {
     xml('word/document.xml','<w:document xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+body.join('')+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>');
     return pack(files,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   }
-  return {build,safe,word};
+  return {build,safe,word,pack,layout:(rows,onProgress)=>word(rows,onProgress,{capture:true})};
 })();

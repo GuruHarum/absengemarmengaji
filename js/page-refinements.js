@@ -21,9 +21,10 @@ function attendanceLogToday() {
 }
 
 let attendanceLogRequest = 0;
-async function loadAttendanceLog() {
+async function loadAttendanceLog(page = 1) {
     const input = document.getElementById('attendanceLogDate');
     if (!input) return;
+    if (typeof page !== 'number') page = 1;
     const request = ++attendanceLogRequest;
     const date = input.value || attendanceLogToday();
     const status = document.getElementById('attendanceLogStatus');
@@ -36,18 +37,21 @@ async function loadAttendanceLog() {
         const level = value('filterClassNumber');
         if (teacher) filters.teacher = teacher;
         if (className) filters.class = className;
-        const rows = await getAttendance(filters);
+        if (level) filters.level = level;
+        const result = await getAttendancePage(filters, page, recordsPerPage);
         if (request !== attendanceLogRequest) return;
-        filteredAttendanceData = rows.filter(row =>
-            String(row.date).slice(0, 10) === date &&
-            (!level || String(extractClassNumber(row.class || '')) === level)
-        );
-        currentPage = 1;
+        const lastPage = Math.max(1, Math.ceil(result.total / recordsPerPage));
+        if (page > lastPage) return loadAttendanceLog(lastPage);
+        window.GM_ATTENDANCE_LOG_PAGE = { total: result.total, page, date };
+        filteredAttendanceData = result.rows;
+        currentPage = page;
         renderAdminData();
-        status.textContent = `Tanggal ${date.split('-').reverse().join('/')} · ${filteredAttendanceData.length} catatan`;
+        status.textContent = `Tanggal ${date.split('-').reverse().join('/')} · ${result.total} catatan`;
+
     } catch (error) {
         if (request !== attendanceLogRequest) return;
         filteredAttendanceData = [];
+        window.GM_ATTENDANCE_LOG_PAGE = { total: 0, page: 1, date };
         currentPage = 1;
         renderAdminData();
         status.textContent = 'Log gagal dimuat. Silakan pilih ulang tanggal atau terapkan filter untuk mencoba lagi.';

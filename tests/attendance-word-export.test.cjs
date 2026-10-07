@@ -43,7 +43,7 @@ function wordContext(compressed=true) {
    ...(compressed?{CompressionStream,Response}:{}),
    document:{createElement(){return {getContext(){return {font:'',measureText(text){return {width:String(text).length*parseFloat(this.font.split(' ')[1])*.5};}};},toBlob(){throw Error('Full-page rasterization is forbidden');}};}}};
  ctx.window=ctx;vm.createContext(ctx);
- for(const name of ['quran-surahs','report-reference','report-core','report-pdf','report-zip']) vm.runInContext(fs.readFileSync('js/'+name+'.js','utf8'),ctx);
+ for(const name of ['quran-surahs','report-reference','report-core','report-pdf','report-zip','report-excel']) vm.runInContext(fs.readFileSync((process.env.GM_BUILT_REPORT_QA ? 'public-build/js/' : 'js/')+name+'.js','utf8'),ctx);
  return ctx;
 }
 function report(id=1) {
@@ -101,7 +101,7 @@ test('DOCX properties follow OOXML order and text omits illegal XML control char
 });
 test('incomplete reports cannot be exported as final Word',async()=>{
  const ctx={window:{},Blob,TextEncoder,Uint8Array,Uint32Array,ReportCore:{reportCheck:()=>({complete:false})},ReportPDF:{sorted:r=>r}};
- vm.runInNewContext(fs.readFileSync('js/report-zip.js','utf8'),ctx);
+ vm.runInNewContext(fs.readFileSync((process.env.GM_BUILT_REPORT_QA ? 'public-build/js/' : 'js/')+'report-zip.js','utf8'),ctx);
  await assert.rejects(ctx.window.ReportZip.word([{student:{id:1}}]),/harus lengkap/);
 });
 function logoContext() {
@@ -129,11 +129,72 @@ test('overlong text is rejected instead of clipped in a fixed page layout',async
 });
 test('delete cancellation never writes; successful deletion reloads the active log',async()=>{
  let writes=0,reloads=0,accepted=false;
- const ctx={window:{},document:{getElementById:()=>null},filteredAttendanceData:[{id:7,student:'Siswa',date:'2026-10-07'}],
+ const ctx={currentPage:1,window:{},document:{getElementById:()=>null},filteredAttendanceData:[{id:7,student:'Siswa',date:'2026-10-07'}],
  AdminNotice:{confirm:async()=>accepted,notify(){}},deleteAttendance:async id=>{assert.equal(id,'7');writes++;},loadAttendanceLog:async()=>reloads++};
  const source=fs.readFileSync('js/admin.js','utf8');
  vm.runInNewContext(source.slice(source.indexOf('async function attendanceLogAction'), source.indexOf('function renderAdminTable')),ctx);
  const button={hasAttribute:()=>true,dataset:{logDelete:'7'}};
  await ctx.attendanceLogAction(button);assert.equal(writes,0);
  accepted=true;await ctx.attendanceLogAction(button);assert.equal(writes,1);assert.equal(reloads,1);assert.equal(button.disabled,false);
+});
+
+test('Word reports have no page, table or text-box background fill for coloured paper',async()=>{
+ const blob=await wordContext().ReportZip.word([report()]);
+ const parts=unzip(new Uint8Array(await blob.arrayBuffer()));
+ const xml=new TextDecoder().decode(parts.get('word/document.xml'));
+ assert.doesNotMatch(xml,/<w:(?:background|shd)\b|filled="t"|fillcolor=/);
+ assert.match(xml,/filled="f"/);assert.match(xml,/<w:tblBorders>/);
+});
+
+test('browser preview and direct-print renderer paint text and borders without background rectangles',async()=>{
+ const ctx=wordContext(),text=[];
+ const drawing={font:'',fillRect(){throw Error('A background rectangle would cover coloured paper');},
+  fillText(value){text.push(String(value));},measureText(value){return {width:String(value).length*Number(this.font.match(/([\d.]+)px/)?.[1]||3)*.4};}};
+ const canvas={getContext:()=>new Proxy(drawing,{get:(target,key)=>key in target?target[key]:(()=>{})})};
+ await ctx.ReportPDF.render(report(),{canvas});
+ assert(text.some(value=>value.includes('SISWA & UJI 1')));assert(text.includes('0'));
+});
+
+test('Excel ZIP contains native editable cells, separate pupils, no fills and A4 print areas',async()=>{
+ const ctx=wordContext(), progress=[];
+ const rows=[report(1),report(2)];rows[0].student.nis='00123';rows[1].student.name=rows[0].student.name;
+ const zip=await ctx.ReportZip.build(rows,{format:'excel',fileName:'Rapor.xlsx',onProgress:n=>progress.push(n)});
+ const outer=unzip(new Uint8Array(await zip.arrayBuffer()));assert.deepEqual([...outer.keys()],['Rapor.xlsx']);
+ const parts=unzip(outer.get('Rapor.xlsx')),read=name=>new TextDecoder().decode(parts.get(name));
+ assert.match(read('xl/workbook.xml'),/name="Siswa &amp; Uji 1"/);
+ assert.match(read('xl/workbook.xml'),/name="Siswa &amp; Uji 1 2"/);
+ assert.match(read('xl/workbook.xml'),/_xlnm.Print_Area/);
+ const sheet=read('xl/worksheets/sheet1.xml');
+ assert.match(sheet,/>SISWA &amp; UJI 1</);assert.match(sheet,/>00123</);
+ assert.match(sheet,/<v>0<\/v>/);assert.match(sheet,/<mergeCell ref=/);
+ assert.match(sheet,/paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="1"/);
+ assert.match(sheet,/showGridLines="0"/);assert.match(read('xl/styles.xml'),/patternType="none"/);
+ assert.doesNotMatch(read('xl/styles.xml'),/patternType="solid"|fillId="[1-9]/);
+ assert(![...parts.keys()].some(key=>/media|drawing/.test(key)));
+ assert.deepEqual(progress,[0,1,2]);
+ if(process.env.GM_REPORT_QA_DIR){fs.mkdirSync(process.env.GM_REPORT_QA_DIR,{recursive:true});fs.writeFileSync(process.env.GM_REPORT_QA_DIR+'/native-rapor.xlsx',outer.get('Rapor.xlsx'));}
+});
+
+test('Excel rejects incomplete reports and keeps worksheet names valid and unique',async()=>{
+ const ctx=wordContext();const incomplete=report();delete incomplete.tahsin.scores.tahsin_makhraj;
+ await assert.rejects(ctx.ReportExcel.build([incomplete]),/lengkap/);
+ const rows=[report(1),report(2)];rows.forEach(row=>row.student.name="'Nama [uji]/panjang: sangat panjang sekali?'");
+ const blob=await ctx.ReportExcel.build(rows);const parts=unzip(new Uint8Array(await blob.arrayBuffer()));
+ const xml=new TextDecoder().decode(parts.get('xl/workbook.xml'));
+ const names=[...xml.matchAll(/<sheet name="([^"]+)"/g)].map(match=>match[1]);
+ assert.equal(new Set(names).size,2);assert(names.every(name=>name.length<=31&&!/[\[\]:*?/\\]/.test(name)));
+});
+
+test('Excel shares only the school logo and keeps every pupil report native',async()=>{
+ const {ctx,counts}=logoContext();const rows=[report(1),report(2)];
+ for(const row of rows)row.school.logo_url='assets/school-logo.png';
+ const blob=await ctx.ReportExcel.build(rows),parts=unzip(new Uint8Array(await blob.arrayBuffer()));
+ assert.deepEqual([...parts.keys()].filter(name=>name.startsWith('xl/media/')),['xl/media/logo0.png']);
+ assert.deepEqual(counts(),{fetches:1,draws:1});
+ for(const number of [1,2]) {
+  const drawing=new TextDecoder().decode(parts.get(`xl/drawings/drawing${number}.xml`));
+  assert.match(drawing,/Logo sekolah/);assert.match(drawing,/<xdr:oneCellAnchor>/);
+  assert.match(new TextDecoder().decode(parts.get(`xl/drawings/_rels/drawing${number}.xml.rels`)),/\.\.\/media\/logo0.png/);
+ }
+ if(process.env.GM_REPORT_QA_DIR)fs.writeFileSync(process.env.GM_REPORT_QA_DIR+'/native-rapor-logo.xlsx',new Uint8Array(await blob.arrayBuffer()));
 });

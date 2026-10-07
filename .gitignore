@@ -2,6 +2,7 @@
 outputs/
 
 public-build/
+node_modules/
 # Local data and connection metadata should never be committed or deployed.
 backup_supabase*.sql
 supabase/.temp/

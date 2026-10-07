@@ -1,0 +1,17 @@
+{
+  "name": "absen-gemar-mengaji",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-static.cjs",
+    "test:performance": "node --test tests/panel-performance.test.cjs tests/panel-css-bundle.test.cjs tests/static-optimization.test.cjs tests/panel-fragments.test.cjs tests/data-performance.test.cjs tests/image-performance.test.cjs",
+    "check:compression": "node scripts/check-live-performance.cjs",
+    "test:panel-dom": "node --test tests/panel-dom.test.cjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.9",
+    "linkedom": "0.18.12",
+    "postcss": "8.5.6",
+    "sharp": "0.34.5",
+    "tailwindcss": "3.4.17"
+  }
+}

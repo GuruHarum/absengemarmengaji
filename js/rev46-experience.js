@@ -678,10 +678,12 @@ window.GMRev46 = (() => {
   }
 
   function init(){
-    mountThemeToggle(); mountCoordinatorPages(); contextualConfirm(); mountKeyboardAvoidance();
+    mountThemeToggle(); contextualConfirm(); mountKeyboardAvoidance();
     document.documentElement.dataset.gmDevice = matchMedia('(max-width: 767px)').matches ? 'mobile' : (matchMedia('(max-width: 1180px)').matches ? 'tablet' : 'desktop');
     window.addEventListener('resize',()=>{document.documentElement.dataset.gmDevice=matchMedia('(max-width: 767px)').matches?'mobile':(matchMedia('(max-width:1180px)').matches?'tablet':'desktop');},{passive:true});
   }
   document.addEventListener('panelready',init);
+  if (window.GMPanel) GMPanel.onPage('presentasi', mountCoordinatorPages);
+  else document.addEventListener('panelready', mountCoordinatorPages);
   return { loadAnalytics, loadPresentation, toggleFullscreen, shiftPeriod, reportRows };
 })();

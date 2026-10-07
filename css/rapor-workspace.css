@@ -1,0 +1,74 @@
+/* Rapor workspace: shared period, distinct tasks, and room for the A4 preview. */
+body.admin-page #page-rapor { display: grid; gap: 22px; color: var(--theme-ink, #234334); }
+body.admin-page #page-rapor.hidden { display: none; }
+body.admin-page #page-rapor > * { margin-top: 0; min-width: 0; }
+body.admin-page #page-rapor .report-panel { background: var(--theme-paper, #fff); border: 1px solid var(--theme-line, #dbe5df); border-radius: 18px; padding: 24px; }
+body.admin-page #page-rapor :is(h2, h3, h4) { color: var(--theme-ink, #234334); }
+body.admin-page #page-rapor .report-period-panel h2 { font-size: 18px; margin: 0; }
+body.admin-page #page-rapor .report-period-panel .section-heading p { margin: 6px 0 0; color: var(--theme-muted, #64766c); font-size: 13px; }
+body.admin-page #page-rapor #reportControls { grid-template-columns: minmax(130px, 1.3fr) repeat(3, minmax(105px, 1fr)) auto; gap: 16px; align-items: end; margin: 22px 0 0; padding: 0; border: 0; }
+body.admin-page #page-rapor .field-label { display: grid; gap: 8px; min-width: 0; font-size: 12px; line-height: 1.5; }
+body.admin-page #page-rapor :is(input, select) { min-width: 0; min-height: 44px; width: 100%; font-size: 14px; background: var(--theme-paper, #fff); color: var(--theme-ink, #234334); border-color: var(--theme-line, #dbe5df); }
+body.admin-page #page-rapor #loadReports { min-height: 44px; white-space: nowrap; }
+body.admin-page #page-rapor .report-summary { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--theme-line, #dbe5df); font-size: 13px; line-height: 1.6; }
+body.admin-page #page-rapor .report-action-feedback { margin: 12px 0 0; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+body.admin-page #page-rapor .report-submenu { display: flex; flex-wrap: nowrap; gap: 6px; padding: 5px; width: fit-content; max-width: 100%; border: 1px solid var(--theme-line, #dbe5df); border-radius: 14px; background: var(--theme-paper, #fff); }
+body.admin-page #page-rapor .report-submenu button { min-height: 44px; border-radius: 10px; padding: 10px 20px; border: 0; white-space: nowrap; box-shadow: none; }
+body.admin-page #page-rapor .report-submenu button.active { background: var(--brand-color, #216454); color: #fff; }
+body.admin-page #page-rapor :is(button, a):focus-visible { outline: 3px solid var(--brand-color, #216454); outline-offset: 3px; }
+body.admin-page #page-rapor .report-workspace { display: grid; grid-template-columns: minmax(0, 290px) minmax(0, 1fr); align-items: start; gap: 24px; }
+body.admin-page #page-rapor .report-selection-card { padding: 22px; }
+body.admin-page #page-rapor .report-selection-card h3 { font-size: 16px; margin: 0 0 20px; }
+body.admin-page #page-rapor .report-selection-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+body.admin-page #page-rapor .report-selection-form { margin: 0; padding: 0; border: 0; min-width: 0; }
+body.admin-page #page-rapor .report-selection-navigation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+body.admin-page #page-rapor .report-selection-navigation button { min-width: 0; min-height: 42px; padding: 9px 7px; font-size: 12px; }
+body.admin-page #page-rapor .report-student-status { margin-top: 18px; padding: 12px; font-size: 12px; line-height: 1.65; }
+body.admin-page #page-rapor .report-paper-option { display: flex; gap: 9px; margin-top: 20px; font-size: 12px; }
+body.admin-page #page-rapor .report-paper-option input { min-height: auto; width: 16px; height: 16px; flex: 0 0 16px; }
+body.admin-page #page-rapor .report-identity-details { margin-top: 20px; border-top: 1px solid var(--theme-line, #dbe5df); padding-top: 16px; }
+body.admin-page #page-rapor .report-preview { width: 100%; max-width: 794px; min-width: 0; margin: 0 auto; box-shadow: 0 6px 24px #163c3210; }
+body.admin-page #page-rapor .report-preview:empty { min-height: 420px; display: grid; place-items: center; border: 1px dashed var(--theme-line, #dbe5df); border-radius: 16px; box-shadow: none; }
+body.admin-page #page-rapor .report-preview:empty::before { content: 'Pratinjau rapor akan tampil setelah data siswa dimuat.'; max-width: 280px; padding: 24px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--theme-muted, #64766c); }
+body.admin-page #page-rapor .report-print-panel { max-width: none; }
+body.admin-page #page-rapor .report-print-panel > h3 { margin: 0; font-size: 18px; }
+body.admin-page #page-rapor .report-export-intro { margin: 8px 0 24px; color: var(--theme-muted, #64766c); font-size: 13px; }
+body.admin-page #page-rapor .report-download-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 680px; gap: 16px; }
+body.admin-page #page-rapor .report-download-summary { margin: 12px 0 24px; line-height: 1.6; }
+body.admin-page #page-rapor .report-export-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+body.admin-page #page-rapor .report-export-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; padding: 22px; border: 1px solid var(--theme-line, #dbe5df); border-radius: 14px; background: var(--theme-paper, #fff); }
+body.admin-page #page-rapor .report-format-label { font-size: 11px; letter-spacing: .08em; color: var(--theme-muted, #64766c); }
+body.admin-page #page-rapor .report-export-card h4 { margin: 10px 0 0; font-size: 18px; font-weight: 700; }
+body.admin-page #page-rapor .report-export-card p { flex: 1; margin: 10px 0 22px; font-size: 13px; line-height: 1.7; color: var(--theme-muted, #64766c); }
+body.admin-page #page-rapor .report-export-card button { width: 100%; min-height: 44px; justify-content: center; }
+body.admin-page #page-rapor .report-export-recovery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+body.admin-page #page-rapor .report-export-recovery:has(> :not([hidden])) { padding-bottom: 8px; }
+body.admin-page #page-rapor .report-paper-note { margin: 24px 0 0; font-size: 12px; line-height: 1.8; color: var(--theme-muted, #64766c); }
+body.admin-page #page-rapor .report-view-heading { margin-bottom: 20px; }
+body.admin-page #page-rapor .report-table-scroll { margin-top: 20px; border: 1px solid var(--theme-line, #dbe5df); border-radius: 12px; }
+@media (max-width: 1280px) {
+    body.admin-page #page-rapor .report-workspace { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page #page-rapor .report-selection-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    body.admin-page #page-rapor .report-selection-navigation { max-width: 320px; }
+}
+@media (max-width: 1100px) {
+    body.admin-page #page-rapor #reportControls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    body.admin-page #page-rapor #loadReports { grid-column: 1 / -1; justify-self: start; }
+    body.admin-page #page-rapor .report-workspace { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page #page-rapor .report-selection-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    body.admin-page #page-rapor .report-selection-navigation { max-width: 320px; }
+    body.admin-page #page-rapor .report-export-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+    body.admin-page #page-rapor { gap: 18px; }
+    body.admin-page #page-rapor .report-panel { padding: 18px; border-radius: 14px; }
+    body.admin-page #page-rapor #reportControls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    body.admin-page #page-rapor #loadReports { width: 100%; }
+    body.admin-page #page-rapor .report-submenu { width: 100%; gap: 3px; padding: 4px; }
+    body.admin-page #page-rapor .report-submenu button { flex: 1; min-width: 0; padding: 9px 4px; font-size: 11px; white-space: normal; }
+    body.admin-page #page-rapor .report-selection-fields,
+    body.admin-page #page-rapor .report-download-grid,
+    body.admin-page #page-rapor .report-export-options { grid-template-columns: minmax(0, 1fr); }
+    body.admin-page #page-rapor .report-selection-navigation { max-width: none; }
+    body.admin-page #page-rapor .report-export-card { padding: 20px; }
+}

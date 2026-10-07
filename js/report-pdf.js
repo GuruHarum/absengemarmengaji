@@ -116,7 +116,7 @@ window.ReportPDF = (() => {
         c.strokeStyle = '#161616';
         c.lineWidth = .38;
         const box = (x, y, w, h) => { c.strokeRect(x, y, w, h); };
-        const filledBox = (x, y, w, h, color) => { c.save(); c.fillStyle = color; c.fillRect(x, y, w, h); c.restore(); c.strokeRect(x, y, w, h); };
+        const filledBox = (x, y, w, h) => box(x, y, w, h);
         // Label/judul tetap kapital. Nama orang dibuat kapital, sedangkan gelar akademik dipertahankan dalam bentuk normal seperti S. Pd / M. Pd.
         const text = (value, x, y, w, h, { size = 2.88, bold = false, align = 'left', min = 2.45, preserveCase = false } = {}) => {
             const display = preserveCase ? String(value ?? '-') : String(value ?? '-').toLocaleUpperCase('id-ID');
@@ -237,6 +237,7 @@ window.ReportPDF = (() => {
         // Validasi satu kali sebelum render. Sebelumnya pemeriksaan yang sama dilakukan lagi di setiap halaman.
         if (!draft && list.some(row => !ReportCore.reportCheck(row).complete))
             throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap');
+        if (window.GMPanel) await GMPanel.load('pdf');
         const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
         const date = new Date();
         // Satu canvas dipakai ulang untuk seluruh halaman. Ukuran, skala, PNG, dan koordinat tetap sama,

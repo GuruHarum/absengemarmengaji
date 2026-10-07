@@ -17,7 +17,7 @@ window.TeacherEnrollment = (() => {
             message(error.message, true);
         }
     }
-    document.addEventListener('panelready', () => {
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
         el('enrollmentTeacher').addEventListener('change', () => {
             const existing = Boolean(el('enrollmentTeacher').value);
             ['enrollmentName', 'enrollmentFullName', 'enrollmentAttendance'].forEach(id => { el(id).disabled = existing; });

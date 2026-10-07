@@ -57,6 +57,14 @@ function getAttendanceRecord(studentName, date) {
     }
     return record;
 }
+function webLogoUrl(url) {
+    if (!window.GM_WEB_ASSETS?.schoolLogo) return url;
+    try {
+        const parsed = new URL(url, location.href);
+        if (parsed.origin === location.origin && parsed.pathname === '/assets/school-logo.png') return window.GM_WEB_ASSETS.schoolLogo;
+    } catch (_) {}
+    return url;
+}
 function extractClassNumber(className) {
     if (!className)
         return null;

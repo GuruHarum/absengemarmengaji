@@ -426,6 +426,7 @@ function printAttendanceReport() {
     setTimeout(() => win.print(), 500);
 }
 async function exportAttendanceToPDF() {
+    if (window.GMPanel) await GMPanel.load('pdf');
     const { jsPDF } = window.jspdf;
     if (typeof supabase === 'undefined') {
         AdminNotice.notify("Koneksi ke database (Supabase client) tidak ditemukan! Pastikan database.js sudah dimuat.");
@@ -653,16 +654,17 @@ async function exportAttendanceToPDF() {
         }
     }
 }
-window.addEventListener('panelready', () => {
-    showLoading(true);
-    window.panelDataReady = (async () => {
-        const currentMonth = (new Date().getMonth() + 1).toString().padStart(2, '0');
-        const currentYear = new Date().getFullYear().toString();
+let attendanceWorkspacePending = null;
+function ensureAttendanceWorkspaceData(force = false) {
+    if (!force && !window.GM_ROSTER_DIRTY && Array.isArray(window.tahsinRosterTeachers) && Array.isArray(window.tahsinRosterStudents)) return Promise.resolve();
+    if (attendanceWorkspacePending) return attendanceWorkspacePending;
+    const promise = (async () => {
+        const previousFilters = Object.fromEntries(['filterTeacher','filterClassNumber','filterClassName','filterMonth','filterYear'].map(id => [id, document.getElementById(id)?.value || '']));
         document.getElementById('filterTeacher').innerHTML = '<option value="">Semua Guru</option>';
         document.getElementById('filterClassNumber').innerHTML = '<option value="">Semua Tingkat</option>';
         document.getElementById('filterClassName').innerHTML = '<option value="">Semua Nama Kelas (Opsional)</option>';
         try {
-            if (!AppAccess.canPage('absensi')) { showLoading(false); return; }
+            if (!AppAccess.canPage('absensi')) return;
             // Panel awal hanya memuat roster Tahsin yang ringkas; master penuh baru
             // dimuat saat menu Kelola Data dipilih. Absensi baru diambil saat difilter.
             const yearKey = getPublicAcademicYearStart();
@@ -672,10 +674,11 @@ window.addEventListener('panelready', () => {
             ]);
             window.tahsinRosterTeachers = teachers;
             window.tahsinRosterStudents = students;
+            window.GM_ROSTER_DIRTY = false;
         }
         catch (err) {
             console.error("Gagal menarik data master guru/siswa:", err);
-            if (window.AdminNotice) AdminNotice.notify('Daftar Tahsin gagal dimuat. Periksa SQL kelompok serta koneksi; filter tidak akan menampilkan guru Tahfidz sebagai pengganti.', 'error');
+            throw err;
         }
         if (typeof populateAdminDropdowns === 'function') {
             populateAdminDropdowns();
@@ -686,13 +689,23 @@ window.addEventListener('panelready', () => {
         if (typeof populateYearFilter === 'function') {
             populateYearFilter();
         }
-        await renderMonthlyReportTable(currentMonth, currentYear, "", "", true);
-        // Hanya tampilkan placeholder; unduh absensi saat filter Data Absensi digunakan.
-        // Tidak mengunduh puluhan ribu baris saat pertama membuka panel.
-        renderLocalAdminLogTable('', '', true);
-        showLoading(false);
+        for (const [id, value] of Object.entries(previousFilters)) { const node = document.getElementById(id); if (node && value) node.value = value; }
+
     })();
+    attendanceWorkspacePending = promise;
+    window.panelDataReady = promise;
+    const clear = () => { if (attendanceWorkspacePending === promise) attendanceWorkspacePending = null; };
+    promise.then(clear, clear);
+    return promise;
+}
+window.addEventListener('panelready', () => {
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    const currentYear = String(new Date().getFullYear());
+    if (typeof populateYearFilter === 'function') populateYearFilter();
+    void renderMonthlyReportTable(currentMonth, currentYear, '', '', true);
+    renderLocalAdminLogTable('', '', true);
 });
+
 document.addEventListener("panelready", () => {
     const printButton = document.getElementById("btn-print");
     const downloadButton = document.getElementById("btn-download");
@@ -746,6 +759,7 @@ document.getElementById('filterBtn').addEventListener('click', async (event) => 
         const teacherId = window.GMFilter?.teacherId(t);
         const classId = window.GMFilter?.classId(c);
         if (t) { if (!teacherId) throw new Error('Guru tidak ditemukan di kelompok Tahsin. Muat ulang data kelompok.'); filter.teacher_id=teacherId; }
+        if (c && /^\d+$/.test(c)) filter.level = c;
         if (c && !/^\d+$/.test(c)) { if (!classId) throw new Error('Kelas tidak ditemukan dalam master. Muat ulang daftar kelas.'); filter.class_id=classId; }
         await fetchAttendanceData(filter);
         await renderMonthlyReportTable(month, year, t, c, false);
@@ -835,6 +849,7 @@ let missingIdentifierRows = [];
 let gmManageDataLoaded = false;
 let gmManageDataPending = null;
 async function gmOpenManageData() {
+    if (window.GM_MANAGE_DIRTY) { gmManageDataLoaded = false; window.GM_MANAGE_DIRTY = false; }
     if (!gmManageDataLoaded) {
         if (!gmManageDataPending) gmManageDataPending = Promise.all([getTeachers(),getStudents()])
             .then(([teachers,students])=> {teachersData=teachers;studentsData=students;gmManageDataLoaded=true;})
@@ -866,7 +881,7 @@ function switchManageView(view) {
         void TeacherEnrollment.open();
     }
 }
-document.addEventListener('panelready', () => switchManageTab('siswa'));
+((callback) => window.GMPanel ? GMPanel.onPage('kelola', callback) : document.addEventListener('panelready', callback))(() => switchManageTab('siswa'));
 async function fetchTeachers() {
     try {
         teachersData = await getTeachers();
@@ -1563,7 +1578,7 @@ async function importManageCsv() {
         refreshManageImportControls();
     }
 }
-document.addEventListener('panelready', () => {
+((callback) => window.GMPanel ? GMPanel.onPage('kelola', callback) : document.addEventListener('panelready', callback))(() => {
     document.getElementById('manageSearch').addEventListener('input', () => { managePage = 1; renderManageTable(); });
     document.getElementById('managePrevPage').addEventListener('click', () => { if (managePage > 1) {
         managePage--;
@@ -1596,7 +1611,7 @@ function applySchoolProfile(profile) {
     if (!profile)
         return;
     const name = profile.name || 'Gemar Mengaji';
-    const logo = (!profile.logo_url || String(profile.logo_url).includes('FjF61ou.png')) ? 'assets/school-logo.png' : profile.logo_url;
+    const logo = webLogoUrl((!profile.logo_url || String(profile.logo_url).includes('FjF61ou.png')) ? 'assets/school-logo.png' : profile.logo_url);
     document.getElementById('adminSchoolName')?.replaceChildren(document.createTextNode(name));
     document.getElementById('adminSchoolAddress')?.replaceChildren(document.createTextNode(profile.address || ''));
     const logoElement = document.getElementById('adminSchoolLogo');
@@ -1694,6 +1709,7 @@ function populateInfographicFilters() {
     kelas.innerHTML = '<option value="">Semua nama kelas</option>' + classValues.map(value => `<option value="${manageEscape(value)}">${manageEscape(value)}</option>`).join('');
 }
 async function showInfographic() {
+    if (window.GMPanel) await GMPanel.load('chart');
     if (!AppAccess.full())
         return;
     const year = document.getElementById('infoYear').value;
@@ -1765,7 +1781,12 @@ async function showInfographic() {
     }
 }
 function switchPage(pageId) {
-    if (pageId === 'laporan') { switchPage('presentasi'); switchPresentationTab('reports'); return; }
+    const target = ['laporan', 'infografik', 'analitik'].includes(pageId) ? 'presentasi' : pageId;
+    if (!AppAccess.canPage(target)) return;
+    return window.GMPanel ? GMPanel.navigate(target, () => switchPageReady(pageId)) : switchPageReady(pageId);
+}
+function switchPageReady(pageId) {
+    if (pageId === 'laporan') { switchPageReady('presentasi'); switchPresentationTab('reports'); return; }
     if (['infografik', 'analitik'].includes(pageId)) pageId = 'presentasi';
     const currentPage = document.body?.dataset?.activePage || '';
     const leaveApproved = document.body?.dataset?.assessmentLeaveApproved === 'true';
@@ -1866,6 +1887,8 @@ document.addEventListener('panelready', () => {
         if (classFilter) classFilter.value = '';
     });
     document.getElementById('topLogoutBtn')?.addEventListener('click', () => document.getElementById('logoutBtn')?.click());
+});
+((callback) => window.GMPanel ? GMPanel.onPage('identitas', callback) : document.addEventListener('panelready', callback))(() => {
     document.getElementById('schoolSettingsForm')?.addEventListener('submit', saveSchoolSettings);
     document.getElementById('settingsThemeColor')?.addEventListener('input', event => {
         const value = document.getElementById('settingsThemeColorValue');

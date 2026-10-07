@@ -132,7 +132,7 @@ function gmApplyAccountLinkFilter() {
         row.hidden = Boolean(value) && row.dataset.linkStatus !== value;
     });
 }
-document.addEventListener('panelready', () => {
+((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
     document.getElementById('accountRows').addEventListener('click', async (event) => {
         const use = event.target.closest('[data-use-account]');
         if (use && AppAccess.full()) {

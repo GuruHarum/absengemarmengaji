@@ -59,7 +59,8 @@
     <link rel="stylesheet" href="css/panel-layout.css?v=20260930-layout1">
     <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
 <link rel="stylesheet" href="css/page-refinements.css?v=20261001-log2">
-<script src="js/page-refinements.js?v=20261001-1" defer></script>
+<script src="js/page-refinements.js?v=20261007-data63" defer></script>
+<link rel="stylesheet" href="css/rapor-workspace.css?v=20261007-data63">
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="coordinator">
 
@@ -413,7 +414,7 @@
 <div id="page-arsip" class="hidden space-y-4"><section class="gm-panel-card"><div class="section-heading"><div><h2>Arsip Rapor</h2></div></div><p class="gm-muted">Arsip rapor final dipertahankan saat reset tahun ajaran. Pencarian arsip akan menggunakan snapshot rapor yang tersimpan.</p><div id="gmArchiveStatus" class="gm-muted">Gunakan filter rapor untuk melihat dokumen periode terkait.</div></section></div>
 <div id="page-rapor" class="hidden space-y-5">
     <section class="report-panel report-period-panel">
-        <div class="section-heading"><div><h2>Rapor Siswa</h2></div></div>
+        <div class="section-heading"><div><h2>Periode Rapor</h2><p>Pilih periode dan tingkat kelas, lalu muat data rapor.</p></div></div>
         <fieldset id="reportControls" class="report-grid">
             <label class="field-label">Tahun awal ajaran<input id="reportYear" type="number" min="2000" max="2200"></label>
             <label class="field-label">Jenis ujian<select id="reportExam"><option value="pts">PTS</option><option value="pas">PAS</option></select></label>
@@ -427,7 +428,7 @@
     <nav id="reportSubmenu" class="manage-tabs report-submenu" aria-label="Submenu rapor siswa" role="tablist">
         <button type="button" class="active" role="tab" data-rapor-view="preview" aria-controls="reportViewPreview" aria-selected="true">Pratinjau Siswa</button>
         <button type="button" role="tab" data-rapor-view="missing" aria-controls="reportViewMissing" aria-selected="false">Cek Nilai Kosong</button>
-        <button type="button" role="tab" data-rapor-view="print" aria-controls="reportViewPrint" aria-selected="false">Cetak Rapor</button>
+        <button type="button" role="tab" data-rapor-view="print" aria-controls="reportViewPrint" aria-selected="false">Unduh &amp; Cetak</button>
     </nav>
     <section id="reportViewPreview" class="report-subview" role="tabpanel" aria-label="Pratinjau rapor siswa">
         <div class="report-workspace">
@@ -468,26 +469,43 @@
         <details><summary>Masalah lain dan kelengkapan administrasi</summary><pre id="reportProblems" class="report-problems"></pre></details>
     </section>
     <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Cetak rapor" hidden>
-        <h3>Download Rapor</h3>
-        <p>Unduh rapor seluruh rombel dalam satu tingkat, atau pilih satu rombel tertentu saja. Hasil berupa satu dokumen Word dengan satu halaman A4 per siswa di dalam ZIP. Desain rapor tetap sama, dengan teks dan tabel Word yang dapat diedit serta logo yang jelas.</p>
+        <h3>Unduh dan Cetak Rapor</h3>
+        <p class="report-export-intro">Pilih cakupan siswa, lalu pilih format yang ingin digunakan.</p>
         <div class="report-grid report-download-grid">
             <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
             <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
         </div>
         <p id="reportDownloadSummary" class="report-download-summary" role="status">Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.</p>
-        <div id="reportActions" class="report-actions">
-            <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Satu Tingkat</button>
-            <button id="reportDirectPrint" type="button" class="secondary-action">Cetak Langsung</button>
+        <div id="reportActions" class="report-export-options">
+            <article class="report-export-card" aria-labelledby="reportWordTitle">
+                <span class="report-format-label">DOCX</span>
+                <h4 id="reportWordTitle">Word</h4>
+                <p>Satu dokumen dengan satu halaman A4 per siswa. Teks dan tabel dapat diedit.</p>
+                <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Word</button>
+            </article>
+            <article class="report-export-card" aria-labelledby="reportExcelTitle">
+                <span class="report-format-label">XLSX</span>
+                <h4 id="reportExcelTitle">Excel</h4>
+                <p>Satu workbook dengan satu lembar rapor per siswa. Cetak seluruh workbook untuk semua siswa.</p>
+                <button id="downloadReportsExcel" type="button" class="primary-action">Unduh ZIP Excel</button>
+            </article>
+            <article class="report-export-card" aria-labelledby="reportPrintTitle">
+                <span class="report-format-label">CETAK</span>
+                <h4 id="reportPrintTitle">Cetak langsung</h4>
+                <p>Buka halaman cetak dari browser dengan tata letak rapor yang sama.</p>
+                <button id="reportDirectPrint" type="button" class="secondary-action">Cetak Langsung</button>
+            </article>
+        </div>
+        <div class="report-export-recovery">
             <button id="reportRetryDownload" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button>
             <a id="reportPdfLink" class="secondary-action" target="_blank" rel="noopener" hidden>Simpan ZIP Rapor</a>
         </div>
         <div id="reportPdfProgress" class="report-pdf-progress" hidden aria-live="polite">
-            <div class="report-progress-heading"><strong id="reportPdfProgressTitle">Menyiapkan PDF</strong><span id="reportPdfProgressPercent">0%</span></div>
+            <div class="report-progress-heading"><strong id="reportPdfProgressTitle">Menyiapkan rapor</strong><span id="reportPdfProgressPercent">0%</span></div>
             <progress id="reportPdfProgressBar" max="100" value="0">0%</progress>
             <p id="reportPdfProgressDetail">Menunggu proses dimulai.</p>
         </div>
-        <p class="report-direct-print-note">Buka dokumen Word untuk mencetak rapor. Cetak Langsung juga tersedia dengan kualitas 300 dpi dan desain yang sama.</p>
-        <p class="report-paper-note">Latar PDF transparan, termasuk sel tabel. Saat dicetak di kertas berwarna, bagian yang tidak bertinta tetap mengikuti warna kertas. Coba satu lembar terlebih dahulu sesuai pengaturan printer.</p>
+        <p class="report-paper-note">Word dan Excel menggunakan latar tanpa isian, termasuk sel tabel, untuk kertas berwarna. Warna putih di layar mengikuti tampilan aplikasi. Warna asli logo tetap dipertahankan.</p>
     </section>
 </div>
     <div id="page-identitas" class="hidden space-y-6">
@@ -726,10 +744,7 @@
 </main>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let teachersData = [];
         let studentsData = [];
@@ -760,16 +775,18 @@
     <script src="js/config.js"></script>
     <script src="js/access.js?v=20260928-profile21"></script>
     <script src="js/panel-preboot.js?v=20260930-rev54"></script>
-    <script src="js/utils.js"></script>
+    <script src="js/utils.js?v=20261007-data63"></script>
     <script src="js/ux-stage5.js?v=20261001-log2"></script>
     <script src="js/filter-identity.js?v=20260928-filter-id-1"></script>
-    <script src="js/database.js?v=20261001-refine1"></script>
+    <script src="js/data-requests.js?v=20261007-data63"></script>
+<script src="js/database.js?v=20261007-data63"></script>
     <script src="js/report.js"></script>
 
     <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
     <script src="js/insights.js"></script>
-    <script src="js/panel-start.js?v=20261007-word-zip-fix3"></script>
-    <script src="js/gm-upgrade-20260928.js?v=20261001-refine1"></script>
+    <script src="js/panel-modules.js?v=20261007-data63"></script>
+<script src="js/panel-start.js?v=20261007-data63"></script>
+    <script src="js/gm-upgrade-20260928.js?v=20261007-data63"></script>
 
 
 

@@ -1,9 +1,11 @@
-const VERSION = 'log56';
+const VERSION = 'log63-data-pages-build-2d72917ae79e';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE = [
+  '/css/tailwind-184ef960fa34.css',
+  '/assets/school-logo-web-7278a86dd519.webp',
   OFFLINE_URL,
   '/guru.html',
   '/manifest.webmanifest',
@@ -23,10 +25,11 @@ const PRECACHE = [
   '/css/rev46-experience.css',
   '/css/rev51-responsive.css',
   '/css/rev54-panels.css',
+  '/css/rapor-workspace.css?v=20261007-data63',
   '/js/pwa.js',
   '/js/panel-preboot.js',
-  '/js/panel-start-guru.js',
-  '/js/rev46-experience.js',
+  '/js/panel-modules.js?v=20261007-data63',
+  '/js/panel-start-guru.js?v=20261007-data63',
   '/js/islamic-quotes.js',
   '/assets/school-logo.png',
   '/assets/icon-192.png',
@@ -38,7 +41,7 @@ const PRECACHE = [
 ];
 
 function normalizedRequest(url) {
-  return new Request(url.origin + url.pathname, { method: 'GET', credentials: 'same-origin' });
+  return new Request(url.origin + url.pathname + url.search, { method: 'GET', credentials: 'same-origin' });
 }
 
 async function precache() {
@@ -137,6 +140,8 @@ async function staleWhileRevalidate(request, url) {
   const cache = await caches.open(RUNTIME_CACHE);
   const key = normalizedRequest(url);
   const cached = await cache.match(key);
+  const immutable = /\/(?:panel|tailwind)-[a-f0-9]{12}\.(?:js|css)$/.test(url.pathname) || /^\/pages\/[\w-]+-[a-f0-9]{12}\.html$/.test(url.pathname) || /\/school-logo-web-[a-f0-9]{12}\.webp$/.test(url.pathname);
+  if (immutable) { const stored = cached || await caches.match(key); if (stored) return stored; }
   const network = fetch(request, { cache: 'no-cache' }).then(async response => {
     if (response.ok && response.type === 'basic') await cache.put(key, response.clone());
     return response;
@@ -167,6 +172,7 @@ self.addEventListener('fetch', event => {
 
   const destination = request.destination;
   const cacheable = ['script', 'style', 'image', 'font', 'manifest'].includes(destination)
+    || /^\/pages\/[\w-]+-[a-f0-9]{12}\.html$/.test(url.pathname)
     || /\.(?:js|css|png|jpg|jpeg|webp|svg|woff2?)$/i.test(url.pathname);
   if (cacheable) event.respondWith(staleWhileRevalidate(request, url));
 });

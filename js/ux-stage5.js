@@ -42,19 +42,32 @@ window.GMUX = (() => {
     }
     function observeTables() {
         enhanceTables(document);
+        const pendingTables = new Set();
+        let scheduled = false;
+        const schedule = table => {
+            if (!table) return;
+            pendingTables.add(table);
+            if (scheduled) return;
+            scheduled = true;
+            requestAnimationFrame(() => {
+                scheduled = false;
+                for (const item of pendingTables) {
+                    item.dataset.gmTableEnhanced = '';
+                    enhanceTable(item);
+                }
+                pendingTables.clear();
+            });
+        };
         const observer = new MutationObserver(mutations => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     if (!(node instanceof Element)) continue;
-                    if (node.matches?.('table')) enhanceTable(node);
-                    enhanceTables(node);
+                    if (node.matches?.('table')) schedule(node);
+                    node.querySelectorAll?.('table').forEach(schedule);
                 }
                 if (mutation.type === 'childList' && mutation.target instanceof HTMLTableSectionElement) {
                     const table = mutation.target.closest('table');
-                    if (table) {
-                        table.dataset.gmTableEnhanced = '';
-                        enhanceTable(table);
-                    }
+                    schedule(table);
                 }
             }
         });

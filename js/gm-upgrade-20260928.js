@@ -127,8 +127,10 @@ window.GMUpgrade = (()=>{
   }catch(e){host.innerHTML=`<section class="gm-panel-card">Arsip belum dapat dimuat: ${escapeHtml(e.message)}</section>`}
  }
  function init(){
-  $('gmReportYear') && ($('gmReportYear').value=yearNow()); $('gmExportTargets')?.addEventListener('click',exportTargets); $('gmBackupBtn')?.addEventListener('click',backup);
+  if ($('gmReportYear') && !$('gmReportYear').value) $('gmReportYear').value=yearNow();
+  for (const [id, callback] of [['gmExportTargets',exportTargets],['gmBackupBtn',backup]]) { const button=$(id); if (button && !button.dataset.gmBound) { button.dataset.gmBound='true'; button.addEventListener('click',callback); } }
  }
- document.addEventListener('panelready',init);
+ if (window.GMPanel) { GMPanel.onPage('presentasi',init); GMPanel.onPage('pengaturan',init); }
+ else document.addEventListener('panelready',init);
  return {dashboard,refreshIdentity,exportTargets,backup,archive};
 })();

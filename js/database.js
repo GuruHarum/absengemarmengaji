@@ -23,7 +23,11 @@ async function fetchAllRows(queryFactory, batchSize = 500) {
     }
     return all;
 }
-async function fetchAllRpcRows(rpcName, args = {}, batchSize = 500) {
+function fetchAllRpcRows(rpcName, args = {}, batchSize = 500) {
+    const read = () => fetchAllRpcRowsUnshared(rpcName, args, batchSize);
+    return window.GMDataRequests ? GMDataRequests.read('rpc:' + JSON.stringify([rpcName, args, batchSize]), read) : read();
+}
+async function fetchAllRpcRowsUnshared(rpcName, args = {}, batchSize = 500) {
     const all = [];
     let from = 0;
     while (true) {
@@ -47,7 +51,10 @@ async function fetchAllRpcRows(rpcName, args = {}, batchSize = 500) {
     }
     return all;
 }
-async function getTeachers() {
+function getTeachers() {
+    return window.GMDataRequests ? GMDataRequests.read('teachers', getTeachersUnshared) : getTeachersUnshared();
+}
+async function getTeachersUnshared() {
     if (window.AppAccess)
         await AppAccess.ready;
     if (!window.AppAccess) {
@@ -58,7 +65,10 @@ async function getTeachers() {
     }
     return fetchAllRows(() => AppAccess.scope(supabase.from('teachers').select('*').order('nama'), 'teachers'), 500);
 }
-async function getStudents() {
+function getStudents() {
+    return window.GMDataRequests ? GMDataRequests.read('students', getStudentsUnshared) : getStudentsUnshared();
+}
+async function getStudentsUnshared() {
     if (window.AppAccess)
         await AppAccess.ready;
     if (!window.AppAccess) {
@@ -71,46 +81,77 @@ async function getStudents() {
 }
 // Ambil absensi dengan filter server-side dan identitas ID. Tidak pernah
 // mengunduh seluruh riwayat sebagai fallback jika filter gagal.
-async function getAttendance(filters = {}) {
+function gmSharedAttendance(key, read) {
+    return window.GMDataRequests ? GMDataRequests.read(key, read) : read();
+}
+async function attendanceFilters(filters) {
+    filters = { ...filters };
     if (window.AppAccess) {
         await AppAccess.ready;
         if (AppAccess.teacher()) {
-            filters = { ...filters, teacher_id: String(AppAccess.profile.teacher_id) };
+            filters.teacher_id = String(AppAccess.profile.teacher_id);
             delete filters.teacher;
         }
     }
     const identity = window.GMFilter;
-    const teacherId = filters.teacher_id || identity?.teacherId(filters.teacher);
-    const classId = filters.class_id || identity?.classId(filters.class);
-    const select = 'id,date,teacher,class,student,status,note,student_id,class_id,teacher_id';
-    const makeQuery = () => {
-        let q = supabase.from('attendance').select(select);
-        if (filters.date) q = q.eq('date', filters.date);
-        else if (filters.date_from && filters.date_to) q = q.gte('date', filters.date_from).lte('date', filters.date_to);
-        else if (filters.month && filters.year) {
-            const m = String(filters.month).padStart(2,'0'), y = String(filters.year);
-            const last = new Date(Number(y),Number(m),0).getDate();
-            q = q.gte('date',`${y}-${m}-01`).lte('date',`${y}-${m}-${String(last).padStart(2,'0')}`);
-        }
-        if (teacherId) q = q.eq('teacher_id', teacherId);
-        else if (filters.teacher) q = q.eq('teacher', filters.teacher);
-        if (classId) q = q.eq('class_id', classId);
-        else if (filters.class) q = q.eq('class', filters.class);
-        if (filters.student_id) q = q.eq('student_id', filters.student_id);
-        else if (filters.student) q = q.eq('student', filters.student);
-        return q.order('date',{ascending:false}).order('id',{ascending:false});
-    };
-    const all = [];
-    for (let offset=0; ; offset+=500) {
-        const {data,error} = await makeQuery().range(offset,offset+499);
-        if (error) {
-            console.error('Filter absensi gagal (tanpa fallback seluruh tabel):', {filters,error});
-            throw new Error(`Gagal memuat absensi: ${error.message}. Periksa migrasi ID dan izin akses.`);
-        }
-        all.push(...(data||[]));
-        if (!data || data.length < 500) break;
+    filters.teacher_id ||= identity?.teacherId(filters.teacher);
+    filters.class_id ||= identity?.classId(filters.class);
+    return filters;
+}
+function attendanceQuery(filters, columns, count) {
+    let q = supabase.from('attendance').select(columns, count ? { count: 'exact' } : undefined);
+    if (filters.date) q = q.eq('date', filters.date);
+    else if (filters.date_from && filters.date_to) q = q.gte('date', filters.date_from).lte('date', filters.date_to);
+    else if (filters.month && filters.year) {
+        const m = String(filters.month).padStart(2, '0'), y = String(filters.year);
+        const last = new Date(Number(y), Number(m), 0).getDate();
+        q = q.gte('date', `${y}-${m}-01`).lte('date', `${y}-${m}-${String(last).padStart(2, '0')}`);
     }
-    return all;
+    if (filters.teacher_id) q = q.eq('teacher_id', filters.teacher_id);
+    else if (filters.teacher) q = q.eq('teacher', filters.teacher);
+    if (filters.class_id) q = q.eq('class_id', filters.class_id);
+    else if (filters.class) q = q.eq('class', filters.class);
+    if (filters.student_id) q = q.eq('student_id', filters.student_id);
+    else if (filters.student) q = q.eq('student', filters.student);
+    return q.order('date', { ascending: false }).order('id', { ascending: false });
+}
+const GM_ATTENDANCE_COLUMNS = 'id,date,teacher,class,student,status,note,student_id,class_id,teacher_id';
+async function attendanceLevelIds(filters) {
+    // Read only the compact index when filtering a level. Historical class names
+    // remain included, even if the class is no longer in the active roster.
+    const rows = await fetchAllRows(() => attendanceQuery(filters, 'id,class'), 500);
+    return rows.filter(row => String(row.class || '').match(/\d+/)?.[0] === String(filters.level)).map(row => row.id);
+}
+function getAttendance(filters = {}) {
+    return gmSharedAttendance('attendance:' + JSON.stringify(filters), async () => {
+        const scoped = await attendanceFilters(filters);
+        if (!scoped.level) return fetchAllRows(() => attendanceQuery(scoped, GM_ATTENDANCE_COLUMNS), 500);
+        const ids = await attendanceLevelIds(scoped), rows = [];
+        for (let start = 0; start < ids.length; start += 200) {
+            rows.push(...await fetchAllRows(() => attendanceQuery(scoped, GM_ATTENDANCE_COLUMNS).in('id', ids.slice(start, start + 200)), 500));
+        }
+        return rows;
+    });
+}
+function getAttendancePage(filters = {}, page = 1, size = 10) {
+    page = Math.max(1, Number.isSafeInteger(Number(page)) ? Number(page) : 1);
+    size = Math.min(100, Math.max(1, Number.isSafeInteger(Number(size)) ? Number(size) : 10));
+    return gmSharedAttendance('attendance-page:' + JSON.stringify([filters, page, size]), async () => {
+        const scoped = await attendanceFilters(filters);
+        const offset = (page - 1) * size;
+        let query, total;
+        if (scoped.level) {
+            const ids = await attendanceLevelIds(scoped);
+            total = ids.length;
+            const selected = ids.slice(offset, offset + size);
+            if (!selected.length) return { rows: [], total, page, size };
+            query = attendanceQuery(scoped, GM_ATTENDANCE_COLUMNS).in('id', selected);
+        } else query = attendanceQuery(scoped, GM_ATTENDANCE_COLUMNS, true).range(offset, offset + size - 1);
+        const { data, count, error } = await query;
+        if (error) throw error;
+        if (total == null && !Number.isInteger(count)) throw new Error('Jumlah log absensi tidak tersedia. Silakan muat ulang.');
+        return { rows: data || [], total: total ?? count, page, size };
+    });
 }
 async function getMaintenanceMode() {
     // Public status must not depend on an old login session or cached response.
@@ -181,6 +222,7 @@ async function saveAttendance(record) {
     return data;
 }
 async function updateAttendance(id, values) {
+    window.GMDataRequests?.invalidate();
     const { data, error } = await supabase
         .from("attendance")
         .update(values)
@@ -194,6 +236,7 @@ async function updateAttendance(id, values) {
     return data;
 }
 async function deleteAttendance(id) {
+    window.GMDataRequests?.invalidate();
     const { data, error } = await supabase
         .from("attendance")
         .delete()
@@ -292,6 +335,7 @@ async function fetchAttendanceData(filters = {}) {
     }
     catch (err) {
         console.error("Gagal memuat data absensi saat refresh:", err);
+        throw err;
     }
     finally {
         if (typeof hideLoading === 'function') {
@@ -392,6 +436,12 @@ async function attendanceExists(date, teacher, student) {
 if (!window.__gemarMengajiRealtimeChannel) {
     const realtimeChannel = window.supabase.channel('gemar-mengaji-realtime');
     const refreshVisibleViews = async (table) => {
+        const panel = Boolean(window.AppAccess), page = document.body?.dataset?.activePage;
+        if (panel && (table === 'students' || table === 'teachers')) {
+            window.GM_MANAGE_DIRTY = true; window.GM_ROSTER_DIRTY = true;
+            if (page === 'absensi' && typeof ensureAttendanceWorkspaceData === 'function') await ensureAttendanceWorkspaceData(true);
+            if (page !== 'kelola') return;
+        }
         if (table === 'students' || table === 'teachers') {
             if (table === 'students') {
                 const freshStudents = await getStudents();
@@ -412,7 +462,7 @@ if (!window.__gemarMengajiRealtimeChannel) {
         }
         if (typeof renderStudents === 'function')
             await renderStudents();
-        if (typeof renderMonthlyReportTable === 'function') {
+        if ((!panel || page === 'absensi') && typeof renderMonthlyReportTable === 'function') {
             const month = document.getElementById('filterMonth')?.value;
             if (month) {
                 await renderMonthlyReportTable(month, document.getElementById('filterYear')?.value || new Date().getFullYear().toString(), document.getElementById('filterTeacher')?.value || '', document.getElementById('filterClassName')?.value || document.getElementById('filterClassNumber')?.value || '', false);
@@ -420,6 +470,7 @@ if (!window.__gemarMengajiRealtimeChannel) {
         }
     };
     const handleRealtimeChange = async (payload) => {
+        window.GMDataRequests?.invalidate();
         const table = payload.table;
         if (table === 'maintenance_settings') {
             if (payload.new?.id !== true && payload.old?.id !== true) return;
@@ -461,7 +512,7 @@ if (!window.__gemarMengajiRealtimeChannel) {
                 syncAttendanceIndex(changedRecord, previousRecord);
             }
             if (typeof loadAttendanceLog === 'function' && document.getElementById('attendanceLogDate')) {
-                await loadAttendanceLog();
+                if (document.body?.dataset?.activePage === 'absensi') await loadAttendanceLog(typeof currentPage === 'number' ? currentPage : 1);
             } else if (typeof renderAdminData === 'function') {
                 if (typeof filteredAttendanceData !== 'undefined') {
                     filteredAttendanceData = typeof getFilteredAttendanceRecords === 'function'

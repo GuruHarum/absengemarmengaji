@@ -29,4 +29,12 @@ for (const rel of ['index.html', 'admin.html', 'guru.html', 'sw.js', 'js/access.
 
 // Verify source copies above before optimizing the generated HTML.
 require('./bundle-panel-css.cjs').bundlePanelCss(out);
-console.log('Static website prepared in public-build (bundled panel CSS)');
+require('./bundle-panel-js.cjs').bundlePanelJs(out);
+require('./optimize-images.cjs').optimizeImages(out).then(() => {
+    require('./split-panel-pages.cjs').splitPanelPages(out);
+    return require('./optimize-static.cjs').optimizeStatic(out);
+}).then(optimized => {
+    const version = require('./stamp-pwa-cache.cjs').stampPwaCache(out);
+    console.log(`PWA cache: ${version}`);
+    console.log(`Static website prepared in public-build (bundled CSS/JS${optimized ? ', static Tailwind, minified assets' : ', original Tailwind retained'})`);
+}).catch(error => { console.error(error); process.exitCode = 1; });

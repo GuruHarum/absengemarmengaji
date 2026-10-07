@@ -16,9 +16,27 @@ window.TeacherPhoto = (() => {
     function ownedPath(teacher, path) {
         return Boolean(path && String(path).startsWith(`portraits/${teacher.id}/`));
     }
+    async function optimize(file) {
+        validate(file);
+        if (typeof createImageBitmap !== 'function' || typeof File !== 'function') return file;
+        let image;
+        try {
+            image = await createImageBitmap(file);
+            const scale = Math.min(1, 768 / Math.max(image.width, image.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+            canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.92));
+            if (!blob || blob.type !== 'image/webp' || blob.size >= file.size) return file;
+            return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp', lastModified: file.lastModified });
+        } catch (_) { return file; }
+        finally { image?.close(); }
+    }
     async function save(teacher, file) {
         if (!teacher?.id || !isTahsin(teacher))
             throw new Error('Foto hanya dapat diunggah untuk guru Tahsin.');
+        file = await optimize(file);
         const ext = validate(file);
         const path = `portraits/${teacher.id}/${crypto.randomUUID()}.${ext}`;
         const bucket = supabase.storage.from(BUCKET);
@@ -47,6 +65,7 @@ window.TeacherPhoto = (() => {
                 console.warn('Foto lama perlu dibersihkan secara manual.', cleanupError);
             }
         }
+        window.GMDataRequests?.invalidate();
         return data;
     }
     async function remove(teacher) {
@@ -65,7 +84,8 @@ window.TeacherPhoto = (() => {
                 console.warn('Foto lama perlu dibersihkan secara manual.', cleanupError);
             }
         }
+        window.GMDataRequests?.invalidate();
         return data;
     }
-    return { validate, isTahsin, save, remove, MAX_BYTES };
+    return { validate, isTahsin, save, remove, optimize, MAX_BYTES };
 })();

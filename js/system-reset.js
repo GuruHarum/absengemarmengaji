@@ -65,7 +65,7 @@ window.SystemReset = (() => {
       AdminNotice.notify(error.message, 'error');
     } finally { busy = false; syncButton(); }
   }
-  document.addEventListener('panelready', () => {
+  ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
     const nav = document.querySelector('[data-settings-view="data"]');
     if (nav) nav.hidden = !roleAllowed();
     ['systemResetBackup','systemResetUnderstand','systemResetPhrase'].forEach(id => el(id)?.addEventListener('input', syncButton));

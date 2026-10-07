@@ -255,7 +255,7 @@ window.AccountProfile = (() => {
         setUnread(0);
     }
 
-    document.addEventListener('panelready', () => {
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
         setupHeader();
         renderPhotoProfile();
 

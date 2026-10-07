@@ -616,6 +616,7 @@ window.LearningGroups = (() => {
   }
 
   async function refreshPublicTahsinRoster() {
+    window.GMDataRequests?.invalidate();
     const yearKey = getPublicAcademicYearStart();
     const [teachers, students] = await Promise.all([
       fetchAllRpcRows('gm_public_tahsin_teachers', {year_key: yearKey}, 500),

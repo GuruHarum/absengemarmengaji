@@ -224,7 +224,7 @@ window.GMAttention = (() => {
             return;
         }
         if (AppAccess.profile?.role === 'koordinator') {
-            switchPage('rapor');
+            await switchPage('rapor');
             await window.StudentReports?.openMissing?.({
                 year: state.year, period: state.period, studentId: row.student_id,
                 studentName: row.student_name, className: row.class_name,
@@ -232,7 +232,7 @@ window.GMAttention = (() => {
             });
             return;
         }
-        switchPage('penilaian');
+        await switchPage('penilaian');
         await window.PeriodicAssessments?.openAttention?.({
             year: state.year, period: state.period, subject: row.subject,
             teacherId: row.teacher_id, className: row.class_name, studentName: row.student_name

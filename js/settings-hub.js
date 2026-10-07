@@ -19,7 +19,7 @@ window.SettingsHub = (() => {
             button.setAttribute('aria-pressed', String(active));
         });
     }
-    document.addEventListener('panelready', () => {
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
         document.getElementById('settingsHubNav')?.addEventListener('click', event => {
             const button = event.target.closest('[data-settings-view]');
             if (button) void show(button.dataset.settingsView);

@@ -84,7 +84,7 @@ function renderTeachers() {
     teacherGrid.innerHTML = teachersData.map((teacher, index) => `
                 <div class="teacher-card bg-white rounded-lg shadow-md p-6 text-center cursor-pointer hover:shadow-lg" style="animation-delay: ${Math.min(index * 45, 450)}ms" data-index="${index}">
                     <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden shadow-md transform transition-transform hover:scale-105">
-                        <img src="${escapeHtml(teacher.foto || 'assets/school-logo.png')}" alt="${escapeHtml(teacher.nama)}" class="teacher-photo-circle teacher-photo-circle--public${teacher.foto ? '' : ' teacher-photo-circle--placeholder'}" loading="lazy" decoding="async" data-fallback="assets/school-logo.png" onerror="this.onerror=null; this.classList.add('teacher-photo-circle--placeholder'); this.src=this.dataset.fallback;">
+                        <img src="${escapeHtml(teacher.foto || webLogoUrl('assets/school-logo.png'))}" alt="${escapeHtml(teacher.nama)}" class="teacher-photo-circle teacher-photo-circle--public${teacher.foto ? '' : ' teacher-photo-circle--placeholder'}" loading="lazy" decoding="async" data-fallback="${escapeHtml(webLogoUrl('assets/school-logo.png'))}" onerror="this.onerror=null; this.classList.add('teacher-photo-circle--placeholder'); this.src=this.dataset.fallback;">
                     </div>
                     <h3 class="text-lg font-semibold text-blue-800">${escapeHtml(teacher.nama)}</h3>
                 </div>
@@ -344,7 +344,7 @@ function bindAttendanceEditEvents() {
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
                 }
-                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher });
+                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, level: /^\d+$/.test(String(selectedClass)) ? String(selectedClass) : undefined });
                 await renderStudents();
             }
             catch (err) {
@@ -405,7 +405,7 @@ function bindAttendanceEditEvents() {
                     confirmContainer.classList.add('hidden');
                     actions.classList.remove('hidden');
                 }
-                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher });
+                await fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, level: /^\d+$/.test(String(selectedClass)) ? String(selectedClass) : undefined });
                 await renderStudents();
             }
             catch (err) {
@@ -475,7 +475,7 @@ function showPage(pageNumber) {
         page2.classList.add('fade-in');
         Promise.all([
             fetchStudents(),
-            fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher })
+            fetchAttendanceData({ date: formatDateForStorage(), teacher: selectedTeacher, level: /^\d+$/.test(String(selectedClass)) ? String(selectedClass) : undefined })
         ]).then(renderStudents).catch(error => {
             console.error(error);
             showNotification('error', 'Gagal memuat data absensi. Silakan coba lagi.');

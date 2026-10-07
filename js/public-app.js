@@ -22,7 +22,7 @@ window.applySchoolProfile = function (profile) {
     if (!profile)
         return;
     const name = profile.name || 'Gemar Mengaji';
-    const logo = (!profile.logo_url || String(profile.logo_url).includes('FjF61ou.png')) ? 'assets/school-logo.png' : profile.logo_url;
+    const logo = webLogoUrl((!profile.logo_url || String(profile.logo_url).includes('FjF61ou.png')) ? 'assets/school-logo.png' : profile.logo_url);
     const nameElement = document.getElementById('schoolName');
     const addressElement = document.getElementById('schoolAddress');
     const logoElement = document.getElementById('schoolLogo');
@@ -74,7 +74,7 @@ async function initApp() {
             window.location.replace('maintenance.html');
             return;
         }
-        await Promise.all([fetchTeachers(), fetchStudents(), fetchAttendanceData({ date: formatDateForStorage() })]);
+        await Promise.all([fetchTeachers(), fetchStudents()]);
     }
     catch (error) {
         console.error('Error initializing app:', error);

@@ -33,7 +33,7 @@ window.GMNotifications = (() => {
             const { data, error } = await supabase.rpc('gm_my_notifications', { limit_key: 30 });
             if (error) throw error;
             state.items = decorated(data || []);
-            AccountProfile?.renderNotifications?.(state.items);
+            window.AccountProfile?.renderNotifications?.(state.items);
             syncAppBadge(state.items);
             return state.items;
         } catch (error) {
@@ -48,13 +48,13 @@ window.GMNotifications = (() => {
     async function markSeen() {
         const unseen = state.items.filter(item => !item.seen_at);
         if (!unseen.length) {
-            AccountProfile?.setUnread?.(0);
+            window.AccountProfile?.setUnread?.(0);
             syncAppBadge([]);
             return 0;
         }
         const now = new Date().toISOString();
         state.items = state.items.map(item => item.seen_at ? item : { ...item, seen_at: now });
-        AccountProfile?.renderNotifications?.(state.items);
+        window.AccountProfile?.renderNotifications?.(state.items);
         syncAppBadge(state.items);
         const { data, error } = await supabase.rpc('gm_mark_notifications_seen');
         if (error) {
@@ -79,7 +79,7 @@ window.GMNotifications = (() => {
         if (!item) return;
         const now = new Date().toISOString();
         state.items = state.items.map(row => String(row.id) === String(id) ? { ...row, seen_at: row.seen_at || now, read_at: row.read_at || now } : row);
-        AccountProfile?.renderNotifications?.(state.items);
+        window.AccountProfile?.renderNotifications?.(state.items);
         syncAppBadge(state.items);
         const { error } = await supabase.rpc('gm_mark_notification_read', { notification_key: Number(id) });
         if (error) console.error('Status notifikasi read gagal disimpan:', error);

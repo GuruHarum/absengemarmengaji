@@ -745,7 +745,7 @@ window.PeriodicAssessments = (() => {
         return decision === 'continue';
     }
 
-    document.addEventListener('panelready', () => {
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
         el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); return load(); });
         el('assessmentYear').addEventListener('input', () => { yearLabel(); rememberLastFilter(); refreshSubjectTeachers().catch(error => message(error.message, true)); });
         el('assessmentPeriod').addEventListener('change', rememberLastFilter);
