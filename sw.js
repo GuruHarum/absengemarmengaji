@@ -27,7 +27,7 @@ const PRECACHE = [
   '/css/rapor-workspace.css?v=20261007-data63',
   '/js/pwa.js',
   '/js/panel-preboot.js',
-  '/js/panel-modules.js?v=20261022-assessment-stage2',
+  '/js/panel-modules.js?v=20261022-assessment-stage3',
   '/js/panel-start-guru.js?v=20261007-data63',
   '/js/islamic-quotes.js',
   '/assets/school-logo.png',
