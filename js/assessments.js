@@ -185,6 +185,34 @@ window.PeriodicAssessments = (() => {
         if (window.setTimeout) state.draftTimer = window.setTimeout(persistDrafts, 450);
         else persistDrafts();
     }
+    async function clearLocalDrafts() {
+        if (state.busy) return;
+        const pending = dirtyStudents().length;
+        const confirmed = await AdminNotice.confirm(
+            `Hapus semua draf penilaian di perangkat untuk akun ini?${pending ? ` ${pending} perubahan yang belum masuk database ikut dibatalkan.` : ''} Nilai database tetap aman.`);
+        if (!confirmed) return;
+        if (!removeStorage(STORAGE.drafts)) {
+            draftStatus('Draf gagal dihapus. Periksa izin penyimpanan perangkat.', 'error');
+            return;
+        }
+        try {
+            const profile = AppAccess?.profile;
+            const legacy = AppAccess?.teacher?.() ? String(profile?.teacher_id || '') : String(profile?.email || '');
+            if (legacy && legacy !== storageScope()) localStorage.removeItem(STORAGE.drafts + ':' + legacy);
+        } catch (_) { /* Browser mungkin memblokir storage. */ }
+        if (state.draftTimer) { clearTimeout(state.draftTimer); state.draftTimer = null; }
+        if (state.context) {
+            state.drafts = new Map(state.students.map(student => [String(student.id),
+                AssessmentData.draft(state.saved.get(String(student.id)))]));
+            state.lastFailedSave = [];
+            if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = true;
+            render();
+        }
+        draftStatus('Draf lokal akun telah dihapus. Nilai database tidak berubah.', 'clean');
+        message('Draf perangkat berhasil dibersihkan. Nilai database tetap aman.');
+        AdminNotice.notify('Draf lokal akun berhasil dihapus.', 'success');
+    }
+
     function restoreDrafts() {
         if (!state.context) return 0;
         const store = draftStore();
@@ -623,7 +651,7 @@ window.PeriodicAssessments = (() => {
         dialog.id = 'assessmentPasteDialog';
         dialog.className = 'assessment-paste-dialog';
         dialog.innerHTML = `<div class="assessment-paste-shell">
-            <header><h3>Tempel nilai dari Excel</h3><p>Salin sel nilai dari Excel lalu tempel di bawah. Bisa memakai urutan siswa yang sedang tampil, atau sertakan nama siswa di kolom pertama. Fitur ini hanya mengisi angka nilai dan tidak mengubah capaian akhir.</p></header>
+            <header><h3>Tempel nilai dari Excel</h3><p>Tempel angka sesuai urutan seluruh hasil filter tingkat/status/pencarian, atau sertakan nama atau ID siswa (#ID) di kolom pertama. Periksa pratinjau; jika ada kesalahan, tidak ada baris yang diterapkan. Capaian akhir tidak berubah.</p></header>
             <textarea id="assessmentPasteText" spellcheck="false" placeholder="Contoh tanpa nama:&#10;85&#9;88&#9;90&#10;80&#9;82&#9;87&#10;&#10;Contoh dengan nama:&#10;Ahmad Fauzan&#9;85&#9;88&#9;90"></textarea>
             <div id="assessmentPastePreview" class="assessment-paste-preview">Tempel nilai untuk memeriksa seluruh baris sebelum diterapkan ke draf.</div>
             <div class="assessment-paste-actions"><button id="assessmentPasteCancel" type="button" class="secondary-action">Batal</button><button id="assessmentPasteApply" type="button" class="primary-action" disabled>Terapkan ke Draf</button></div>
@@ -1031,6 +1059,7 @@ window.PeriodicAssessments = (() => {
         });
         el('assessmentExport')?.addEventListener('click', exportExcel);
         el('assessmentPasteExcel')?.addEventListener('click', openPasteDialog);
+        el('assessmentClearLocalDrafts')?.addEventListener('click', () => { void clearLocalDrafts(); });
         const movePeriod = amount => {
             const order = ['pts_ganjil','pas_ganjil','pts_genap','pas_genap'];
             const current = order.indexOf(el('assessmentPeriod').value);
