@@ -210,7 +210,8 @@ window.LearningGroups = (() => {
                 <button type="button" data-clear class="secondary-action">Kosongkan</button>
                 <strong data-selected>0 siswa dipilih</strong>
               </div>
-              <div data-students class="assignment-student-options gm-member-picker"></div>
+              <p data-search-summary class="gm-member-count" role="status" aria-live="polite"></p>
+               <div data-students class="assignment-student-options gm-member-picker"></div>
               <div class="gm-group-savebar"><button type="submit" class="primary-action" data-save>Simpan kelompok</button></div>
             </fieldset>
           </form>
@@ -255,8 +256,8 @@ window.LearningGroups = (() => {
     const host = shell(subject); views[subject].busy = value;
     host.querySelector('[data-fields]').disabled = value;
     host.querySelector('[data-refresh]').disabled = value;
-    host.querySelector('[data-year]').disabled = value;
-    host.querySelector('[data-view-teacher]').disabled = value;
+    host.querySelector('[data-year]').disabled = value || AppAccess.teacher();
+    host.querySelector('[data-view-teacher]').disabled = value || AppAccess.teacher();
     host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer], [data-transfer-students]').forEach(button => button.disabled = value);
   }
   function selectedTeacher(subject) {
@@ -397,7 +398,12 @@ window.LearningGroups = (() => {
       ? state.students.filter(s => `${s['nama siswa']} ${s.kelas || ''}`.toLocaleLowerCase('id').includes(search))
       : (cls ? state.students.filter(s => s.kelas === cls) : (state.autoTahsinLevels?.length ? state.students.filter(s => state.selected.has(String(s.id))) : []));
 
-    const filtered = candidates.slice(0, search ? 80 : candidates.length);
+    const sortedCandidates = [...candidates].sort((a, b) => String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id') || String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }));
+     const filtered = sortedCandidates.slice(0, search ? 80 : sortedCandidates.length);
+     const countLabel = host.querySelector('[data-search-summary]');
+     if (countLabel) countLabel.textContent = search
+       ? (sortedCandidates.length > 80 ? `Menampilkan 80 dari ${sortedCandidates.length} hasil. Persempit pencarian untuk melihat yang lain.` : `${sortedCandidates.length} hasil pencarian.`)
+       : (cls ? `${sortedCandidates.length} siswa di kelas ${cls}.` : (state.autoTahsinLevels?.length ? `${sortedCandidates.length} siswa hasil salinan Tahsin.` : 'Pilih kelas atau cari nama siswa.'));
     list.innerHTML = filtered.map(s => {
       const activeGroupIds = new Set(state.groups.filter(group => group.active).map(group => String(group.id)));
       const current = state.members.find(m => m.active && activeGroupIds.has(String(m.assignment_id)) && String(m.student_id) === String(s.id));
@@ -549,7 +555,8 @@ window.LearningGroups = (() => {
     if (transfer) {
       const g = state.groups.find(row => row.id === transfer.dataset.transfer);
       if (!g) return msg(subject,'Kelompok sudah berubah. Muat ulang.',true);
-      const choices = state.teachers.filter(t => String(t.id) !== String(g.teacher_id)).map(t => ({ value: String(t.id), label: t.nama_lengkap || t.nama || `Guru ${t.id}` }));
+      const choices = state.teachers.filter(t => String(t.id) !== String(g.teacher_id) && (subject !== 'tahsin' || t.attendance_enabled !== false)).map(t => ({ value: String(t.id), label: t.nama_lengkap || t.nama || `Guru ${t.id}` }));
+       if (!choices.length) return msg(subject, 'Tidak ada guru tujuan yang tersedia untuk program ini.', true);
       const target = await AdminNotice.request({
         title: 'Transfer kelompok',
         message: `Pilih guru tujuan untuk ${g.class_name}.`,
