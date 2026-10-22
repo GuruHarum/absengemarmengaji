@@ -1,5 +1,5 @@
 (() => {
-    const version = '20261022-learning1';
+    const version = '20261022-assessment1';
     const core = ['admin-notices','class-picker','quran-surahs','report-reference','report-core','assessments-core','teacher-photo','profile','push-notifications','notifications','attention-center','dashboard','rev46-experience','admin','api'];
     const definitions = {
         curriculum: { files: ['curriculum-targets'] },
