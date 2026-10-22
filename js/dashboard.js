@@ -2007,6 +2007,24 @@ function switchPage(pageId) {
         return;
     }
     if (!AppAccess.canPage(target)) return;
+    const currentPage = document.body?.dataset?.activePage || '';
+    if (['kelompok', 'kelompok-tahsin'].includes(currentPage) && currentPage !== pageId && window.LearningGroups) {
+        const subject = currentPage === 'kelompok' ? 'tahfidz' : 'tahsin';
+        if (LearningGroups.isBusy(subject)) {
+            AdminNotice.notify('Tunggu proses pengelolaan kelompok selesai sebelum berpindah halaman.', 'info');
+            return;
+        }
+        if (LearningGroups.hasUnsavedChanges(subject)) {
+            void Promise.resolve(LearningGroups.confirmLeave(subject, 'berpindah halaman atau submenu'))
+                .then(approved => {
+                    if (!approved) return;
+                    LearningGroups.discardDraft(subject);
+                    void switchPage(pageId);
+                })
+                .catch(error => AdminNotice.notify(error.message || 'Konfirmasi perpindahan halaman gagal.', 'error'));
+            return;
+        }
+    }
     return window.GMPanel ? GMPanel.navigate(target, () => switchPageReady(pageId)) : switchPageReady(pageId);
 }
 function switchPageReady(pageId) {
