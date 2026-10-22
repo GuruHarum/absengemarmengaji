@@ -864,5 +864,12 @@ window.LearningGroups = (() => {
       'Kelompok berhasil dibuat. Absensi dan penilaian mengikuti keanggotaan terbaru.');
   }
 
+  // Mencegah browser ditutup atau dimuat ulang saat pilihan anggota belum disimpan.
+  window.addEventListener('beforeunload', event => {
+    if (!hasUnsavedChanges('tahsin') && !hasUnsavedChanges('tahfidz')) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
   return { open, hasUnsavedChanges, confirmLeave, discardDraft, isBusy: subject => Boolean(views[subject]?.busy) };
 })();
