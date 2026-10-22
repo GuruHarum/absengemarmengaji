@@ -599,7 +599,10 @@ window.LearningGroups = (() => {
   async function click(subject, event) {
     const state = views[subject], host = shell(subject);
     if (!state || state.busy) return;
-    if (event.target.closest('[data-refresh]')) return void open(subject, true);
+    if (event.target.closest('[data-refresh]')) {
+      if (await confirmLeave(subject, 'memuat ulang data')) await open(subject, true);
+      return;
+    }
     if (event.target.closest('[data-cancel]')) return resetForm(subject);
     if (event.target.closest('[data-clear]')) { state.selected.clear(); state.autoTahsinLevels = []; renderStudents(subject); return; }
     if (event.target.closest('[data-pick-visible]')) {
@@ -623,6 +626,9 @@ window.LearningGroups = (() => {
     }
     if (event.target.closest('[data-sync-tahsin]')) {
       if (subject !== 'tahfidz') return;
+      if (hasUnsavedChanges(subject) && !(await AdminNotice.confirm(
+        'Menyalin dari Tahsin akan mengganti daftar pilihan murid yang belum disimpan. Lanjutkan?'
+      ))) return;
       const teacherId = selectedTeacher(subject);
       if (!teacherId) return msg(subject, 'Pilih guru terlebih dahulu sebelum menyalin siswa Tahsin.', true);
       busy(subject, true);
@@ -657,6 +663,12 @@ window.LearningGroups = (() => {
     if (edit) {
       const g = state.groups.find(row => row.id === edit.dataset.edit);
       if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
+      if (state.edit === g.id && hasUnsavedChanges(subject)) {
+        host.querySelector('[data-editor]').open = true;
+        host.querySelector('[data-editor]').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (!(await confirmLeave(subject, 'membuka pengeditan kelompok lain'))) return;
       host.querySelector('[data-view-teacher]').value = String(g.teacher_id);
       state.edit = g.id;
       state.selected = membersOf(state, g.id);
@@ -674,6 +686,8 @@ window.LearningGroups = (() => {
       host.querySelector('[data-editor]').scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
+    const groupAction = event.target.closest('[data-transfer-students], [data-transfer], [data-delete-group], [data-end]');
+    if (groupAction && !(await confirmLeave(subject, 'mengelola kelompok lain'))) return;
     const transferStudents = event.target.closest('[data-transfer-students]');
     if (transferStudents) {
       const g = state.groups.find(row => row.id === transferStudents.dataset.transferStudents);
@@ -790,6 +804,16 @@ window.LearningGroups = (() => {
     if(typeof renderManageTable==='function') renderManageTable();
   }
 
+  async function reloadWithFeedback(subject, feedback) {
+    const loaded = await open(subject, true);
+    if (loaded) {
+      msg(subject, feedback);
+      AdminNotice.notify(feedback, 'success');
+    } else {
+      AdminNotice.notify('Perubahan berhasil disimpan, tetapi daftar belum dapat dimuat ulang. Coba Muat ulang.', 'info');
+    }
+  }
+
   async function save(subject) {
     const state = views[subject], host = shell(subject);
     if (state.busy || !AppAccess.full()) return;
@@ -803,17 +827,28 @@ window.LearningGroups = (() => {
     const name = autoName || `${titleOf(subject)} ${teacherName(state, teacher)} / ${actualClassLabel}`;
     if (!actualClassLabel && !autoName) return msg(subject, 'Kelas siswa terpilih tidak dapat dikenali. Periksa data siswa terlebih dahulu.', true);
     if (name.length > 80) return msg(subject,'Nama kelompok melebihi 80 karakter.',true);
-    busy(subject,true);
+    busy(subject, true);
     try {
-      const {error} = await supabase.rpc('gm_manage_learning_group', {
+      const { error } = await supabase.rpc('gm_manage_learning_group', {
         subject_key: subject, action: group ? 'replace' : 'create', target_id: group?.id || null,
         teacher_key: teacher, group_name: name, year_key: state.year, student_keys: [...state.selected]
       });
       if (error) throw error;
-      if(subject==='tahsin') await refreshPublicTahsinRoster();
-      msg(subject,'Kelompok tersimpan. Absensi dan penilaian mengikuti keanggotaan terbaru.');
-    } catch(error) { msg(subject,error.message,true); busy(subject,false); return; }
-    busy(subject,false); resetForm(subject); await open(subject,true);
+    } catch (error) {
+      msg(subject, error.message, true);
+      busy(subject, false);
+      return;
+    }
+    // Transaksi sudah sukses: kegagalan memperbarui cache publik tidak boleh
+    // dilaporkan sebagai kegagalan menyimpan kelompok.
+    if (subject === 'tahsin') {
+      try { await refreshPublicTahsinRoster(); }
+      catch (error) { console.warn('Daftar publik Tahsin perlu dimuat ulang.', error); }
+    }
+    busy(subject, false);
+    resetForm(subject);
+    await reloadWithFeedback(subject, group ? 'Perubahan anggota kelompok berhasil disimpan.' :
+      'Kelompok berhasil dibuat. Absensi dan penilaian mengikuti keanggotaan terbaru.');
   }
 
   return { open, hasUnsavedChanges, confirmLeave, discardDraft, isBusy: subject => Boolean(views[subject]?.busy) };
