@@ -199,14 +199,14 @@ window.GMUpgrade = (()=>{
     $('gmArchiveStatus').textContent='Menyiapkan unduhan arsip '+(format==='word'?'Word':'Excel')+'…';
     try{
      const result=await supabase.from('report_issuance_archives')
-      .select('snapshot,student_name,academic_year_start,period').eq('id',id).single();
+      .select('snapshot,student_name,academic_year_start,period,issued_at').eq('id',id).single();
      if(result.error)throw result.error;
      const snap=result.data?.snapshot;
      if(!snap?.student?.id||!snap?.period||!snap?.year)throw Error('Snapshot arsip tidak lengkap. Unduhan dibatalkan.');
      if(!window.ReportZip?.build)throw Error('Modul Word/Excel belum tersedia. Buka ulang halaman.');
      const filename='Arsip Rapor - '+ReportZip.safe(snap.student.name)+' - '+snap.year+'-'+(snap.year+1)
        +' - '+String(snap.period).toUpperCase();
-     const blob=await ReportZip.build([snap],{fileName:filename+(format==='word'?'.docx':'.xlsx'),format});
+     const blob=await ReportZip.build([snap],{fileName:filename+(format==='word'?'.docx':'.xlsx'),format,date:result.data.issued_at});
      const url=URL.createObjectURL(blob);
      const link=document.createElement('a');
      link.href=url;link.download=filename+' - '+(format==='word'?'Word':'Excel')+'.zip';
