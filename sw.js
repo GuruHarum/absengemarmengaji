@@ -1,4 +1,4 @@
-const VERSION = 'log63-data-pages';
+const VERSION = 'teacher-account-update-20261022';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
