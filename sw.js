@@ -1,4 +1,4 @@
-const VERSION = 'manage-data-responsive-preview-20261022a';
+const VERSION = 'learning-groups-refine-20261022b';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
