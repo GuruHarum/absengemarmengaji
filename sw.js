@@ -22,6 +22,7 @@ const PRECACHE = [
   '/css/rev37-visual-fixes.css',
   '/css/rev45-workflow.css',
   '/css/rev46-experience.css',
+  '/css/gm-presentation-responsive.css',
   '/css/rev51-responsive.css',
   '/css/rev54-panels.css',
   '/css/rapor-workspace.css?v=20261007-data63',
