@@ -701,23 +701,43 @@ window.PeriodicAssessments = (() => {
         try {
             const XLSX = await ensureXlsx();
             const subject = state.context.subject;
+            const includeDrafts = Boolean(el('assessmentExportIncludeDrafts')?.checked);
             const data = list.map((student, index) => {
-                const draft = state.drafts.get(String(student.id));
-                const stats = ReportCore.stats(draft, subject);
-                const issue = issueDetail(student);
-                const base = { No: index + 1, 'Nama Siswa': student['nama siswa'], Kelas: classLabel(student.kelas), Status: issue.reason || 'Tersimpan' };
-                const excelValue = value => value === '' || value == null ? '' : value;
+                const saved = state.saved.get(String(student.id));
+                const status = statusOf(student);
+                const localDraft = includeDrafts && status === 'draft';
+                const scores = localDraft ? state.drafts.get(String(student.id)) :
+                    (saved ? AssessmentData.draft(saved) : AssessmentData.draft());
+                const hasValues = Boolean(saved || localDraft);
+                const stats = hasValues ? ReportCore.stats(scores, subject) : null;
+                const labels = { saved: 'Tersimpan di database', draft: 'Draf belum dikirim',
+                    ungraded: 'Belum dinilai', incomplete: 'Belum lengkap', review: 'Perlu verifikasi' };
+                const base = {
+                    No: index + 1,
+                    'ID Siswa': String(student.id),
+                    'Nama Siswa': student['nama siswa'],
+                    Kelas: classLabel(student.kelas),
+                    Status: labels[status],
+                    'Sumber Nilai': localDraft ? 'Draf perangkat (BELUM MASUK DATABASE)' :
+                        (saved ? 'Database' : 'Belum ada nilai')
+                };
+                const excelValue = value => hasValues && value !== '' && value != null ? value : '';
                 if (subject === 'tahsin') Object.assign(base, {
-                    'Makhorijul Huruf': excelValue(draft.tahsin_makhraj), Tajwid: excelValue(draft.tahsin_tajwid), 'Tartil/Kelancaran': excelValue(draft.tahsin_tartil), 'Gharib Musykilat': excelValue(draft.tahsin_gharib),
-                    'Capaian Akhir': ReportCore.progress(draft, 'tahsin')
+                    'Makhorijul Huruf': excelValue(scores.tahsin_makhraj),
+                    Tajwid: excelValue(scores.tahsin_tajwid),
+                    'Tartil/Kelancaran': excelValue(scores.tahsin_tartil),
+                    'Gharib Musykilat': excelValue(scores.tahsin_gharib),
+                    'Capaian Akhir': hasValues ? ReportCore.progress(scores, 'tahsin') : ''
                 });
                 else Object.assign(base, {
-                    'Makhorijul Huruf': excelValue(draft.tahfidz_makhraj), Tajwid: excelValue(draft.tahfidz_tajwid), 'Tartil/Kelancaran': excelValue(draft.tahfidz_hafalan),
-                    'Capaian Akhir': ReportCore.progress(draft, 'tahfidz')
+                    'Makhorijul Huruf': excelValue(scores.tahfidz_makhraj),
+                    Tajwid: excelValue(scores.tahfidz_tajwid),
+                    'Tartil/Kelancaran': excelValue(scores.tahfidz_hafalan),
+                    'Capaian Akhir': hasValues ? ReportCore.progress(scores, 'tahfidz') : ''
                 });
-                base.Jumlah = stats.sum ?? '';
-                base['Rata-rata'] = stats.average == null ? '' : Number(stats.average.toFixed(2));
-                base.Grade = stats.grade;
+                base.Jumlah = stats?.sum ?? '';
+                base['Rata-rata'] = stats?.average == null ? '' : Number(stats.average.toFixed(2));
+                base.Grade = stats?.grade ?? '';
                 return base;
             });
             const sheet = XLSX.utils.json_to_sheet(data);
@@ -726,10 +746,11 @@ window.PeriodicAssessments = (() => {
             XLSX.utils.book_append_sheet(workbook, sheet, state.context.subject.toUpperCase());
             const scopeLabel = el('assessmentExportScope')?.value === 'all' ? 'Semua Siswa' :
                 (el('assessmentExportScope')?.value === 'level' ? (el('assessmentLevel').value ? 'Tingkat ' + el('assessmentLevel').value : 'Seluruh Tingkat') : 'Tampilan Saat Ini');
-            const fileName = window.GMFileName?.assessment?.({ subject: state.context.subject, scope: classLabel(scopeLabel), period: state.context.period, year: state.context.year })
+            const originalName = window.GMFileName?.assessment?.({ subject: state.context.subject, scope: classLabel(scopeLabel), period: state.context.period, year: state.context.year })
                 || `Penilaian ${state.context.subject.toUpperCase()} - ${scopeLabel} - ${state.context.period} - ${state.context.year}-${state.context.year + 1}.xlsx`;
+            const fileName = includeDrafts ? String(originalName).replace(/\.xlsx$/i, ' - DRAF BELUM DIKIRIM.xlsx') : originalName;
             XLSX.writeFile(workbook, fileName);
-            message(`Excel berhasil dibuat untuk ${list.length} siswa.`);
+            message(`Excel berhasil dibuat untuk ${list.length} siswa. ${includeDrafts ? 'Draf perangkat ditandai dan dibedakan dari database.' : 'Nilai yang diekspor berasal dari database; draf tidak disertakan.'}`);
         } catch (error) { message(`Export Excel gagal: ${error.message}`, true); }
         finally { if (button) { button.disabled = false; button.textContent = 'Export Excel'; } }
     }
