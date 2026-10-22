@@ -39,8 +39,33 @@ window.PeriodicAssessments = (() => {
     const scopedKey = key => `${key}:${storageScope()}`;
     function readStorage(key, fallback = null) {
         if (!storageAvailable()) return fallback;
-        try { const raw = localStorage.getItem(scopedKey(key)); return raw ? JSON.parse(raw) : fallback; }
-        catch (_) { return fallback; }
+        try {
+            const raw = localStorage.getItem(scopedKey(key));
+            if (raw) return JSON.parse(raw);
+            // Pulihkan draf pengguna lama yang dahulu disimpan dengan ID guru,
+            // tetapi pindahkan ke penyimpanan yang terikat akun Auth saat ini.
+            const profile = AppAccess?.profile;
+            const oldScope = AppAccess?.teacher?.() ? String(profile?.teacher_id || '') : String(profile?.email || '');
+            if (key === STORAGE.drafts && oldScope && oldScope !== storageScope()) {
+                const previousKey = key + ':' + oldScope;
+                const previousRaw = localStorage.getItem(previousKey);
+                if (previousRaw) {
+                    const previous = JSON.parse(previousRaw);
+                    if (previous && typeof previous === 'object' && !Array.isArray(previous)) {
+                        const selected = {};
+                        for (const [name,bucket] of Object.entries(previous)) {
+                            if (!AppAccess?.teacher?.() ||
+                                String(bucket?.context?.teacherId || '') === String(profile?.teacher_id || '')) selected[name] = bucket;
+                        }
+                        if (Object.keys(selected).length && writeStorage(key, selected)) {
+                            localStorage.removeItem(previousKey);
+                            return selected;
+                        }
+                    }
+                }
+            }
+            return fallback;
+        } catch (_) { return fallback; }
     }
     function writeStorage(key, value) {
         if (!storageAvailable()) return false;
@@ -48,8 +73,8 @@ window.PeriodicAssessments = (() => {
         catch (_) { return false; }
     }
     function removeStorage(key) {
-        if (!storageAvailable()) return;
-        try { localStorage.removeItem(scopedKey(key)); } catch (_) { }
+        if (!storageAvailable()) return false;
+        try { localStorage.removeItem(scopedKey(key)); return true; } catch (_) { return false; }
     }
     const contextKey = (context = state.context) => context ? `${context.year}|${context.period}|${context.subject}|${context.teacherId}` : '';
 
@@ -139,14 +164,21 @@ window.PeriodicAssessments = (() => {
         }
         if (Object.keys(entries).length) {
             store[key] = { savedAt: Date.now(), context: { ...state.context }, entries };
-            writeStorage(STORAGE.drafts, store);
+            if (!writeStorage(STORAGE.drafts, store)) {
+                draftStatus('PERINGATAN: draf belum aman. Penyimpanan perangkat gagal atau penuh. Simpan nilai ke database sebelum keluar.', 'error');
+                return false;
+            }
             const now = new Date();
-            draftStatus(`Draf sementara tersimpan di perangkat · ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`, 'saved');
+            draftStatus(`Draf belum dikirim, tersimpan di perangkat · ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`, 'saved');
         } else {
             delete store[key];
-            writeStorage(STORAGE.drafts, store);
-            draftStatus('Semua perubahan sudah tersimpan ke database.', 'clean');
+            if (!writeStorage(STORAGE.drafts, store)) {
+                draftStatus('Nilai sudah sesuai database; penyimpanan lokal tidak tersedia.', 'error');
+            } else {
+                draftStatus('Tidak ada draf tertunda. Nilai tersimpan di database atau belum diisi.', 'clean');
+            }
         }
+        return true;
     }
     function scheduleDraftSave() {
         if (window.clearTimeout && state.draftTimer) window.clearTimeout(state.draftTimer);
@@ -172,7 +204,7 @@ window.PeriodicAssessments = (() => {
             state.drafts.set(id, AssessmentData.draft(savedDraft.draft));
             restored++;
         }
-        if (restored) draftStatus(`${restored} draf sementara dipulihkan dari perangkat.${skipped ? ` ${skipped} draf dilewati karena data database sudah berubah.` : ''}`, 'restored');
+        if (restored || skipped) draftStatus(`${restored} draf sementara dipulihkan dari perangkat.${skipped ? ` ${skipped} draf dilewati karena data database sudah berubah (tidak ditimpa).` : ''}`, skipped ? 'error' : 'restored');
         return restored;
     }
 
@@ -344,9 +376,14 @@ window.PeriodicAssessments = (() => {
     }
 
     async function chooseUnsaved(messageText) {
-        persistDrafts();
+        const draftSafe = persistDrafts();
         const count = dirtyStudents().length;
         if (!count) return 'continue';
+        if (!draftSafe) {
+            const saveNow = await AdminNotice.confirm('Penyimpanan draf perangkat gagal. Nilai akan hilang bila keluar tanpa menyimpan ke database. Simpan sekarang?');
+            if (!saveNow) return 'cancel';
+            return (await save(dirtyStudents(), { showSummary: true, source: 'leave-storage-failed' })) ? 'continue' : 'cancel';
+        }
         if (window.AdminNotice?.choose) {
             const choice = await AdminNotice.choose({
                 title: `${count} siswa memiliki perubahan belum disimpan`,
