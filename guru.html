@@ -527,12 +527,12 @@
 <div class="hidden space-y-6" id="page-kelompok"><div id="learningGroupTahfidz"></div></div>
 <div class="hidden space-y-6" id="page-penilaian">
 <section class="assessment-controls assessment-context-card">
-<div class="section-heading"><div><p class="section-kicker">TAHSIN &amp; TAHFIDZ</p><h2>Penilaian Periodik</h2><p>Isi nilai per kelas dengan draf sementara otomatis dan indikator kelengkapan yang lebih jelas.</p></div><span class="assessment-scale">Skala nilai 0-100</span></div>
+<div class="section-heading"><div><p class="section-kicker">TAHSIN &amp; TAHFIDZ</p><h2>Penilaian Periodik</h2><p>Penilaian per tingkat untuk seluruh murid guru pengampu, tanpa pemisahan rombel.</p></div><span class="assessment-scale">Skala nilai 0-100</span></div>
 <form id="assessmentLoadForm"><fieldset class="assessment-context-grid" id="assessmentContextFields">
 <label class="field-label" for="assessmentYear">Tahun awal ajaran<input id="assessmentYear" max="2200" min="2000" required="" step="1" type="number"/><small id="assessmentYearLabel"></small></label>
 <label class="field-label" for="assessmentPeriod">Periode penilaian
 <div class="assessment-period-nav"><button aria-label="Periode sebelumnya" class="secondary-action" id="assessmentPeriodPrev" type="button">←</button><select id="assessmentPeriod" required=""><option value="pts_ganjil">Tengah Semester Ganjil</option><option value="pas_ganjil">Akhir Semester Ganjil</option><option value="pts_genap">Tengah Semester Genap</option><option value="pas_genap">Akhir Semester Genap</option></select><button aria-label="Periode berikutnya" class="secondary-action" id="assessmentPeriodNext" type="button">→</button></div></label>
-<label class="field-label" for="assessmentTeacher">Guru pengampu<select id="assessmentTeacher" required=""><option value="">Pilih guru</option></select></label>
+<label class="field-label" for="assessmentTeacher">Guru pengampu<input id="assessmentTeacherSearch" type="search" autocomplete="off" placeholder="Cari nama guru..." aria-label="Cari guru pengampu"><select id="assessmentTeacher" required><option value="">Pilih guru</option></select></label>
 <label class="field-label" for="assessmentSubject">Pelajaran<select id="assessmentSubject" required=""><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label>
 <button class="primary-action" id="assessmentLoad" type="submit">Tampilkan Siswa</button>
 </fieldset></form>
@@ -540,41 +540,41 @@
 <div><strong>Filter cepat</strong><span id="assessmentFavoriteStatus">Belum ada filter favorit.</span></div>
 <div class="assessment-filter-memory-actions"><button class="secondary-action" id="assessmentFavoriteSave" type="button">Simpan sebagai Favorit</button><button class="secondary-action" id="assessmentFavoriteUse" type="button">Pakai Favorit</button></div>
 </div>
-<p class="assessment-help" id="assessmentScopeNote"></p>
+<p id="assessmentScopeNote" class="assessment-help"></p><p id="assessmentPendingFilter" class="assessment-pending-filter" role="status" hidden>Filter periode/guru berubah. Tekan Tampilkan Siswa untuk memuat data yang sesuai.</p>
 <p class="assessment-draft-state" data-state="clean" id="assessmentDraftState">Autosave draf sementara aktif di perangkat ini.</p>
 </section>
 <p class="assessment-feedback" id="assessmentFeedback" role="status"></p>
 <div hidden="" id="assessmentWorkspace">
 <section class="assessment-summary">
 <div><span>PERIODE AKTIF</span><strong id="assessmentActivePeriod"></strong></div>
-<div><span>SISWA TAMPIL</span><strong id="assessmentTotal">0</strong></div>
+<div><span>SISWA TINGKAT INI</span><strong id="assessmentTotal">0</strong></div>
 <div><span>TERSIMPAN</span><strong id="assessmentSaved">0</strong></div>
-<div><span>BELUM DISIMPAN</span><strong id="assessmentDirty">0</strong></div>
-<div><span>BERMASALAH</span><strong id="assessmentProblems">0</strong></div>
+<div><span>DRAF BELUM DIKIRIM</span><strong id="assessmentDirty">0</strong></div>
+<div><span>BELUM DINILAI</span><strong id="assessmentUnrated">0</strong></div><div><span>BELUM LENGKAP</span><strong id="assessmentIncomplete">0</strong></div><div><span>PERLU VERIFIKASI</span><strong id="assessmentProblems">0</strong></div>
 </section>
 <section aria-label="Filter dan tindakan penilaian" class="assessment-work-toolbar">
 <div class="assessment-toolbar">
 <label class="field-label" for="assessmentLevel">Tingkat kelas<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label>
-<label class="field-label" for="assessmentClass">Kelas<select id="assessmentClass"><option value="">Pilih kelas</option></select></label>
+
 <label class="field-label" for="assessmentSearch">Cari siswa<input autocomplete="off" id="assessmentSearch" placeholder="Ketik nama siswa..." type="search"/></label>
 </div>
 <div class="assessment-quick-actions">
-<button aria-pressed="false" class="secondary-action" id="assessmentProblemOnly" type="button">Hanya bermasalah</button>
+<label class="field-label gm-assessment-status-field" for="assessmentStatusFilter">Status nilai<select id="assessmentStatusFilter"><option value="all">Semua status</option><option value="ungraded">Belum dinilai</option><option value="draft">Draf belum dikirim</option><option value="saved">Tersimpan</option><option value="incomplete">Belum lengkap</option><option value="review">Perlu verifikasi</option><option value="problem">Semua yang perlu perhatian</option></select></label>
 <button class="secondary-action" id="assessmentPasteExcel" title="Tempel nilai dari Excel tanpa mengubah capaian akhir" type="button">Tempel dari Excel</button>
-<label class="field-label assessment-export-scope" for="assessmentExportScope">Export<select id="assessmentExportScope"><option value="view">Tampilan saat ini</option><option value="class">Seluruh kelas aktif</option><option value="all">Semua siswa guru ini</option></select></label>
-<button class="secondary-action" id="assessmentExport" type="button">Export Excel</button>
+<label class="field-label assessment-export-scope" for="assessmentExportScope">Export<select id="assessmentExportScope"><option value="view">Tampilan saat ini</option><option value="level">Seluruh tingkat dipilih</option><option value="all">Semua siswa guru ini</option></select></label>
+<button id="assessmentExport" type="button" class="secondary-action">Export Excel</button><label class="gm-assessment-export-drafts"><input id="assessmentExportIncludeDrafts" type="checkbox"> Sertakan draf perangkat (belum masuk database)</label>
 <div class="assessment-inline-help"><button aria-controls="assessmentRuleHelpText" aria-expanded="false" class="assessment-help-button" id="assessmentRuleHelp" title="Mengapa field tertentu tidak muncul?" type="button">?</button><div class="assessment-help-popover" hidden="" id="assessmentRuleHelpText"><strong>Mengapa field tertentu tidak muncul?</strong><span>Tajwid tidak wajib ketika capaian aktual masih Buku 1. Gharib hanya tampil dan wajib pada tahap Finishing. Form mengikuti aturan capaian siswa agar nilai yang tidak berlaku tidak ikut dihitung.</span></div></div>
 </div>
 </section>
 <div id="assessmentCards"></div>
 <div class="assessment-pagination"><button class="secondary-action" id="assessmentPrev" type="button">Sebelumnya</button><span id="assessmentPageInfo"></span><button class="secondary-action" id="assessmentNext" type="button">Berikutnya</button></div>
 <div class="assessment-save-all-bottom">
-            <div class="assessment-save-actions"><button class="secondary-action" hidden="" id="assessmentRetrySave" type="button">Coba Lagi yang Gagal</button><button class="primary-action" id="assessmentSaveAll" type="button">Simpan Semua</button></div>
+            <div class="assessment-save-actions"><button class="secondary-action" hidden="" id="assessmentRetrySave" type="button">Coba Lagi yang Gagal</button><button id="assessmentSaveAll" type="button" class="primary-action">Simpan semua perubahan tingkat ini</button></div>
 </div>
 <div class="assessment-save-summary" hidden="" id="assessmentSaveSummary"></div>
 <div aria-label="Aksi cepat penilaian" class="assessment-mobile-bar" id="assessmentMobileBar">
 <span class="gm-mobile-status" id="assessmentMobileStatus">Draf aman di perangkat</span>
-<button class="secondary-action" id="assessmentMobileProblems" type="button">Bermasalah</button>
+<button id="assessmentMobileProblems" type="button" class="secondary-action">Perlu dicek</button>
 <button class="primary-action" id="assessmentMobileSave" type="button">Simpan</button>
 </div>
 </div>
