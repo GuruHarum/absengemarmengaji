@@ -577,3 +577,239 @@ body.admin-page #page-penilaian .assessment-summary > [hidden] {
 body.admin-page #page-penilaian .gm-assessment-export-options:not([open]) > .gm-assessment-export-settings {
   display:none!important;
 }
+
+/* Tahap per tingkat: satu card utuh tanpa bingkai lengkung berlapis. */
+body.admin-page #page-penilaian #assessmentCards {
+  gap:16px;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-student,
+body.admin-page #page-penilaian #assessmentCards .assessment-student[data-problem] {
+  display:block;
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  border:0!important;
+  border-left:0!important;
+  border-radius:15px;
+  outline:0;
+  box-shadow:0 1px 3px rgba(15,55,38,.09)!important;
+  background:var(--gm-surface,#fff);
+  overflow:hidden;
+  isolation:isolate;
+  transform:none!important;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-student > header {
+  width:100%;
+  box-sizing:border-box;
+  margin:0!important;
+  padding:13px 16px!important;
+  background:#164d3e;
+  border:0;
+  border-bottom:2px solid #d1b573;
+  border-radius:0;
+  box-shadow:none;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-student > header > div {
+  padding-left:0!important;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-subjects {
+  margin:0;
+  padding:0;
+  background:var(--gm-surface,#fff);
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-subjects > fieldset {
+  padding:18px 17px;
+  border:0;
+  margin:0;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-attainment {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  align-items:start;
+  gap:12px;
+  max-width:none;
+  margin:0;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-attainment > .field-label:first-child {
+  grid-column:1/-1;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-attainment > :is(.progress-material,.assessment-help,.assessment-empty) {
+  grid-column:1/-1;
+  margin:0;
+  padding:0;
+  font-size:12px;
+  line-height:1.5;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-attainment > .assessment-help {
+  display:none;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-surah-fields {
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,.75fr);
+  gap:12px;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-surah-fields[hidden] {
+  display:none!important;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-values-heading {
+  margin:16px 0 11px;
+  padding:12px 0 0;
+  color:var(--gm-muted,#62766c);
+  border-top:1px solid var(--gm-assessment-line);
+  font-size:11px;
+  font-weight:650;
+  letter-spacing:.025em;
+  text-transform:none;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-student .assessment-result-summary {
+  border-top:1px solid var(--gm-assessment-line);
+  margin:0;
+  min-height:0;
+}
+body.admin-page #page-penilaian #assessmentCards .assessment-student > footer {
+  margin:0;
+  border-top:1px solid var(--gm-assessment-line);
+  box-shadow:none;
+}
+body.admin-page #page-penilaian .gm-assessment-level-nav {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  margin:17px 0;
+  padding:14px;
+  border:1px solid var(--gm-assessment-line);
+  border-radius:12px;
+  background:var(--gm-surface,#fff);
+}
+body.admin-page #page-penilaian .gm-assessment-level-nav[hidden] {
+  display:none!important;
+}
+body.admin-page #page-penilaian .gm-assessment-level-nav #assessmentPageInfo {
+  grid-column:1/-1;
+  grid-row:1;
+  color:var(--gm-muted,#637568);
+  font-size:12px;
+  font-weight:550;
+  text-align:center;
+}
+body.admin-page #page-penilaian .gm-assessment-level-nav button {
+  width:100%;
+  box-sizing:border-box;
+  min-height:43px;
+  margin:0;
+  font-size:12px;
+  border-radius:9px;
+}
+body.admin-page #page-penilaian .gm-assessment-level-nav button[hidden] {
+  display:none!important;
+}
+body.admin-page #page-penilaian .gm-assessment-level-nav:has(#assessmentPrev[hidden]) #assessmentNext,
+body.admin-page #page-penilaian .gm-assessment-level-nav:has(#assessmentNext[hidden]) #assessmentPrev {
+  grid-column:1/-1;
+}
+body.admin-page #page-penilaian .gm-assessment-export {
+  display:inline-flex;
+  align-items:center;
+}
+body.admin-page #page-penilaian .gm-assessment-export > button {
+  min-height:33px;
+  padding:6px 11px;
+  border-radius:8px;
+  font-size:11px;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog {
+  position:fixed;
+  width:min(355px,calc(100vw - 32px));
+  max-height:min(85dvh,530px);
+  box-sizing:border-box;
+  margin:auto;
+  padding:21px;
+  border:1px solid var(--gm-assessment-line);
+  border-radius:17px;
+  background:var(--gm-surface,#fff);
+  color:var(--gm-text,#244f3c);
+  box-shadow:0 20px 70px rgba(5,28,19,.21);
+  overflow:auto;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog:not([open]) {
+  display:none!important;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog::backdrop {
+  background:rgba(11,30,22,.42);
+  backdrop-filter:blur(2px);
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog .field-label {
+  display:grid;
+  gap:7px;
+  margin:0 0 15px;
+  font-size:12px;
+  font-weight:650;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog select {
+  width:100%;
+  min-height:44px;
+  margin:0;
+  padding:8px 10px;
+  border:1px solid var(--gm-assessment-line);
+  border-radius:10px;
+  background:var(--gm-surface,#fff);
+  color:inherit;
+  font:inherit;
+  font-size:14px;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog .gm-assessment-export-drafts {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  margin:0 0 18px;
+  font-size:12px;
+  cursor:pointer;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog .gm-assessment-export-drafts input {
+  width:17px;
+  height:17px;
+  margin:0;
+  flex-shrink:0;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog-actions {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+body.admin-page #page-penilaian .gm-assessment-export-dialog-actions button {
+  min-height:42px;
+  font-size:12px;
+  padding:8px;
+  border-radius:10px;
+}
+@media(max-width:767px){
+  body.admin-page #page-penilaian #assessmentCards .assessment-student > header {
+    padding:12px!important;
+  }
+  body.admin-page #page-penilaian #assessmentCards .assessment-subjects > fieldset {
+    padding:15px 13px;
+  }
+  body.admin-page #page-penilaian #assessmentCards .assessment-attainment {
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px;
+  }
+  body.admin-page #page-penilaian #assessmentCards .assessment-surah-fields {
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+  body.admin-page #page-penilaian .gm-assessment-level-nav {
+    margin:14px 0;
+    padding:11px;
+  }
+  body.admin-page #page-penilaian .gm-assessment-export-dialog {
+    padding:17px;
+  }
+}
+@media(max-width:360px){
+  body.admin-page #page-penilaian #assessmentCards .assessment-attainment {
+    grid-template-columns:1fr!important;
+  }
+}
