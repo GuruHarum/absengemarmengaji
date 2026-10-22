@@ -1,3 +1,43 @@
+body.admin-page #page-penilaian .gm-assessment-progress {
+  margin:12px 0 15px;
+  padding:13px 15px;
+  background:var(--gm-surface,#fff);
+  border:1px solid var(--gm-border,#dce5dc);
+  border-radius:12px;
+}
+body.admin-page #page-penilaian .gm-assessment-progress-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:9px;
+  color:var(--gm-text,#315847);
+  font-size:12px;
+  line-height:1.45;
+}
+body.admin-page #page-penilaian .gm-assessment-progress-heading strong {
+  font-weight:650;
+}
+body.admin-page #page-penilaian .gm-assessment-progress-track {
+  overflow:hidden;
+  height:9px;
+  width:100%;
+  border-radius:999px;
+  background:var(--gm-soft,#e7eee7);
+}
+body.admin-page #page-penilaian .gm-assessment-progress-track > span {
+  display:block;
+  width:0;
+  height:100%;
+  background:var(--gm-accent,#216454);
+  border-radius:inherit;
+  transition:width .2s ease;
+}
+@media(prefers-reduced-motion:reduce) {
+  body.admin-page #page-penilaian .gm-assessment-progress-track > span {transition:none}
+}
+
 /* Penilaian Periodik: alur satu tingkat (gabungan seluruh rombel), 22 Oktober 2026. */
 body.admin-page #page-penilaian .assessment-summary {
   grid-template-columns:minmax(215px,1.6fr) repeat(6,minmax(98px,1fr));
