@@ -2034,8 +2034,8 @@ function switchPageReady(pageId) {
         analitik: ['Analitik Periode', 'Bandingkan ketercapaian target secara agregat.', 'Tanpa menampilkan identitas siswa.'],
         presentasi: ['Laman Presentasi', 'Ringkasan data Gemar Mengaji untuk presentasi.', 'Data ditampilkan per tingkat dan kelas.'],
         rapor: ['Rapor Siswa', 'Laporan perkembangan siswa.', 'Periksa dan terbitkan rapor per tingkat kelas.'],
-        kelompok: ['Kelola Tahfidz', 'Kelola kelompok Tahfidz.', ''],
-        'kelompok-tahsin': ['Kelola Tahsin', 'Kelola kelompok Tahsin.', ''],
+        kelompok: ['Kelola Pembelajaran', 'Kelola Pembelajaran', ''],
+        'kelompok-tahsin': ['Kelola Pembelajaran', 'Kelola Pembelajaran', ''],
         profil: ['Pengaturan Profil', 'Profil rapi, akses lebih personal.', 'Kelola nama profil, foto dan keamanan akun dalam satu tempat.'],
         absensi: ['Data Absensi', 'Catat kehadiran, dampingi kebaikan.', 'Pantau dan kelola rekap kehadiran siswa dalam satu tempat.'],
         penilaian: ['Penilaian Periodik', 'Catat perkembangan, rawat potensi.', 'Penilaian Tahsin dan Tahfidz untuk setiap tahap belajar siswa.'],
@@ -2054,7 +2054,7 @@ function switchPageReady(pageId) {
     if (eyebrow && pageId !== 'dashboard') eyebrow.textContent = 'PANEL ADMINISTRASI';
     pages.forEach(name => {
         const item = document.getElementById(`menu-${name}`);
-        if (name === pageId)
+        if (name === pageId || (pageId === 'kelompok' && name === 'kelompok-tahsin'))
             item?.setAttribute('aria-current', 'page');
         else
             item?.removeAttribute('aria-current');
@@ -2069,8 +2069,23 @@ function switchPageReady(pageId) {
             requestAnimationFrame(() => page.classList.add('page-animate-in'));
         }
     });
+    // Kedua materi tetap memakai halaman dan alur penugasan yang sudah ada.
+    // Hanya menu utamanya yang disatukan.
+    const isGroupPage = pageId === 'kelompok' || pageId === 'kelompok-tahsin';
+    const groupSubnav = document.getElementById('gmLearningSubnav');
+    if (groupSubnav) {
+        groupSubnav.hidden = !isGroupPage;
+        [['gmLearningTabTahsin', pageId === 'kelompok-tahsin'],
+         ['gmLearningTabTahfidz', pageId === 'kelompok']].forEach(([id, pressed]) => {
+            const tab = document.getElementById(id);
+            if (!tab) return;
+            tab.setAttribute('aria-pressed', String(pressed));
+            if (pressed) tab.setAttribute('aria-current', 'page');
+            else tab.removeAttribute('aria-current');
+        });
+    }
     ['menu-dashboard','menu-rapor','menu-laporan','menu-arsip','menu-analitik','menu-presentasi','menu-kelompok','menu-kelompok-tahsin','menu-profil','menu-absensi','menu-kelola','menu-penilaian','menu-infografik','menu-identitas','menu-pengaturan','menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
-    const active = document.getElementById(`menu-${pageId}`);
+    const active = document.getElementById(pageId === 'kelompok' ? 'menu-kelompok-tahsin' : `menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
     if (pageId === 'absensi') void loadAttendanceLog();
     if (pageId === 'dashboard')
