@@ -164,11 +164,15 @@ window.LearningGroups = (() => {
       <section class="assessment-controls gm-group-manager" data-subject="${subject}">
         <div class="section-heading gm-compact-heading"><div><h2>Kelola ${title}</h2></div></div>
         <div class="gm-group-pagebar">
-          <label class="field-label">Guru
-            <select data-view-teacher><option value="">Pilih guru</option></select>
-          </label>
-          <label class="field-label gm-year-field">Tahun ajaran
+          <div class="gm-teacher-picker">
+            <label class="field-label" for="gmGroupTeacherSearch-${subject}">Guru</label>
+            <input id="gmGroupTeacherSearch-${subject}" data-teacher-search type="search" placeholder="Cari nama guru..." autocomplete="off" aria-label="Cari nama guru">
+            <select data-view-teacher aria-label="Pilih guru dari hasil pencarian"><option value="">Pilih guru</option></select>
+            <small data-teacher-result-label aria-live="polite"></small>
+          </div>
+          <label class="field-label gm-year-field">Tahun ajaran (tahun awal)
             <input data-year type="number" min="2000" max="2200" value="${schoolYear()}">
+            <small class="gm-year-preview" data-year-label aria-live="polite">${schoolYear()}/${schoolYear() + 1}</small>
           </label>
           <div class="gm-group-view-actions">
             <label class="gm-archive-toggle" title="Lihat kelompok yang sudah diarsipkan">
@@ -203,13 +207,21 @@ window.LearningGroups = (() => {
                 <label class="field-label">Cari siswa
                   <input data-search type="search" placeholder="Cari nama siswa di semua kelas" autocomplete="off">
                 </label>
+                <label class="field-label">Status keanggotaan
+                  <select data-member-status>
+                    <option value="all">Semua siswa</option>
+                    <option value="unassigned">Belum punya kelompok</option>
+                    <option value="assigned">Sudah punya kelompok</option>
+                  </select>
+                </label>
               </div>
               <div class="gm-group-tools gm-member-tools">
                 <button type="button" data-pick-visible class="secondary-action">Pilih yang tampil</button>
-                ${subject === 'tahfidz' ? '<button type="button" data-sync-tahsin class="secondary-action">Samakan dengan siswa Tahsin</button>' : ''}
+                ${subject === 'tahfidz' ? '<button type="button" data-sync-tahsin class="secondary-action">Salin siswa Tahsin guru ini</button>' : ''}
                 <button type="button" data-clear class="secondary-action">Kosongkan</button>
                 <strong data-selected>0 siswa dipilih</strong>
               </div>
+              ${subject === 'tahfidz' ? '<p class="gm-copy-tahsin-help">Salin hanya anggota kelompok Tahsin aktif milik guru yang dipilih pada tahun ajaran ini. Guru khusus Tahfidz dapat memilih siswa secara manual.</p>' : ''}
               <p data-search-summary class="gm-member-count" role="status" aria-live="polite"></p>
                <div data-students class="assignment-student-options gm-member-picker"></div>
               <div class="gm-group-savebar"><button type="submit" class="primary-action" data-save>Simpan kelompok</button></div>
@@ -222,18 +234,16 @@ window.LearningGroups = (() => {
     host.addEventListener('click', event => click(subject, event));
     host.addEventListener('input', event => {
       const state = views[subject]; if (!state || state.busy) return;
+      if (event.target.matches('[data-teacher-search]')) renderTeacherOptions(subject);
       if (event.target.matches('[data-search]')) renderStudents(subject);
+      if (event.target.matches('[data-year]')) renderYearPreview(subject);
     });
     host.addEventListener('change', event => {
       const state = views[subject]; if (!state || state.busy) return;
-      if (event.target.matches('[data-year]')) void open(subject, true);
+      if (event.target.matches('[data-year]')) { void changeAcademicYear(subject, event.target); return; }
       if (event.target.matches('[data-show-archived]')) { renderGroups(subject); return; }
-      if (event.target.matches('[data-view-teacher]')) {
-        resetForm(subject, false);
-        renderGroups(subject);
-        renderStudents(subject);
-      }
-      if (event.target.matches('[data-class]')) renderStudents(subject);
+      if (event.target.matches('[data-view-teacher]')) { void changeTeacher(subject, event.target); return; }
+      if (event.target.matches('[data-class], [data-member-status]')) renderStudents(subject);
       if (event.target.matches('[data-student]')) {
         const id = event.target.dataset.student;
         if (event.target.checked) {
@@ -262,6 +272,35 @@ window.LearningGroups = (() => {
   }
   function selectedTeacher(subject) {
     return shell(subject).querySelector('[data-view-teacher]').value;
+  }
+
+  function renderYearPreview(subject) {
+    const host = shell(subject);
+    const year = Number(host.querySelector('[data-year]').value);
+    host.querySelector('[data-year-label]').textContent =
+      Number.isInteger(year) && year >= 2000 && year <= 2200
+        ? `${year}/${year + 1}` : 'Masukkan tahun awal yang valid.';
+  }
+
+  function renderTeacherOptions(subject) {
+    const state = views[subject];
+    const host = shell(subject);
+    if (!state) return;
+    const search = host.querySelector('[data-teacher-search]').value.trim().toLocaleLowerCase('id');
+    const teachers = state.allowedTeachers || [];
+    const matches = teachers.filter(teacher =>
+      `${teacher.nama_lengkap || ''} ${teacher.nama || ''}`.toLocaleLowerCase('id').includes(search));
+    const selectedId = String(state.viewTeacherId || '');
+    const selected = teachers.find(teacher => String(teacher.id) === selectedId);
+    const visible = selected && !matches.some(teacher => String(teacher.id) === selectedId)
+      ? [selected, ...matches] : matches;
+    const select = host.querySelector('[data-view-teacher]');
+    select.replaceChildren(new Option('Pilih guru', ''), ...visible.map(teacher =>
+      new Option(teacher.nama_lengkap || teacher.nama || `Guru ${teacher.id}`, String(teacher.id))));
+    select.value = selectedId || '';
+    host.querySelector('[data-teacher-result-label]').textContent = search
+      ? `${matches.length} dari ${teachers.length} guru cocok.` : `${teachers.length} guru tersedia.`;
+    host.querySelector('[data-teacher-search]').disabled = AppAccess.teacher();
   }
 
   async function open(subject, refresh = false) {
@@ -307,14 +346,17 @@ window.LearningGroups = (() => {
       Object.assign(state, { teachers, students, groups, members, year, autoTahsinLevels: [] });
       state.edit = null; state.selected.clear();
 
-      const allowedTeachers = teachers.filter(t => subject !== 'tahsin' || t.attendance_enabled !== false);
-      const teacherSelect = host.querySelector('[data-view-teacher]');
-      teacherSelect.replaceChildren(new Option('Pilih guru', ''));
-      allowedTeachers.forEach(t => teacherSelect.add(new Option(t.nama_lengkap || t.nama, String(t.id))));
+      const allowedTeachers = teachers.filter(t => subject !== 'tahsin' || t.attendance_enabled !== false)
+        .sort((a, b) => String(a.nama_lengkap || a.nama || '').localeCompare(String(b.nama_lengkap || b.nama || ''), 'id'));
+      state.allowedTeachers = allowedTeachers;
       const teacherIds = new Set(allowedTeachers.map(t => String(t.id)));
       const firstWithGroup = groups.find(g => teacherIds.has(String(g.teacher_id)))?.teacher_id;
-      teacherSelect.value = AppAccess.teacher() ? String(AppAccess.profile.teacher_id || '') : (teacherIds.has(String(previousTeacher)) ? String(previousTeacher) : (firstWithGroup ? String(firstWithGroup) : (allowedTeachers[0] ? String(allowedTeachers[0].id) : '')));
-      teacherSelect.disabled = AppAccess.teacher();
+      state.viewTeacherId = AppAccess.teacher() ? String(AppAccess.profile.teacher_id || '') :
+        (teacherIds.has(String(previousTeacher)) ? String(previousTeacher) :
+          (firstWithGroup ? String(firstWithGroup) : (allowedTeachers[0] ? String(allowedTeachers[0].id) : '')));
+      renderTeacherOptions(subject);
+      host.querySelector('[data-view-teacher]').disabled = AppAccess.teacher();
+      renderYearPreview(subject);
       host.querySelector('[data-year]').disabled = AppAccess.teacher();
       host.querySelector('[data-show-archived]').closest('label').hidden = AppAccess.teacher();
 
@@ -454,6 +496,7 @@ window.LearningGroups = (() => {
     state.autoTahsinLevels = [];
     host.querySelector('[data-class]').value = '';
     host.querySelector('[data-search]').value = '';
+    host.querySelector('[data-member-status]').value = 'all';
     host.querySelector('[data-form-title]').textContent = `Buat kelompok ${titleOf(subject)}`;
     host.querySelector('[data-editor-label]').textContent = 'Tambah kelompok';
     host.querySelector('[data-save]').textContent = 'Simpan kelompok';
@@ -478,7 +521,7 @@ window.LearningGroups = (() => {
       } else {
         if (!classSelect.value) {
           const classes = [...new Set(visible.map(input => input.dataset.studentClass).filter(Boolean))];
-          if (classes.length !== 1) return msg(subject, 'Pilih kelas terlebih dahulu sebelum menggunakan Pilih semua.', true);
+          if (classes.length !== 1) return msg(subject, 'Pilih kelas terlebih dahulu sebelum memilih seluruh siswa yang tampil.', true);
           classSelect.value = classes[0];
         }
         visible.filter(input => input.dataset.studentClass === classSelect.value).forEach(input => state.selected.add(input.dataset.student));
@@ -495,7 +538,7 @@ window.LearningGroups = (() => {
       try {
         const groups = await fetchAllRows(() => supabase.from('teaching_assignments').select('id,class_name').eq('subject', 'tahsin').eq('academic_year_start', state.year).eq('teacher_id', teacherId).eq('active', true).order('class_name'));
         const ids = groups.map(group => group.id).filter(Boolean);
-        if (!ids.length) throw new Error('Guru ini belum memiliki kelompok Tahsin aktif.');
+        if (!ids.length) throw new Error('Guru ini belum memiliki kelompok Tahsin aktif. Pilih anggota Tahfidz secara manual atau guru lain yang memiliki kelompok Tahsin.');
         const members = await fetchAllRows(() => supabase.from('assessment_group_members').select('assignment_id,student_id').eq('subject', 'tahsin').eq('academic_year_start', state.year).eq('active', true).in('assignment_id', ids));
         const tahsinStudents = members.map(row => state.students.find(student => String(student.id) === String(row.student_id))).filter(Boolean);
         const levels = [...new Set(tahsinStudents.map(student => gradeFromClassName(student.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b));
@@ -508,6 +551,7 @@ window.LearningGroups = (() => {
         });
         state.selected = new Set(eligible.map(student => String(student.id)));
         state.autoTahsinLevels = pickedLevels;
+        host.querySelector('[data-member-status]').value = 'all';
         host.querySelector('[data-class]').value = '';
         host.querySelector('[data-search]').value = '';
         msg(subject, state.selected.size ? `Siswa Tahsin kelas ${pickedLevels.join(', ')} berhasil disalin.` : 'Tidak ada siswa Tahsin yang dapat disalin pada tingkat yang dipilih.', !state.selected.size);
