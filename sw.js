@@ -1,4 +1,4 @@
-const VERSION = 'presentation-responsive-20261022a';
+const VERSION = 'profile-settings-20261022a';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -28,7 +28,7 @@ const PRECACHE = [
   '/css/rapor-workspace.css?v=20261007-data63',
   '/js/pwa.js',
   '/js/panel-preboot.js',
-  '/js/panel-modules.js?v=20261022-assessment-stage4',
+  '/js/panel-modules.js?v=20261022-profile1',
   '/js/panel-start-guru.js?v=20261007-data63',
   '/js/islamic-quotes.js',
   '/assets/school-logo.png',
