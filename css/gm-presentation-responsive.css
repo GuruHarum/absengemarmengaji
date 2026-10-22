@@ -1,0 +1,342 @@
+/* Presentasi koordinator — responsif tanpa mengubah grafik atau rumus.
+   Hanya mengatur wadah, tata letak, ruang, ukuran kontrol, dan perilaku overflow. */
+#page-presentasi {
+  width: 100%;
+  max-width: min(100%, 1440px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+#page-presentasi,
+#page-presentasi > *,
+#page-presentasi #presentationOverview,
+#page-presentasi #presentationReports,
+#page-presentasi .gm-panel-card,
+#page-presentasi .gm-presentation-page,
+#page-presentasi .gm-presentation-carousel,
+#page-presentasi .gm-presentation-track,
+#page-presentasi .gm-presentation-slide,
+#page-presentasi .gm-presentation-summary,
+#page-presentasi .gm-class-target-section,
+#page-presentasi .gm-class-target-grid,
+#page-presentasi .gm-class-target-card,
+#page-presentasi .gm-chart-shell,
+#page-presentasi .gm-class-chart-shell {
+  min-width: 0;
+  box-sizing: border-box;
+}
+#page-presentasi #presentationOverview[hidden],
+#page-presentasi #presentationReports[hidden] {
+  display: none !important;
+}
+#page-presentasi .manage-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+#page-presentasi .manage-tabs::-webkit-scrollbar { display: none; }
+#page-presentasi .manage-tabs button {
+  min-width: 0;
+  min-height: 40px;
+  white-space: nowrap;
+}
+#page-presentasi .gm-panel-card .section-heading {
+  min-width: 0;
+}
+#page-presentasi .gm-panel-card .section-heading > div {
+  min-width: 0;
+}
+#page-presentasi .gm-panel-card .section-heading :is(h2,p) {
+  overflow-wrap: anywhere;
+}
+#page-presentasi .gm-presentation-toolbar {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.15fr) auto auto;
+  gap: 10px;
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+}
+#page-presentasi .gm-presentation-toolbar > *,
+#page-presentasi .gm-filter-row > * {
+  min-width: 0;
+  margin: 0;
+}
+#page-presentasi .gm-presentation-toolbar :is(input,select),
+#page-presentasi .gm-filter-row :is(input,select) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#page-presentasi .gm-presentation-toolbar > button {
+  width: auto;
+  min-width: 0;
+  min-height: 42px;
+  padding-inline: 14px;
+  white-space: normal;
+  line-height: 1.3;
+}
+#page-presentasi .gm-filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+#page-presentasi .gm-presentation-hero,
+#page-presentasi .gm-presentation-hero > div,
+#page-presentasi .gm-presentation-kpis-4 article {
+  min-width: 0;
+  box-sizing: border-box;
+}
+#page-presentasi .gm-presentation-hero :is(h2,p) {
+  overflow-wrap: anywhere;
+}
+#page-presentasi .gm-presentation-kpis-4 {
+  min-width: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+#page-presentasi .gm-presentation-kpis-4 article {
+  overflow: hidden;
+}
+#page-presentasi .gm-presentation-kpis-4 article :is(span,small,strong) {
+  overflow-wrap: anywhere;
+}
+#page-presentasi .gm-presentation-carousel {
+  max-width: 100%;
+}
+#page-presentasi .gm-carousel-head,
+#page-presentasi .gm-slide-copy,
+#page-presentasi .gm-class-target-heading {
+  min-width: 0;
+}
+#page-presentasi .gm-carousel-head > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#page-presentasi .gm-carousel-head h3,
+#page-presentasi .gm-slide-copy :is(span,strong),
+#page-presentasi .gm-class-target-heading h3 {
+  overflow-wrap: anywhere;
+}
+#page-presentasi .gm-carousel-actions {
+  flex: 0 0 auto;
+}
+#page-presentasi .gm-carousel-actions button {
+  min-width: 38px;
+  min-height: 38px;
+}
+#page-presentasi .gm-presentation-slide,
+#page-presentasi .gm-class-target-card {
+  max-width: 100%;
+}
+#page-presentasi .gm-chart-shell,
+#page-presentasi .gm-class-chart-shell {
+  max-width: 100%;
+}
+#page-presentasi .gm-stage-grade-tabs,
+#page-presentasi .gm-class-grade-tabs,
+#page-presentasi .gm-attendance-month-strip {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+#page-presentasi .gm-stage-grade-tabs button,
+#page-presentasi .gm-class-grade-tabs button {
+  min-height: 38px;
+}
+#page-presentasi .gm-stage-row,
+#page-presentasi .gm-stage-copy,
+#page-presentasi .gm-stage-pane,
+#page-presentasi .gm-target-count-item {
+  min-width: 0;
+}
+#page-presentasi .gm-target-count-item :is(strong,span) {
+  overflow-wrap: anywhere;
+}
+#page-presentasi .gm-table-wrap {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+#page-presentasi .gm-presentation-table {
+  width: 100%;
+  min-width: 650px;
+}
+#page-presentasi .gm-presentation-table th,
+#page-presentasi .gm-presentation-table td {
+  white-space: nowrap;
+}
+#page-presentasi .gm-attendance-month-meta {
+  min-width: 0;
+}
+#page-presentasi .gm-attendance-month-meta span {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1200px) {
+  #page-presentasi .gm-presentation-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-presentasi .gm-presentation-toolbar > button {
+    grid-column: auto;
+    width: 100%;
+  }
+  #page-presentasi .gm-presentation-kpis-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-presentasi .gm-class-target-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 800px) {
+  #page-presentasi .gm-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-presentasi .gm-filter-row > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  #page-presentasi .gm-presentation-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+  }
+  #page-presentasi .gm-slide-copy {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  #page-presentasi .gm-slide-copy span {
+    max-width: 100%;
+    text-align: left;
+  }
+  #page-presentasi .gm-attendance-month-meta {
+    flex-wrap: wrap;
+  }
+  #page-presentasi .gm-attendance-month-meta span {
+    text-align: left;
+  }
+}
+@media (max-width: 600px) {
+  #page-presentasi .gm-presentation-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  #page-presentasi .gm-presentation-toolbar > :is(label,button) {
+    grid-column: auto;
+  }
+  #page-presentasi .gm-presentation-toolbar > button {
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+  #page-presentasi .gm-presentation-toolbar :is(input,select),
+  #page-presentasi .gm-filter-row :is(input,select) {
+    font-size: 16px;
+  }
+  #page-presentasi .gm-presentation-hero {
+    padding: 16px;
+    border-radius: 15px;
+    gap: 7px;
+  }
+  #page-presentasi .gm-presentation-hero h2 {
+    font-size: clamp(19px, 5.3vw, 25px);
+    line-height: 1.3;
+  }
+  #page-presentasi .gm-presentation-hero p {
+    line-height: 1.55;
+  }
+  #page-presentasi .gm-presentation-kpis-4 {
+    gap: 9px;
+  }
+  #page-presentasi .gm-presentation-kpis-4 article {
+    padding: 13px 12px;
+  }
+  #page-presentasi .gm-presentation-kpis-4 strong {
+    font-size: clamp(19px, 5vw, 25px);
+    line-height: 1.15;
+  }
+  #page-presentasi .gm-carousel-head {
+    padding: 12px;
+    gap: 7px;
+  }
+  #page-presentasi .gm-carousel-head h3 {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  #page-presentasi .gm-carousel-actions {
+    gap: 5px;
+  }
+  #page-presentasi .gm-carousel-actions button {
+    min-width: 38px;
+    min-height: 38px;
+  }
+  #page-presentasi .gm-presentation-slide {
+    padding: 14px 10px 16px;
+  }
+  #page-presentasi .gm-class-target-card,
+  #page-presentasi .gm-presentation-summary {
+    padding: 13px;
+  }
+  #page-presentasi .gm-stage-pane-head {
+    padding: 10px 11px;
+  }
+  #page-presentasi .gm-stage-copy {
+    flex-wrap: wrap;
+    gap: 3px 8px;
+  }
+  #page-presentasi .gm-class-target-heading h3 {
+    font-size: 15px;
+  }
+}
+@media (max-width: 380px) {
+  #page-presentasi .gm-presentation-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #page-presentasi .gm-presentation-toolbar > :is(label,button) {
+    grid-column: 1 / -1;
+  }
+  #page-presentasi .gm-filter-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #page-presentasi .gm-filter-row > * {
+    grid-column: auto !important;
+  }
+  #page-presentasi .gm-presentation-kpis-4 {
+    gap: 7px;
+  }
+  #page-presentasi .gm-presentation-kpis-4 article {
+    padding: 11px;
+  }
+  #page-presentasi .gm-presentation-kpis-4 strong {
+    font-size: 19px;
+  }
+  #page-presentasi .gm-carousel-head {
+    align-items: flex-start;
+  }
+  #page-presentasi .gm-presentation-slide {
+    padding-inline: 8px;
+  }
+}
+@media (orientation: landscape) and (max-height: 540px) {
+  #page-presentasi .gm-presentation-hero {
+    padding: 13px 18px;
+    gap: 6px;
+  }
+  #page-presentasi .gm-presentation-kpis-4 article {
+    padding: 11px 12px;
+  }
+  #page-presentasi .gm-presentation-slide {
+    min-height: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #page-presentasi .gm-stage-grade-tabs,
+  #page-presentasi .gm-class-grade-tabs,
+  #page-presentasi .gm-attendance-month-strip {
+    scroll-behavior: auto;
+  }
+}
