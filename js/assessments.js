@@ -413,6 +413,7 @@ window.PeriodicAssessments = (() => {
             state.problemOnly = el('assessmentStatusFilter').value === 'problem';
             el('assessmentActivePeriod').textContent = `${context.year}/${context.year + 1} · ${AssessmentData.periods[context.period]} · ${teacher.nama} / ${context.subject.toUpperCase()}`;
             el('assessmentWorkspace').hidden = false;
+            if (el('assessmentPendingFilter')) el('assessmentPendingFilter').hidden = true;
             state.pendingWorkspaceFilter = null;
             render();
             rememberLastFilter();
@@ -719,9 +720,12 @@ window.PeriodicAssessments = (() => {
         state.lastSubject = el('assessmentSubject').value;
         yearLabel();
         await refreshSubjectTeachers();
-        if (filter.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(filter.teacherId))) el('assessmentTeacher').value = String(filter.teacherId);
+        if (filter.teacherId && state.eligibleTeachers.some(teacher => String(teacher.id) === String(filter.teacherId))) {
+            state.selectedTeacherId = String(filter.teacherId);
+            renderTeacherOptions();
+        }
         state.pendingWorkspaceFilter = filter;
-        if (loadData && el('assessmentTeacher').value) return load({ preferredFilter: filter });
+        if (loadData && el('assessmentTeacher').value) return load({ preferredFilter: filter, skipUnsavedPrompt: true });
         return true;
     }
 
@@ -754,7 +758,9 @@ window.PeriodicAssessments = (() => {
             state.lastSubject = el('assessmentSubject').value;
             yearLabel();
             await refreshSubjectTeachers();
-            if (last.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(last.teacherId))) el('assessmentTeacher').value = String(last.teacherId);
+            if (last.teacherId && state.eligibleTeachers.some(teacher => String(teacher.id) === String(last.teacherId))) {
+                state.selectedTeacherId = String(last.teacherId); renderTeacherOptions();
+            }
             state.pendingWorkspaceFilter = last;
             el('assessmentScopeNote').textContent = AppAccess.full() ? 'Daftar siswa mengikuti anggota kelompok pelajaran yang aktif. Filter terakhir disimpan di perangkat.' : 'Hanya siswa dari kelompok pelajaran Anda. Filter terakhir disimpan di perangkat.';
             state.initialized = true;
@@ -775,9 +781,12 @@ window.PeriodicAssessments = (() => {
         el('assessmentSubject').value = options.subject || 'tahsin';
         state.lastSubject = el('assessmentSubject').value;
         await refreshSubjectTeachers();
-        if (AppAccess.full() && options.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(options.teacherId))) el('assessmentTeacher').value = String(options.teacherId);
+        if (AppAccess.full() && options.teacherId && state.eligibleTeachers.some(teacher => String(teacher.id) === String(options.teacherId))) {
+            state.selectedTeacherId = String(options.teacherId); renderTeacherOptions();
+        }
         el('assessmentPeriod').value = options.period || 'pts_ganjil';
-        await load();
+        const loaded = await load();
+        if (!loaded) return false;
         if (options.className && state.students.some(student => student.kelas === options.className)) el('assessmentLevel').value = classLevel(options.className);
         el('assessmentSearch').value = options.studentName || '';
         el('assessmentStatusFilter').value = options.problemOnly ? 'problem' : 'all';
@@ -796,10 +805,18 @@ window.PeriodicAssessments = (() => {
     }
 
     ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
-        el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); return load(); });
-        el('assessmentYear').addEventListener('input', () => { yearLabel(); rememberLastFilter(); refreshSubjectTeachers().catch(error => message(error.message, true)); });
-        el('assessmentPeriod').addEventListener('change', rememberLastFilter);
-        el('assessmentTeacher').addEventListener('change', rememberLastFilter);
+        el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); void load(); });
+        el('assessmentYear').addEventListener('input', () => { yearLabel(); markPendingFilter(); });
+        el('assessmentYear').addEventListener('change', () => {
+            rememberLastFilter();
+            refreshSubjectTeachers().catch(error => message(error.message, true));
+        });
+        el('assessmentPeriod').addEventListener('change', () => { rememberLastFilter(); markPendingFilter(); });
+        el('assessmentTeacher').addEventListener('change', () => {
+            state.selectedTeacherId = el('assessmentTeacher').value;
+            rememberLastFilter(); markPendingFilter();
+        });
+        el('assessmentTeacherSearch').addEventListener('input', renderTeacherOptions);
         el('assessmentSubject').addEventListener('change', async () => {
             const next = el('assessmentSubject').value;
             const previous = state.context?.subject || state.lastSubject || 'tahsin';
@@ -810,6 +827,8 @@ window.PeriodicAssessments = (() => {
             state.lastSubject = next;
             el('assessmentWorkspace').hidden = true;
             state.students = []; state.saved.clear(); state.drafts.clear(); state.context = null; state.problemOnly = false;
+            el('assessmentPendingFilter').hidden = false;
+            message('Pelajaran berubah. Tekan Tampilkan Siswa untuk memuat kelompok pelajaran baru.');
             rememberLastFilter();
             refreshSubjectTeachers().catch(error => message(error.message, true));
         });
