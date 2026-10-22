@@ -42,6 +42,7 @@ test('CSS profil dibatasi ke halaman profil dan PWA menaikkan cache', () => {
   const sw = fs.readFileSync('sw.js','utf8');
   assert.match(css, /PROFIL 2026-10-22/);
   assert.match(css, /#page-profil \.profile-local-feedback/);
+  assert.match(css, /#page-profil \[hidden\] \{ display:none!important; \}/);
   assert.match(css, /max-width:420px/);
   assert.match(sw, /profile-settings-20261022a/);
 });
