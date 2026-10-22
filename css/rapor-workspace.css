@@ -103,3 +103,33 @@ body.admin-page #page-rapor #reportViewMissing .report-view-heading button { min
  body.admin-page #page-rapor .report-submenu { flex-wrap: wrap; }
  body.admin-page #page-rapor .report-submenu button { flex: 1 1 100%; }
 }
+
+/* Arsip rapor: kartu, filter, dan tombol yang nyaman pada layar sempit. */
+body.admin-page #page-arsip{display:grid;gap:18px;min-width:0}
+body.admin-page #page-arsip.hidden{display:none}
+body.admin-page #page-arsip .gm-archive-panel{min-width:0;padding:clamp(16px,2.5vw,26px)}
+body.admin-page #page-arsip .gm-archive-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:20px}
+body.admin-page #page-arsip .gm-archive-heading h2{font-size:clamp(19px,2vw,24px);font-weight:750;color:var(--theme-ink,#234334)}
+body.admin-page #page-arsip .gm-archive-heading p{margin:6px 0 0;color:var(--theme-muted,#60756b);font-size:13px;line-height:1.6}
+body.admin-page #page-arsip .gm-archive-total{padding:8px 12px;border-radius:9px;background:var(--theme-soft,#eef5ef);color:var(--brand-dark,#216454);font-size:12px}
+body.admin-page #page-arsip .gm-archive-filters{display:grid;grid-template-columns:minmax(170px,1.5fr) repeat(3,minmax(105px,1fr));gap:12px}
+body.admin-page #page-arsip .gm-archive-filter{display:grid;gap:7px;min-width:0;font-size:12px;font-weight:650;color:var(--theme-muted,#60756b)}
+body.admin-page #page-arsip .gm-archive-filter :is(input,select){box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--theme-line,#d8e3da);border-radius:10px;background:var(--theme-paper,#fff);color:var(--theme-ink,#234334);font-size:13px}
+body.admin-page #page-arsip .gm-archive-status{margin:14px 0;min-height:19px;font-size:12px;line-height:1.5;color:var(--theme-muted,#60756b);overflow-wrap:anywhere}
+body.admin-page #page-arsip .gm-archive-entries{display:grid;gap:9px;min-width:0}
+body.admin-page #page-arsip .gm-archive-item{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;padding:15px;border:1px solid var(--theme-line,#dce6de);border-radius:13px;background:var(--theme-paper,#fff)}
+body.admin-page #page-arsip .gm-archive-info{display:grid;gap:5px;min-width:0;overflow-wrap:anywhere;flex:1}
+body.admin-page #page-arsip .gm-archive-info strong{font-size:14px;font-weight:700;color:var(--theme-ink,#234334)}
+body.admin-page #page-arsip .gm-archive-info span{font-size:12px;color:var(--theme-muted,#60756b)}
+body.admin-page #page-arsip .gm-archive-info small{font-size:11.5px;line-height:1.6;color:var(--theme-muted,#60756b)}
+body.admin-page #page-arsip .gm-archive-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px}
+body.admin-page #page-arsip .gm-archive-actions button{min-height:44px;min-width:106px;font-size:12px;white-space:normal}
+body.admin-page #page-arsip .gm-archive-legacy{font-size:12px;line-height:1.5;color:#91652c;background:#fff8e9;border-radius:8px;padding:8px 11px}
+body.admin-page #page-arsip .gm-archive-pagination{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:12px;margin-top:18px}
+body.admin-page #page-arsip .gm-archive-pagination button{min-height:44px;min-width:106px}
+body.admin-page #page-arsip .gm-archive-pagination span,body.admin-page #page-arsip .gm-archive-help{font-size:12px;color:var(--theme-muted,#60756b);line-height:1.6}
+body.admin-page #page-arsip .gm-archive-help{margin:18px 0 0;padding-top:14px;border-top:1px solid var(--theme-line,#dce6de)}
+body.admin-page #page-arsip .gm-archive-empty{text-align:center;padding:28px 12px;font-size:13px;color:var(--theme-muted,#60756b)}
+@media(max-width:900px){body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){body.admin-page #page-arsip .gm-archive-item{flex-direction:column;align-items:stretch}body.admin-page #page-arsip .gm-archive-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}body.admin-page #page-arsip .gm-archive-actions :is(button,.gm-archive-legacy){min-width:0;width:100%;text-align:center}body.admin-page #page-arsip .gm-archive-heading{flex-direction:column}}
+@media(max-width:390px){body.admin-page #page-arsip .gm-archive-filters,body.admin-page #page-arsip .gm-archive-actions{grid-template-columns:minmax(0,1fr)}}
