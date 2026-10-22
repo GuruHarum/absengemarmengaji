@@ -297,7 +297,7 @@ window.PeriodicAssessments = (() => {
             next.textContent = position < levels.length - 1 ? `Tingkat ${levels[position + 1]} →` : 'Tingkat berikutnya →';
         }
         if (el('assessmentPageInfo'))
-            el('assessmentPageInfo').textContent = `Tingkat ${active} dari ${levels.length}`;
+            el('assessmentPageInfo').textContent = `Tingkat ${active} · ${position + 1}/${levels.length}`;
     }
 
     function changeAutoGrade(offset) {
