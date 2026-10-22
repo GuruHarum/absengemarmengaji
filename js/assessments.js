@@ -645,29 +645,70 @@ window.PeriodicAssessments = (() => {
         finally { if (button) { button.disabled = false; button.textContent = 'Export Excel'; } }
     }
 
+    function renderTeacherOptions() {
+        const select = el('assessmentTeacher');
+        const search = el('assessmentTeacherSearch')?.value.trim().toLocaleLowerCase('id') || '';
+        const eligible = state.eligibleTeachers || [];
+        const selectedId = String(state.selectedTeacherId || '');
+        const matches = eligible.filter(teacher =>
+            `${teacher.nama || ''} ${teacher.nama_lengkap || ''}`.toLocaleLowerCase('id').includes(search));
+        const selected = eligible.find(teacher => String(teacher.id) === selectedId);
+        const visible = selected && !matches.some(teacher => String(teacher.id) === selectedId)
+            ? [selected, ...matches] : matches;
+        select.replaceChildren(new Option('Pilih guru', ''), ...visible.map(teacher =>
+            new Option(teacher.nama_lengkap || teacher.nama, String(teacher.id))));
+        select.value = selectedId;
+        select.disabled = !AppAccess.full();
+        const label = select.closest('label');
+        if (label) label.hidden = !AppAccess.full();
+        if (el('assessmentTeacherSearch')) el('assessmentTeacherSearch').disabled = !AppAccess.full();
+        if (el('assessmentTeacherSearch')) el('assessmentTeacherSearch').hidden = !AppAccess.full();
+    }
+
     async function refreshSubjectTeachers() {
+        const sequence = ++state.teacherRequestId;
         const subject = el('assessmentSubject').value || 'tahsin';
-        const previous = el('assessmentTeacher').value;
+        const previous = el('assessmentTeacher').value || state.selectedTeacherId || '';
         const year = Number(el('assessmentYear').value);
-        const assignmentCacheKey = `${SESSION_CACHE.assignments}:${year}:${subject}`;
-        let assignmentRows = readSession(assignmentCacheKey, 5 * 60 * 1000);
-        if (!assignmentRows) {
-            assignmentRows = await fetchAllRows(() => supabase.from('teaching_assignments')
+        if (!Number.isInteger(year) || year < 2000 || year > 2200) return false;
+        const cacheKey = `${SESSION_CACHE.assignments}:${year}:${subject}`;
+        let rows = readSession(cacheKey, 5 * 60 * 1000);
+        if (!rows) {
+            rows = await fetchAllRows(() => supabase.from('teaching_assignments')
                 .select('teacher_id').eq('subject', subject).eq('active', true)
                 .eq('academic_year_start', year));
-            writeSession(assignmentCacheKey, assignmentRows);
+            writeSession(cacheKey, rows);
         }
-        const ids = new Set(assignmentRows.map(row => String(row.teacher_id)));
-        const eligible = state.teachers.filter(row => ids.has(String(row.id)) && (subject !== 'tahsin' || row.attendance_enabled !== false));
-        el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
-        eligible.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
-        const wanted = AppAccess.teacher?.() ? String(AppAccess.profile.teacher_id) : (previous || String(AppAccess.profile.teacher_id || ''));
-        if (eligible.some(row => String(row.id) === wanted)) el('assessmentTeacher').value = wanted;
-        else el('assessmentTeacher').value = '';
-        el('assessmentTeacher').disabled = !AppAccess.full();
-        const teacherLabel = el('assessmentTeacher').closest?.('label');
-        if (teacherLabel) teacherLabel.hidden = !AppAccess.full();
-        return Boolean(el('assessmentTeacher').value);
+        if (sequence !== state.teacherRequestId) return false;
+        const ids = new Set(rows.map(row => String(row.teacher_id)));
+        state.eligibleTeachers = state.teachers
+            .filter(teacher => ids.has(String(teacher.id)) &&
+                (subject !== 'tahsin' || teacher.attendance_enabled !== false))
+            .sort((x, y) => String(x.nama_lengkap || x.nama || '').localeCompare(String(y.nama_lengkap || y.nama || ''), 'id'));
+        const wanted = AppAccess.teacher() ? String(AppAccess.profile.teacher_id) :
+            (previous || String(AppAccess.profile.teacher_id || ''));
+        state.selectedTeacherId = state.eligibleTeachers.some(row => String(row.id) === wanted) ? wanted : '';
+        renderTeacherOptions();
+        markPendingFilter();
+        return Boolean(state.selectedTeacherId);
+    }
+
+    function markPendingFilter() {
+        if (!state.context) return;
+        const c = state.context;
+        const teacherId = AppAccess.full() ? el('assessmentTeacher').value : AppAccess.profile.teacher_id;
+        const changed = c.year !== Number(el('assessmentYear').value) ||
+            c.period !== el('assessmentPeriod').value ||
+            c.subject !== el('assessmentSubject').value ||
+            c.teacherId !== String(teacherId || '');
+        if (el('assessmentPendingFilter')) el('assessmentPendingFilter').hidden = !changed;
+        if (changed) {
+            persistDrafts();
+            el('assessmentWorkspace').hidden = true;
+            message('Filter berubah. Tekan Tampilkan Siswa untuk memuat periode dan guru yang baru. Draf lama tetap di perangkat sampai disimpan.');
+        } else {
+            el('assessmentWorkspace').hidden = false;
+        }
     }
 
     async function applyStoredFilter(filter, { loadData = true } = {}) {
