@@ -111,20 +111,113 @@ window.GMUpgrade = (()=>{
     XLSX.writeFile(wb,`Target Tahsin Tahfidz - ${({pts_ganjil:'PTS Ganjil',pas_ganjil:'PAS Ganjil',pts_genap:'PTS Genap',pas_genap:'PAS Genap'}[period]||period)} - ${y}-${y+1}.xlsx`);$('gmReportStatus').textContent=`Selesai. ${rows.length} siswa diproses.`;
    }catch(e){$('gmReportStatus').textContent=e.message}finally{btn.disabled=false}}
  async function backup(){await ensureXLSX();const btn=$('gmBackupBtn');btn.disabled=true;$('gmBackupStatus').textContent='Menyiapkan backup...';try{const wb=XLSX.utils.book_new();const [students,teachers,groups,members,attendance,assessments]=await Promise.all([getStudents(),getTeachers(),fetchAllRows(()=>supabase.from('teaching_assignments').select('*').order('academic_year_start')),fetchAllRows(()=>supabase.from('assessment_group_members').select('*')),fetchAllRows(()=>supabase.from('attendance').select('*').order('date')),fetchAllRows(()=>supabase.from('subject_assessments').select('*'))]);for(let grade=1;grade<=6;grade++){const data=students.filter(s=>String(s.kelas||'').match(new RegExp(`(^|\\D)${grade}(\\D|$)`)));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),`KELAS ${grade}`)}[['GURU',teachers],['KELOMPOK',groups],['ANGGOTA KELOMPOK',members],['ABSENSI',attendance],['NILAI',assessments]].forEach(([n,d])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(d),n.slice(0,31)));XLSX.writeFile(wb,`Backup Gemar Mengaji - ${new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'})}.xlsx`);$('gmBackupStatus').textContent='Backup selesai.'}catch(e){$('gmBackupStatus').textContent=e.message}finally{btn.disabled=false}}
+ // Arsip tidak dibuat ulang dari nilai sekarang: hanya snapshot saat penerbitan yang boleh diunduh.
+ let archiveRequest = 0;
  async function archive(){
-  const host=$('page-arsip'); if(!host||!AppAccess.full())return;
-  host.innerHTML=`<section class="gm-panel-card">${window.GMUX?.skeletonTable ? window.GMUX.skeletonTable(5,4) : 'Memuat arsip rapor...'}</section>`;
+  const host=$('page-arsip');
+  if(!host || AppAccess.profile?.role!=='koordinator') return;
+  const request=++archiveRequest;
+  host.innerHTML='<section class="gm-panel-card"><h2>Arsip Rapor</h2><p role="status">Memuat arsip penerbitan…</p></section>';
   try{
-    const [current,history]=await Promise.all([
-      fetchAllRows(()=>supabase.from('student_reports').select('student_id,academic_year_start,period,status,snapshot,approved_at').not('snapshot','is',null).order('academic_year_start',{ascending:false})),
-      fetchAllRows(()=>supabase.from('student_report_history').select('id,previous_record,changed_at').order('changed_at',{ascending:false}))
-    ]);
-    const rows=[];
-    for(const r of current){const snap=r.snapshot||{};rows.push({name:snap.student?.name||r.student_id,kelas:snap.student?.class||'-',year:r.academic_year_start,period:r.period,teacher:snap.teachers?.tahsin||snap.tahsin?.teacher_name||'-',date:r.approved_at||''})}
-    for(const h of history){const r=h.previous_record||{},snap=r.snapshot||{};if(!snap.student)continue;rows.push({name:snap.student?.name||r.student_id,kelas:snap.student?.class||'-',year:Number(r.academic_year_start||0),period:r.period||'-',teacher:snap.teachers?.tahsin||snap.tahsin?.teacher_name||'-',date:h.changed_at||''})}
-    rows.sort((a,b)=>b.year-a.year||a.name.localeCompare(b.name,'id'));
-    host.innerHTML=`<section class="gm-panel-card"><div class="section-heading"><div><h2>Arsip Rapor</h2></div><strong>${rows.length} arsip</strong></div><div style="overflow:auto"><table class="gm-compact-table"><thead><tr><th>Siswa</th><th>Kelas</th><th>Tahun Ajaran</th><th>Periode</th><th>Guru Tahsin</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.kelas)}</td><td>${r.year?`${r.year}/${r.year+1}`:'-'}</td><td>${escapeHtml(r.period)}</td><td>${escapeHtml(r.teacher)}</td></tr>`).join('')||'<tr class="gm-table-empty-row"><td colspan="5"><strong>Belum ada arsip rapor</strong><span>Arsip akan muncul setelah rapor difinalkan.</span></td></tr>'}</tbody></table></div></section>`;
-  }catch(e){host.innerHTML=`<section class="gm-panel-card">Arsip belum dapat dimuat: ${escapeHtml(e.message)}</section>`}
+   const [saved,old]=await Promise.all([
+    fetchAllRows(()=>supabase.from('report_issuance_archives')
+      .select('id,student_id,student_name,class_name,academic_year_start,period,issued_at')
+      .order('id',{ascending:false})),
+    fetchAllRows(()=>supabase.from('student_reports')
+      .select('student_id,academic_year_start,period,issued_at')
+      .not('issued_at','is',null).order('issued_at',{ascending:false}))
+   ]);
+   if(request!==archiveRequest)return;
+   const existing=new Set(saved.map(r=>[r.student_id,r.academic_year_start,r.period].join('|')));
+   const records=[
+    ...saved.map(r=>({...r,legacy:false,name:r.student_name||'-',kelas:r.class_name||'-',year:Number(r.academic_year_start||0)})),
+    ...old.filter(r=>!existing.has([r.student_id,r.academic_year_start,r.period].join('|')))
+      .map(r=>({...r,legacy:true,name:'Penerbitan lama · '+r.student_id,kelas:'-',year:Number(r.academic_year_start||0)}))
+   ].sort((a,b)=>String(b.issued_at||'').localeCompare(String(a.issued_at||''))||String(a.name).localeCompare(String(b.name),'id'));
+   const periods={pts_ganjil:'PTS Semester 1',pas_ganjil:'PAS Semester 1',pts_genap:'PTS Semester 2',pas_genap:'PAS Semester 2'};
+   const years=[...new Set(records.map(r=>r.year).filter(Boolean))].sort((a,b)=>b-a);
+   const clean=value=>escapeHtml(String(value??''));
+   const filters=(id,label,values)=>'<label class="gm-archive-filter"><span>'+label+'</span><select id="'+id+'"><option value="">Semua</option>'+values.map(v=>'<option value="'+clean(v[0])+'">'+clean(v[1])+'</option>').join('')+'</select></label>';
+   host.innerHTML='<section class="gm-panel-card gm-archive-panel">'
+    +'<div class="section-heading gm-archive-heading"><div><h2>Arsip Rapor</h2><p>Unduh ulang salinan data yang dicatat saat penerbitan, dalam Word atau Excel.</p></div>'
+    +'<strong class="gm-archive-total">'+saved.length+' arsip tersimpan</strong></div>'
+    +'<div class="gm-archive-filters"><label class="gm-archive-filter"><span>Cari siswa</span><input id="gmArchiveSearch" type="search" placeholder="Nama atau ID siswa" autocomplete="off"></label>'
+    +filters('gmArchiveYear','Tahun ajaran',years.map(y=>[String(y),y+'/'+(y+1)]))
+    +filters('gmArchivePeriod','Periode',Object.entries(periods))
+    +filters('gmArchiveGrade','Tingkat',[1,2,3,4,5,6].map(i=>[String(i),'Kelas '+i]))
+    +'</div><p id="gmArchiveStatus" class="gm-archive-status" role="status" aria-live="polite"></p>'
+    +'<div id="gmArchiveEntries" class="gm-archive-entries"></div>'
+    +'<div class="gm-archive-pagination"><button type="button" class="secondary-action" id="gmArchivePrev" disabled>Sebelumnya</button>'
+    +'<span id="gmArchivePageInfo"></span><button type="button" class="secondary-action" id="gmArchiveNext">Berikutnya</button></div>'
+    +'<p class="gm-archive-help">Catatan penerbitan lama tanpa salinan tidak dapat diunduh persis seperti dokumen asal. '
+    +'Untuk membuat arsip baru dari nilai yang sekarang, gunakan menu Rapor lalu unduh Word atau Excel.</p></section>';
+   let page=0;const perPage=24;
+   function render(){
+    const search=$('gmArchiveSearch').value.trim().toLocaleLowerCase('id'),year=$('gmArchiveYear').value,
+      period=$('gmArchivePeriod').value,grade=$('gmArchiveGrade').value;
+    const matched=records.filter(r=>(!search||(r.name+' '+r.student_id).toLocaleLowerCase('id').includes(search))&&
+      (!year||r.year===Number(year))&&(!period||r.period===period)&&
+      (!grade||r.kelas.match(/^\s*(\d+)/)?.[1]===grade));
+    const pages=Math.max(1,Math.ceil(matched.length/perPage));page=Math.max(0,Math.min(page,pages-1));
+    const chunk=matched.slice(page*perPage,(page+1)*perPage);
+    $('gmArchiveEntries').innerHTML=chunk.map(r=>{
+     const date=r.issued_at?new Date(r.issued_at).toLocaleDateString('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'short',year:'numeric'}):'-';
+     const caption=(r.year?r.year+'/'+(r.year+1):'-')+' · '+(periods[r.period]||r.period)+' · '+(r.legacy?'Riwayat lama':'Tersimpan '+date);
+     const buttons=r.legacy
+      ?'<span class="gm-archive-legacy">Salinan asli belum tersedia</span>'
+      :'<button type="button" class="secondary-action" data-archive-id="'+Number(r.id)+'" data-archive-format="word">Unduh Word</button>'
+        +'<button type="button" class="secondary-action" data-archive-id="'+Number(r.id)+'" data-archive-format="excel">Unduh Excel</button>';
+     return '<article class="gm-archive-item"><div class="gm-archive-info"><strong>'+clean(r.name)+'</strong>'
+      +'<span>'+clean(r.kelas)+(r.legacy?'': ' · '+clean(r.student_id))+'</span>'
+      +'<small>'+clean(caption)+'</small></div><div class="gm-archive-actions">'+buttons+'</div></article>';
+    }).join('')||'<p class="gm-archive-empty">Tidak ada arsip sesuai filter.</p>';
+    $('gmArchiveStatus').textContent=matched.length+' catatan · '+matched.filter(r=>!r.legacy).length+' dapat diunduh'
+      +(matched.some(r=>r.legacy)?' · '+matched.filter(r=>r.legacy).length+' riwayat lama tanpa salinan':'');
+    $('gmArchivePageInfo').textContent='Halaman '+(page+1)+' dari '+pages;
+    $('gmArchivePrev').disabled=page===0;
+    $('gmArchiveNext').disabled=page>=pages-1;
+   }
+   for(const id of ['gmArchiveSearch','gmArchiveYear','gmArchivePeriod','gmArchiveGrade']){
+    $(id).addEventListener(id==='gmArchiveSearch'?'input':'change',()=>{page=0;render()});
+   }
+   $('gmArchivePrev').addEventListener('click',()=>{if(page){page--;render()}});
+   $('gmArchiveNext').addEventListener('click',()=>{page++;render()});
+   let downloading=false;
+   $('gmArchiveEntries').addEventListener('click',async event=>{
+    const button=event.target.closest?.('[data-archive-id]');
+    if(!button||downloading)return;
+    const id=Number(button.dataset.archiveId),format=button.dataset.archiveFormat;
+    if(!Number.isSafeInteger(id)||id<1||!['word','excel'].includes(format))return;
+    downloading=true;
+    const controls=[...host.querySelectorAll('[data-archive-id]')];
+    controls.forEach(b=>b.disabled=true);
+    $('gmArchiveStatus').textContent='Menyiapkan unduhan arsip '+(format==='word'?'Word':'Excel')+'…';
+    try{
+     const result=await supabase.from('report_issuance_archives')
+      .select('snapshot,student_name,academic_year_start,period').eq('id',id).single();
+     if(result.error)throw result.error;
+     const snap=result.data?.snapshot;
+     if(!snap?.student?.id||!snap?.period||!snap?.year)throw Error('Snapshot arsip tidak lengkap. Unduhan dibatalkan.');
+     if(!window.ReportZip?.build)throw Error('Modul Word/Excel belum tersedia. Buka ulang halaman.');
+     const filename='Arsip Rapor - '+ReportZip.safe(snap.student.name)+' - '+snap.year+'-'+(snap.year+1)
+       +' - '+String(snap.period).toUpperCase();
+     const blob=await ReportZip.build([snap],{fileName:filename+(format==='word'?'.docx':'.xlsx'),format});
+     const url=URL.createObjectURL(blob);
+     const link=document.createElement('a');
+     link.href=url;link.download=filename+' - '+(format==='word'?'Word':'Excel')+'.zip';
+     link.hidden=true;document.body.appendChild(link);link.click();link.remove();
+     setTimeout(()=>URL.revokeObjectURL(url),120000);
+     $('gmArchiveStatus').textContent='Unduhan arsip '+(format==='word'?'Word':'Excel')+' berhasil disiapkan.';
+    }catch(error){
+     $('gmArchiveStatus').textContent='Gagal menyiapkan arsip: '+(error.message||'Kesalahan tidak diketahui');
+    }finally{
+     downloading=false;controls.forEach(b=>b.disabled=false);
+    }
+   });
+   render();
+  }catch(error){
+   if(request===archiveRequest)host.innerHTML='<section class="gm-panel-card"><h2>Arsip Rapor</h2><p role="alert">Arsip belum dapat dimuat: '+escapeHtml(error.message)+'</p></section>';
+  }
  }
  function init(){
   if ($('gmReportYear') && !$('gmReportYear').value) $('gmReportYear').value=yearNow();
