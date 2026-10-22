@@ -919,6 +919,11 @@ async function openTeacherEnrollmentModal() {
     if (feedback) feedback.textContent = '';
     const form = document.getElementById('enrollmentForm');
     if (form) form.reset();
+    const selectedTeacher = document.getElementById('enrollmentTeacher');
+    if (selectedTeacher) {
+        selectedTeacher.value = '';
+        selectedTeacher.dispatchEvent(new Event('change'));
+    }
     if (attendance) attendance.value = currentTeacherGroup === 'tahfidz' ? 'false' : 'true';
     enrollment.hidden = false;
     overlay.hidden = false;
