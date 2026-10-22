@@ -813,3 +813,8 @@ body.admin-page #page-penilaian .gm-assessment-export-dialog-actions button {
     grid-template-columns:1fr!important;
   }
 }
+
+body.admin-page #page-penilaian #assessmentCards .assessment-values-heading[hidden],
+body.admin-page #page-penilaian #assessmentCards .assessment-score-grid[hidden] {
+  display:none!important;
+}
