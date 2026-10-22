@@ -15,6 +15,7 @@ const PRECACHE = [
   '/css/ux-stage5.css',
   '/css/pwa.css',
   '/css/page-refinements.css',
+  '/css/gm-assessment-refinement.css',
   '/js/page-refinements.js',
   '/css/site-footer.css',
   '/css/visual-stage8.css',
