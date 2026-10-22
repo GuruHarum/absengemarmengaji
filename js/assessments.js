@@ -233,7 +233,7 @@ window.PeriodicAssessments = (() => {
         state.busy = busy;
         if (el('assessmentContextFields')) el('assessmentContextFields').disabled = busy;
         el('assessmentCards')?.querySelectorAll('input, select, button').forEach(control => { control.disabled = busy || control.closest('form')?.dataset.reviewLocked === 'true'; });
-        ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
+        ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportConfirm', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
         if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan...' : 'Simpan Semua';
         pagination();
     }
@@ -819,7 +819,7 @@ window.PeriodicAssessments = (() => {
             XLSX.writeFile(workbook, fileName);
             message(`Excel berhasil dibuat untuk ${list.length} siswa. ${includeDrafts ? 'Draf perangkat ditandai dan dibedakan dari database.' : 'Nilai yang diekspor berasal dari database; draf tidak disertakan.'}`);
         } catch (error) { message(`Export Excel gagal: ${error.message}`, true); }
-        finally { if (button) { button.disabled = false; button.textContent = 'Export Excel'; } }
+        finally { if (button) { button.disabled = false; button.textContent = 'Ekspor Excel'; } }
     }
 
     function renderTeacherOptions() {
@@ -1099,7 +1099,25 @@ window.PeriodicAssessments = (() => {
             }
             await applyStoredFilter(favorite, { loadData: true });
         });
-        el('assessmentExport')?.addEventListener('click', exportExcel);
+        const exportDialog = el('assessmentExportMenu'), exportButton = el('assessmentExport');
+        exportButton?.addEventListener('click', () => {
+            if (!state.context || !state.students.length) {
+                message('Tampilkan data penilaian sebelum ekspor.', true);
+                return;
+            }
+            if (!exportDialog || exportDialog.open) return;
+            exportDialog.showModal();
+            exportButton.setAttribute('aria-expanded', 'true');
+        });
+        exportDialog?.addEventListener('close', () => exportButton?.setAttribute('aria-expanded', 'false'));
+        el('assessmentExportCancel')?.addEventListener('click', () => exportDialog?.close());
+        el('assessmentExportConfirm')?.addEventListener('click', () => {
+            exportDialog?.close();
+            void exportExcel();
+        });
+        exportDialog?.addEventListener('click', event => {
+            if (event.target === exportDialog) exportDialog.close();
+        });
         el('assessmentPasteExcel')?.addEventListener('click', openPasteDialog);
         el('assessmentRuleHelp')?.addEventListener('click', () => {
             const pop = el('assessmentRuleHelpText'), btn = el('assessmentRuleHelp');
