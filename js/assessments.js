@@ -2,7 +2,7 @@ window.PeriodicAssessments = (() => {
     const state = {
         initialized: false, busy: false, context: null, teachers: [], students: [], saved: new Map(), drafts: new Map(), page: 1,
         problemOnly: false, teacherRequestId: 0, eligibleTeachers: [], lastFailedSave: [], lastSubject: 'tahsin', pendingWorkspaceFilter: null, draftTimer: null,
-        renderLimit: 12, lazyObserver: null, prefetchedMarkup: new Map()
+        renderLimit: 12, lazyObserver: null, prefetchedMarkup: new Map(), autoGrade: ''
     };
     const el = id => document.getElementById(id);
     const escape = value => escapeHtml(value);
@@ -238,9 +238,18 @@ window.PeriodicAssessments = (() => {
         pagination();
     }
 
-    // Tingkat kelas mencakup seluruh rombel guru, tidak hanya satu kelas bernama.
+    // Pada mode otomatis hanya satu tingkat ditampilkan; seluruh rombel guru
+    // pada tingkat itu tetap digabung. Pemilihan tingkat manual menonaktifkan navigasi.
+    const availableLevels = () => [...new Set(state.students.map(student => classLevel(student.kelas)).filter(Boolean))]
+        .sort((a, b) => Number(a) - Number(b));
+    const activeGrade = () => {
+        const selected = el('assessmentLevel')?.value || '';
+        if (selected) return selected;
+        const levels = availableLevels();
+        return levels.includes(state.autoGrade) ? state.autoGrade : (levels[0] || '');
+    };
     const gradeStudents = () => {
-        const grade = el('assessmentLevel')?.value || '';
+        const grade = activeGrade();
         return state.students.filter(student => !grade || classLevel(student.kelas) === grade);
     };
     const dirtyInGrade = () => gradeStudents().filter(isDirty);
@@ -266,10 +275,46 @@ window.PeriodicAssessments = (() => {
     }
     function pagination() {
         state.page = 1;
+        const levels = availableLevels(), active = activeGrade();
+        const position = levels.indexOf(active);
+        const manual = Boolean(el('assessmentLevel')?.value);
+        const searching = Boolean(el('assessmentSearch')?.value.trim());
+        const filtered = el('assessmentStatusFilter')?.value !== 'all';
         const rows = visible();
-        if (el('assessmentPrev')) { el('assessmentPrev').disabled = true; el('assessmentPrev').hidden = true; }
-        if (el('assessmentNext')) { el('assessmentNext').disabled = true; el('assessmentNext').hidden = true; }
-        if (el('assessmentPageInfo')) el('assessmentPageInfo').textContent = (el('assessmentLevel')?.value ? 'Tingkat ' + el('assessmentLevel').value : 'Semua tingkat') + ' · ' + rows.length + ' dari ' + gradeStudents().length + ' siswa';
+        const allLoaded = state.renderLimit >= rows.length;
+        const show = !manual && !searching && !filtered && levels.length > 1 && allLoaded && position >= 0;
+        const nav = el('assessmentLevelNav');
+        if (nav) nav.hidden = !show;
+        const prev = el('assessmentPrev'), next = el('assessmentNext');
+        if (prev) {
+            prev.hidden = !show || position <= 0;
+            prev.disabled = state.busy || position <= 0;
+            prev.textContent = position > 0 ? `← Tingkat ${levels[position - 1]}` : '← Sebelumnya';
+        }
+        if (next) {
+            next.hidden = !show || position >= levels.length - 1;
+            next.disabled = state.busy || position >= levels.length - 1;
+            next.textContent = position < levels.length - 1 ? `Tingkat ${levels[position + 1]} →` : 'Tingkat berikutnya →';
+        }
+        if (el('assessmentPageInfo'))
+            el('assessmentPageInfo').textContent = `Tingkat ${active} dari ${levels.length}`;
+    }
+
+    function changeAutoGrade(offset) {
+        if (state.busy || el('assessmentLevel')?.value ||
+            el('assessmentStatusFilter')?.value !== 'all' || el('assessmentSearch')?.value.trim()) return;
+        const levels = availableLevels(), position = levels.indexOf(activeGrade());
+        const next = position + offset;
+        if (position < 0 || next < 0 || next >= levels.length) return;
+        if (dirtyStudents().length && !persistDrafts()) {
+            message('Draf belum aman di perangkat. Simpan nilai sebelum berpindah tingkat.', true);
+            return;
+        }
+        state.autoGrade = levels[next];
+        state.page = 1;
+        render();
+        const workspace = el('assessmentWorkspace');
+        workspace?.scrollIntoView?.({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     }
     function prefetchNext(rows) {
         const start = state.renderLimit;
@@ -309,7 +354,7 @@ window.PeriodicAssessments = (() => {
         group.forEach(student => { count[statusOf(student)] += 1; });
         const completedPct = group.length ? Math.round(100 * count.saved / group.length) : 0;
         if (el('assessmentProgressText')) el('assessmentProgressText').textContent =
-            `${count.saved}/${group.length} tersimpan`;
+            `Tingkat ${activeGrade() || '-'} · ${count.saved}/${group.length} tersimpan`;
         if (el('assessmentProgressPct')) el('assessmentProgressPct').textContent = `${completedPct}%`;
         if (el('assessmentProgressFill')) el('assessmentProgressFill').style.width = completedPct + '%';
         if (el('assessmentProgressBar')) el('assessmentProgressBar').setAttribute('aria-valuenow', String(completedPct));
@@ -450,10 +495,11 @@ window.PeriodicAssessments = (() => {
             state.saved = new Map(saved.map(row => [String(row.student_id), { ...row, ...row.scores }]));
             state.drafts = new Map(students.map(student => [String(student.id), AssessmentData.draft(state.saved.get(String(student.id)))]));
             state.lastFailedSave = [];
+            state.autoGrade = availableLevels()[0] || '';
             if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = true;
             const restored = restoreDrafts();
             state.page = 1;
-            el('assessmentLevel').replaceChildren(new Option('Semua tingkat', ''));
+            el('assessmentLevel').replaceChildren(new Option('Otomatis per tingkat', ''));
             [...new Set(students.map(row => classLevel(row.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b)).forEach(level => el('assessmentLevel').add(new Option(`Kelas ${level}`, level)));
             const preferred = options.preferredFilter || state.pendingWorkspaceFilter || readStorage(STORAGE.last, {});
             const sameContext = preferred && Number(preferred.year) === context.year && preferred.period === context.period && preferred.subject === context.subject && String(preferred.teacherId || '') === String(context.teacherId);
@@ -1066,8 +1112,8 @@ window.PeriodicAssessments = (() => {
             el('assessmentStatusFilter').value = el('assessmentStatusFilter').value === 'problem' ? 'all' : 'problem';
             state.problemOnly = el('assessmentStatusFilter').value === 'problem'; state.page = 1; render();
         });
-        el('assessmentPrev').addEventListener('click', () => { state.page--; render(); });
-        el('assessmentNext').addEventListener('click', () => { state.page++; render(); });
+        el('assessmentPrev').addEventListener('click', () => changeAutoGrade(-1));
+        el('assessmentNext').addEventListener('click', () => changeAutoGrade(1));
         refreshFavoriteButtons();
     });
 
