@@ -514,7 +514,7 @@ window.PeriodicAssessments = (() => {
             node.hidden = false;
             node.innerHTML = `<strong>${savedCount} siswa berhasil disimpan.</strong><span>${problems} siswa masih perlu diperiksa · ${dirty} draf belum masuk database.</span>`;
         }
-        return `${savedCount} dari ${attemptedCount} siswa berhasil disimpan. ${problems ? `${problems} siswa masih perlu diperiksa.` : 'Semua siswa pada kelas ini sudah lengkap.'}`;
+        return `${savedCount} dari ${attemptedCount} siswa berhasil disimpan. ${problems ? `${problems} siswa masih perlu diperiksa.` : 'Semua siswa pada tingkat yang dipilih sudah lengkap.'}`;
     }
 
     async function save(students, options = {}) {
