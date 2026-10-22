@@ -303,12 +303,76 @@ window.LearningGroups = (() => {
     host.querySelector('[data-teacher-search]').disabled = AppAccess.teacher();
   }
 
+  function hasUnsavedChanges(subject) {
+    const state = views[subject];
+    if (!state) return false;
+    const original = state.edit ? membersOf(state, state.edit) : new Set();
+    return state.selected.size !== original.size ||
+      [...state.selected].some(studentId => !original.has(studentId));
+  }
+
+  async function confirmLeave(subject, reason = 'berpindah halaman') {
+    const state = views[subject];
+    if (state?.busy) {
+      AdminNotice.notify('Tunggu hingga proses pengelolaan kelompok selesai.', 'info');
+      return false;
+    }
+    if (!hasUnsavedChanges(subject)) return true;
+    return Boolean(await AdminNotice.confirm(
+      `Ada perubahan anggota ${titleOf(subject)} yang belum disimpan. Jika ${reason}, pilihan tersebut akan dibatalkan. Lanjutkan?`
+    ));
+  }
+
+  function discardDraft(subject) {
+    if (!views[subject]) return;
+    resetForm(subject);
+  }
+
+  async function changeTeacher(subject, control) {
+    const state = views[subject];
+    const nextTeacher = control.value;
+    const previous = String(state.viewTeacherId || '');
+    if (nextTeacher === previous) return;
+    // Pertahankan pilihan awal selama dialog konfirmasi masih terbuka.
+    control.value = previous;
+    if (!(await confirmLeave(subject, 'mengganti guru'))) return;
+    discardDraft(subject);
+    state.viewTeacherId = nextTeacher;
+    renderTeacherOptions(subject);
+    renderGroups(subject);
+    renderStudents(subject);
+    msg(subject, '');
+  }
+
+  async function changeAcademicYear(subject, control) {
+    const state = views[subject];
+    const text = control.value.trim();
+    const requested = Number(text);
+    const previous = state.year;
+    if (!text || !Number.isInteger(requested) || requested < 2000 || requested > 2200) {
+      msg(subject, 'Isi tahun awal ajaran yang valid (contoh: 2026).', true);
+      control.value = String(previous);
+      renderYearPreview(subject);
+      return;
+    }
+    if (requested === previous) return;
+    control.value = String(previous);
+    renderYearPreview(subject);
+    if (!(await confirmLeave(subject, 'mengganti tahun ajaran'))) return;
+    control.value = String(requested);
+    renderYearPreview(subject);
+    if (!(await open(subject, true))) {
+      control.value = String(previous);
+      renderYearPreview(subject);
+    }
+  }
+
   async function open(subject, refresh = false) {
     const host = shell(subject);
     const state = views[subject] ||= { teachers: [], students: [], groups: [], members: [], selected: new Set(), edit: null, busy: false, year: schoolYear(), autoTahsinLevels: [] };
-    if (state.busy) return;
+    if (state.busy) return false;
     const requestedYear = Number(host.querySelector('[data-year]').value || schoolYear());
-    if (state.groups.length && !refresh && requestedYear === state.year) return;
+    if (state.groups.length && !refresh && requestedYear === state.year) return true;
     busy(subject, true); msg(subject, '');
     if (window.GMUX) {
       host.querySelector('[data-groups]').innerHTML = window.GMUX.skeletonCards(3);
@@ -367,8 +431,10 @@ window.LearningGroups = (() => {
       renderGroups(subject);
       renderStudents(subject);
       msg(subject, '');
+      return true;
     } catch(error) {
       msg(subject, `Gagal memuat kelompok: ${error.message}`, true);
+      return false;
     } finally {
       busy(subject, false);
     }
@@ -750,5 +816,5 @@ window.LearningGroups = (() => {
     busy(subject,false); resetForm(subject); await open(subject,true);
   }
 
-  return { open };
+  return { open, hasUnsavedChanges, confirmLeave, discardDraft, isBusy: subject => Boolean(views[subject]?.busy) };
 })();
