@@ -262,8 +262,7 @@ window.PeriodicAssessments = (() => {
         if (el('assessmentContextFields')) el('assessmentContextFields').disabled = busy;
         el('assessmentCards')?.querySelectorAll('input, select, button').forEach(control => { control.disabled = busy || control.closest('form')?.dataset.reviewLocked === 'true'; });
         ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
-        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' :
-            (el('assessmentLevel')?.value ? 'Simpan semua perubahan tingkat ' + el('assessmentLevel').value : 'Simpan semua perubahan guru ini');
+        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan...' : 'Simpan Semua';
         pagination();
     }
 
@@ -338,19 +337,17 @@ window.PeriodicAssessments = (() => {
         group.forEach(student => { count[statusOf(student)] += 1; });
         const completedPct = group.length ? Math.round(100 * count.saved / group.length) : 0;
         if (el('assessmentProgressText')) el('assessmentProgressText').textContent =
-            `${count.saved} dari ${group.length} siswa tingkat ini tersimpan lengkap di database`;
+            `${count.saved}/${group.length} tersimpan`;
         if (el('assessmentProgressPct')) el('assessmentProgressPct').textContent = `${completedPct}%`;
         if (el('assessmentProgressFill')) el('assessmentProgressFill').style.width = completedPct + '%';
         if (el('assessmentProgressBar')) el('assessmentProgressBar').setAttribute('aria-valuenow', String(completedPct));
         for (const [key,id] of [['saved','assessmentSaved'],['draft','assessmentDirty'],['ungraded','assessmentUnrated'],['incomplete','assessmentIncomplete'],['review','assessmentProblems']])
             if (el(id)) el(id).textContent = count[key];
         if (el('assessmentTotal')) el('assessmentTotal').textContent = group.length;
-        if (!state.busy && el('assessmentSaveAll')) el('assessmentSaveAll').textContent =
-            el('assessmentLevel')?.value ? 'Simpan semua perubahan tingkat ' + el('assessmentLevel').value :
-                'Simpan semua perubahan guru ini';
+        if (!state.busy && el('assessmentSaveAll')) el('assessmentSaveAll').textContent = 'Simpan Semua';
         if (el('assessmentMobileStatus')) {
             const pending = count.draft + count.incomplete + count.review;
-            el('assessmentMobileStatus').textContent = count.draft ? count.draft + ' draf belum dikirim' :
+            el('assessmentMobileStatus').textContent = count.draft ? count.draft + ' draf' :
                 (pending ? pending + ' perlu dicek' : count.saved + '/' + group.length + ' tersimpan');
         }
         el('assessmentCards')?.querySelectorAll('[data-student-index]').forEach(card => {
@@ -387,7 +384,7 @@ window.PeriodicAssessments = (() => {
         const markup = `<form novalidate class="assessment-student" data-student-index="${index}"><header><div class="assessment-student-identity"><span class="assessment-card-order" aria-label="Nomor urut ${displayOrder}">${displayOrder}</span><div><p>${escape(classLabel(student.kelas))}</p><h3>${escape(student['nama siswa'])}</h3></div></div><span class="assessment-state"></span></header>
             <div class="assessment-subjects"><fieldset data-subject="tahsin" aria-label="Penilaian Tahsin"><div class="assessment-score-grid">${(window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']).map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div></fieldset>
             <fieldset data-subject="tahfidz" aria-label="Penilaian Tahfidz"><div class="assessment-score-grid">${['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'].map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div ${['REVIEW', 'TES'].includes(draft.tahfidz_progress_type) ? 'hidden' : ''}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div></fieldset></div>
-            <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Nilai lama: pengelola perlu memeriksa dan menyimpan untuk verifikasi pengampu.' : state.context.subject === 'tahsin' ? 'Nilai mengikuti capaian aktual siswa.' : 'Tahfidz'}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
+            <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Perlu verifikasi pengelola.' : ''}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
         const selectedMarkup = markup.replace(/<fieldset data-subject="(tahsin|tahfidz)"[^>]*>[\s\S]*?<\/fieldset>/g, (block, subject) => subject === state.context.subject ? block : '');
         return state.saved.get(String(student.id))?.needs_review && !AppAccess.full()
             ? selectedMarkup.replace('<form ', '<form data-review-locked="true" ').replace('<fieldset ', '<fieldset disabled ').replace('type="submit"', 'type="submit" disabled')
@@ -502,7 +499,7 @@ window.PeriodicAssessments = (() => {
             if (el('assessmentSaveSummary')) el('assessmentSaveSummary').hidden = true;
             render();
             rememberLastFilter();
-            message(students.length ? `${restored ? `${restored} draf sementara dipulihkan. ` : ''}Nilai siap diisi. Data kosong tidak dihitung sebagai nilai nol.` : 'Belum ada anggota kelompok aktif untuk guru dan pelajaran ini.');
+            message(students.length ? '' : 'Belum ada siswa pada pilihan ini.');
             return true;
         } catch (error) {
             console.error(error);
@@ -867,7 +864,7 @@ window.PeriodicAssessments = (() => {
         if (changed) {
             persistDrafts();
             el('assessmentWorkspace').hidden = true;
-            message('Filter berubah. Tekan Tampilkan Siswa untuk memuat periode dan guru yang baru. Draf lama tetap di perangkat sampai disimpan.');
+            message('');
         } else {
             el('assessmentWorkspace').hidden = false;
         }
@@ -904,7 +901,7 @@ window.PeriodicAssessments = (() => {
             return;
         }
         state.busy = true;
-        message('Memuat daftar guru...');
+        message('');
         try {
             await AppAccess.ready;
             if (window.ReportCore) await loadReportReferenceCached();
@@ -923,11 +920,11 @@ window.PeriodicAssessments = (() => {
                 state.selectedTeacherId = String(last.teacherId); renderTeacherOptions();
             }
             state.pendingWorkspaceFilter = last;
-            el('assessmentScopeNote').textContent = AppAccess.full() ? 'Daftar siswa mengikuti anggota kelompok pelajaran yang aktif. Filter terakhir disimpan di perangkat.' : 'Hanya siswa dari kelompok pelajaran Anda. Filter terakhir disimpan di perangkat.';
+            if (el('assessmentScopeNote')) el('assessmentScopeNote').textContent = '';
             state.initialized = true;
             refreshFavoriteButtons();
             draftStatus('Autosave draf sementara aktif di perangkat ini.', 'clean');
-            message('Pilih pelajaran, guru, dan periode untuk memuat kelas.');
+            message('');
         } catch (error) { message(error.message, true); }
         finally { state.busy = false; }
     }
@@ -960,7 +957,7 @@ window.PeriodicAssessments = (() => {
     function yearLabel() {
         const year = Number(el('assessmentYear').value);
         el('assessmentYearLabel').textContent = Number.isInteger(year) && year >= 2000 && year <= 2200
-            ? `Tahun ajaran ${year}/${year + 1}` : 'Masukkan tahun awal ajaran yang valid.';
+            ? `${year}/${year + 1}` : 'Tahun tidak valid';
     }
 
     async function confirmLeave() {
