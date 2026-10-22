@@ -300,8 +300,8 @@ window.AccountProfile = (() => {
             event.preventDefault();
             return submit(event.target, async () => {
                 const password = el('profilePassword').value;
-                if (password.length < 10 || password.length > 128)
-                    throw new Error('Password harus 10 sampai 128 karakter.');
+                if (!password)
+                    throw new Error('Password tidak boleh kosong.');
                 if (password !== el('profileConfirm').value)
                     throw new Error('Konfirmasi password tidak sama.');
                 const nonce = el('profileNonce').value.trim();
