@@ -57,8 +57,11 @@ window.PeriodicAssessments = (() => {
                             if (!AppAccess?.teacher?.() ||
                                 String(bucket?.context?.teacherId || '') === String(profile?.teacher_id || '')) selected[name] = bucket;
                         }
-                        if (Object.keys(selected).length && writeStorage(key, selected)) {
-                            localStorage.removeItem(previousKey);
+                        if (Object.keys(selected).length) {
+                            if (writeStorage(key, selected)) localStorage.removeItem(previousKey);
+                            else state.draftMigrationFailed = true;
+                            // Meski browser penuh, draf lama tetap dapat dipulihkan
+                            // dari kunci lamanya; jangan menghapus sumber sebelum sukses.
                             return selected;
                         }
                     }
@@ -232,7 +235,10 @@ window.PeriodicAssessments = (() => {
             state.drafts.set(id, AssessmentData.draft(savedDraft.draft));
             restored++;
         }
-        if (restored || skipped) draftStatus(`${restored} draf sementara dipulihkan dari perangkat.${skipped ? ` ${skipped} draf dilewati karena data database sudah berubah (tidak ditimpa).` : ''}`, skipped ? 'error' : 'restored');
+        if (restored || skipped || state.draftMigrationFailed) draftStatus(
+            `${restored} draf dipulihkan dari perangkat.${skipped ? ` ${skipped} draf dilewati karena data database sudah berubah.` : ''}${state.draftMigrationFailed ? ' Draf lama belum dapat dipindahkan karena penyimpanan browser penuh. Simpan nilai ke database agar aman.' : ''}`,
+            (skipped || state.draftMigrationFailed) ? 'error' : 'restored');
+        state.draftMigrationFailed = false;
         return restored;
     }
 
