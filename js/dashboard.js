@@ -981,6 +981,8 @@ function renderManageTable() {
     document.getElementById('manageDirectoryTable').hidden = importTab;
     document.getElementById('manageDirectoryPagination').hidden = importTab;
     document.getElementById('manageImportView').hidden = !importTab;
+    const mobileCards = document.getElementById('manageMobileCards');
+    if (mobileCards) mobileCards.hidden = importTab;
     document.getElementById('tab-impor').hidden = !AppAccess.full();
     document.getElementById('manageAddBtn').hidden = importTab || (AppAccess.teacher() && currentManageTab === 'guru');
     document.getElementById('manageIdentifierActions').hidden = !(AppAccess.full() && currentManageTab === 'siswa');
@@ -1039,6 +1041,51 @@ function renderManageTable() {
             }
             return `${classGroup}<tr class="hover:bg-slate-50"><td class="px-6 py-3 text-slate-500">${startNumber + offset + 1}</td><td class="px-6 py-3 font-semibold">${manageEscape(getManageTitle(item))}</td><td class="px-6 py-3">${manageEscape(gmTahsinGroupTeacher(item))}</td><td class="px-6 py-3">${manageEscape(item.kelas || '-')}</td>${actions}</tr>`;
         }).join('');
+    }
+    // Daftar mobile terpisah dari tabel desktop agar nama, label dan aksi tidak bertabrakan.
+    // Data, filter, urutan, pagination dan izin edit/hapus tetap sama.
+    if (mobileCards) {
+        if (!pageRows.length) {
+            mobileCards.innerHTML = '<div class="gm-directory-empty" role="status">Data tidak ditemukan.</div>';
+        } else {
+            const start = (managePage - 1) * manageRowsPerPage;
+            mobileCards.innerHTML = pageRows.map((item, offset) => {
+                const id = manageEscape(item.id);
+                const title = manageEscape(getManageTitle(item));
+                const number = start + offset + 1;
+                const isTeacher = currentManageTab === 'guru';
+                const canEdit = !(AppAccess.teacher() && isTeacher && (currentTeacherGroup !== 'tahsin' || String(AppAccess.profile.teacher_id) !== String(item.id)));
+                const edit = canEdit ? `<button type="button" class="gm-directory-action gm-directory-action--edit" onclick="openManageModal('${id}')">Edit</button>` : '';
+                const remove = isTeacher && !AppAccess.teacher()
+                    ? `<button type="button" class="gm-directory-action gm-directory-action--remove" onclick="deleteData('${id}')">Hapus</button>`
+                    : !isTeacher && AppAccess.profile.role === 'koordinator'
+                        ? `<button type="button" class="gm-directory-action gm-directory-action--remove" onclick="deleteStudentVerified('${id}')">Hapus</button>`
+                        : '';
+                const actions = edit || remove ? `<div class="gm-directory-card-actions">${edit}${remove}</div>` : '';
+                if (isTeacher) {
+                    const fullName = String(item.nama_lengkap || '').trim();
+                    const subtitle = fullName && fullName !== getManageTitle(item)
+                        ? `<div class="gm-directory-card-subtitle">${manageEscape(fullName)}</div>` : '';
+                    const photo = currentTeacherGroup === 'tahsin' && item.foto
+                        ? `<img class="gm-directory-photo" src="${manageEscape(item.foto)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.style.display='none'">`
+                        : '';
+                    return `<article class="gm-directory-card" aria-label="Guru ${title}">
+                        <div class="gm-directory-card-top"><span class="gm-directory-number">#${number}</span><span class="gm-directory-kind">${currentTeacherGroup === 'tahfidz' ? 'Tahfidz' : 'Tahsin'}</span></div>
+                        <div class="gm-directory-person">${photo}<div class="gm-directory-person-name"><h3>${title}</h3>${subtitle}</div></div>
+                        ${actions}
+                    </article>`;
+                }
+                return `<article class="gm-directory-card" aria-label="Siswa ${title}">
+                    <div class="gm-directory-card-top"><span class="gm-directory-number">#${number}</span></div>
+                    <h3 class="gm-directory-student-name">${title}</h3>
+                    <dl class="gm-directory-details">
+                        <div><dt>Kelas</dt><dd>${manageEscape(item.kelas || '-')}</dd></div>
+                        <div><dt>Tahsin</dt><dd>${manageEscape(gmTahsinGroupTeacher(item))}</dd></div>
+                    </dl>
+                    ${actions}
+                </article>`;
+            }).join('');
+        }
     }
     document.getElementById('manageRecordInfo').textContent = `${rows.length} data`;
     document.getElementById('managePageInfo').textContent = `Halaman ${managePage} / ${totalPages}`;
