@@ -1180,6 +1180,27 @@ async function handleFormSubmit(event) {
                 throw error;
             saved = data;
         }
+        else if (teacherTab && AppAccess.full()) {
+            const slug = value => String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
+            const local = slug(payload.nama);
+            if (!local) throw new Error('Nama guru tidak dapat dijadikan email akun.');
+            const { data, error } = await supabase.functions.invoke('create-teacher-account', {
+                body: {
+                    email: local + '@harum.com',
+                    name: payload.nama,
+                    full_name: payload.nama_lengkap || payload.nama,
+                    attendance_enabled: payload.attendance_enabled
+                }
+            });
+            if (error) {
+                let detail;
+                try { detail = await error.context?.json(); } catch (_) {}
+                throw new Error(detail?.error || error.message || 'Akun guru belum berhasil dibuat.');
+            }
+            if (!data?.ok) throw new Error(data?.error || 'Pembuatan akun guru belum terkonfirmasi.');
+            saved = { ...payload, email: data.email || local + '@harum.com' };
+            AdminNotice.notify('Akun guru dibuat: ' + saved.email + '. Password awal: 1-0.', 'success');
+        }
         else if (!teacherTab && AppAccess.full()) {
             const { data, error } = await supabase.rpc('gm_create_student_master', {
                 p_student_name: payload['nama siswa'],
@@ -1212,7 +1233,7 @@ async function handleFormSubmit(event) {
         closeManageModal();
         renderManageTable();
         if (identifierAuditLoaded && AppAccess.full() && !teacherTab) await checkMissingStudentIdentifiers();
-        AdminNotice.notify('Data berhasil disimpan.', 'success');
+        if (!(teacherTab && !id && AppAccess.full())) AdminNotice.notify('Data berhasil disimpan.', 'success');
     }
     catch (error) {
         AdminNotice.notify('Gagal menyimpan: ' + error.message, 'error');
@@ -1782,6 +1803,10 @@ async function showInfographic() {
 }
 function switchPage(pageId) {
     const target = ['laporan', 'infografik', 'analitik'].includes(pageId) ? 'presentasi' : pageId;
+    if (AppAccess.profile?.temporaryPassword && target !== 'profil') {
+        AdminNotice.notify('Silakan ganti password awal melalui Profil sebelum melanjutkan.', 'error');
+        return;
+    }
     if (!AppAccess.canPage(target)) return;
     return window.GMPanel ? GMPanel.navigate(target, () => switchPageReady(pageId)) : switchPageReady(pageId);
 }
