@@ -256,7 +256,8 @@ window.PeriodicAssessments = (() => {
         if (el('assessmentContextFields')) el('assessmentContextFields').disabled = busy;
         el('assessmentCards')?.querySelectorAll('input, select, button').forEach(control => { control.disabled = busy || control.closest('form')?.dataset.reviewLocked === 'true'; });
         ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
-        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' : 'Simpan semua perubahan tingkat ini';
+        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' :
+            (el('assessmentLevel')?.value ? 'Simpan semua perubahan tingkat ' + el('assessmentLevel').value : 'Simpan semua perubahan guru ini');
         pagination();
     }
 
@@ -338,6 +339,9 @@ window.PeriodicAssessments = (() => {
         for (const [key,id] of [['saved','assessmentSaved'],['draft','assessmentDirty'],['ungraded','assessmentUnrated'],['incomplete','assessmentIncomplete'],['review','assessmentProblems']])
             if (el(id)) el(id).textContent = count[key];
         if (el('assessmentTotal')) el('assessmentTotal').textContent = group.length;
+        if (!state.busy && el('assessmentSaveAll')) el('assessmentSaveAll').textContent =
+            el('assessmentLevel')?.value ? 'Simpan semua perubahan tingkat ' + el('assessmentLevel').value :
+                'Simpan semua perubahan guru ini';
         if (el('assessmentMobileStatus')) {
             const pending = count.draft + count.incomplete + count.review;
             el('assessmentMobileStatus').textContent = count.draft ? count.draft + ' draf belum dikirim' :
@@ -756,9 +760,12 @@ window.PeriodicAssessments = (() => {
                     'ID Siswa': String(student.id),
                     'Nama Siswa': student['nama siswa'],
                     Kelas: classLabel(student.kelas),
-                    Status: labels[status],
+                    Status: status === 'draft' && !includeDrafts ?
+                        'Draf belum dikirim (tidak ikut ekspor)' : labels[status],
                     'Sumber Nilai': localDraft ? 'Draf perangkat (BELUM MASUK DATABASE)' :
-                        (saved ? 'Database' : 'Belum ada nilai')
+                        (status === 'draft' ? (saved ? 'Database (versi sebelum perubahan draf)' :
+                            'Belum ada nilai database; draf tidak disertakan') :
+                            (saved ? 'Database' : 'Belum ada nilai'))
                 };
                 const excelValue = value => hasValues && value !== '' && value != null ? value : '';
                 if (subject === 'tahsin') Object.assign(base, {
