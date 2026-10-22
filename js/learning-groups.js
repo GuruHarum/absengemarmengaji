@@ -281,11 +281,29 @@ window.LearningGroups = (() => {
       const year = requestedYear;
       if (!Number.isInteger(year) || year < 2000 || year > 2200) throw new Error('Tahun ajaran tidak valid.');
       const previousTeacher = selectedTeacher(subject);
-      const [teachers, students, groups, members] = await Promise.all([
-        getTeachers(), getStudents(),
+      const [teachers, managerStudents, groups, members] = await Promise.all([
+        getTeachers(), AppAccess.teacher() ? Promise.resolve(null) : getStudents(),
         fetchAllRows(() => supabase.from('teaching_assignments').select('id,teacher_id,subject,class_name,academic_year_start,active').eq('subject', subject).eq('academic_year_start', year).order('class_name')),
         fetchAllRows(() => supabase.from('assessment_group_members').select('assignment_id,student_id,subject,academic_year_start,active').eq('subject', subject).eq('academic_year_start', year))
       ]);
+      // Guru melihat anggota kelompok yang benar, bukan hanya siswa yang
+      // kolom "nama guru" lamanya cocok. Kebijakan RLS tetap berlaku.
+      let students = managerStudents;
+      if (AppAccess.teacher()) {
+        const activeGroups = new Set(groups.filter(group => group.active).map(group => String(group.id)));
+        const studentIds = [...new Set(members
+          .filter(member => member.active && activeGroups.has(String(member.assignment_id)))
+          .map(member => Number(member.student_id))
+          .filter(Number.isSafeInteger))];
+        students = [];
+        for (let offset = 0; offset < studentIds.length; offset += 200) {
+          const batch = studentIds.slice(offset, offset + 200);
+          const rows = await fetchAllRows(() => supabase.from('students').select('*').in('id', batch).order('kelas').order('nama siswa'), 200);
+          students.push(...rows);
+        }
+        students.sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }) ||
+          String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
+      }
       Object.assign(state, { teachers, students, groups, members, year, autoTahsinLevels: [] });
       state.edit = null; state.selected.clear();
 
