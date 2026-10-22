@@ -1,0 +1,194 @@
+/* Penilaian Periodik: alur satu tingkat (gabungan seluruh rombel), 22 Oktober 2026. */
+body.admin-page #page-penilaian .assessment-summary {
+  grid-template-columns:minmax(215px,1.6fr) repeat(6,minmax(98px,1fr));
+  gap:0;
+}
+body.admin-page #page-penilaian .assessment-summary > div {
+  min-width:0;
+  padding:14px 13px;
+}
+body.admin-page #page-penilaian .assessment-summary > div:not(:first-child) {
+  border-left:1px solid var(--gm-border,#dce5dc);
+}
+body.admin-page #page-penilaian .assessment-summary span {
+  font-size:10px;
+  letter-spacing:.03em;
+  line-height:1.4;
+}
+body.admin-page #page-penilaian .assessment-summary strong {
+  font-size:clamp(18px,2vw,24px);
+}
+body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+body.admin-page #page-penilaian .assessment-context-grid {
+  grid-template-columns:minmax(120px,.65fr) minmax(170px,1fr) minmax(230px,1.25fr) minmax(145px,.8fr) auto;
+  align-items:end;
+}
+body.admin-page #page-penilaian .assessment-context-grid > .field-label,
+body.admin-page #page-penilaian .assessment-context-grid > button {
+  min-width:0;
+  margin:0;
+}
+body.admin-page #page-penilaian #assessmentTeacherSearch {
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  box-sizing:border-box;
+  margin:5px 0 7px;
+}
+body.admin-page #page-penilaian #assessmentTeacherSearch[hidden] {
+  display:none!important;
+}
+body.admin-page #page-penilaian .assessment-context-grid :is(input,select) {
+  max-width:100%;
+}
+body.admin-page #assessmentWorkspace .assessment-toolbar {
+  grid-template-columns:minmax(150px,.8fr) minmax(230px,1.8fr);
+  gap:12px;
+}
+body.admin-page #assessmentWorkspace .assessment-quick-actions {
+  align-items:center;
+  gap:9px;
+}
+body.admin-page #assessmentWorkspace .gm-assessment-status-field {
+  min-width:min(100%,185px);
+}
+body.admin-page .gm-assessment-export-drafts {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+  max-width:100%;
+  font-size:12px;
+  line-height:1.45;
+  color:var(--gm-muted,#64776b);
+  cursor:pointer;
+}
+body.admin-page .gm-assessment-export-drafts input {
+  width:18px;
+  height:18px;
+  flex:0 0 18px;
+}
+body.admin-page #page-penilaian .assessment-pending-filter {
+  margin:12px 0 0;
+  padding:11px 13px;
+  border:1px solid #ead2a3;
+  border-radius:11px;
+  background:#fff8ea;
+  color:#77541b;
+  font-size:12px;
+  line-height:1.5;
+}
+body.admin-page #page-penilaian .assessment-pending-filter[hidden]{display:none!important}
+body.admin-page #page-penilaian .assessment-draft-state[data-state="error"] {
+  border-color:#e8c0a8;
+  background:#fff3eb;
+  color:#994128;
+}
+body.admin-page #page-penilaian .gm-assessment-local-details {
+  margin-top:9px;
+  padding:8px 11px;
+  background:var(--gm-surface,#fff);
+  border:1px solid var(--gm-border,#dce5dc);
+  border-radius:10px;
+  color:var(--gm-muted,#64776b);
+  font-size:11px;
+  line-height:1.6;
+}
+body.admin-page #page-penilaian .gm-assessment-local-details summary {
+  cursor:pointer;
+  font-weight:650;
+}
+body.admin-page #page-penilaian .gm-assessment-local-details p {
+  margin:8px 0;
+  max-width:75ch;
+}
+body.admin-page #page-penilaian .gm-assessment-local-details button {
+  min-height:39px;
+  padding:7px 12px;
+  white-space:normal;
+}
+body.admin-page #page-penilaian .assessment-student .assessment-state[data-state="saved"] {
+  color:#216446;
+  background:#edf8f1;
+  border-color:#cbe6d4;
+}
+body.admin-page #page-penilaian .assessment-student .assessment-state[data-state="draft"],
+body.admin-page #page-penilaian .assessment-student .assessment-state[data-state="incomplete"] {
+  color:#8b601d;
+  background:#fff6e7;
+  border-color:#eed7a9;
+}
+body.admin-page #page-penilaian .assessment-student .assessment-state[data-state="review"] {
+  color:#963d37;
+  background:#fff0ef;
+  border-color:#f2cbc8;
+}
+body.admin-page #page-penilaian .assessment-student .assessment-state[data-state="ungraded"] {
+  color:var(--gm-muted,#64776b);
+  background:var(--gm-soft,#eef5ef);
+}
+body.admin-page #page-penilaian .assessment-save-summary span,
+body.admin-page #assessmentPastePreview { overflow-wrap:anywhere; }
+@media(max-width:1320px) {
+  body.admin-page #page-penilaian .assessment-summary {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child {
+    grid-column:1/-1;
+  }
+  body.admin-page #page-penilaian .assessment-context-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  body.admin-page #page-penilaian .assessment-context-grid > button {
+    grid-column:1/-1;
+    width:100%;
+  }
+}
+@media(max-width:767px) {
+  body.admin-page #page-penilaian .assessment-summary {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child {grid-column:1/-1}
+  body.admin-page #page-penilaian .assessment-summary > div {padding:12px}
+  body.admin-page #page-penilaian .assessment-context-grid,
+  body.admin-page #assessmentWorkspace .assessment-toolbar {
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+  }
+  body.admin-page #page-penilaian .assessment-context-grid > button {grid-column:auto}
+  body.admin-page #page-penilaian .assessment-quick-actions > .gm-assessment-status-field {
+    flex:1 1 100%;
+    width:100%;
+  }
+  body.admin-page #page-penilaian .gm-assessment-export-drafts {flex:1 1 100%}
+  body.admin-page #page-penilaian .assessment-student :is(input,select,textarea) {
+    font-size:16px;
+    min-height:43px;
+  }
+  body.admin-page #page-penilaian .assessment-student .assessment-state {
+    max-width:112px;
+    line-height:1.3;
+    white-space:normal;
+    text-align:center;
+  }
+  body.admin-page #page-penilaian .assessment-mobile-bar .gm-mobile-status {
+    min-width:0;
+    font-size:10px;
+    line-height:1.35;
+  }
+}
+@media(max-width:390px) {
+  body.admin-page #page-penilaian .assessment-mobile-bar {
+    gap:5px;
+    padding-inline:6px;
+  }
+  body.admin-page #page-penilaian .assessment-mobile-bar button {
+    min-width:0;
+    font-size:11px;
+    padding-inline:7px;
+  }
+}
