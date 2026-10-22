@@ -569,3 +569,11 @@ body.admin-page #page-penilaian .assessment-save-all-bottom button {
     padding-inline:7px;
   }
 }
+
+/* Native hidden content stays hidden despite themed span/grid styles. */
+body.admin-page #page-penilaian .assessment-summary > [hidden] {
+  display:none!important;
+}
+body.admin-page #page-penilaian .gm-assessment-export-options:not([open]) > .gm-assessment-export-settings {
+  display:none!important;
+}
