@@ -304,14 +304,14 @@
 </nav>
 <section class="assessment-controls gm-manage-subpanel" hidden="" id="teacherEnrollment">
 <div class="section-heading gm-compact-heading"><div><h2>Daftarkan Data dan Akun Guru</h2></div></div>
-<p class="assessment-help">Gunakan email aktif sebagai akun login. Password sementara diberikan langsung kepada guru dan dapat diganti dari Pengaturan Profil.</p>
+<p class="assessment-help">Email login dibuat otomatis dari nama guru. Password awal adalah 1-0 dan harus diganti saat login pertama.</p>
 <form id="enrollmentForm"><fieldset class="assessment-context-grid" id="enrollmentFields">
 <label class="field-label" for="enrollmentTeacher">Data guru<select id="enrollmentTeacher"><option value="">Buat data guru baru</option></select></label>
 <label class="field-label" for="enrollmentName">Nama guru (untuk data baru)<input id="enrollmentName" maxlength="80" required=""/></label>
 <label class="field-label" for="enrollmentFullName">Nama lengkap (untuk data baru)<input id="enrollmentFullName" maxlength="160" required=""/></label>
 <label class="field-label" for="enrollmentAttendance">Tampil pada absensi (data baru)<select id="enrollmentAttendance"><option value="true">Ya, mengajar Tahsin</option><option value="false">Tidak, khusus Tahfidz</option></select></label>
-<label class="field-label" for="enrollmentEmail">Email / nama pengguna login<input autocomplete="off" id="enrollmentEmail" required="" type="email"/></label>
-<label class="field-label" for="enrollmentPassword">Password sementara<input autocomplete="new-password" id="enrollmentPassword" maxlength="128" minlength="10" required="" type="password"/></label>
+<label class="field-label" for="enrollmentEmail">Email login otomatis<input id="enrollmentEmail" type="email" autocomplete="off" readonly placeholder="Diisi otomatis dari nama guru"/></label>
+<p class="assessment-help">Password awal: <strong>1-0</strong>. Guru akan diminta menggantinya setelah masuk.</p>
 <button class="primary-action" type="submit">Buat Data dan Akun Guru</button></fieldset></form><p class="assessment-feedback" id="enrollmentFeedback" role="status"></p></section>
 <div id="manageViewDirectory">
 <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" id="kelolaDataSection">
