@@ -56,7 +56,7 @@ window.TeacherEnrollment = (() => {
                 }
                 if (!data?.ok)
                     throw new Error(data?.error || 'Konfirmasi pembuatan akun tidak lengkap.');
-                message(`Data dan akun guru berhasil dibuat. Login: ${data.email || el('enrollmentEmail').value}. Password awal: 1-0. Guru wajib menggantinya setelah masuk.`);
+                message(`Data dan akun guru berhasil dibuat. Login: ${data.email || el('enrollmentEmail').value}. Password awal: 123456. Guru wajib menggantinya setelah masuk.`);
                 await fetchTeachers();
                 renderManageTable();
             }
