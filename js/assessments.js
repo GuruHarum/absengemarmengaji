@@ -228,7 +228,7 @@ window.PeriodicAssessments = (() => {
         if (el('assessmentContextFields')) el('assessmentContextFields').disabled = busy;
         el('assessmentCards')?.querySelectorAll('input, select, button').forEach(control => { control.disabled = busy || control.closest('form')?.dataset.reviewLocked === 'true'; });
         ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
-        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' : 'Simpan Semua';
+        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' : 'Simpan semua perubahan tingkat ini';
         pagination();
     }
 
@@ -478,23 +478,35 @@ window.PeriodicAssessments = (() => {
     async function save(students, options = {}) {
         if (state.busy || !state.context) return false;
         if (!students.length) { message('Tidak ada perubahan yang perlu disimpan.'); return true; }
-        const payload = [];
+        const payload = [], invalid = [];
         for (const student of students) {
             try {
-                payload.push(AssessmentData.payload(state.context, student, state.drafts.get(String(student.id)), state.saved.get(String(student.id))));
+                payload.push(AssessmentData.payload(state.context, student,
+                    state.drafts.get(String(student.id)), state.saved.get(String(student.id))));
             } catch (error) {
-                state.lastFailedSave = [student];
-                if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = false;
-                message(`${student['nama siswa']}: ${error.message} Belum ada perubahan yang dikirim.`, true);
-                el('assessmentLevel').value = classLevel(student.kelas);
-                el('assessmentStatusFilter').value = 'all';
-                el('assessmentSearch').value = '';
-                state.problemOnly = false;
-                state.page = 1;
-                render();
-                el('assessmentCards').querySelector(`[data-student-index="${state.students.indexOf(student)}"]`)?.reportValidity();
-                return false;
+                invalid.push({ student, reason: error.message });
             }
+        }
+        if (invalid.length) {
+            state.lastFailedSave = students;
+            if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = false;
+            // Validasi semua siswa terlebih dahulu: tidak ada sebagian nilai
+            // yang dikirim tanpa pengetahuan guru.
+            const first = invalid[0].student;
+            el('assessmentLevel').value = classLevel(first.kelas);
+            el('assessmentSearch').value = '';
+            el('assessmentStatusFilter').value = 'all';
+            state.page = 1;
+            render();
+            const summary = el('assessmentSaveSummary');
+            if (summary) {
+                summary.hidden = false;
+                summary.innerHTML = `<strong>${invalid.length} siswa perlu diperbaiki. Belum ada nilai yang dikirim.</strong><span>${invalid.slice(0, 5).map(row =>
+                    escape(row.student['nama siswa']) + ': ' + escape(row.reason)).join(' • ')}${invalid.length > 5 ? ' • dan ' + (invalid.length - 5) + ' siswa lainnya' : ''}</span>`;
+            }
+            message(`Tidak dapat menyimpan. ${invalid.length} siswa perlu diperiksa, termasuk ${first['nama siswa']}: ${invalid[0].reason}. Semua draf tetap tersedia.`, true);
+            persistDrafts();
+            return false;
         }
         setBusy(true);
         message(`Menyimpan ${payload.length} siswa...`);
