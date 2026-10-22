@@ -153,6 +153,7 @@
 }
 @media(prefers-reduced-motion:reduce){#kelolaDataSection *,#manageModal *{transition:none!important}}
 </style>
+<link rel="stylesheet" href="/css/gm-data-navigation.css?v=20261022a">
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="teacher">
 <div aria-label="Memuat panel guru" aria-live="polite" class="islamic-loader" id="loadingIndicator" role="status">
@@ -394,25 +395,25 @@
 </div>
 <div class="hidden space-y-6" id="page-kelola">
 <nav aria-label="Submenu Kelola Data" class="gm-local-nav">
-<button aria-pressed="true" class="gm-local-nav-button active" id="manageViewDirectoryButton" onclick="switchManageView('directory')" type="button">Data Sekolah</button>
-<button aria-pressed="false" class="gm-local-nav-button" id="manageViewEnrollmentButton" onclick="switchManageView('enrollment')" type="button">Daftarkan Data &amp; Akun Guru</button>
+<button type="button" id="manageViewDirectoryButton" class="gm-local-nav-button active" aria-pressed="true" onclick="switchManageView('students')">Data Siswa</button>
+<button type="button" id="manageViewEnrollmentButton" class="gm-local-nav-button" aria-pressed="false" onclick="switchManageView('teachers')">Data Guru</button>
 </nav>
 <section class="assessment-controls gm-manage-subpanel" hidden="" id="teacherEnrollment">
-<div class="section-heading gm-compact-heading"><div><h2>Daftarkan Data dan Akun Guru</h2></div></div>
-<p class="assessment-help">Email login dibuat otomatis dari nama guru. Password awal adalah 123456 dan harus diganti saat login pertama.</p>
+<div class="section-heading gm-compact-heading"><div><h2>Tambah Guru</h2></div></div>
+
 <form id="enrollmentForm"><fieldset class="assessment-context-grid" id="enrollmentFields">
 <label class="field-label" for="enrollmentTeacher">Data guru<select id="enrollmentTeacher"><option value="">Buat data guru baru</option></select></label>
-<label class="field-label" for="enrollmentName">Nama guru (untuk data baru)<input id="enrollmentName" maxlength="80" required=""/></label>
-<label class="field-label" for="enrollmentFullName">Nama lengkap (untuk data baru)<input id="enrollmentFullName" maxlength="160" required=""/></label>
-<label class="field-label" for="enrollmentAttendance">Tampil pada absensi (data baru)<select id="enrollmentAttendance"><option value="true">Ya, mengajar Tahsin</option><option value="false">Tidak, khusus Tahfidz</option></select></label>
+<label class="field-label" for="enrollmentName">Nama Guru<input id="enrollmentName" maxlength="80" required=""/></label>
+<label class="field-label" for="enrollmentFullName">Nama Lengkap<input id="enrollmentFullName" maxlength="160" required=""/></label>
+<label class="field-label" for="enrollmentAttendance">Jenis Guru<select id="enrollmentAttendance"><option value="true">Ya, mengajar Tahsin</option><option value="false">Tidak, khusus Tahfidz</option></select></label>
 <label class="field-label" for="enrollmentEmail">Email login otomatis<input id="enrollmentEmail" type="email" autocomplete="off" readonly placeholder="Diisi otomatis dari nama guru"/></label>
 <p class="assessment-help">Password awal: <strong>123456</strong>. Guru akan diminta menggantinya setelah masuk.</p>
 <button class="primary-action" type="submit">Buat Data dan Akun Guru</button></fieldset></form><p class="assessment-feedback" id="enrollmentFeedback" role="status"></p></section>
 <div id="manageViewDirectory">
 <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" id="kelolaDataSection">
 <div class="manage-toolbar">
-<div class="section-heading"><div><h2>Kelola Data</h2></div><button class="primary-action" id="manageAddBtn" onclick="openManageModal()" type="button">Tambah Data Baru</button></div>
-<div aria-label="Jenis data" class="manage-tabs"><button aria-pressed="true" id="tab-siswa" onclick="switchManageTab('siswa')" type="button">Siswa</button><button aria-pressed="false" id="tab-guru-tahsin" onclick="switchManageTab('guru-tahsin')" type="button">Guru Tahsin</button><button aria-pressed="false" id="tab-guru-tahfidz" onclick="switchManageTab('guru-tahfidz')" type="button">Guru Tahfidz</button><button aria-pressed="false" hidden="" id="tab-impor" onclick="switchManageTab('impor')" type="button">Impor Siswa</button></div>
+<div class="section-heading"><div><h2>Kelola Data</h2></div><button type="button" id="manageAddBtn" onclick="openManagePrimaryAdd()" class="primary-action">Tambah Data Baru</button></div>
+<div aria-label="Jenis data" class="manage-tabs"><button aria-pressed="true" id="tab-siswa" onclick="switchManageTab('siswa')" type="button">Siswa</button><button aria-pressed="false" id="tab-guru-tahsin" onclick="switchManageTab('guru-tahsin')" type="button">Guru Tahsin</button><button aria-pressed="false" id="tab-guru-tahfidz" onclick="switchManageTab('guru-tahfidz')" type="button">Guru Tahfidz</button><button type="button" id="tab-akun-guru" aria-pressed="false" onclick="switchManageTab('akun-guru')" hidden>Akun Guru</button><button aria-pressed="false" hidden="" id="tab-impor" onclick="switchManageTab('impor')" type="button">Impor Siswa</button></div>
 <div id="manageDirectoryView">
 <div class="manage-search-row"><label class="field-label" for="manageSearch">Cari data<input autocomplete="off" id="manageSearch" placeholder="Nama siswa, guru, atau kelas..." type="search"/></label><span id="manageRecordInfo">0 data</span></div>
 <div class="detail-filter-grid" id="studentManageFilters">
@@ -449,6 +450,15 @@
 <span class="text-xs font-semibold text-slate-600" id="managePageInfo">Halaman 1</span>
 <button class="px-3 py-2 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40" id="manageNextPage" type="button">Berikutnya</button>
 </div>
+<section id="manageAccountView" class="gm-manage-account-view" hidden aria-label="Akun Guru">
+    <div class="gm-account-directory-search">
+       <label for="manageAccountSearch">Cari guru atau akun<input type="search" id="manageAccountSearch" autocomplete="off" placeholder="Nama, email, atau username"></label>
+       <span id="manageAccountCount" aria-live="polite"></span>
+    </div>
+    <div class="gm-account-directory-table"><table><thead><tr><th>Nama Guru</th><th>Email Login</th><th>Username</th></tr></thead><tbody id="manageAccountRows"></tbody></table></div>
+    <div id="manageAccountCards" class="gm-account-directory-cards"></div>
+    <p id="manageAccountFeedback" class="gm-account-directory-feedback" role="status" aria-live="polite"></p>
+</section>
 <div class="px-6 pb-6 border-t border-slate-100 pt-5" hidden="" id="manageImportView">
 <h3 class="text-lg font-semibold text-slate-800 mb-1">Impor Siswa</h3>
 <p class="text-sm text-slate-500 mb-4">Periksa file sebelum menyimpan. Nomor yang dipakai lebih dari satu siswa akan dikosongkan pada siswa yang diimpor; daftar namanya bisa diperiksa pada tab Siswa.</p>
