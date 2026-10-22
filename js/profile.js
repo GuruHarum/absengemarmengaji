@@ -99,6 +99,10 @@ window.AccountProfile = (() => {
             AppAccess.profile.email = data.user.email || '';
             AppAccess.profile.displayName = clean(data.user.user_metadata?.full_name);
             el('profileEmail').value = data.user.email || '';
+            if (el('profileUsername')) {
+                const { data: username, error: usernameError } = await supabase.rpc('gm_my_login_username');
+                if (!usernameError) el('profileUsername').value = username || '';
+            }
             el('profileName').value = AppAccess.profile.displayName || '';
             clearPreview();
             if (AppAccess.profile.teacher_id)
@@ -296,6 +300,16 @@ window.AccountProfile = (() => {
             });
         });
 
+        el('profileUsernameForm')?.addEventListener('submit', event => {
+            event.preventDefault();
+            return submit(event.target, async () => {
+                const username = el('profileUsername').value.trim().toLowerCase();
+                const { data, error } = await supabase.rpc('gm_set_login_username', { new_username: username });
+                if (error) throw error;
+                el('profileUsername').value = data;
+                message('Username berhasil disimpan. Login berikutnya dapat memakai username atau email.');
+            });
+        });
         el('passwordForm')?.addEventListener('submit', event => {
             event.preventDefault();
             return submit(event.target, async () => {
