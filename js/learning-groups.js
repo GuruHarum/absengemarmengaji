@@ -205,7 +205,7 @@ window.LearningGroups = (() => {
                 </label>
               </div>
               <div class="gm-group-tools gm-member-tools">
-                <button type="button" data-pick-visible class="secondary-action">Pilih semua</button>
+                <button type="button" data-pick-visible class="secondary-action">Pilih yang tampil</button>
                 ${subject === 'tahfidz' ? '<button type="button" data-sync-tahsin class="secondary-action">Samakan dengan siswa Tahsin</button>' : ''}
                 <button type="button" data-clear class="secondary-action">Kosongkan</button>
                 <strong data-selected>0 siswa dipilih</strong>
@@ -379,7 +379,7 @@ window.LearningGroups = (() => {
       if (b.grade === 'lain') return -1;
       return Number(a.grade) - Number(b.grade);
     });
-    host.querySelector('[data-page-summary]').textContent = `${teacherName(state, teacherId)} · ${buckets.length} tingkat · ${totalMembers} siswa`;
+    host.querySelector('[data-page-summary]').textContent = `${teacherName(state, teacherId)} · ${showArchived ? 'Arsip' : 'Aktif'} · ${buckets.length} tingkat · ${totalMembers} siswa`;
     target.innerHTML = buckets.map(bucket => {
       const title = bucket.grade === 'lain' ? 'Tingkat belum dikenali' : `Tingkat ${bucket.grade}`;
       const breakdown = [...bucket.classCounts].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([c,n])=>`<span>${safe(c)} <b>${n}</b></span>`).join('');
@@ -403,7 +403,9 @@ window.LearningGroups = (() => {
           <div class="gm-grade-group-list">${groupRows}</div>
         </details>
       </article>`;
-    }).join('') || '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>';
+    }).join('') || (showArchived
+       ? '<div class="gm-empty-state gm-empty-rich"><strong>Belum ada kelompok di arsip</strong><span>Kelompok yang diarsipkan akan muncul di sini.</span></div>'
+       : '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>');
   }
 
   function renderStudents(subject) {
