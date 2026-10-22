@@ -195,7 +195,7 @@ window.PeriodicAssessments = (() => {
         state.busy = busy;
         if (el('assessmentContextFields')) el('assessmentContextFields').disabled = busy;
         el('assessmentCards')?.querySelectorAll('input, select, button').forEach(control => { control.disabled = busy || control.closest('form')?.dataset.reviewLocked === 'true'; });
-        ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentClass', 'assessmentSearch', 'assessmentProblemOnly', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
+        ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
         if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' : 'Simpan Semua';
         pagination();
     }
@@ -600,8 +600,7 @@ window.PeriodicAssessments = (() => {
     function exportRows() {
         const scope = el('assessmentExportScope')?.value || 'view';
         if (scope === 'all') return [...state.students];
-        const kelas = el('assessmentClass')?.value;
-        if (scope === 'class') return state.students.filter(student => student.kelas === kelas);
+        if (scope === 'level') return gradeStudents();
         return visible();
     }
     async function exportExcel() {
@@ -636,7 +635,8 @@ window.PeriodicAssessments = (() => {
             sheet['!cols'] = Object.keys(data[0]).map(key => ({ wch: Math.min(45, Math.max(12, key.length + 3, ...data.slice(0, 80).map(row => String(row[key] ?? '').length + 2))) }));
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, sheet, state.context.subject.toUpperCase());
-            const scopeLabel = el('assessmentExportScope')?.value === 'all' ? 'Semua Siswa' : (el('assessmentClass')?.value || 'Tampilan Saat Ini');
+            const scopeLabel = el('assessmentExportScope')?.value === 'all' ? 'Semua Siswa' :
+                (el('assessmentExportScope')?.value === 'level' ? (el('assessmentLevel').value ? 'Tingkat ' + el('assessmentLevel').value : 'Seluruh Tingkat') : 'Tampilan Saat Ini');
             const fileName = window.GMFileName?.assessment?.({ subject: state.context.subject, scope: classLabel(scopeLabel), period: state.context.period, year: state.context.year })
                 || `Penilaian ${state.context.subject.toUpperCase()} - ${scopeLabel} - ${state.context.period} - ${state.context.year}-${state.context.year + 1}.xlsx`;
             XLSX.writeFile(workbook, fileName);
@@ -737,8 +737,9 @@ window.PeriodicAssessments = (() => {
         if (AppAccess.full() && options.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(options.teacherId))) el('assessmentTeacher').value = String(options.teacherId);
         el('assessmentPeriod').value = options.period || 'pts_ganjil';
         await load();
-        if (options.className && state.students.some(student => student.kelas === options.className)) el('assessmentClass').value = options.className;
+        if (options.className && state.students.some(student => student.kelas === options.className)) el('assessmentLevel').value = classLevel(options.className);
         el('assessmentSearch').value = options.studentName || '';
+        el('assessmentStatusFilter').value = options.problemOnly ? 'problem' : 'all';
         state.problemOnly = Boolean(options.problemOnly);
         state.page = 1;
         render();
@@ -842,11 +843,13 @@ window.PeriodicAssessments = (() => {
         });
         SurahPicker.bind(el('assessmentCards'));
         el('assessmentCards').addEventListener('submit', event => { event.preventDefault(); const student = state.students[Number(event.target.dataset.studentIndex)]; if (student) return save([student], { showSummary: false }); });
-        el('assessmentSaveAll').addEventListener('click', () => save(visible().filter(isDirty), { showSummary: true, source: 'save-all' }));
+        el('assessmentSaveAll').addEventListener('click', () => save(dirtyInGrade(), { showSummary: true, source: 'save-all' }));
         el('assessmentRetrySave')?.addEventListener('click', () => save(state.lastFailedSave.filter(Boolean), { showSummary: true, source: 'retry' }));
-        ['assessmentClass', 'assessmentSearch'].forEach(id => el(id).addEventListener('input', () => { state.page = 1; render(); }));
-        el('assessmentLevel').addEventListener('input', () => { const level = el('assessmentLevel').value; const row = state.students.find(s => !level || classLevel(s.kelas) === level); el('assessmentClass').value = row?.kelas || ''; state.page = 1; render(); });
-        el('assessmentProblemOnly')?.addEventListener('click', () => { state.problemOnly = !state.problemOnly; state.page = 1; render(); });
+        ['assessmentLevel','assessmentSearch','assessmentStatusFilter'].forEach(id => el(id).addEventListener(
+            id === 'assessmentSearch' ? 'input' : 'change', () => {
+                state.problemOnly = el('assessmentStatusFilter').value === 'problem';
+                state.page = 1; render();
+            }));
         el('assessmentFavoriteSave')?.addEventListener('click', saveFavorite);
         el('assessmentFavoriteUse')?.addEventListener('click', async () => {
             const favorite = readStorage(STORAGE.favorite);
@@ -875,9 +878,10 @@ window.PeriodicAssessments = (() => {
             pop.hidden = !pop.hidden;
             btn?.setAttribute('aria-expanded', String(!pop.hidden));
         });
-        el('assessmentMobileSave')?.addEventListener('click', () => save(visible().filter(isDirty), { showSummary: true, source: 'mobile-save' }));
+        el('assessmentMobileSave')?.addEventListener('click', () => save(dirtyInGrade(), { showSummary: true, source: 'mobile-save' }));
         el('assessmentMobileProblems')?.addEventListener('click', () => {
-            state.problemOnly = !state.problemOnly; state.page = 1; render();
+            el('assessmentStatusFilter').value = el('assessmentStatusFilter').value === 'problem' ? 'all' : 'problem';
+            state.problemOnly = el('assessmentStatusFilter').value === 'problem'; state.page = 1; render();
         });
         el('assessmentPrev').addEventListener('click', () => { state.page--; render(); });
         el('assessmentNext').addEventListener('click', () => { state.page++; render(); });
