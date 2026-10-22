@@ -781,8 +781,8 @@
   <div class="assessment-quick-actions">
   <button id="assessmentPasteExcel" type="button" class="secondary-action">Tempel Excel</button>
   <div class="gm-assessment-export" id="assessmentExportWrap">
-    <button id="assessmentExport" type="button" class="secondary-action" aria-haspopup="true" aria-expanded="false" aria-controls="assessmentExportMenu">Ekspor Excel</button>
-    <div id="assessmentExportMenu" class="gm-assessment-export-menu" role="group" aria-label="Pengaturan ekspor Excel" hidden>
+    <button id="assessmentExport" type="button" class="secondary-action" aria-haspopup="dialog" aria-expanded="false" aria-controls="assessmentExportMenu">Ekspor Excel</button>
+    <dialog id="assessmentExportMenu" class="gm-assessment-export-dialog" aria-label="Ekspor nilai Excel">
       <label class="field-label assessment-export-scope" for="assessmentExportScope">Cakupan
         <select id="assessmentExportScope">
           <option value="view">Siswa yang tampil</option>
@@ -791,8 +791,11 @@
         </select>
       </label>
       <label class="gm-assessment-export-drafts"><input id="assessmentExportIncludeDrafts" type="checkbox"> Sertakan draf lokal</label>
-      <button id="assessmentExportConfirm" type="button" class="primary-action">Unduh Excel</button>
-    </div>
+      <div class="gm-assessment-export-dialog-actions">
+        <button id="assessmentExportCancel" type="button" class="secondary-action">Batal</button>
+        <button id="assessmentExportConfirm" type="button" class="primary-action">Unduh Excel</button>
+      </div>
+    </dialog>
   </div>
   <div class="assessment-inline-help"><button id="assessmentRuleHelp" type="button" class="assessment-help-button" aria-expanded="false" aria-controls="assessmentRuleHelpText" title="Aturan penilaian" aria-label="Aturan penilaian">?</button><div id="assessmentRuleHelpText" class="assessment-help-popover" hidden><strong>Aturan penilaian</strong><span>Tajwid dinilai mulai Buku 2. Gharib dinilai pada tahap Finishing.</span></div></div>
 </div>
