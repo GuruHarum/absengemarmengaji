@@ -59,6 +59,8 @@ window.TeacherEnrollment = (() => {
                 message(`Data dan akun guru berhasil dibuat. Login: ${data.email || el('enrollmentEmail').value}. Password awal: 123456. Guru wajib menggantinya setelah masuk.`);
                 await fetchTeachers();
                 renderManageTable();
+                if (typeof loadManageTeacherAccounts === 'function' && currentManageTab === 'akun-guru')
+                    await loadManageTeacherAccounts();
             }
             catch (error) {
                 message(error.message, true);
