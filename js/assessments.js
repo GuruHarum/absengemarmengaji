@@ -188,34 +188,6 @@ window.PeriodicAssessments = (() => {
         if (window.setTimeout) state.draftTimer = window.setTimeout(persistDrafts, 450);
         else persistDrafts();
     }
-    async function clearLocalDrafts() {
-        if (state.busy) return;
-        const pending = dirtyStudents().length;
-        const confirmed = await AdminNotice.confirm(
-            `Hapus semua draf penilaian di perangkat untuk akun ini?${pending ? ` ${pending} perubahan yang belum masuk database ikut dibatalkan.` : ''} Nilai database tetap aman.`);
-        if (!confirmed) return;
-        if (!removeStorage(STORAGE.drafts)) {
-            draftStatus('Draf gagal dihapus. Periksa izin penyimpanan perangkat.', 'error');
-            return;
-        }
-        try {
-            const profile = AppAccess?.profile;
-            const legacy = AppAccess?.teacher?.() ? String(profile?.teacher_id || '') : String(profile?.email || '');
-            if (legacy && legacy !== storageScope()) localStorage.removeItem(STORAGE.drafts + ':' + legacy);
-        } catch (_) { /* Browser mungkin memblokir storage. */ }
-        if (state.draftTimer) { clearTimeout(state.draftTimer); state.draftTimer = null; }
-        if (state.context) {
-            state.drafts = new Map(state.students.map(student => [String(student.id),
-                AssessmentData.draft(state.saved.get(String(student.id)))]));
-            state.lastFailedSave = [];
-            if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = true;
-            render();
-        }
-        draftStatus('Draf lokal akun telah dihapus. Nilai database tidak berubah.', 'clean');
-        message('Draf perangkat berhasil dibersihkan. Nilai database tetap aman.');
-        AdminNotice.notify('Draf lokal akun berhasil dihapus.', 'success');
-    }
-
     function restoreDrafts() {
         if (!state.context) return 0;
         const store = draftStore();
@@ -384,7 +356,7 @@ window.PeriodicAssessments = (() => {
         const markup = `<form novalidate class="assessment-student" data-student-index="${index}"><header><div class="assessment-student-identity"><span class="assessment-card-order" aria-label="Nomor urut ${displayOrder}">${displayOrder}</span><div><p>${escape(classLabel(student.kelas))}</p><h3>${escape(student['nama siswa'])}</h3></div></div><span class="assessment-state"></span></header>
             <div class="assessment-subjects"><fieldset data-subject="tahsin" aria-label="Penilaian Tahsin"><div class="assessment-score-grid">${(window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']).map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div></fieldset>
             <fieldset data-subject="tahfidz" aria-label="Penilaian Tahfidz"><div class="assessment-score-grid">${['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'].map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div ${['REVIEW', 'TES'].includes(draft.tahfidz_progress_type) ? 'hidden' : ''}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div></fieldset></div>
-            <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Perlu verifikasi pengelola.' : ''}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
+            <output data-report-summary class="assessment-result-summary"></output><footer>${state.saved.get(String(student.id))?.needs_review ? '<span>Perlu verifikasi pengelola.</span>' : ''}<button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
         const selectedMarkup = markup.replace(/<fieldset data-subject="(tahsin|tahfidz)"[^>]*>[\s\S]*?<\/fieldset>/g, (block, subject) => subject === state.context.subject ? block : '');
         return state.saved.get(String(student.id))?.needs_review && !AppAccess.full()
             ? selectedMarkup.replace('<form ', '<form data-review-locked="true" ').replace('<fieldset ', '<fieldset disabled ').replace('type="submit"', 'type="submit" disabled')
@@ -1084,17 +1056,6 @@ window.PeriodicAssessments = (() => {
         });
         el('assessmentExport')?.addEventListener('click', exportExcel);
         el('assessmentPasteExcel')?.addEventListener('click', openPasteDialog);
-        el('assessmentClearLocalDrafts')?.addEventListener('click', () => { void clearLocalDrafts(); });
-        const movePeriod = amount => {
-            const order = ['pts_ganjil','pas_ganjil','pts_genap','pas_genap'];
-            const current = order.indexOf(el('assessmentPeriod').value);
-            const next = Math.max(0, Math.min(order.length - 1, current + amount));
-            if (next === current) return;
-            el('assessmentPeriod').value = order[next];
-            rememberLastFilter();
-        };
-        el('assessmentPeriodPrev')?.addEventListener('click', () => movePeriod(-1));
-        el('assessmentPeriodNext')?.addEventListener('click', () => movePeriod(1));
         el('assessmentRuleHelp')?.addEventListener('click', () => {
             const pop = el('assessmentRuleHelpText'), btn = el('assessmentRuleHelp');
             if (!pop) return;
