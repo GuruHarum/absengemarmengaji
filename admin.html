@@ -774,30 +774,35 @@
 <div class="gm-assessment-progress" aria-label="Kemajuan penyimpanan nilai tingkat dipilih"><div class="gm-assessment-progress-heading"><strong id="assessmentProgressText">Belum ada nilai tersimpan</strong><span id="assessmentProgressPct">0%</span></div><div id="assessmentProgressBar" class="gm-assessment-progress-track" role="progressbar" aria-label="Persentase nilai tersimpan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="assessmentProgressFill"></span></div></div>
         <section class="assessment-work-toolbar" aria-label="Filter dan tindakan penilaian">
   <div class="assessment-toolbar">
-    <label class="field-label" for="assessmentLevel">Tingkat<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label>
+    <label class="field-label" for="assessmentLevel">Tingkat<select id="assessmentLevel"><option value="">Otomatis per tingkat</option></select></label>
     <label class="field-label gm-assessment-status-field" for="assessmentStatusFilter">Status<select id="assessmentStatusFilter"><option value="all">Semua status</option><option value="ungraded">Belum dinilai</option><option value="draft">Draf</option><option value="saved">Tersimpan</option><option value="incomplete">Belum lengkap</option><option value="review">Perlu verifikasi</option><option value="problem">Perlu dicek</option></select></label>
     <label class="field-label" for="assessmentSearch">Cari siswa<input id="assessmentSearch" type="search" placeholder="Nama siswa..." autocomplete="off"></label>
   </div>
   <div class="assessment-quick-actions">
-    <button id="assessmentPasteExcel" type="button" class="secondary-action">Tempel Excel</button>
-    <button id="assessmentExport" type="button" class="secondary-action">Ekspor Excel</button>
-    <details class="gm-assessment-export-options">
-      <summary>Opsi ekspor</summary>
-      <div class="gm-assessment-export-settings">
-        <label class="field-label assessment-export-scope" for="assessmentExportScope">Cakupan
-          <select id="assessmentExportScope"><option value="view">Hasil filter</option><option value="level">Seluruh tingkat</option><option value="all">Semua siswa guru</option></select>
-        </label>
-        <label class="gm-assessment-export-drafts"><input id="assessmentExportIncludeDrafts" type="checkbox"> Sertakan draf lokal</label>
-      </div>
-    </details>
-    <div class="assessment-inline-help">
-      <button id="assessmentRuleHelp" type="button" class="assessment-help-button" aria-expanded="false" aria-controls="assessmentRuleHelpText" title="Aturan penilaian" aria-label="Aturan penilaian">?</button>
-      <div id="assessmentRuleHelpText" class="assessment-help-popover" hidden><strong>Aturan penilaian</strong><span>Tajwid dinilai mulai Buku 2. Gharib dinilai pada tahap Finishing.</span></div>
+  <button id="assessmentPasteExcel" type="button" class="secondary-action">Tempel Excel</button>
+  <div class="gm-assessment-export" id="assessmentExportWrap">
+    <button id="assessmentExport" type="button" class="secondary-action" aria-haspopup="true" aria-expanded="false" aria-controls="assessmentExportMenu">Ekspor Excel</button>
+    <div id="assessmentExportMenu" class="gm-assessment-export-menu" role="group" aria-label="Pengaturan ekspor Excel" hidden>
+      <label class="field-label assessment-export-scope" for="assessmentExportScope">Cakupan
+        <select id="assessmentExportScope">
+          <option value="view">Siswa yang tampil</option>
+          <option value="level">Seluruh tingkat ini</option>
+          <option value="all">Semua siswa guru</option>
+        </select>
+      </label>
+      <label class="gm-assessment-export-drafts"><input id="assessmentExportIncludeDrafts" type="checkbox"> Sertakan draf lokal</label>
+      <button id="assessmentExportConfirm" type="button" class="primary-action">Unduh Excel</button>
     </div>
   </div>
+  <div class="assessment-inline-help"><button id="assessmentRuleHelp" type="button" class="assessment-help-button" aria-expanded="false" aria-controls="assessmentRuleHelpText" title="Aturan penilaian" aria-label="Aturan penilaian">?</button><div id="assessmentRuleHelpText" class="assessment-help-popover" hidden><strong>Aturan penilaian</strong><span>Tajwid dinilai mulai Buku 2. Gharib dinilai pada tahap Finishing.</span></div></div>
+</div>
 </section>
         <div id="assessmentCards"></div>
-        <div class="assessment-pagination"><button id="assessmentPrev" type="button" class="secondary-action">Sebelumnya</button><span id="assessmentPageInfo"></span><button id="assessmentNext" type="button" class="secondary-action">Berikutnya</button></div>
+        <nav id="assessmentLevelNav" class="assessment-pagination gm-assessment-level-nav" aria-label="Navigasi tingkat kelas" hidden>
+  <button id="assessmentPrev" type="button" class="secondary-action" aria-label="Buka tingkat sebelumnya">← Sebelumnya</button>
+  <span id="assessmentPageInfo" aria-live="polite"></span>
+  <button id="assessmentNext" type="button" class="primary-action" aria-label="Buka tingkat berikutnya">Tingkat berikutnya →</button>
+</nav>
         <div class="assessment-save-all-bottom">
             <div class="assessment-save-actions"><button id="assessmentRetrySave" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button><button id="assessmentSaveAll" type="button" class="primary-action" title="Simpan semua perubahan pada tingkat terpilih">Simpan Semua</button></div>
         </div>
