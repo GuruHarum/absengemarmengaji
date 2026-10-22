@@ -35,9 +35,9 @@ body.admin-page #page-rapor .report-print-panel > h3 { margin: 0; font-size: 18p
 body.admin-page #page-rapor .report-export-intro { margin: 8px 0 24px; color: var(--theme-muted, #64766c); font-size: 13px; }
 body.admin-page #page-rapor .report-download-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 680px; gap: 16px; }
 body.admin-page #page-rapor .report-download-summary { margin: 12px 0 24px; line-height: 1.6; }
-body.admin-page #page-rapor .report-export-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+body.admin-page #page-rapor .report-export-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 860px; }
 body.admin-page #page-rapor .report-export-card { display: flex; flex-direction: column; align-items: flex-start; gap: 0; min-width: 0; padding: 22px; border: 1px solid var(--theme-line, #dbe5df); border-radius: 14px; background: var(--theme-paper, #fff); }
-body.admin-page #page-rapor .report-format-label { font-size: 11px; letter-spacing: .08em; color: var(--theme-muted, #64766c); }
+body.admin-page #page-rapor .report-format-label { font-size: 12px; letter-spacing: .08em; color: var(--theme-muted, #64766c); }
 body.admin-page #page-rapor .report-export-card h4 { margin: 10px 0 0; font-size: 18px; font-weight: 700; }
 body.admin-page #page-rapor .report-export-card p { flex: 1; margin: 10px 0 22px; font-size: 13px; line-height: 1.7; color: var(--theme-muted, #64766c); }
 body.admin-page #page-rapor .report-export-card button { width: 100%; min-height: 44px; justify-content: center; }
@@ -65,10 +65,41 @@ body.admin-page #page-rapor .report-table-scroll { margin-top: 20px; border: 1px
     body.admin-page #page-rapor #reportControls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     body.admin-page #page-rapor #loadReports { width: 100%; }
     body.admin-page #page-rapor .report-submenu { width: 100%; gap: 3px; padding: 4px; }
-    body.admin-page #page-rapor .report-submenu button { flex: 1; min-width: 0; padding: 9px 4px; font-size: 11px; white-space: normal; }
+    body.admin-page #page-rapor .report-submenu button { flex: 1; min-width: 0; padding: 9px 4px; font-size: 12px; line-height: 1.35; white-space: normal; }
     body.admin-page #page-rapor .report-selection-fields,
     body.admin-page #page-rapor .report-download-grid,
     body.admin-page #page-rapor .report-export-options { grid-template-columns: minmax(0, 1fr); }
     body.admin-page #page-rapor .report-selection-navigation { max-width: none; }
     body.admin-page #page-rapor .report-export-card { padding: 20px; }
+}
+
+/* Rapor — kontrol yang lebih mudah dibaca dan diekspor pada berbagai layar. */
+body.admin-page #page-rapor .report-export-card { box-sizing: border-box; min-width: 0; padding: clamp(16px,2vw,22px); }
+body.admin-page #page-rapor .report-export-card h4 { font-size: clamp(16px,1.8vw,18px); }
+body.admin-page #page-rapor .report-export-card :is(p,button) { overflow-wrap: anywhere; }
+body.admin-page #page-rapor .report-export-card p { font-size: 13px; line-height: 1.65; }
+body.admin-page #page-rapor .report-export-card button { min-height: 46px; font-size: 13px; }
+body.admin-page #page-rapor .report-submenu { overflow-x: auto; scrollbar-width: thin; }
+body.admin-page #page-rapor .report-submenu button { font-size: 12.5px; line-height: 1.4; }
+body.admin-page #page-rapor .report-selection-navigation button { min-height: 44px; font-size: 12.5px; }
+body.admin-page #page-rapor .report-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+body.admin-page #page-rapor .report-table-scroll table { min-width: 620px; }
+body.admin-page #page-rapor #reportViewMissing>.report-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+body.admin-page #page-rapor #reportViewMissing .report-view-heading button { min-height: 44px; }
+@media (max-width: 960px) {
+ body.admin-page #page-rapor #reportViewMissing>.report-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+ body.admin-page #page-rapor .report-submenu { width: 100%; box-sizing: border-box; }
+ body.admin-page #page-rapor .report-submenu button { min-width: 0; flex: 1 1 0; font-size: 12px; padding: 10px 6px; }
+ body.admin-page #page-rapor .report-export-options { grid-template-columns: minmax(0,1fr); }
+ body.admin-page #page-rapor .report-view-heading { align-items: stretch; }
+ body.admin-page #page-rapor .report-view-heading button { width: 100%; }
+ body.admin-page #page-rapor .report-table-scroll { margin-inline: 0; }
+}
+@media (max-width: 380px) {
+ body.admin-page #page-rapor #reportControls,
+ body.admin-page #page-rapor #reportViewMissing>.report-grid { grid-template-columns: minmax(0,1fr); }
+ body.admin-page #page-rapor .report-submenu { flex-wrap: wrap; }
+ body.admin-page #page-rapor .report-submenu button { flex: 1 1 100%; }
 }
