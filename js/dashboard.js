@@ -1232,7 +1232,7 @@ async function handleFormSubmit(event) {
         closeManageModal();
         renderManageTable();
         if (teacherTab && !id && AppAccess.full()) {
-            AdminNotice.notify('Akun guru berhasil dibuat. Email: ' + saved.email + ' | Password awal: 1-0. Guru wajib menggantinya setelah login.', 'success');
+            AdminNotice.notify('Akun guru berhasil dibuat. Email: ' + saved.email + ' | Password awal: 123456. Guru wajib menggantinya setelah login.', 'success');
         }
         if (identifierAuditLoaded && AppAccess.full() && !teacherTab) await checkMissingStudentIdentifiers();
         if (!(teacherTab && !id && AppAccess.full())) AdminNotice.notify('Data berhasil disimpan.', 'success');
