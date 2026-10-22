@@ -984,7 +984,9 @@ function renderManageTable() {
     const mobileCards = document.getElementById('manageMobileCards');
     if (mobileCards) mobileCards.hidden = importTab;
     document.getElementById('tab-impor').hidden = !AppAccess.full();
-    document.getElementById('manageAddBtn').hidden = importTab || (AppAccess.teacher() && currentManageTab === 'guru');
+    const addButton = document.getElementById('manageAddBtn');
+    addButton.hidden = importTab || (AppAccess.teacher() && currentManageTab === 'guru');
+    addButton.textContent = currentManageTab === 'guru' ? 'Tambah Guru' : 'Tambah Siswa';
     document.getElementById('manageIdentifierActions').hidden = !(AppAccess.full() && currentManageTab === 'siswa');
     document.getElementById('manageIdentifierAudit').hidden = !(identifierAuditLoaded && AppAccess.full() && currentManageTab === 'siswa');
     refreshManageImportControls();
@@ -1127,12 +1129,12 @@ async function openManageModal(id = null) {
     if (id && !item)
         return AdminNotice.notify('Data tidak ditemukan. Silakan muat ulang halaman.');
     document.getElementById('entityId').value = item?.id || '';
-    document.getElementById('modalTitle').textContent = `${item ? 'Ubah' : 'Tambah'} Data ${currentManageTab === 'guru' ? 'Guru' : 'Siswa'}`;
+    document.getElementById('modalTitle').textContent = `${item ? 'Edit' : 'Tambah'} ${currentManageTab === 'guru' ? 'Guru' : 'Siswa'}`;
     const fields = document.getElementById('formFields');
     if (currentManageTab === 'guru') {
         fields.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Guru</label><input id="inputGuruNama" required value="${manageEscape(item?.nama || item?.nama_guru || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>`;
         if (AppAccess.full())
-            fields.innerHTML += `<div><label for="inputGuruNamaLengkap" class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama lengkap untuk rapor</label><input id="inputGuruNamaLengkap" maxlength="160" value="${manageEscape(item?.nama_lengkap || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Nama lengkap beserta gelar"><p class="mt-2 text-xs text-slate-500">Terpisah dari nama guru yang digunakan pada absensi.</p></div>`;
+            fields.innerHTML += `<div><label for="inputGuruNamaLengkap" class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama lengkap untuk rapor</label><input id="inputGuruNamaLengkap" maxlength="160" value="${manageEscape(item?.nama_lengkap || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Nama lengkap beserta gelar"></div>`;
         if (AppAccess.full())
             fields.innerHTML += `<div><label for="inputGuruAttendance" class="block text-xs font-bold text-slate-600 uppercase mb-2">Tampil pada absensi (Tahsin)</label><select id="inputGuruAttendance" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"><option value="true" ${(item ? item.attendance_enabled !== false : currentTeacherGroup === 'tahsin') ? 'selected' : ''}>Ya - guru Tahsin / kedua pelajaran</option><option value="false" ${(item ? item.attendance_enabled === false : currentTeacherGroup === 'tahfidz') ? 'selected' : ''}>Tidak - khusus Tahfidz</option></select></div>`;
     }
@@ -1151,11 +1153,11 @@ async function openManageModal(id = null) {
                 <label class="block text-xs font-semibold text-slate-700" for="inputSiswaNisn">NISN
                     <input id="inputSiswaNisn" type="text" inputmode="numeric" autocomplete="off" maxlength="32" value="${manageEscape(ids?.nisn || '')}" placeholder="Kosongkan jika belum valid" class="mt-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm">
                 </label>
-                <p class="text-xs text-amber-800">Nomor tidak wajib. Nomor yang digunakan siswa lain akan ditolak, bukan menimpa pemiliknya.</p>
+                <p class="text-xs text-amber-800">NIS dan NISN harus unik.</p>
             </div>`;
         }
         else if (AppAccess.full() && !item) {
-            fields.innerHTML += '<p class="text-xs text-slate-500">Setelah siswa dibuat, klik Edit untuk melengkapi NIS dan NISN.</p>';
+            fields.innerHTML += '';
         }
 
     }
