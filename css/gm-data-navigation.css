@@ -1,6 +1,7 @@
 
 /* Kelola Data 2026-10-22 — tata letak dua kelompok, satu sumber data. */
 #page-kelola{min-width:0}
+#teacherEnrollment[hidden]{display:none!important}
 #page-kelola .gm-local-nav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
 #page-kelola .gm-local-nav-button{min-height:44px;padding:11px 19px;border-radius:11px;font-size:13px;font-weight:650;line-height:1.4}
 #page-kelola .gm-local-nav-button[aria-pressed="true"]{background:#216454;color:#fff;border-color:#216454;box-shadow:0 3px 9px rgba(33,100,84,.12)}
