@@ -1,4 +1,4 @@
-const VERSION = 'learning-groups-refine-20261022b';
+const VERSION = 'periodic-assessment-grade-20261022a';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
