@@ -61,6 +61,60 @@
 <link rel="stylesheet" href="css/page-refinements.css?v=20261001-log2">
 <script src="js/page-refinements.js?v=20261007-data63" defer></script>
 <link rel="stylesheet" href="css/rapor-workspace.css?v=20261007-data63">
+
+<style id="gm-manage-responsive-20261022">
+/* Kelola Data: perubahan visual saja; ID, handler dan alur simpan tetap. */
+#kelolaDataSection{border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 8px 28px rgba(15,23,42,.035);min-width:0}
+#kelolaDataSection .manage-toolbar{padding:clamp(16px,2.5vw,28px);padding-bottom:14px}
+#kelolaDataSection .section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+#kelolaDataSection .section-heading h2{font-size:clamp(1.15rem,2vw,1.55rem);font-weight:750;letter-spacing:-.025em;color:#0f172a;margin:0}
+#kelolaDataSection .manage-tabs{display:flex;gap:5px;align-items:center;overflow-x:auto;scrollbar-width:thin;padding:4px;border-radius:12px;background:#f1f5f9;max-width:100%}
+#kelolaDataSection .manage-tabs button{flex:0 0 auto;border:0;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:650;color:#475569;background:transparent;white-space:nowrap;min-height:42px;transition:background .15s,color .15s}
+#kelolaDataSection .manage-tabs button[aria-pressed="true"]{background:#fff;color:#0f766e;box-shadow:0 1px 5px rgba(15,23,42,.12)}
+#kelolaDataSection .manage-search-row{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:18px 0 14px}
+#kelolaDataSection .manage-search-row label{flex:1 1 280px;max-width:520px}
+#kelolaDataSection .manage-search-row input,#kelolaDataSection .detail-filter-grid select{min-height:44px;border-radius:11px;border:1px solid #cbd5e1;background:#fff;width:100%;font-size:14px;padding:10px 12px;outline-offset:2px}
+#kelolaDataSection #manageRecordInfo{font-size:12px;color:#64748b;white-space:nowrap;padding-bottom:9px}
+#kelolaDataSection .detail-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#kelolaDataSection .field-label{font-size:12px;font-weight:650;color:#475569;min-width:0}
+#kelolaDataSection #manageDirectoryTable{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#kelolaDataSection #manageDirectoryTable table{min-width:570px}
+#kelolaDataSection #manageDirectoryTable th{padding:13px 16px;background:#f8fafc;color:#64748b;font-size:11px;letter-spacing:.04em}
+#kelolaDataSection #manageDirectoryTable td{padding:14px 16px;vertical-align:middle;overflow-wrap:anywhere}
+#kelolaDataSection #manageDirectoryTable tbody tr:hover{background:#f8fafc}
+#kelolaDataSection #manageDirectoryPagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+#kelolaDataSection #manageDirectoryPagination button{min-height:40px;border-radius:10px}
+#manageModal{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
+#manageModal #modalContent{width:min(100%,520px);max-height:min(90dvh,900px);border-radius:18px}
+#manageModal #modalContent input,#manageModal #modalContent select{min-height:44px}
+@media(max-width:720px){
+#kelolaDataSection{border-radius:15px}
+#kelolaDataSection .manage-toolbar{padding:15px 12px 12px}
+#kelolaDataSection .section-heading{align-items:stretch;gap:12px;margin-bottom:14px}
+#kelolaDataSection .section-heading>div{flex:1 1 100%}
+#kelolaDataSection #manageAddBtn{width:100%;min-height:44px;justify-content:center;text-align:center}
+#kelolaDataSection .manage-tabs{margin:0 -2px;padding:4px}
+#kelolaDataSection .manage-tabs button{padding:10px 13px}
+#kelolaDataSection .manage-search-row{margin:14px 0 12px;align-items:center}
+#kelolaDataSection .manage-search-row label{flex-basis:100%;max-width:none}
+#kelolaDataSection #manageRecordInfo{padding:0}
+#kelolaDataSection .detail-filter-grid{grid-template-columns:1fr;gap:10px}
+#kelolaDataSection #manageDirectoryTable{padding:0 10px 4px;overflow-x:visible}
+#kelolaDataSection #manageDirectoryTable table{min-width:0;display:block;width:100%}
+#kelolaDataSection #manageDirectoryTable thead{display:none}
+#kelolaDataSection #manageDirectoryTable tbody{display:grid;gap:10px;width:100%}
+#kelolaDataSection #manageDirectoryTable tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px;border:1px solid #e2e8f0;border-radius:13px;background:#fff}
+#kelolaDataSection #manageDirectoryTable tbody td{display:block;padding:0;min-width:0;font-size:13px;flex:1 1 42%;border:0}
+#kelolaDataSection #manageDirectoryTable tbody td:first-child{flex:0 0 24px;color:#94a3b8;font-size:12px}
+#kelolaDataSection #manageDirectoryTable tbody td:nth-child(2){flex:1 1 calc(100% - 40px);font-weight:650;color:#0f172a}
+#kelolaDataSection #manageDirectoryTable tbody td:last-child{flex:1 1 100%;display:flex;justify-content:flex-end;gap:8px;padding-top:7px;border-top:1px solid #f1f5f9}
+#kelolaDataSection #manageDirectoryTable tbody td[colspan]{flex:1 1 100%;text-align:center}
+#kelolaDataSection #manageDirectoryPagination{justify-content:center;padding:12px 8px;gap:8px}
+#kelolaDataSection #manageDirectoryPagination button{flex:0 1 auto}
+#manageModal #modalContent{max-height:calc(100dvh - 24px);border-radius:14px}
+}
+@media(max-width:360px){#kelolaDataSection .manage-tabs button{font-size:12px;padding:9px 11px}#kelolaDataSection #manageDirectoryPagination{font-size:11px}}
+</style>
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="coordinator">
 
@@ -349,10 +403,10 @@
         <div id="manageViewDirectory">
         <section id="kelolaDataSection" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="manage-toolbar">
-                <div class="section-heading"><div><p class="section-kicker">DIREKTORI SEKOLAH</p><h2>Pusat Data Sekolah</h2><p>Data siswa dan guru, tertata dalam satu tempat.</p></div><button type="button" id="manageAddBtn" onclick="openManageModal()" class="primary-action">Tambah Data Baru</button></div>
+                <div class="section-heading"><div><h2>Kelola Data</h2></div><button type="button" id="manageAddBtn" onclick="openManageModal()" class="primary-action">Tambah Data Baru</button></div>
                 <div class="manage-tabs" aria-label="Jenis data"><button type="button" onclick="switchManageTab('siswa')" id="tab-siswa" aria-pressed="true">Siswa</button><button type="button" onclick="switchManageTab('guru-tahsin')" id="tab-guru-tahsin" aria-pressed="false">Guru Tahsin</button><button type="button" onclick="switchManageTab('guru-tahfidz')" id="tab-guru-tahfidz" aria-pressed="false">Guru Tahfidz</button><button type="button" onclick="switchManageTab('impor')" id="tab-impor" aria-pressed="false" hidden>Impor Siswa</button></div>
                 <div id="manageDirectoryView">
-                <div class="manage-search-row"><label for="manageSearch" class="field-label">Cari data<input id="manageSearch" type="search" placeholder="Nama siswa, guru, atau kelas..." autocomplete="off"></label><span id="manageRecordInfo">0 data</span></div>
+                <div class="manage-search-row"><label for="manageSearch" class="field-label">Cari data<input id="manageSearch" type="search" placeholder="Nama siswa, guru, atau kelas..." autocomplete="off"></label><span id="manageRecordInfo" aria-live="polite">0 data</span></div>
                 <div id="studentManageFilters" class="detail-filter-grid">
                     <label class="field-label" for="manageLevelFilter">Tingkat kelas<select id="manageLevelFilter"><option value="">Pilih tingkat kelas dahulu</option></select></label>
                     <label class="field-label" for="manageStudentFilterMode">Filter berdasarkan<select id="manageStudentFilterMode" disabled><option value="">Pilih filter guru atau nama kelas</option><option value="guru">Nama guru</option><option value="kelas">Nama kelas</option></select></label>
