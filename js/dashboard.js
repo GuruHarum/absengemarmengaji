@@ -953,6 +953,8 @@ async function loadManageTeacherAccounts() {
     if (!AppAccess.full() || currentManageTab !== 'akun-guru') return;
     const feedback = document.getElementById('manageAccountFeedback');
     if (feedback) feedback.textContent = '';
+    const count = document.getElementById('manageAccountCount');
+    if (count && !gmTeacherAccountsLoaded) count.textContent = 'Memuat akun...';
     try {
         const { data, error } = await supabase.rpc('gm_list_teacher_accounts');
         if (error) throw error;
@@ -975,7 +977,7 @@ function renderManageTeacherAccounts() {
         [row.teacher_name, row.teacher_type, row.email, row.username]
             .some(value => String(value || '').toLowerCase().includes(search))
     );
-    count.textContent = rows.length + ' guru';
+    count.textContent = new Set(rows.map(row => String(row.teacher_id))).size + ' guru';
     if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="3">Tidak ada data guru yang sesuai.</td></tr>';
         cards.innerHTML = '<div class="gm-directory-empty">Tidak ada data guru yang sesuai.</div>';
