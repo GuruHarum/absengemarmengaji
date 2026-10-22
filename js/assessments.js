@@ -892,7 +892,6 @@ window.PeriodicAssessments = (() => {
                 state.selectedTeacherId = String(last.teacherId); renderTeacherOptions();
             }
             state.pendingWorkspaceFilter = last;
-            if (el('assessmentScopeNote')) el('assessmentScopeNote').textContent = '';
             state.initialized = true;
             refreshFavoriteButtons();
             draftStatus('Autosave draf sementara aktif di perangkat ini.', 'clean');
