@@ -607,7 +607,8 @@
         <p class="assessment-help">Nama profil hanya digunakan untuk sapaan dan identitas akun. Nama resmi guru pada rapor tidak berubah.</p>
         <button type="submit" class="primary-action">Simpan Profil</button>
     </form>
-    <div id="profilePushCard" class="profile-push-card" hidden>
+    <section class="assessment-controls"><form id="profileUsernameForm" class="space-y-3"><label class="field-label" for="profileUsername">Username untuk login<input id="profileUsername" type="text" autocomplete="username" minlength="3" maxlength="30" pattern="[a-z][a-z0-9._]{2,29}" placeholder="Contoh: bagus"></label><p class="assessment-help">Opsional. Setelah disimpan, Anda dapat login dengan username ini atau email akun.</p><button class="primary-action" type="submit">Simpan Username</button></form></section>
+<div id="profilePushCard" class="profile-push-card" hidden>
         <div class="profile-push-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></div>
         <div class="profile-push-copy"><strong>Notifikasi perangkat</strong><span id="profilePushStatus">Belum aktif</span></div>
         <div class="profile-push-actions"><button id="profilePushEnable" type="button" class="secondary-action">Aktifkan</button><button id="profilePushDisable" type="button" class="profile-danger-link" hidden>Nonaktifkan</button></div>
