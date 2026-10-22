@@ -454,35 +454,60 @@ window.LearningGroups = (() => {
     const state = views[subject], host = shell(subject);
     const cls = host.querySelector('[data-class]').value;
     const search = host.querySelector('[data-search]').value.trim().toLocaleLowerCase('id');
+    const membershipStatus = host.querySelector('[data-member-status]').value;
     const list = host.querySelector('[data-students]');
 
-    const candidates = search
-      ? state.students.filter(s => `${s['nama siswa']} ${s.kelas || ''}`.toLocaleLowerCase('id').includes(search))
-      : (cls ? state.students.filter(s => s.kelas === cls) : (state.autoTahsinLevels?.length ? state.students.filter(s => state.selected.has(String(s.id))) : []));
+    // Keanggotaan dilihat per program dan tahun ajaran dari state halaman.
+    const activeGroupIds = new Set(state.groups.filter(group => group.active).map(group => String(group.id)));
+    const assignmentByStudent = new Map();
+    state.members.forEach(member => {
+      if (member.active && activeGroupIds.has(String(member.assignment_id))) {
+        assignmentByStudent.set(String(member.student_id), String(member.assignment_id));
+      }
+    });
 
-    const sortedCandidates = [...candidates].sort((a, b) => String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id') || String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }));
-     const filtered = sortedCandidates.slice(0, search ? 80 : sortedCandidates.length);
-     const countLabel = host.querySelector('[data-search-summary]');
-     if (countLabel) countLabel.textContent = search
-       ? (sortedCandidates.length > 80 ? `Menampilkan 80 dari ${sortedCandidates.length} hasil. Persempit pencarian untuk melihat yang lain.` : `${sortedCandidates.length} hasil pencarian.`)
-       : (cls ? `${sortedCandidates.length} siswa di kelas ${cls}.` : (state.autoTahsinLevels?.length ? `${sortedCandidates.length} siswa hasil salinan Tahsin.` : 'Pilih kelas atau cari nama siswa.'));
-    list.innerHTML = filtered.map(s => {
-      const activeGroupIds = new Set(state.groups.filter(group => group.active).map(group => String(group.id)));
-      const current = state.members.find(m => m.active && activeGroupIds.has(String(m.assignment_id)) && String(m.student_id) === String(s.id));
-      const other = current && current.assignment_id !== state.edit;
-      const origin = state.groups.find(g => g.id === current?.assignment_id);
-      const classMismatch = Boolean(!search && cls && s.kelas !== cls && !state.selected.has(String(s.id)));
-      const disabled = other || classMismatch;
-      const note = other ? ` · Sudah di ${safe(origin?.class_name || 'kelompok lain')}` : (classMismatch ? ` · Pilihan kelas: ${safe(cls)}` : '');
-      return `<label class="${classMismatch ? 'is-class-mismatch' : ''}"><input type="checkbox" data-student="${safe(s.id)}" data-student-class="${safe(s.kelas)}" ${state.selected.has(String(s.id)) ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-        <span><strong>${safe(s['nama siswa'])}</strong><small>${safe(s.kelas)}${note}</small></span></label>`;
-    }).join('') || (search
-      ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Siswa tidak ditemukan</strong><span>Coba nama lain.</span></div>'
-      : (cls
+    const candidatesBySearch = search
+      ? state.students.filter(student => `${student['nama siswa']} ${student.kelas || ''}`.toLocaleLowerCase('id').includes(search))
+      : (cls ? state.students.filter(student => student.kelas === cls)
+        : (state.autoTahsinLevels?.length ? state.students.filter(student => state.selected.has(String(student.id))) : []));
+
+    const candidates = candidatesBySearch.filter(student => {
+      const assigned = assignmentByStudent.has(String(student.id));
+      return membershipStatus === 'unassigned' ? !assigned
+        : membershipStatus === 'assigned' ? assigned : true;
+    });
+    const sortedCandidates = [...candidates].sort((a, b) =>
+      String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id') ||
+      String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }));
+    const filtered = sortedCandidates.slice(0, search ? 80 : sortedCandidates.length);
+    const statusLabel = membershipStatus === 'unassigned' ? ' · belum punya kelompok'
+      : membershipStatus === 'assigned' ? ' · sudah punya kelompok' : '';
+    host.querySelector('[data-search-summary]').textContent = search
+      ? (sortedCandidates.length > 80
+          ? `Menampilkan 80 dari ${sortedCandidates.length} hasil${statusLabel}. Persempit pencarian untuk melihat yang lain.`
+          : `${sortedCandidates.length} hasil pencarian${statusLabel}.`)
+      : (cls ? `${sortedCandidates.length} siswa di kelas ${cls}${statusLabel}.`
+        : (state.autoTahsinLevels?.length
+          ? `${sortedCandidates.length} siswa salinan Tahsin${statusLabel}.`
+          : `Pilih kelas atau cari nama siswa${statusLabel}.`));
+
+    list.innerHTML = filtered.map(student => {
+      const id = String(student.id);
+      const groupId = assignmentByStudent.get(id);
+      const other = Boolean(groupId && groupId !== String(state.edit || ''));
+      const origin = state.groups.find(group => String(group.id) === groupId);
+      const note = other ? ` · Sudah di ${safe(origin?.class_name || 'kelompok lain')}` : '';
+      return `<label><input type="checkbox" data-student="${safe(student.id)}" data-student-class="${safe(student.kelas)}" ${state.selected.has(id) ? 'checked' : ''} ${other ? 'disabled' : ''}>
+        <span><strong>${safe(student['nama siswa'])}</strong><small>${safe(student.kelas)}${note}</small></span></label>`;
+    }).join('') || (membershipStatus !== 'all'
+      ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Tidak ada siswa pada status ini</strong><span>Coba filter lain atau pilih kelas berbeda.</span></div>'
+      : search
+        ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Siswa tidak ditemukan</strong><span>Coba nama lain.</span></div>'
+        : cls
           ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Belum ada siswa</strong><span>Tidak ada siswa pada kelas ini.</span></div>'
-          : (state.autoTahsinLevels?.length
-              ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Belum ada siswa Tahsin pada pilihan ini</strong><span>Periksa pilihan tingkat kelas atau muat ulang data Tahsin.</span></div>'
-              : '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Cari siswa atau pilih kelas</strong><span>Pencarian ini dipakai untuk memilih siswa manual.</span></div>')));
+          : state.autoTahsinLevels?.length
+            ? '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Belum ada siswa Tahsin pada pilihan ini</strong><span>Periksa tingkat kelas atau muat ulang data Tahsin.</span></div>'
+            : '<div class="gm-empty-state gm-empty-rich gm-empty-state--compact"><strong>Cari siswa atau pilih kelas</strong><span>Pencarian dipakai untuk memilih siswa manual.</span></div>');
 
     host.querySelector('[data-selected]').textContent = state.autoTahsinLevels?.length
       ? `${state.selected.size} siswa dipilih · salinan Tahsin kelas ${state.autoTahsinLevels.join(', ')}`
