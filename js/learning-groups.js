@@ -701,6 +701,7 @@ window.LearningGroups = (() => {
       if (!choice) return;
       const target = state.groups.find(row => row.id === choice.targetGroupId);
       if (!target) return msg(subject, 'Kelompok tujuan sudah berubah. Muat ulang.', true);
+      let transferFeedback = '';
       busy(subject, true);
       try {
         const { data, error } = await supabase.rpc('gm_transfer_group_students', {
@@ -709,15 +710,18 @@ window.LearningGroups = (() => {
           p_student_ids: choice.studentIds
         });
         if (error) throw error;
-        if (subject === 'tahsin') await refreshPublicTahsinRoster();
-        msg(subject, `${Number(data?.moved || choice.studentIds.length)} murid dipindahkan ke ${data?.target_teacher_name || teacherName(state, target.teacher_id)}. ${Number(data?.source_remaining || 0)} murid tetap di kelompok asal.`);
+        if (subject === 'tahsin') {
+          try { await refreshPublicTahsinRoster(); }
+          catch (refreshError) { console.warn('Daftar publik Tahsin perlu dimuat ulang.', refreshError); }
+        }
+        transferFeedback = `${Number(data?.moved || choice.studentIds.length)} murid dipindahkan ke ${data?.target_teacher_name || teacherName(state, target.teacher_id)}. ${Number(data?.source_remaining || 0)} murid tetap di kelompok asal.`;
       } catch (error) {
         msg(subject, error.message, true);
         busy(subject, false);
         return;
       }
       busy(subject, false);
-      await open(subject, true);
+      await reloadWithFeedback(subject, transferFeedback);
       return;
     }
     const transfer = event.target.closest('[data-transfer]');
@@ -735,18 +739,20 @@ window.LearningGroups = (() => {
         confirmLabel: 'Transfer'
       });
       if (!target) return;
+      let groupTransferFeedback = '';
       busy(subject,true);
       try {
         const {data,error}=await supabase.rpc('gm_transfer_learning_group',{p_group_id:g.id,p_teacher_id:String(target).trim()});
         if(error) throw error;
-        msg(subject,`Kelompok ditransfer ke ${data?.teacher_name||'guru tujuan'}.`);
+        groupTransferFeedback = `Kelompok ditransfer ke ${data?.teacher_name||'guru tujuan'}.`;
       } catch(error){ msg(subject,error.message,true); busy(subject,false); return; }
-      busy(subject,false); await open(subject,true); return;
+      busy(subject,false); await reloadWithFeedback(subject,groupTransferFeedback); return;
     }
     const del = event.target.closest('[data-delete-group]');
     if (del) {
       const g = state.groups.find(row => row.id === del.dataset.deleteGroup);
       if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
+      let deletionFeedback = '';
       busy(subject,true);
       try {
         let preview = { members: state.members.filter(row => row.assignment_id === g.id).length };
@@ -770,24 +776,31 @@ window.LearningGroups = (() => {
         const rpcName = subject === 'tahfidz' ? 'gm_delete_tahfidz_group_verified' : 'gm_delete_learning_group_verified';
         const {data: result, error} = await supabase.rpc(rpcName, {p_group_id:g.id,p_confirmation:typed});
         if (error) throw error;
-        if(subject==='tahsin') await refreshPublicTahsinRoster();
+        if (subject === 'tahsin') {
+          try { await refreshPublicTahsinRoster(); }
+          catch (refreshError) { console.warn('Daftar publik Tahsin perlu dimuat ulang.', refreshError); }
+        }
         const detached = Number(result?.detached_assessments || 0);
-        msg(subject,`Kelompok dihapus permanen. ${result?.deleted_members || preview.members || 0} keanggotaan dihapus${detached ? `; ${detached} nilai tetap disimpan tanpa tautan kelompok lama` : ''}.`);
+        deletionFeedback = `Kelompok dihapus permanen. ${result?.deleted_members || preview.members || 0} keanggotaan dihapus${detached ? `; ${detached} nilai tetap disimpan tanpa tautan kelompok lama` : ''}.`;
       } catch(error) { msg(subject,error.message,true); busy(subject,false); return; }
-      busy(subject,false); await open(subject,true); return;
+      busy(subject,false); await reloadWithFeedback(subject,deletionFeedback); return;
     }
     const end = event.target.closest('[data-end]');
     if (end) {
       const g = state.groups.find(row => row.id === end.dataset.end);
       if (!g || !(await AdminNotice.confirm(`Akhiri kelompok ${g.class_name}? Kelompok dinonaktifkan, bukan dihapus.`))) return;
+      let archiveFeedback = '';
       busy(subject,true);
       try {
         const {data: archived, error} = await supabase.rpc('gm_archive_learning_group_v2', {p_group_id:g.id});
         if(error) throw error;
-        if(subject==='tahsin') await refreshPublicTahsinRoster();
-        msg(subject,`Kelompok diarsipkan. ${archived?.released_members || 0} keanggotaan dilepas dari status aktif sehingga siswa dapat dimasukkan ke kelompok baru.`);
+        if (subject === 'tahsin') {
+          try { await refreshPublicTahsinRoster(); }
+          catch (refreshError) { console.warn('Daftar publik Tahsin perlu dimuat ulang.', refreshError); }
+        }
+        archiveFeedback = `Kelompok diarsipkan. ${archived?.released_members || 0} keanggotaan dilepas dari status aktif sehingga siswa dapat dimasukkan ke kelompok baru.`;
       } catch(error) { msg(subject,error.message,true); busy(subject,false); return; }
-      busy(subject,false); await open(subject,true);
+      busy(subject,false); await reloadWithFeedback(subject,archiveFeedback);
     }
   }
 
