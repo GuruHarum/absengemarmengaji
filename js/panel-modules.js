@@ -1,5 +1,5 @@
 (() => {
-    const version = '20261022-profile1';
+    const version = '20261022-archive1';
     const core = ['admin-notices','class-picker','quran-surahs','report-reference','report-core','assessments-core','teacher-photo','profile','push-notifications','notifications','attention-center','dashboard','rev46-experience','admin','api'];
     const definitions = {
         curriculum: { files: ['curriculum-targets'] },
@@ -15,7 +15,7 @@
         chart: { urls: ['https://cdn.jsdelivr.net/npm/chart.js'] },
         pdf: { urls: ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js'] }
     };
-    const routes = { profil: ['profile'], penilaian: ['assessment'], rapor: ['reports'], pengaturan: ['settings'], kelola: ['manage'], kelompok: ['groups'], 'kelompok-tahsin': ['groups'], presentasi: ['chart'] };
+    const routes = { profil: ['profile'], penilaian: ['assessment'], rapor: ['reports'], arsip: ['reports'], pengaturan: ['settings'], kelola: ['manage'], kelompok: ['groups'], 'kelompok-tahsin': ['groups'], presentasi: ['chart'] };
     const scripts = new Map(), pending = new Map(), loaded = new Set();
     const pagePending = new Map(), mounted = new Set(), pageCallbacks = new Map();
     const groupPages = { assessment: ['penilaian'], reports: ['rapor'], settings: ['pengaturan'], manage: ['kelola'], groups: ['kelompok', 'kelompok-tahsin'] };
