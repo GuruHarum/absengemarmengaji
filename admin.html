@@ -62,58 +62,100 @@
 <script src="js/page-refinements.js?v=20261007-data63" defer></script>
 <link rel="stylesheet" href="css/rapor-workspace.css?v=20261007-data63">
 
-<style id="gm-manage-responsive-20261022">
-/* Kelola Data: perubahan visual saja; ID, handler dan alur simpan tetap. */
-#kelolaDataSection{border:1px solid #e2e8f0;border-radius:20px;box-shadow:0 8px 28px rgba(15,23,42,.035);min-width:0}
-#kelolaDataSection .manage-toolbar{padding:clamp(16px,2.5vw,28px);padding-bottom:14px}
-#kelolaDataSection .section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-#kelolaDataSection .section-heading h2{font-size:clamp(1.15rem,2vw,1.55rem);font-weight:750;letter-spacing:-.025em;color:#0f172a;margin:0}
-#kelolaDataSection .manage-tabs{display:flex;gap:5px;align-items:center;overflow-x:auto;scrollbar-width:thin;padding:4px;border-radius:12px;background:#f1f5f9;max-width:100%}
-#kelolaDataSection .manage-tabs button{flex:0 0 auto;border:0;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:650;color:#475569;background:transparent;white-space:nowrap;min-height:42px;transition:background .15s,color .15s}
-#kelolaDataSection .manage-tabs button[aria-pressed="true"]{background:#fff;color:#0f766e;box-shadow:0 1px 5px rgba(15,23,42,.12)}
-#kelolaDataSection .manage-search-row{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:18px 0 14px}
-#kelolaDataSection .manage-search-row label{flex:1 1 280px;max-width:520px}
-#kelolaDataSection .manage-search-row input,#kelolaDataSection .detail-filter-grid select{min-height:44px;border-radius:11px;border:1px solid #cbd5e1;background:#fff;width:100%;font-size:14px;padding:10px 12px;outline-offset:2px}
-#kelolaDataSection #manageRecordInfo{font-size:12px;color:#64748b;white-space:nowrap;padding-bottom:9px}
-#kelolaDataSection .detail-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-#kelolaDataSection .field-label{font-size:12px;font-weight:650;color:#475569;min-width:0}
-#kelolaDataSection #manageDirectoryTable{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-#kelolaDataSection #manageDirectoryTable table{min-width:570px}
-#kelolaDataSection #manageDirectoryTable th{padding:13px 16px;background:#f8fafc;color:#64748b;font-size:11px;letter-spacing:.04em}
-#kelolaDataSection #manageDirectoryTable td{padding:14px 16px;vertical-align:middle;overflow-wrap:anywhere}
-#kelolaDataSection #manageDirectoryTable tbody tr:hover{background:#f8fafc}
-#kelolaDataSection #manageDirectoryPagination{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-#kelolaDataSection #manageDirectoryPagination button{min-height:40px;border-radius:10px}
-#manageModal{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
-#manageModal #modalContent{width:min(100%,520px);max-height:min(90dvh,900px);border-radius:18px}
-#manageModal #modalContent input,#manageModal #modalContent select{min-height:44px}
-@media(max-width:720px){
-#kelolaDataSection{border-radius:15px}
-#kelolaDataSection .manage-toolbar{padding:15px 12px 12px}
-#kelolaDataSection .section-heading{align-items:stretch;gap:12px;margin-bottom:14px}
-#kelolaDataSection .section-heading>div{flex:1 1 100%}
-#kelolaDataSection #manageAddBtn{width:100%;min-height:44px;justify-content:center;text-align:center}
-#kelolaDataSection .manage-tabs{margin:0 -2px;padding:4px}
-#kelolaDataSection .manage-tabs button{padding:10px 13px}
-#kelolaDataSection .manage-search-row{margin:14px 0 12px;align-items:center}
-#kelolaDataSection .manage-search-row label{flex-basis:100%;max-width:none}
-#kelolaDataSection #manageRecordInfo{padding:0}
-#kelolaDataSection .detail-filter-grid{grid-template-columns:1fr;gap:10px}
-#kelolaDataSection #manageDirectoryTable{padding:0 10px 4px;overflow-x:visible}
-#kelolaDataSection #manageDirectoryTable table{min-width:0;display:block;width:100%}
-#kelolaDataSection #manageDirectoryTable thead{display:none}
-#kelolaDataSection #manageDirectoryTable tbody{display:grid;gap:10px;width:100%}
-#kelolaDataSection #manageDirectoryTable tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px;border:1px solid #e2e8f0;border-radius:13px;background:#fff}
-#kelolaDataSection #manageDirectoryTable tbody td{display:block;padding:0;min-width:0;font-size:13px;flex:1 1 42%;border:0}
-#kelolaDataSection #manageDirectoryTable tbody td:first-child{flex:0 0 24px;color:#94a3b8;font-size:12px}
-#kelolaDataSection #manageDirectoryTable tbody td:nth-child(2){flex:1 1 calc(100% - 40px);font-weight:650;color:#0f172a}
-#kelolaDataSection #manageDirectoryTable tbody td:last-child{flex:1 1 100%;display:flex;justify-content:flex-end;gap:8px;padding-top:7px;border-top:1px solid #f1f5f9}
-#kelolaDataSection #manageDirectoryTable tbody td[colspan]{flex:1 1 100%;text-align:center}
-#kelolaDataSection #manageDirectoryPagination{justify-content:center;padding:12px 8px;gap:8px}
-#kelolaDataSection #manageDirectoryPagination button{flex:0 1 auto}
-#manageModal #modalContent{max-height:calc(100dvh - 24px);border-radius:14px}
+<style id="gm-manage-redesign-20261022">
+/* Kelola Data: tabel untuk desktop, kartu khusus untuk mobile. */
+#kelolaDataSection{width:100%;min-width:0;overflow:hidden;border:1px solid #dce8e3;border-radius:20px;background:#fff;box-shadow:0 8px 28px rgba(22,64,49,.045)}
+#kelolaDataSection .manage-toolbar{padding:clamp(16px,2.4vw,28px);background:#fff;border-bottom:1px solid #e8eeeb}
+#kelolaDataSection .section-heading{display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:16px;flex-wrap:wrap}
+#kelolaDataSection .section-heading h2{margin:0;color:#163e33;font-weight:750;font-size:clamp(19px,2.1vw,25px);line-height:1.35;letter-spacing:-.025em}
+#kelolaDataSection #manageAddBtn{min-height:43px;padding:10px 18px;border-radius:11px;font-size:13px;background:#216454;color:white;white-space:nowrap}
+#kelolaDataSection #manageAddBtn[hidden]{display:none!important}
+#kelolaDataSection .manage-tabs{display:flex;flex-wrap:nowrap;gap:5px;width:max-content;max-width:100%;margin:20px 0 0;padding:4px;background:#eef5f0;border:1px solid #e2ebe4;border-radius:13px;overflow-x:auto;scrollbar-width:thin}
+#kelolaDataSection .manage-tabs button{flex:0 0 auto;min-height:42px;padding:10px 17px;border:0;border-radius:10px;font-size:13px;font-weight:650;white-space:nowrap;color:#536e5d;background:transparent}
+#kelolaDataSection .manage-tabs button[aria-pressed="true"]{background:#fff;color:#176246;box-shadow:0 2px 7px rgba(15,65,48,.1)}
+#kelolaDataSection .manage-search-row{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 0}
+#kelolaDataSection .manage-search-row>.field-label{flex:1 1 270px;max-width:580px}
+#kelolaDataSection .field-label{min-width:0;gap:7px;color:#4d685a;font-weight:600;font-size:12px;line-height:1.4}
+#kelolaDataSection .field-label :is(input,select){width:100%;min-width:0;min-height:44px;padding:10px 12px;background:#fff;border:1px solid #cadad0;border-radius:11px;color:#214638;font-size:13px;line-height:1.4}
+#kelolaDataSection .field-label :is(input,select):focus-visible{outline:2px solid #35866a;outline-offset:1px}
+#kelolaDataSection #manageRecordInfo{display:inline-flex;align-items:center;padding:9px 12px;border:0;border-radius:9px;background:#eef6ef;color:#37624b;font-size:12px;font-weight:600;white-space:nowrap}
+#kelolaDataSection .detail-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:15px}
+#kelolaDataSection #manageDirectoryTable{width:100%;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#kelolaDataSection #manageDirectoryTable table{width:100%;min-width:610px;border-collapse:collapse;table-layout:auto}
+#kelolaDataSection #manageDirectoryTable th{padding:15px 14px;font-size:11px;letter-spacing:.025em;color:#567264;background:#f4f8f5}
+#kelolaDataSection #manageDirectoryTable td{padding:13px 14px;font-size:12px;vertical-align:middle;overflow-wrap:anywhere}
+#kelolaDataSection #manageDirectoryTable tbody tr:not(.gm-manage-class-row):hover{background:#f8fbf8}
+#kelolaDataSection #manageDirectoryTable .gm-manage-class-row td{font-size:12px;font-weight:650;background:#eff5f1}
+#kelolaDataSection #manageDirectoryPagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;padding:14px 18px;background:#fff}
+#kelolaDataSection #manageDirectoryPagination button{min-height:42px;border-radius:11px;font-size:12px}
+#kelolaDataSection #manageDirectoryPagination span{font-size:12px;white-space:nowrap}
+#kelolaDataSection #manageMobileCards{display:none}
+#kelolaDataSection [hidden],#pwaProfileInstallSlot [hidden]{display:none!important}
+#manageModal{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));overscroll-behavior:contain}
+#manageModal #modalContent{width:min(100%,540px);max-height:calc(100dvh - 24px)!important;border-radius:18px;background:#fff;overscroll-behavior:contain}
+#manageModal #modalContent>div:first-child{position:sticky;top:0;z-index:2;background:#fff;padding:18px 22px;border-bottom:1px solid #e6ede7}
+#manageModal #modalTitle{font-size:18px;font-weight:700;color:#214b37}
+#manageModal #manageForm{padding:20px 22px}
+#manageModal #formFields{display:grid;gap:15px}
+#manageModal #formFields>div{min-width:0}
+#manageModal #formFields label{font-size:12px;line-height:1.5;font-weight:650;letter-spacing:0;text-transform:none;color:#405d4d}
+#manageModal #formFields :is(input,select){width:100%;min-height:44px;margin-top:7px;border-radius:10px;border-color:#cbdcd2;background:#fff;font-size:13px}
+#manageModal #formFields p{line-height:1.5}
+#manageModal .gm-manage-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:14px;margin-top:18px}
+#manageModal .gm-manage-modal-actions button{min-height:44px;min-width:0;margin:0;border-radius:10px;font-size:13px}
+#manageModal #submitBtn{background:#216454;color:#fff}
+#pwaProfileInstallSlot{margin:0 0 14px;min-height:0}
+#pwaProfileInstallSlot .pwa-install-chip{position:static;display:inline-flex;margin:0;box-shadow:none;border-radius:10px;min-height:44px;background:#edf6f0;color:#1d634a;border:1px solid #cbded3}
+@media(max-width:900px) and (min-width:641px){
+#kelolaDataSection .detail-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#kelolaDataSection .manage-tabs{max-width:100%}
 }
-@media(max-width:360px){#kelolaDataSection .manage-tabs button{font-size:12px;padding:9px 11px}#kelolaDataSection #manageDirectoryPagination{font-size:11px}}
+@media(max-width:640px){
+#kelolaDataSection{border-radius:14px}
+#kelolaDataSection .manage-toolbar{padding:16px 12px 14px}
+#kelolaDataSection .section-heading{display:flex;flex-direction:row;align-items:center;gap:10px;margin:0}
+#kelolaDataSection .section-heading>div{flex:1 1 150px}
+#kelolaDataSection .section-heading h2{font-size:19px}
+#kelolaDataSection #manageAddBtn{flex:0 0 auto;width:auto;min-width:104px;padding:10px 12px;font-size:12px}
+#kelolaDataSection .manage-tabs{margin:14px 0 0;width:100%;max-width:100%;gap:3px;padding:4px}
+#kelolaDataSection .manage-tabs button{flex:1 0 auto;min-height:42px;padding:10px 12px;font-size:12px}
+#kelolaDataSection .manage-search-row{margin:14px 0 0;align-items:center;gap:9px}
+#kelolaDataSection .manage-search-row>.field-label{flex:1 1 100%;max-width:none}
+#kelolaDataSection #manageRecordInfo{padding:6px 10px;font-size:11px}
+#kelolaDataSection .detail-filter-grid{grid-template-columns:1fr;gap:9px;margin-top:13px}
+#kelolaDataSection #manageDirectoryTable{display:none!important}
+#kelolaDataSection #manageMobileCards{display:grid;gap:10px;padding:12px;background:#f8fbf9}
+#kelolaDataSection .gm-directory-card{min-width:0;padding:15px;background:#fff;border:1px solid #dfe9e2;border-radius:14px;box-shadow:0 2px 9px rgba(12,55,34,.035)}
+#kelolaDataSection .gm-directory-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
+#kelolaDataSection .gm-directory-number{font-size:11px;font-weight:650;color:#80958a}
+#kelolaDataSection .gm-directory-kind{display:inline-flex;align-items:center;min-height:25px;border-radius:7px;padding:4px 9px;background:#eef6ef;color:#2a694d;font-size:11px;font-weight:650}
+#kelolaDataSection .gm-directory-student-name,#kelolaDataSection .gm-directory-person-name h3{margin:0;color:#173d30;font-size:14px;line-height:1.5;font-weight:750;overflow-wrap:anywhere}
+#kelolaDataSection .gm-directory-details{display:grid;gap:9px;margin:12px 0 0}
+#kelolaDataSection .gm-directory-details>div{display:grid;grid-template-columns:63px minmax(0,1fr);column-gap:10px;align-items:start}
+#kelolaDataSection .gm-directory-details dt{color:#72877a;font-size:11px;font-weight:600}
+#kelolaDataSection .gm-directory-details dd{margin:0;color:#3a5545;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+#kelolaDataSection .gm-directory-person{display:flex;gap:12px;align-items:center;min-width:0}
+#kelolaDataSection .gm-directory-person-name{min-width:0}
+#kelolaDataSection .gm-directory-card-subtitle{margin-top:3px;color:#718476;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+#kelolaDataSection .gm-directory-photo{flex:0 0 44px;width:44px;height:44px;object-fit:cover;border-radius:50%;border:1px solid #dce5df}
+#kelolaDataSection .gm-directory-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-top:12px;margin-top:13px;border-top:1px solid #edf2ed}
+#kelolaDataSection .gm-directory-action{display:inline-flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:44px;border:1px solid #d4e3da;border-radius:10px;background:#f8fbf9;color:#20654d;font-size:12px;font-weight:700;cursor:pointer}
+#kelolaDataSection .gm-directory-action--remove{border-color:#f1d4d4;background:#fffafa;color:#b44646}
+#kelolaDataSection .gm-directory-card-actions>.gm-directory-action:only-child{grid-column:1/-1}
+#kelolaDataSection .gm-directory-empty{padding:30px 12px;text-align:center;color:#758a7a;font-size:13px}
+#kelolaDataSection #manageDirectoryPagination{justify-content:center;gap:7px;padding:13px 8px}
+#kelolaDataSection #manageDirectoryPagination button{min-height:42px;padding:8px 11px}
+#manageModal #modalContent{border-radius:15px}
+#manageModal #modalContent>div:first-child{padding:16px}
+#manageModal #manageForm{padding:16px}
+}
+@media(max-width:360px){
+#kelolaDataSection .section-heading h2{font-size:17px}
+#kelolaDataSection #manageAddBtn{min-width:94px;padding:9px 10px;font-size:11px}
+#kelolaDataSection .gm-directory-card{padding:12px}
+#kelolaDataSection .manage-tabs button{padding:9px 10px}
+}
+@media(prefers-reduced-motion:reduce){#kelolaDataSection *,#manageModal *{transition:none!important}}
 </style>
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="coordinator">
@@ -406,7 +448,7 @@
                 <div class="section-heading"><div><h2>Kelola Data</h2></div><button type="button" id="manageAddBtn" onclick="openManageModal()" class="primary-action">Tambah Data Baru</button></div>
                 <div class="manage-tabs" aria-label="Jenis data"><button type="button" onclick="switchManageTab('siswa')" id="tab-siswa" aria-pressed="true">Siswa</button><button type="button" onclick="switchManageTab('guru-tahsin')" id="tab-guru-tahsin" aria-pressed="false">Guru Tahsin</button><button type="button" onclick="switchManageTab('guru-tahfidz')" id="tab-guru-tahfidz" aria-pressed="false">Guru Tahfidz</button><button type="button" onclick="switchManageTab('impor')" id="tab-impor" aria-pressed="false" hidden>Impor Siswa</button></div>
                 <div id="manageDirectoryView">
-                <div class="manage-search-row"><label for="manageSearch" class="field-label">Cari data<input id="manageSearch" type="search" placeholder="Nama siswa, guru, atau kelas..." autocomplete="off"></label><span id="manageRecordInfo" aria-live="polite">0 data</span></div>
+                <div class="manage-search-row"><label for="manageSearch" class="field-label">Cari data<input id="manageSearch" type="search" placeholder="Cari nama, guru, atau kelas..." autocomplete="off"></label><span id="manageRecordInfo" aria-live="polite">0 data</span></div>
                 <div id="studentManageFilters" class="detail-filter-grid">
                     <label class="field-label" for="manageLevelFilter">Tingkat kelas<select id="manageLevelFilter"><option value="">Pilih tingkat kelas dahulu</option></select></label>
                     <label class="field-label" for="manageStudentFilterMode">Filter berdasarkan<select id="manageStudentFilterMode" disabled><option value="">Pilih filter guru atau nama kelas</option><option value="guru">Nama guru</option><option value="kelas">Nama kelas</option></select></label>
@@ -436,6 +478,7 @@
                     </tbody>
                 </table>
              </div>
+             <div id="manageMobileCards" aria-label="Daftar data" hidden></div>
              <div id="manageDirectoryPagination" class="p-4 border-t border-slate-200 flex items-center justify-end gap-3">
                  <button id="managePrevPage" type="button" class="px-3 py-2 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40">Sebelumnya</button>
                  <span id="managePageInfo" class="text-xs font-semibold text-slate-600">Halaman 1</span>
@@ -642,6 +685,7 @@
 <div id="page-profil" class="hidden profile-settings-grid">
 <section class="assessment-controls profile-main-card">
     <div class="profile-section-heading"><div><p class="section-kicker">IDENTITAS AKUN</p><h2>Profil Saya</h2><p>Atur nama yang tampil pada dashboard dan foto profil akun Anda.</p></div></div>
+    <div id="pwaProfileInstallSlot" aria-label="Pemasangan aplikasi"></div>
     <p id="profileFeedback" class="assessment-feedback" role="status" aria-live="polite"></p>
     <div id="profileTeacherCard" class="profile-photo-card">
         <div class="profile-photo-preview" aria-hidden="true"><img id="profilePhotoPreview" alt="" hidden><span id="profilePhotoInitials">A</span></div>
@@ -767,11 +811,11 @@
     <section class="maintenance-preview-card"><p class="section-kicker">RUANG JEDA YANG MENENANGKAN</p><h3>Sejenak menata, untuk kembali lebih baik.</h3><p>Pengunjung akan melihat halaman bernuansa Islami dengan renungan yang berganti otomatis. Saat maintenance dinonaktifkan, halaman absensi dapat digunakan kembali.</p></section>
 </div>
 
-<div id="manageModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+<div id="manageModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="modalContent" style="max-height:90dvh;overflow-y:auto">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-lg font-bold text-slate-800" id="modalTitle">Tambah Data</h3>
-            <button onclick="closeManageModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all">
+            <button onclick="closeManageModal()" aria-label="Tutup formulir" type="button" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -784,7 +828,7 @@
             <div id="formFields" class="space-y-4">
             </div>
 
-            <div class="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+            <div class="gm-manage-modal-actions border-t border-slate-100">
                 <button type="button" onclick="closeManageModal()" class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
                 <button type="submit" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition-all shadow-sm" id="submitBtn">Simpan</button>
             </div>
