@@ -1199,7 +1199,6 @@ async function handleFormSubmit(event) {
             }
             if (!data?.ok) throw new Error(data?.error || 'Pembuatan akun guru belum terkonfirmasi.');
             saved = { ...payload, email: data.email || local + '@harum.com' };
-            AdminNotice.notify('Akun guru dibuat: ' + saved.email + '. Password awal: 1-0.', 'success');
         }
         else if (!teacherTab && AppAccess.full()) {
             const { data, error } = await supabase.rpc('gm_create_student_master', {
@@ -1232,6 +1231,9 @@ async function handleFormSubmit(event) {
             studentsData = await getStudents();
         closeManageModal();
         renderManageTable();
+        if (teacherTab && !id && AppAccess.full()) {
+            AdminNotice.notify('Akun guru berhasil dibuat. Email: ' + saved.email + ' | Password awal: 1-0. Guru wajib menggantinya setelah login.', 'success');
+        }
         if (identifierAuditLoaded && AppAccess.full() && !teacherTab) await checkMissingStudentIdentifiers();
         if (!(teacherTab && !id && AppAccess.full())) AdminNotice.notify('Data berhasil disimpan.', 'success');
     }
