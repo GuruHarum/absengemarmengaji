@@ -1082,21 +1082,33 @@ function refreshStudentManageFilters() {
 function renderManageTable() {
     const header = document.getElementById('manageTableHeader');
     const body = document.getElementById('manageTableBody');
-    if (!header || !body)
-        return;
+    if (!header || !body) return;
     const importTab = currentManageTab === 'impor';
-    document.getElementById('manageDirectoryView').hidden = importTab;
-    document.getElementById('manageDirectoryTable').hidden = importTab;
-    document.getElementById('manageDirectoryPagination').hidden = importTab;
-    document.getElementById('manageImportView').hidden = !importTab;
+    const accountTab = currentManageTab === 'akun-guru';
+    const directory = document.getElementById('manageDirectoryView');
+    const table = document.getElementById('manageDirectoryTable');
+    const pagination = document.getElementById('manageDirectoryPagination');
+    const importView = document.getElementById('manageImportView');
+    const accountView = document.getElementById('manageAccountView');
     const mobileCards = document.getElementById('manageMobileCards');
-    if (mobileCards) mobileCards.hidden = importTab;
-    document.getElementById('tab-impor').hidden = !AppAccess.full();
+    if (directory) directory.hidden = importTab || accountTab;
+    if (table) table.hidden = importTab || accountTab;
+    if (pagination) pagination.hidden = importTab || accountTab;
+    if (importView) importView.hidden = !importTab;
+    if (accountView) accountView.hidden = !accountTab;
+    if (mobileCards) mobileCards.hidden = importTab || accountTab;
+
     const addButton = document.getElementById('manageAddBtn');
-    addButton.hidden = importTab || (AppAccess.teacher() && currentManageTab === 'guru');
-    addButton.textContent = currentManageTab === 'guru' ? 'Tambah Guru' : 'Tambah Siswa';
+    if (addButton) {
+        addButton.hidden = importTab || (currentManageView === 'teachers' && !AppAccess.full());
+        addButton.textContent = currentManageView === 'teachers' ? 'Tambah Guru' : 'Tambah Siswa';
+    }
     document.getElementById('manageIdentifierActions').hidden = !(AppAccess.full() && currentManageTab === 'siswa');
     document.getElementById('manageIdentifierAudit').hidden = !(identifierAuditLoaded && AppAccess.full() && currentManageTab === 'siswa');
+    if (accountTab) {
+        renderManageTeacherAccounts();
+        return;
+    }
     refreshManageImportControls();
     if (importTab) return;
     refreshStudentManageFilters();
