@@ -1,12 +1,13 @@
 (() => {
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'log56';
+    const BUILD = 'auto-update-20261022';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;
     let reloading = false;
     let updateCheckTimer = null;
+    let pendingSafeReload = false;
     let onlineToastTimer = null;
 
     const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -129,41 +130,27 @@
     }
 
     function activateWaitingSilently() {
-        if (!waitingWorker || !standalone() || dirty()) return false;
+        if (!waitingWorker || dirty() || document.querySelector('input:focus, textarea:focus, select:focus')) return false;
         reloading = true;
         waitingWorker.postMessage({ type: 'ACTIVATE' });
         return true;
     }
 
+    // Pembaruan tidak lagi meminta interaksi pengguna. Jika ada pekerjaan belum
+    // tersimpan atau pengguna sedang mengetik, aktivasi ditunda sampai aman.
     function showUpdate() {
         if (!waitingWorker) return;
-        if (standalone()) { activateWaitingSilently(); return; }
-        showNotice(
-            'Pembaruan tersedia',
-            'Versi terbaru Gemar Mengaji sudah siap digunakan.',
-            [
-                {
-                    label: 'Perbarui sekarang',
-                    primary: true,
-                    action: () => {
-                        if (dirty()) {
-                            showNotice(
-                                'Selesaikan perubahan dulu',
-                                'Simpan nilai atau pekerjaan yang sedang diedit, lalu perbarui aplikasi.',
-                                [
-                                    { label: 'Nanti', action: hideNotice },
-                                    { label: 'Coba lagi', primary: true, action: showUpdate }
-                                ]
-                            );
-                            return;
-                        }
-                        reloading = true;
-                        waitingWorker.postMessage({ type: 'ACTIVATE' });
-                    }
-                },
-                { label: 'Nanti', action: hideNotice }
-            ]
-        );
+        activateWaitingSilently();
+    }
+
+    function completePendingUpdate() {
+        if (dirty() || document.querySelector('input:focus, textarea:focus, select:focus')) return;
+        if (pendingSafeReload) {
+            pendingSafeReload = false;
+            location.reload();
+        } else if (waitingWorker) {
+            activateWaitingSilently();
+        }
     }
 
     function updateInstallVisibility() {
@@ -182,6 +169,7 @@
     function scheduleUpdateChecks() {
         clearInterval(updateCheckTimer);
         updateCheckTimer = setInterval(checkForUpdate, 30 * 60 * 1000);
+        setInterval(completePendingUpdate, 5000);
     }
 
     function setConnectionState() {
@@ -239,12 +227,14 @@
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             updateToolsVisibility();
-            if (!activateWaitingSilently()) void checkForUpdate();
+            completePendingUpdate();
+            void checkForUpdate();
         }
     });
     window.addEventListener('focus', () => {
         updateToolsVisibility();
-        if (!activateWaitingSilently()) void checkForUpdate();
+        completePendingUpdate();
+        void checkForUpdate();
     });
     window.addEventListener('pageshow', () => {
         updateInstallVisibility();
@@ -254,20 +244,12 @@
     });
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloading) {
-            location.reload();
+        waitingWorker = null;
+        if (dirty() || document.querySelector('input:focus, textarea:focus, select:focus')) {
+            pendingSafeReload = true;
             return;
         }
-        if (!dirty()) {
-            showNotice(
-                'Aplikasi sudah diperbarui',
-                'Muat ulang untuk menggunakan versi terbaru.',
-                [
-                    { label: 'Nanti', action: hideNotice },
-                    { label: 'Muat ulang', primary: true, action: () => { if (!dirty()) location.reload(); } }
-                ]
-            );
-        }
+        location.reload();
     });
 
     navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
