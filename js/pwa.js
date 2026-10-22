@@ -1,7 +1,7 @@
 (() => {
     if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
-    const BUILD = 'auto-update-20261022';
+    const BUILD = 'auto-update-20261022-manage-redesign';
     let pendingInstall = null;
     let waitingWorker = null;
     let registration = null;
@@ -50,6 +50,11 @@
 
     tools.append(installButton, connection, notice);
     document.body.append(tools);
+
+    // Di panel admin/guru, tempatkan instalasi di Profil, bukan tombol
+    // melayang yang menutup Edit/Hapus pada Kelola Data di layar kecil.
+    const profileInstallSlot = document.getElementById('pwaProfileInstallSlot');
+    if (profileInstallSlot) profileInstallSlot.append(installButton);
 
     // REV52: pada aplikasi yang sudah terpasang (standalone/PWA), kontrol PWA
     // tidak ditampilkan agar tidak menutupi antarmuka. Service worker tetap aktif
