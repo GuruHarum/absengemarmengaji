@@ -2,12 +2,25 @@ window.AccountProfile = (() => {
     const el = id => document.getElementById(id);
     let selectedPhoto = null;
     let previewUrl = null;
+    let savedUsername = '';
+    let usernameBusy = false;
 
-    const message = (text, error = false) => {
-        const target = el('profileFeedback');
-        if (!target) return;
-        target.dataset.feedbackError = String(error);
-        target.textContent = text;
+    const message = (text, error = false, feedbackId = 'profileFeedback') => {
+        const main = el('profileFeedback');
+        if (main) {
+            main.dataset.feedbackError = String(error);
+            main.textContent = text;
+            // Pertahankan status global untuk kompatibilitas, tampilkan pesan aksi di dekat formulir.
+            main.hidden = feedbackId !== 'profileFeedback';
+        }
+        if (feedbackId !== 'profileFeedback') {
+            const local = el(feedbackId);
+            if (local) {
+                local.dataset.feedbackError = String(error);
+                local.textContent = text;
+                local.hidden = !text;
+            }
+        }
     };
 
     const clean = value => String(value || '').trim();
@@ -83,6 +96,16 @@ window.AccountProfile = (() => {
         if (input) input.value = '';
     }
 
+    function renderUsernameActions() {
+        const remove = el('profileUsernameRemove');
+        const save = el('profileUsernameSave');
+        if (remove) {
+            remove.hidden = !savedUsername;
+            remove.disabled = usernameBusy;
+        }
+        if (save) save.disabled = usernameBusy;
+    }
+
     async function refreshTeacher() {
         if (!AppAccess.profile?.teacher_id) return null;
         const row = await AppAccess.loadTeacherProfile();
@@ -93,6 +116,13 @@ window.AccountProfile = (() => {
 
     async function open() {
         try {
+            for (const id of ['profilePhotoFeedback', 'profileIdentityFeedback', 'profileUsernameFeedback', 'profilePasswordFeedback']) {
+                const feedback = el(id);
+                if (feedback) {
+                    feedback.hidden = true;
+                    feedback.textContent = '';
+                }
+            }
             const { data, error } = await supabase.auth.getUser();
             if (error || !data.user)
                 throw error || new Error('Silakan masuk kembali.');
@@ -101,7 +131,14 @@ window.AccountProfile = (() => {
             el('profileEmail').value = data.user.email || '';
             if (el('profileUsername')) {
                 const { data: username, error: usernameError } = await supabase.rpc('gm_my_login_username');
-                if (!usernameError) el('profileUsername').value = username || '';
+                if (!usernameError) {
+                    savedUsername = clean(username);
+                    el('profileUsername').value = savedUsername;
+                } else {
+                    savedUsername = '';
+                    el('profileUsername').value = '';
+                }
+                renderUsernameActions();
             }
             el('profileName').value = AppAccess.profile.displayName || '';
             clearPreview();
@@ -118,17 +155,26 @@ window.AccountProfile = (() => {
         }
     }
 
-    async function submit(form, action) {
+    async function submit(form, action, feedbackId = 'profileFeedback') {
         const button = form.querySelector('button[type="submit"]');
+        if (button?.disabled || (form.id === 'profileUsernameForm' && usernameBusy)) return;
         if (button) button.disabled = true;
+        if (form.id === 'profileUsernameForm') {
+            usernameBusy = true;
+            renderUsernameActions();
+        }
         try {
             await action();
         }
         catch (error) {
-            message(error.message || 'Gagal memperbarui akun.', true);
+            message(error.message || 'Gagal memperbarui akun.', true, feedbackId);
         }
         finally {
             if (button) button.disabled = false;
+            if (form.id === 'profileUsernameForm') {
+                usernameBusy = false;
+                renderUsernameActions();
+            }
         }
     }
 
@@ -161,18 +207,18 @@ window.AccountProfile = (() => {
 
     async function savePhoto() {
         const teacher = currentTeacherRecord();
-        if (!teacher) return message('Akun belum tertaut dengan data guru.', true);
-        if (!selectedPhoto) return message('Pilih foto terlebih dahulu.', true);
+        if (!teacher) return message('Akun belum tertaut dengan data guru.', true, 'profilePhotoFeedback');
+        if (!selectedPhoto) return message('Pilih foto terlebih dahulu.', true, 'profilePhotoFeedback');
         const button = el('profilePhotoSave');
         if (button) button.disabled = true;
         try {
             const saved = await TeacherPhoto.save(teacher, selectedPhoto);
             clearPreview();
             updateTeacherState(saved);
-            message('Foto profil berhasil diperbarui.');
+            message('Foto profil berhasil diperbarui.', false, 'profilePhotoFeedback');
         }
         catch (error) {
-            message(error.message || 'Foto profil gagal diperbarui.', true);
+            message(error.message || 'Foto profil gagal diperbarui.', true, 'profilePhotoFeedback');
         }
         finally {
             renderPhotoProfile();
@@ -182,16 +228,21 @@ window.AccountProfile = (() => {
     async function removePhoto() {
         const teacher = currentTeacherRecord();
         if (!teacher?.foto) return;
+        const question = 'Hapus foto profil ini? Foto yang tersimpan akan dihapus dan avatar kembali memakai inisial.';
+        const approved = window.AdminNotice?.confirm
+            ? await window.AdminNotice.confirm(question)
+            : await window.confirm?.(question);
+        if (!approved) return;
         const button = el('profilePhotoRemove');
         if (button) button.disabled = true;
         try {
             const saved = await TeacherPhoto.remove(teacher);
             clearPreview();
             updateTeacherState(saved);
-            message('Foto profil dihapus.');
+            message('Foto profil berhasil dihapus.', false, 'profilePhotoFeedback');
         }
         catch (error) {
-            message(error.message || 'Foto profil gagal dihapus.', true);
+            message(error.message || 'Foto profil gagal dihapus.', true, 'profilePhotoFeedback');
         }
         finally {
             if (button) button.disabled = false;
@@ -262,6 +313,7 @@ window.AccountProfile = (() => {
     ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
         setupHeader();
         renderPhotoProfile();
+        renderUsernameActions();
 
         el('profilePhotoFile')?.addEventListener('change', event => {
             const file = event.target.files?.[0];
@@ -274,15 +326,15 @@ window.AccountProfile = (() => {
                 TeacherPhoto.validate(file);
             }
             catch (error) {
-                event.target.value = '';
-                selectedPhoto = null;
-                return message(error.message, true);
+                clearPreview();
+                renderPhotoProfile();
+                return message(error.message, true, 'profilePhotoFeedback');
             }
             if (previewUrl) URL.revokeObjectURL(previewUrl);
             selectedPhoto = file;
             previewUrl = URL.createObjectURL(file);
             renderPhotoProfile();
-            message('Foto siap disimpan.');
+            message('Foto siap disimpan.', false, 'profilePhotoFeedback');
         });
         el('profilePhotoSave')?.addEventListener('click', savePhoto);
         el('profilePhotoRemove')?.addEventListener('click', removePhoto);
@@ -296,19 +348,45 @@ window.AccountProfile = (() => {
                 AppAccess.profile.displayName = name;
                 renderHeader();
                 window.GMUpgrade?.refreshIdentity?.();
-                message('Nama profil disimpan.');
-            });
+                message('Nama profil disimpan.', false, 'profileIdentityFeedback');
+            }, 'profileIdentityFeedback');
         });
 
         el('profileUsernameForm')?.addEventListener('submit', event => {
             event.preventDefault();
             return submit(event.target, async () => {
                 const username = el('profileUsername').value.trim().toLowerCase();
+                if (!username) throw new Error('Untuk menghapus username yang tersimpan, gunakan tombol Hapus Username.');
                 const { data, error } = await supabase.rpc('gm_set_login_username', { new_username: username });
                 if (error) throw error;
-                el('profileUsername').value = data;
-                message('Username berhasil disimpan. Login berikutnya dapat memakai username atau email.');
-            });
+                savedUsername = data || '';
+                el('profileUsername').value = savedUsername;
+                renderUsernameActions();
+                message('Username berhasil disimpan. Login berikutnya dapat memakai username atau email.', false, 'profileUsernameFeedback');
+            }, 'profileUsernameFeedback');
+        });
+        el('profileUsernameRemove')?.addEventListener('click', async () => {
+            if (!savedUsername || usernameBusy) return;
+            const question = 'Hapus username login? Setelah dihapus, Anda tetap dapat masuk menggunakan email dan password akun.';
+            const approved = window.AdminNotice?.confirm
+                ? await window.AdminNotice.confirm(question)
+                : await window.confirm?.(question);
+            if (!approved) return;
+            usernameBusy = true;
+            renderUsernameActions();
+            try {
+                const { data, error } = await supabase.rpc('gm_set_login_username', { new_username: '' });
+                if (error) throw error;
+                if (data !== '') throw new Error('Penghapusan username belum terkonfirmasi.');
+                savedUsername = '';
+                el('profileUsername').value = '';
+                message('Username berhasil dihapus. Login menggunakan email tetap tersedia.', false, 'profileUsernameFeedback');
+            } catch (error) {
+                message(error.message || 'Username belum dapat dihapus.', true, 'profileUsernameFeedback');
+            } finally {
+                usernameBusy = false;
+                renderUsernameActions();
+            }
         });
         el('passwordForm')?.addEventListener('submit', event => {
             event.preventDefault();
@@ -323,8 +401,8 @@ window.AccountProfile = (() => {
                 if (error) throw error;
                 event.target.reset();
                 AppAccess.profile.temporaryPassword = false;
-                message('Password berhasil diubah. Gunakan password baru saat masuk berikutnya.');
-            });
+                message('Password berhasil diubah. Gunakan password baru saat masuk berikutnya.', false, 'profilePasswordFeedback');
+            }, 'profilePasswordFeedback');
         });
 
         el('profileReauthenticate')?.addEventListener('click', async event => {
@@ -332,10 +410,10 @@ window.AccountProfile = (() => {
             try {
                 const { error } = await supabase.auth.reauthenticate();
                 if (error) throw error;
-                message('Kode verifikasi dikirim ke kontak akun Anda. Masukkan kode, lalu ubah password.');
+                message('Kode verifikasi dikirim ke kontak akun Anda. Masukkan kode, lalu ubah password.', false, 'profilePasswordFeedback');
             }
             catch (error) {
-                message(error.message, true);
+                message(error.message, true, 'profilePasswordFeedback');
             }
             finally {
                 event.target.disabled = false;
