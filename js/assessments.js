@@ -551,42 +551,70 @@ window.PeriodicAssessments = (() => {
     function clipboardPlan(text) {
         const matrix = parseClipboard(text);
         const targets = visible();
-        if (!matrix.length) return { rows: [], errors: ['Clipboard kosong.'] };
+        const errors = [], rows = [];
+        if (!matrix.length) return { rows, errors: ['Clipboard kosong.'] };
+        if (matrix.length > 1000) return { rows, errors: ['Maksimal 1000 baris sekali tempel.'] };
         const keys = scoreKeysForSubject(state.context?.subject);
-        const byName = new Map(targets.map(student => [normalizeStudentName(student['nama siswa']), student]));
-        const firstLooksNumeric = matrix[0].every((cell, idx) => idx >= keys.length || cell === '' || !Number.isNaN(Number(String(cell).replace(',', '.'))));
-        const rows = [], errors = [];
-        matrix.forEach((cells, rowIndex) => {
-            let student, values;
-            const first = cells[0] || '';
-            const firstNumber = Number(String(first).replace(',', '.'));
-            const hasName = Number.isNaN(firstNumber) || cells.length > keys.length;
-            if (hasName) {
-                student = byName.get(normalizeStudentName(first));
+        const byName = new Map(), byId = new Map(targets.map(student => [String(student.id), student]));
+        for (const student of targets) {
+            const key = normalizeStudentName(student['nama siswa']);
+            byName.set(key, [...(byName.get(key) || []), student]);
+        }
+        const used = new Set();
+        matrix.forEach((cells, index) => {
+            const first = String(cells[0] || '').trim();
+            const number = Number(first.replace(',', '.'));
+            const hasIdentity = !first || !Number.isFinite(number) || cells.length > keys.length;
+            let student, values = cells;
+            if (hasIdentity) {
+                const idMatch = first.match(/^(?:#|ID\s*[:#]\s*)(\d+)$/i);
+                const matchingId = idMatch ? idMatch[1] : (/^\d+$/.test(first) ? first : null);
+                if (matchingId && byId.has(matchingId)) {
+                    student = byId.get(matchingId);
+                } else {
+                    const matches = byName.get(normalizeStudentName(first)) || [];
+                    if (matches.length > 1) {
+                        errors.push(`Baris ${index + 1}: nama "${first}" ditemukan lebih dari sekali. Gunakan ID siswa (#ID).`);
+                        return;
+                    }
+                    student = matches[0];
+                }
                 values = cells.slice(1);
-                if (!student) { errors.push(`Baris ${rowIndex + 1}: nama "${first}" tidak ditemukan pada kelas yang tampil.`); return; }
+                if (!student) {
+                    errors.push(`Baris ${index + 1}: siswa "${first}" tidak ditemukan pada tingkat dan filter saat ini.`);
+                    return;
+                }
             } else {
-                student = targets[rowIndex];
-                values = cells;
-                if (!student) { errors.push(`Baris ${rowIndex + 1}: jumlah baris melebihi siswa yang tampil.`); return; }
+                student = targets[index];
+                if (!student) {
+                    errors.push(`Baris ${index + 1}: jumlah baris melebihi hasil filter siswa.`);
+                    return;
+                }
             }
+            if (used.has(String(student.id))) {
+                errors.push(`Baris ${index + 1}: siswa "${student['nama siswa']}" terulang dalam data tempelan.`);
+                return;
+            }
+            used.add(String(student.id));
             const draft = state.drafts.get(String(student.id));
-            const applicable = state.context.subject === 'tahsin' && window.ReportCore ? new Set(ReportCore.applicable(draft, 'tahsin').keys) : new Set(keys);
+            const applicable = state.context.subject === 'tahsin' && window.ReportCore
+                ? new Set(ReportCore.applicable(draft, 'tahsin').keys) : new Set(keys);
             const changes = [];
             keys.forEach((field, idx) => {
                 if (!applicable.has(field)) return;
                 const raw = String(values[idx] ?? '').trim();
                 if (raw === '') return;
                 const value = Number(raw.replace(',', '.'));
-                if (!Number.isFinite(value) || value < 0 || value > 100) {
-                    errors.push(`Baris ${rowIndex + 1}: nilai ${raw} tidak valid untuk ${AssessmentData.scores[field]}.`);
+                if (!Number.isFinite(value) || value < 0 || value > 100 || !/^\d{1,3}([.,]\d{1,2})?$/.test(raw)) {
+                    errors.push(`Baris ${index + 1}: nilai "${raw}" tidak valid untuk ${AssessmentData.scores[field]}.`);
                     return;
                 }
                 changes.push({ field, value: String(value) });
             });
             if (changes.length) rows.push({ student, changes });
+            else errors.push(`Baris ${index + 1}: tidak ada nilai yang bisa diterapkan.`);
         });
-        return { rows, errors, matrix, firstLooksNumeric };
+        return { rows, errors };
     }
     function ensurePasteDialog() {
         let dialog = el('assessmentPasteDialog');
@@ -597,7 +625,7 @@ window.PeriodicAssessments = (() => {
         dialog.innerHTML = `<div class="assessment-paste-shell">
             <header><h3>Tempel nilai dari Excel</h3><p>Salin sel nilai dari Excel lalu tempel di bawah. Bisa memakai urutan siswa yang sedang tampil, atau sertakan nama siswa di kolom pertama. Fitur ini hanya mengisi angka nilai dan tidak mengubah capaian akhir.</p></header>
             <textarea id="assessmentPasteText" spellcheck="false" placeholder="Contoh tanpa nama:&#10;85&#9;88&#9;90&#10;80&#9;82&#9;87&#10;&#10;Contoh dengan nama:&#10;Ahmad Fauzan&#9;85&#9;88&#9;90"></textarea>
-            <div id="assessmentPastePreview" class="assessment-paste-preview">Tempel data untuk melihat pratinjau.</div>
+            <div id="assessmentPastePreview" class="assessment-paste-preview">Tempel nilai untuk memeriksa seluruh baris sebelum diterapkan ke draf.</div>
             <div class="assessment-paste-actions"><button id="assessmentPasteCancel" type="button" class="secondary-action">Batal</button><button id="assessmentPasteApply" type="button" class="primary-action" disabled>Terapkan ke Draf</button></div>
         </div>`;
         document.body.append(dialog);
@@ -605,14 +633,24 @@ window.PeriodicAssessments = (() => {
             const plan = clipboardPlan(el('assessmentPasteText').value);
             dialog._gmPlan = plan;
             const preview = el('assessmentPastePreview');
-            preview.innerHTML = `${plan.rows.length ? `<strong>${plan.rows.length} siswa siap diisi.</strong>` : '<strong>Belum ada nilai yang siap diterapkan.</strong>'}
-                ${plan.errors.length ? `<div style="margin-top:6px">${plan.errors.slice(0,8).map(e => `• ${escape(e)}`).join('<br>')}${plan.errors.length > 8 ? `<br>• dan ${plan.errors.length-8} peringatan lain` : ''}</div>` : '<div style="margin-top:6px">Tidak ada masalah yang terdeteksi.</div>'}`;
-            el('assessmentPasteApply').disabled = !plan.rows.length;
+            const examples = plan.rows.slice(0, 8).map(row => escape(row.student['nama siswa']) + ' (' + escape(classLabel(row.student.kelas)) + ')');
+            preview.innerHTML = `${plan.rows.length ? `<strong>${plan.rows.length} siswa terdeteksi.</strong>` : '<strong>Belum ada nilai yang siap diterapkan.</strong>'}
+                ${examples.length ? '<p>Pratinjau: ' + examples.join(' · ') + (plan.rows.length > 8 ? ' · ...' : '') + '</p>' : ''}
+                ${plan.errors.length ? '<strong>' + plan.errors.length + ' kesalahan. Perbaiki seluruhnya sebelum melanjutkan.</strong><div>' +
+                    plan.errors.slice(0, 10).map(e => '• ' + escape(e)).join('<br>') +
+                    (plan.errors.length > 10 ? '<br>• dan ' + (plan.errors.length - 10) + ' kesalahan lain' : '') + '</div>' :
+                    '<p>Semua baris siap diterapkan sebagai draf; belum disimpan ke database.</p>'}`;
+            el('assessmentPasteApply').disabled = !plan.rows.length || plan.errors.length > 0;
+            el('assessmentPasteApply').textContent = plan.errors.length ? 'Perbaiki kesalahan dulu' : `Terapkan ${plan.rows.length} siswa ke draf`;
         };
         el('assessmentPasteText').addEventListener('input', update);
         el('assessmentPasteCancel').addEventListener('click', () => dialog.close());
         el('assessmentPasteApply').addEventListener('click', () => {
-            const plan = dialog._gmPlan || clipboardPlan(el('assessmentPasteText').value);
+            const plan = clipboardPlan(el('assessmentPasteText').value);
+            if (!plan.rows.length || plan.errors.length) {
+                message('Tempelan belum dapat diterapkan karena masih ada kesalahan. Periksa pratinjau.', true);
+                return;
+            }
             for (const row of plan.rows) {
                 const draft = state.drafts.get(String(row.student.id));
                 row.changes.forEach(change => { draft[change.field] = change.value; if (change.field === 'tahfidz_hafalan') draft.tahfidz_aspect_confirmed = 'true'; });
@@ -630,6 +668,7 @@ window.PeriodicAssessments = (() => {
         el('assessmentPasteText').value = '';
         el('assessmentPastePreview').textContent = 'Tempel data untuk melihat pratinjau.';
         el('assessmentPasteApply').disabled = true;
+        el('assessmentPasteApply').textContent = 'Terapkan ke Draf';
         dialog.showModal?.();
         setTimeout(() => el('assessmentPasteText')?.focus(), 50);
     }
