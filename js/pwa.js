@@ -17,6 +17,10 @@
         window.StudentReports?.isBusy?.() ||
         window.PeriodicAssessments?.hasUnsavedChanges?.() ||
         window.ReportSettings?.hasUnsavedChanges?.() ||
+        window.LearningGroups?.hasUnsavedChanges?.('tahsin') ||
+        window.LearningGroups?.hasUnsavedChanges?.('tahfidz') ||
+        window.LearningGroups?.isBusy?.('tahsin') ||
+        window.LearningGroups?.isBusy?.('tahfidz') ||
         (typeof selectedStudentStatus !== 'undefined' && selectedStudentStatus && Object.keys(selectedStudentStatus).length > 0)
     );
 
