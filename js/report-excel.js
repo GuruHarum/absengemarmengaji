@@ -14,9 +14,9 @@ window.ReportExcel = (() => {
     const relationships = 'http://schemas.openxmlformats.org/package/2006/relationships';
     const documentRels = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
-    async function build(rows, { onProgress = () => {} } = {}) {
+    async function build(rows, { onProgress = () => {}, date = null } = {}) {
         // Reuse the Word geometry and fitted text, so report content and coordinates have one owner.
-        const layout = await ReportZip.layout(rows, (n, total, row) => onProgress(n, total, row));
+        const layout = await ReportZip.layout(rows, (n, total, row) => onProgress(n, total, row), {date});
         const files = [], fonts = [], fontIds = new Map(), borders = [], borderIds = new Map(), styles = [], styleIds = new Map();
         const addXml = (name, content) => files.push({ name, bytes: enc.encode('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' + content) });
         function intern(list, ids, key, value) { if (!ids.has(key)) { ids.set(key, list.length); list.push(value); } return ids.get(key); }
