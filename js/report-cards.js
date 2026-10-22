@@ -11,7 +11,7 @@ window.StudentReports = (() => {
     function setBusy(value) {
         busy = value;
         el('reportControls').disabled = value;
-        ['checkMissingScores','downloadReports','downloadReportsExcel','reportDirectPrint','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
+        ['checkMissingScores','downloadReports','downloadReportsExcel','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
         ['reportDownloadMode','reportDownloadClass'].forEach(id => { if (el(id)) el(id).disabled = value; });
         el('reportSelection').disabled = value;
     }
@@ -315,60 +315,6 @@ window.StudentReports = (() => {
         el('reportStudent').value = String(list[Math.max(0, Math.min(list.length - 1, index + amount))].student.id);
         preview();
     }
-    async function directPrint() {
-        if (busy) return;
-        if (!await load(false) || !rows.length) return;
-        let selection;
-        try { selection = downloadSelection(); }
-        catch (error) { tell(error.message); refreshDownloadScope(); return; }
-        const selectedRows = selection.rows;
-        if (window.AdminNotice?.confirm) {
-            const ok = await AdminNotice.confirm(`Cetak langsung ${selection.label}? ${selectedRows.length} halaman rapor final akan disiapkan dan dibuka pada dialog cetak perangkat.`);
-            if (!ok) return;
-        }
-        if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
-            checks();
-            tell(`Belum dapat mencetak ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`);
-            return;
-        }
-        const popup = window.open('', '_blank');
-        if (popup) {
-            popup.document.write('<title>Menyiapkan Rapor</title><p style="font-family:sans-serif;padding:24px">Menyiapkan PDF untuk dicetak…</p>');
-        }
-        downloadStartedAt = Date.now();
-        updatePdfProgress({ visible: true, title: `Menyiapkan cetak ${selection.label}`, total: selectedRows.length });
-        setBusy(true);
-        try {
-            const pdf = await ReportPDF.build(selectedRows, {
-                draft: false,
-                onProgress: (n, total, row) => {
-                    updatePdfProgress({ visible: true, title: 'Menyusun halaman untuk cetak', n, total, row });
-                    tell(`Menyiapkan cetak ${n}/${total} halaman (${Math.round(n / total * 100)}%)...`);
-                }
-            });
-            pdf.autoPrint?.();
-            const blob = pdf.output('blob');
-            const url = URL.createObjectURL(blob);
-            if (popup && !popup.closed) {
-                popup.location.replace(url);
-                setTimeout(() => { try { popup.focus(); popup.print?.(); } catch (_) { } }, 1200);
-            } else {
-                const anchor = document.createElement('a');
-                anchor.href = url;
-                anchor.target = '_blank';
-                anchor.rel = 'noopener';
-                anchor.click();
-            }
-            updatePdfProgress({ visible: true, title: 'PDF siap dicetak', n: selectedRows.length, total: selectedRows.length, row: selectedRows.at(-1) });
-            tell(`PDF ${selection.label} siap dicetak langsung · ${selectedRows.length} halaman.`);
-            setTimeout(() => URL.revokeObjectURL(url), 120000);
-        } catch (error) {
-            if (popup && !popup.closed) popup.close();
-            tell(`Cetak langsung gagal: ${error.message}`);
-            updatePdfProgress({ visible: false });
-        } finally { setBusy(false); }
-    }
-
     async function download(retry = false, format = 'word') {
         if (busy) return;
         if (retry && lastDownloadAttempt) {
@@ -502,7 +448,6 @@ window.StudentReports = (() => {
         el('reportNext').addEventListener('click', () => step(1));
         el('downloadReports').addEventListener('click', () => download(false, 'word'));
         el('downloadReportsExcel')?.addEventListener('click', () => download(false, 'excel'));
-        el('reportDirectPrint')?.addEventListener('click', directPrint);
         el('reportRetryDownload')?.addEventListener('click', () => download(true));
         el('reportDownloadMode')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
         el('reportDownloadClass')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
