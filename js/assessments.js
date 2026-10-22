@@ -1086,6 +1086,9 @@ window.PeriodicAssessments = (() => {
         el('assessmentRetrySave')?.addEventListener('click', () => save(state.lastFailedSave.filter(Boolean), { showSummary: true, source: 'retry' }));
         ['assessmentLevel','assessmentSearch','assessmentStatusFilter'].forEach(id => el(id).addEventListener(
             id === 'assessmentSearch' ? 'input' : 'change', () => {
+                // Mengosongkan filter tingkat selalu kembali ke tingkat terendah.
+                if (id === 'assessmentLevel' && !el('assessmentLevel').value)
+                    state.autoGrade = availableLevels()[0] || '';
                 state.problemOnly = el('assessmentStatusFilter').value === 'problem';
                 state.page = 1; render();
             }));
