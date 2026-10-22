@@ -329,6 +329,12 @@ window.PeriodicAssessments = (() => {
         const group = gradeStudents();
         const count = { saved: 0, draft: 0, ungraded: 0, incomplete: 0, review: 0 };
         group.forEach(student => { count[statusOf(student)] += 1; });
+        const completedPct = group.length ? Math.round(100 * count.saved / group.length) : 0;
+        if (el('assessmentProgressText')) el('assessmentProgressText').textContent =
+            `${count.saved} dari ${group.length} siswa tingkat ini tersimpan lengkap di database`;
+        if (el('assessmentProgressPct')) el('assessmentProgressPct').textContent = `${completedPct}%`;
+        if (el('assessmentProgressFill')) el('assessmentProgressFill').style.width = completedPct + '%';
+        if (el('assessmentProgressBar')) el('assessmentProgressBar').setAttribute('aria-valuenow', String(completedPct));
         for (const [key,id] of [['saved','assessmentSaved'],['draft','assessmentDirty'],['ungraded','assessmentUnrated'],['incomplete','assessmentIncomplete'],['review','assessmentProblems']])
             if (el(id)) el(id).textContent = count[key];
         if (el('assessmentTotal')) el('assessmentTotal').textContent = group.length;
@@ -458,7 +464,10 @@ window.PeriodicAssessments = (() => {
             }
             state.context = context;
             state.lastSubject = context.subject;
-            state.students = students.sort((a, b) => String(a.kelas).localeCompare(String(b.kelas), 'id', { numeric: true }) || String(a['nama siswa']).localeCompare(String(b['nama siswa']), 'id'));
+            state.students = students.sort((a, b) =>
+                Number(classLevel(a.kelas) || 999) - Number(classLevel(b.kelas) || 999) ||
+                String(a['nama siswa']).localeCompare(String(b['nama siswa']), 'id') ||
+                String(a.kelas).localeCompare(String(b.kelas), 'id', { numeric: true }));
             state.saved = new Map(saved.map(row => [String(row.student_id), { ...row, ...row.scores }]));
             state.drafts = new Map(students.map(student => [String(student.id), AssessmentData.draft(state.saved.get(String(student.id)))]));
             state.lastFailedSave = [];
@@ -480,6 +489,7 @@ window.PeriodicAssessments = (() => {
             el('assessmentWorkspace').hidden = false;
             if (el('assessmentPendingFilter')) el('assessmentPendingFilter').hidden = true;
             state.pendingWorkspaceFilter = null;
+            if (el('assessmentSaveSummary')) el('assessmentSaveSummary').hidden = true;
             render();
             rememberLastFilter();
             message(students.length ? `${restored ? `${restored} draf sementara dipulihkan. ` : ''}Nilai siap diisi. Data kosong tidak dihitung sebagai nilai nol.` : 'Belum ada anggota kelompok aktif untuk guru dan pelajaran ini.');
@@ -552,6 +562,7 @@ window.PeriodicAssessments = (() => {
             if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = true;
             persistDrafts();
             render();
+            if (!options.showSummary && el('assessmentSaveSummary')) el('assessmentSaveSummary').hidden = true;
             message(options.showSummary ? saveSummary(data.length, payload.length) : `${data.length} siswa berhasil disimpan untuk ${AssessmentData.periods[state.context.period]}.`);
             return true;
         } catch (error) {
@@ -933,7 +944,11 @@ window.PeriodicAssessments = (() => {
         return true;
     }
 
-    function yearLabel() { const year = Number(el('assessmentYear').value); el('assessmentYearLabel').textContent = `Tahun ajaran ${year}/${year + 1}`; }
+    function yearLabel() {
+        const year = Number(el('assessmentYear').value);
+        el('assessmentYearLabel').textContent = Number.isInteger(year) && year >= 2000 && year <= 2200
+            ? `Tahun ajaran ${year}/${year + 1}` : 'Masukkan tahun awal ajaran yang valid.';
+    }
 
     async function confirmLeave() {
         if (!dirtyStudents().length) return true;
