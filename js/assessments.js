@@ -1,7 +1,7 @@
 window.PeriodicAssessments = (() => {
     const state = {
         initialized: false, busy: false, context: null, teachers: [], students: [], saved: new Map(), drafts: new Map(), page: 1,
-        problemOnly: false, lastFailedSave: [], lastSubject: 'tahsin', pendingWorkspaceFilter: null, draftTimer: null,
+        problemOnly: false, teacherRequestId: 0, eligibleTeachers: [], lastFailedSave: [], lastSubject: 'tahsin', pendingWorkspaceFilter: null, draftTimer: null,
         renderLimit: 12, lazyObserver: null, prefetchedMarkup: new Map()
     };
     const el = id => document.getElementById(id);
@@ -35,7 +35,7 @@ window.PeriodicAssessments = (() => {
         node.classList.toggle('is-error', error);
     };
     const storageAvailable = () => { try { return Boolean(window.localStorage); } catch (_) { return false; } };
-    const storageScope = () => String(AppAccess?.profile?.id || AppAccess?.profile?.teacher_id || AppAccess?.profile?.email || 'shared');
+    const storageScope = () => String(AppAccess?.profile?.userId || AppAccess?.profile?.email || 'anonymous');
     const scopedKey = key => `${key}:${storageScope()}`;
     function readStorage(key, fallback = null) {
         if (!storageAvailable()) return fallback;
@@ -93,8 +93,9 @@ window.PeriodicAssessments = (() => {
             teacherId: String(el('assessmentTeacher')?.value || state.context?.teacherId || ''),
             subject: el('assessmentSubject')?.value || state.context?.subject || 'tahsin',
             level: el('assessmentLevel')?.value || '',
-            className: el('assessmentClass')?.value || '',
-            problemOnly: Boolean(state.problemOnly)
+            status: el('assessmentStatusFilter')?.value || 'all',
+            search: el('assessmentSearch')?.value.trim() || '',
+            problemOnly: el('assessmentStatusFilter')?.value === 'problem'
         };
     }
     function rememberLastFilter() { writeStorage(STORAGE.last, filterSnapshot()); }
@@ -199,14 +200,25 @@ window.PeriodicAssessments = (() => {
         pagination();
     }
 
-    // Setiap halaman hanya satu kelas nyata, bukan gabungan tingkat/rombel.
+    // Tingkat kelas mencakup seluruh rombel guru, tidak hanya satu kelas bernama.
+    const gradeStudents = () => {
+        const grade = el('assessmentLevel')?.value || '';
+        return state.students.filter(student => !grade || classLevel(student.kelas) === grade);
+    };
+    const dirtyInGrade = () => gradeStudents().filter(isDirty);
+    function statusOf(student) {
+        const saved = state.saved.get(String(student.id));
+        if (saved?.needs_review) return 'review';
+        if (isDirty(student)) return 'draft';
+        if (!saved) return 'ungraded';
+        return issueDetail(student).problem ? 'incomplete' : 'saved';
+    }
     function visible() {
-        const kelas = el('assessmentClass')?.value;
-        if (!kelas) return [];
         const search = el('assessmentSearch')?.value.trim().toLocaleLowerCase('id') || '';
-        return state.students.filter(student => student.kelas === kelas &&
-            String(student['nama siswa']).toLocaleLowerCase('id').includes(search) &&
-            (!state.problemOnly || issueDetail(student).problem));
+        const filter = el('assessmentStatusFilter')?.value || 'all';
+        return gradeStudents().filter(student =>
+            String(student['nama siswa'] || '').toLocaleLowerCase('id').includes(search) &&
+            (filter === 'all' || (filter === 'problem' ? issueDetail(student).problem : statusOf(student) === filter)));
     }
     function resetLazy() {
         state.renderLimit = 12;
@@ -219,7 +231,7 @@ window.PeriodicAssessments = (() => {
         const rows = visible();
         if (el('assessmentPrev')) { el('assessmentPrev').disabled = true; el('assessmentPrev').hidden = true; }
         if (el('assessmentNext')) { el('assessmentNext').disabled = true; el('assessmentNext').hidden = true; }
-        if (el('assessmentPageInfo')) el('assessmentPageInfo').textContent = el('assessmentClass')?.value ? classLabel(el('assessmentClass').value) : 'Pilih kelas';
+        if (el('assessmentPageInfo')) el('assessmentPageInfo').textContent = (el('assessmentLevel')?.value ? 'Tingkat ' + el('assessmentLevel').value : 'Semua tingkat') + ' · ' + rows.length + ' dari ' + gradeStudents().length + ' siswa';
     }
     function prefetchNext(rows) {
         const start = state.renderLimit;
@@ -254,24 +266,20 @@ window.PeriodicAssessments = (() => {
         }
     }
     function summaries() {
-        const shown = visible();
-        const cleanSaved = shown.filter(student => state.saved.has(String(student.id)) && !isDirty(student) && !issueDetail(student).problem).length;
-        if (el('assessmentTotal')) el('assessmentTotal').textContent = shown.length;
-        if (el('assessmentSaved')) el('assessmentSaved').textContent = cleanSaved;
-        if (el('assessmentDirty')) el('assessmentDirty').textContent = shown.length - cleanSaved;
-        if (el('assessmentProblems')) el('assessmentProblems').textContent = state.students.filter(student => student.kelas === el('assessmentClass')?.value && issueDetail(student).problem).length;
+        const group = gradeStudents();
+        const count = { saved: 0, draft: 0, ungraded: 0, incomplete: 0, review: 0 };
+        group.forEach(student => { count[statusOf(student)] += 1; });
+        for (const [key,id] of [['saved','assessmentSaved'],['draft','assessmentDirty'],['ungraded','assessmentUnrated'],['incomplete','assessmentIncomplete'],['review','assessmentProblems']])
+            if (el(id)) el(id).textContent = count[key];
+        if (el('assessmentTotal')) el('assessmentTotal').textContent = group.length;
         if (el('assessmentMobileStatus')) {
-            const dirty = shown.filter(isDirty).length, problems = shown.filter(student => issueDetail(student).problem).length;
-            el('assessmentMobileStatus').textContent = dirty ? `${dirty} belum disimpan` : (problems ? `${problems} perlu diperiksa` : 'Semua aman');
-        }
-        const problemButton = el('assessmentProblemOnly');
-        if (problemButton) {
-            problemButton.classList.toggle('active', state.problemOnly);
-            problemButton.setAttribute?.('aria-pressed', String(state.problemOnly));
-            problemButton.textContent = state.problemOnly ? 'Tampilkan semua siswa' : 'Hanya bermasalah';
+            const pending = count.draft + count.incomplete + count.review;
+            el('assessmentMobileStatus').textContent = count.draft ? count.draft + ' draf belum dikirim' :
+                (pending ? pending + ' perlu dicek' : count.saved + '/' + group.length + ' tersimpan');
         }
         el('assessmentCards')?.querySelectorAll('[data-student-index]').forEach(card => {
             const student = state.students[Number(card.dataset.studentIndex)];
+            if (!student) return;
             const badge = card.querySelector('.assessment-state');
             const summary = card.querySelector('[data-report-summary]');
             if (summary && window.ReportCore) {
@@ -279,12 +287,14 @@ window.PeriodicAssessments = (() => {
                 const totals = ReportCore.stats(scores, state.context.subject);
                 summary.textContent = `Jumlah: ${totals.sum ?? '-'} · Rata-rata: ${totals.average == null ? '-' : totals.average.toFixed(1).replace('.', ',')} · Grade: ${totals.grade}${totals.complete ? '' : ' · BELUM LENGKAP'}`;
             }
-            const issue = issueDetail(student), dirty = isDirty(student);
-            badge.textContent = issue.reason || (state.saved.has(String(student.id)) ? 'Tersimpan' : 'Belum diisi');
-            badge.dataset.dirty = String(dirty);
-            card.dataset.problem = String(issue.problem);
+            const status = statusOf(student);
+            badge.textContent = { saved:'Tersimpan', draft:'Draf belum dikirim', ungraded:'Belum dinilai', incomplete:'Belum lengkap', review:'Perlu verifikasi' }[status];
+            badge.dataset.dirty = String(status === 'draft');
+            badge.dataset.state = status;
+            card.dataset.problem = String(status !== 'saved');
         });
     }
+
     function surahLabel(number) {
         const row = QURAN_SURAHS.find(row => String(row.number) === String(number));
         return row ? row.number + '. ' + row.name : '';
@@ -316,7 +326,7 @@ window.PeriodicAssessments = (() => {
             const markup = rows.length ? rows.map((student, visibleIndex) => {
                 const cached = state.prefetchedMarkup.get(String(student.id));
                 return cached || cardMarkup(student, state.students.indexOf(student), visibleIndex + 1);
-            }).join('') : `<div class="assessment-empty">${state.problemOnly ? 'Tidak ada siswa bermasalah pada kelas ini.' : 'Tidak ada siswa pada kelas ini.'}</div>`;
+            }).join('') : `<div class="assessment-empty">${gradeStudents().length ? 'Tidak ada siswa yang cocok dengan pencarian/status.' : 'Belum ada murid pada tingkat ini.'}</div>`;
             const more = rows.length < allRows.length ? `<div id="assessmentLazySentinel" class="assessment-lazy-sentinel">Menyiapkan siswa berikutnya… <button type="button" class="secondary-action">Muat berikutnya</button></div>` : '';
             el('assessmentCards').innerHTML = markup + more;
         }
@@ -392,16 +402,15 @@ window.PeriodicAssessments = (() => {
             state.page = 1;
             el('assessmentLevel').replaceChildren(new Option('Semua tingkat', ''));
             [...new Set(students.map(row => classLevel(row.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b)).forEach(level => el('assessmentLevel').add(new Option(`Kelas ${level}`, level)));
-            el('assessmentClass').replaceChildren(new Option('Pilih kelas', ''));
-            const classes = [...new Set(students.map(row => row.kelas).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id', { numeric: true }));
-            classes.forEach(kelas => el('assessmentClass').add(new Option(classLabel(kelas), kelas)));
             const preferred = options.preferredFilter || state.pendingWorkspaceFilter || readStorage(STORAGE.last, {});
             const sameContext = preferred && Number(preferred.year) === context.year && preferred.period === context.period && preferred.subject === context.subject && String(preferred.teacherId || '') === String(context.teacherId);
-            const preferredClass = sameContext && classes.includes(preferred.className) ? preferred.className : classes[0] || '';
-            el('assessmentClass').value = preferredClass;
-            el('assessmentLevel').value = preferredClass ? classLevel(preferredClass) : '';
-            state.problemOnly = Boolean(sameContext && preferred.problemOnly);
-            el('assessmentSearch').value = '';
+            const gradeOptions = [...el('assessmentLevel').options].map(option => option.value);
+            const savedGrade = preferred?.level || classLevel(preferred?.className);
+            el('assessmentLevel').value = sameContext && gradeOptions.includes(savedGrade) ? savedGrade : '';
+            const savedStatus = sameContext ? (preferred.status || (preferred.problemOnly ? 'problem' : 'all')) : 'all';
+            el('assessmentStatusFilter').value = [...el('assessmentStatusFilter').options].some(o => o.value === savedStatus) ? savedStatus : 'all';
+            el('assessmentSearch').value = sameContext ? String(preferred.search || '') : '';
+            state.problemOnly = el('assessmentStatusFilter').value === 'problem';
             el('assessmentActivePeriod').textContent = `${context.year}/${context.year + 1} · ${AssessmentData.periods[context.period]} · ${teacher.nama} / ${context.subject.toUpperCase()}`;
             el('assessmentWorkspace').hidden = false;
             state.pendingWorkspaceFilter = null;
@@ -417,10 +426,9 @@ window.PeriodicAssessments = (() => {
     }
 
     function saveSummary(savedCount, attemptedCount) {
-        const className = el('assessmentClass')?.value;
-        const classRows = state.students.filter(student => !className || student.kelas === className);
-        const problems = classRows.filter(student => issueDetail(student).problem).length;
-        const dirty = classRows.filter(isDirty).length;
+        const gradeRows = gradeStudents();
+        const problems = gradeRows.filter(student => issueDetail(student).problem).length;
+        const dirty = gradeRows.filter(isDirty).length;
         const node = el('assessmentSaveSummary');
         if (node) {
             node.hidden = false;
@@ -441,7 +449,7 @@ window.PeriodicAssessments = (() => {
                 if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = false;
                 message(`${student['nama siswa']}: ${error.message} Belum ada perubahan yang dikirim.`, true);
                 el('assessmentLevel').value = classLevel(student.kelas);
-                el('assessmentClass').value = student.kelas;
+                el('assessmentStatusFilter').value = 'all';
                 el('assessmentSearch').value = '';
                 state.problemOnly = false;
                 state.page = 1;
