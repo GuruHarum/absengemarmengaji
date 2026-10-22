@@ -128,10 +128,15 @@ window.GMUpgrade = (()=>{
       .not('issued_at','is',null).order('issued_at',{ascending:false}))
    ]);
    if(request!==archiveRequest)return;
-   const existing=new Set(saved.map(r=>[r.student_id,r.academic_year_start,r.period].join('|')));
+   const firstSavedAt=new Map();
+   for (const row of saved) {
+    const key=[row.student_id,row.academic_year_start,row.period].join('|');
+    const timestamp=Date.parse(row.issued_at||'')||0;
+    if (!firstSavedAt.has(key)||timestamp<firstSavedAt.get(key)) firstSavedAt.set(key,timestamp);
+   }
    const records=[
     ...saved.map(r=>({...r,legacy:false,name:r.student_name||'-',kelas:r.class_name||'-',year:Number(r.academic_year_start||0)})),
-    ...old.filter(r=>!existing.has([r.student_id,r.academic_year_start,r.period].join('|')))
+    ...old.filter(r=>{ const first=firstSavedAt.get([r.student_id,r.academic_year_start,r.period].join('|')); return first==null || (Date.parse(r.issued_at||'')||0)<first; })
       .map(r=>({...r,legacy:true,name:'Penerbitan lama · '+r.student_id,kelas:'-',year:Number(r.academic_year_start||0)}))
    ].sort((a,b)=>String(b.issued_at||'').localeCompare(String(a.issued_at||''))||String(a.name).localeCompare(String(b.name),'id'));
    const periods={pts_ganjil:'PTS Semester 1',pas_ganjil:'PAS Semester 1',pts_genap:'PTS Semester 2',pas_genap:'PAS Semester 2'};
