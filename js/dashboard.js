@@ -841,6 +841,9 @@ async function loadMaintenanceMode() {
     }
 }
 let currentManageTab = 'siswa';
+let currentManageView = 'students';
+let gmTeacherAccountRows = [];
+let gmTeacherAccountsLoaded = false;
 let currentTeacherGroup = 'tahsin';
 let editingIndex = null;
 let identifierAuditLoaded = false;
@@ -857,31 +860,136 @@ async function gmOpenManageData() {
         try { await gmManageDataPending; }
         catch (error) { AdminNotice.notify('Gagal memuat master: '+error.message,'error'); return; }
     }
-    renderManageTable();
-    switchManageView('directory');
+    switchManageView('students');
 }
 function switchManageView(view) {
-    if (!['directory', 'enrollment'].includes(view)) return;
-    if (view === 'enrollment' && !AppAccess.full()) return;
-    const directory = document.getElementById('manageViewDirectory');
+    if (view === 'enrollment') return openTeacherEnrollmentModal();
+    if (view === 'directory') view = 'students';
+    if (!['students', 'teachers'].includes(view)) return;
+    if (view === 'students') switchManageTab('siswa');
+    else switchManageTab('guru-tahsin');
+}
+
+function openManagePrimaryAdd() {
+    if (currentManageView === 'teachers') return openTeacherEnrollmentModal();
+    if (currentManageTab === 'siswa') return openManageModal();
+}
+
+async function openTeacherEnrollmentModal() {
+    if (!AppAccess.full()) return;
     const enrollment = document.getElementById('teacherEnrollment');
-    const directoryButton = document.getElementById('manageViewDirectoryButton');
-    const enrollmentButton = document.getElementById('manageViewEnrollmentButton');
-    if (enrollmentButton) enrollmentButton.hidden = !AppAccess.full();
-    if (directory) directory.hidden = view !== 'directory';
-    if (enrollment) enrollment.hidden = view !== 'enrollment';
-    [[directoryButton, view === 'directory'], [enrollmentButton, view === 'enrollment']].forEach(([button, active]) => {
-        if (!button) return;
-        button.setAttribute('aria-pressed', String(active));
-        button.classList.toggle('active', active);
-    });
-    if (view === 'directory') {
-        renderManageTable();
-    } else {
-        void TeacherEnrollment.open();
+    if (!enrollment || !window.TeacherEnrollment) {
+        AdminNotice.notify('Formulir tambah guru belum siap. Buka kembali Kelola Data.', 'error');
+        return;
+    }
+    let overlay = document.getElementById('gmEnrollmentOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'gmEnrollmentOverlay';
+        overlay.className = 'gm-enrollment-overlay';
+        overlay.hidden = true;
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'gmEnrollmentTitle');
+
+        const dialog = document.createElement('div');
+        dialog.className = 'gm-enrollment-dialog';
+        const header = document.createElement('div');
+        header.className = 'gm-enrollment-header';
+        const title = document.createElement('h2');
+        title.id = 'gmEnrollmentTitle';
+        title.textContent = 'Tambah Guru';
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'gm-enrollment-close';
+        close.textContent = '×';
+        close.setAttribute('aria-label', 'Tutup formulir');
+        close.addEventListener('click', closeTeacherEnrollmentModal);
+        header.append(title, close);
+        dialog.append(header, enrollment);
+        overlay.append(dialog);
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay) closeTeacherEnrollmentModal();
+        });
+        document.body.append(overlay);
+    }
+    const attendance = document.getElementById('enrollmentAttendance');
+    if (attendance) attendance.value = currentTeacherGroup === 'tahfidz' ? 'false' : 'true';
+    const feedback = document.getElementById('enrollmentFeedback');
+    if (feedback) feedback.textContent = '';
+    const form = document.getElementById('enrollmentForm');
+    if (form) form.reset();
+    if (attendance) attendance.value = currentTeacherGroup === 'tahfidz' ? 'false' : 'true';
+    enrollment.hidden = false;
+    overlay.hidden = false;
+    document.body.classList.add('gm-enrollment-open');
+    try {
+        await TeacherEnrollment.open();
+        document.getElementById('enrollmentName')?.focus();
+    } catch (error) {
+        AdminNotice.notify('Gagal membuka formulir: ' + error.message, 'error');
     }
 }
-((callback) => window.GMPanel ? GMPanel.onPage('kelola', callback) : document.addEventListener('panelready', callback))(() => switchManageTab('siswa'));
+
+function closeTeacherEnrollmentModal() {
+    const overlay = document.getElementById('gmEnrollmentOverlay');
+    if (overlay) overlay.hidden = true;
+    const enrollment = document.getElementById('teacherEnrollment');
+    if (enrollment) enrollment.hidden = true;
+    document.body.classList.remove('gm-enrollment-open');
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !document.getElementById('gmEnrollmentOverlay')?.hidden)
+        closeTeacherEnrollmentModal();
+});
+
+async function loadManageTeacherAccounts() {
+    if (!AppAccess.full() || currentManageTab !== 'akun-guru') return;
+    const feedback = document.getElementById('manageAccountFeedback');
+    if (feedback) feedback.textContent = '';
+    try {
+        const { data, error } = await supabase.rpc('gm_list_teacher_accounts');
+        if (error) throw error;
+        gmTeacherAccountRows = Array.isArray(data) ? data : [];
+        gmTeacherAccountsLoaded = true;
+        renderManageTeacherAccounts();
+    } catch (error) {
+        gmTeacherAccountsLoaded = false;
+        if (feedback) feedback.textContent = 'Daftar akun belum dapat dimuat: ' + error.message;
+    }
+}
+
+function renderManageTeacherAccounts() {
+    const tbody = document.getElementById('manageAccountRows');
+    const cards = document.getElementById('manageAccountCards');
+    const count = document.getElementById('manageAccountCount');
+    if (!tbody || !cards || !count) return;
+    const search = (document.getElementById('manageAccountSearch')?.value || '').trim().toLowerCase();
+    const rows = gmTeacherAccountRows.filter(row =>
+        [row.teacher_name, row.teacher_type, row.email, row.username]
+            .some(value => String(value || '').toLowerCase().includes(search))
+    );
+    count.textContent = rows.length + ' guru';
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="3">Tidak ada data guru yang sesuai.</td></tr>';
+        cards.innerHTML = '<div class="gm-directory-empty">Tidak ada data guru yang sesuai.</div>';
+        return;
+    }
+    tbody.innerHTML = rows.map(row => '<tr><td>' + manageEscape(row.teacher_name || '-') +
+        '</td><td>' + manageEscape(row.email || 'Belum ada akun') +
+        '</td><td>' + manageEscape(row.username || 'Belum diatur') + '</td></tr>').join('');
+    cards.innerHTML = rows.map(row =>
+        '<article class="gm-account-card"><h3>' + manageEscape(row.teacher_name || '-') + '</h3><dl>' +
+        '<div><dt>Email</dt><dd>' + manageEscape(row.email || 'Belum ada akun') + '</dd></div>' +
+        '<div><dt>Username</dt><dd>' + manageEscape(row.username || 'Belum diatur') + '</dd></div>' +
+        '</dl></article>'
+    ).join('');
+}
+((callback) => window.GMPanel ? GMPanel.onPage('kelola', callback) : document.addEventListener('panelready', callback))(() => {
+    document.getElementById('manageAccountSearch')?.addEventListener('input', renderManageTeacherAccounts);
+    switchManageTab('siswa');
+});
 async function fetchTeachers() {
     try {
         teachersData = await getTeachers();
@@ -1106,22 +1214,43 @@ function refreshManageImportControls() {
     document.getElementById('csvImportHint').textContent = 'Impor 2 tahap. Identitas dicocokkan berdasarkan NISN, lalu NIS; perubahan nama/kelas/guru diperbarui untuk ID yang sama. Nomor ganda atau NIS dan NISN yang bertentangan akan diblokir untuk diperiksa. Guru Tahfidz pada Excel menyinkronkan anggota kelompok.';
 }
 function switchManageTab(tab) {
-    if (!['siswa', 'guru', 'guru-tahsin', 'guru-tahfidz', 'impor'].includes(tab))
-        return;
-    if (tab === 'impor' && !AppAccess.full()) return;
-    if (tab === 'guru')
-        tab = 'guru-tahsin';
-    currentManageTab = (tab === 'siswa' || tab === 'impor') ? tab : 'guru';
+    if (!['siswa', 'guru', 'guru-tahsin', 'guru-tahfidz', 'akun-guru', 'impor'].includes(tab)) return;
+    if ((tab === 'impor' || tab === 'akun-guru') && !AppAccess.full()) return;
+    if (tab === 'guru') tab = 'guru-tahsin';
+    currentManageView = tab === 'siswa' || tab === 'impor' ? 'students' : 'teachers';
+    currentManageTab = tab === 'siswa' || tab === 'impor' || tab === 'akun-guru' ? tab : 'guru';
     if (currentManageTab === 'guru')
         currentTeacherGroup = tab === 'guru-tahfidz' ? 'tahfidz' : 'tahsin';
     managePage = 1;
-    ['siswa', 'guru-tahsin', 'guru-tahfidz', 'impor'].forEach(name => {
-        const button = document.getElementById(`tab-${name}`);
-        button.setAttribute('aria-pressed', String(name === tab));
-        button.className = name === tab ? 'px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 transition-all' : 'px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all';
+
+    const nav = [
+        ['manageViewDirectoryButton', currentManageView === 'students'],
+        ['manageViewEnrollmentButton', currentManageView === 'teachers']
+    ];
+    nav.forEach(([id, active]) => {
+        const button = document.getElementById(id);
+        if (!button) return;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('active', active);
+    });
+    const directory = document.getElementById('manageViewDirectory');
+    if (directory) directory.hidden = false;
+
+    ['siswa', 'guru-tahsin', 'guru-tahfidz', 'akun-guru', 'impor'].forEach(name => {
+        const button = document.getElementById('tab-' + name);
+        if (!button) return;
+        const studentTab = name === 'siswa' || name === 'impor';
+        button.hidden = studentTab !== (currentManageView === 'students') ||
+            (name === 'impor' && !AppAccess.full()) ||
+            (name === 'akun-guru' && !AppAccess.full());
+        const active = name === tab;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('active', active);
     });
     renderManageTable();
+    if (currentManageTab === 'akun-guru') void loadManageTeacherAccounts();
 }
+
 async function openManageModal(id = null) {
     if (AppAccess.teacher() && currentManageTab === "guru" && !id)
         return;
