@@ -1,4 +1,4 @@
-const VERSION = 'periodic-assessment-stage-20261022e';
+const VERSION = 'presentation-responsive-20261022a';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
