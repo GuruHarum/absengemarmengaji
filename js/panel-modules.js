@@ -1,5 +1,5 @@
 (() => {
-    const version = '20261022-archive2';
+    const version = '20261023-report-template1';
     const core = ['admin-notices','class-picker','quran-surahs','report-reference','report-core','assessments-core','teacher-photo','profile','push-notifications','notifications','attention-center','dashboard','rev46-experience','admin','api'];
     const definitions = {
         curriculum: { files: ['curriculum-targets'] },
@@ -7,7 +7,7 @@
         assessment: { dependencies: ['progress'], files: ['assessments'] },
         groups: { files: ['learning-groups'] },
         excel: { files: ['report-excel'] },
-        reports: { dependencies: ['assessment'], files: ['report-pdf','report-zip','report-cards'] },
+        reports: { dependencies: ['assessment'], files: ['report-pdf','report-template-data','report-template','report-zip','report-cards'] },
         settings: { dependencies: ['progress'], files: ['report-settings','settings-hub','system-reset','account-deletion','accounts'] },
         photo: { files: [] },
         profile: { files: [] },
