@@ -115,6 +115,7 @@ window.AccountProfile = (() => {
     }
 
     async function open() {
+        showProfileSection(AppAccess.profile?.temporaryPassword ? 'security' : (el('page-profil')?.dataset.profileSection || 'account'));
         try {
             for (const id of ['profilePhotoFeedback', 'profileIdentityFeedback', 'profileUsernameFeedback', 'profilePasswordFeedback']) {
                 const feedback = el(id);
@@ -275,7 +276,20 @@ window.AccountProfile = (() => {
         setUnread(items.filter(item => !item.seen_at).length);
     }
 
+    function showProfileSection(name='account') {
+        const wrapper=el('page-profil');
+        if (!wrapper) return;
+        const section=name==='security'?'security':'account';
+        wrapper.dataset.profileSection=section;
+        wrapper.querySelectorAll('[data-profile-tab]').forEach(button=>{
+            const active=button.dataset.profileTab===section;
+            button.classList.toggle('active',active);
+            button.setAttribute('aria-selected',String(active));
+            button.tabIndex=active?0:-1;
+        });
+    }
     function setupHeader() {
+        el('page-profil')?.querySelectorAll('[data-profile-tab]').forEach(button=>button.addEventListener('click',()=>showProfileSection(button.dataset.profileTab)));
         renderHeader();
         el('headerProfileBtn')?.addEventListener('click', () => switchPage('profil'));
         const bell = el('notificationBellBtn');
