@@ -1,5 +1,5 @@
 (() => {
-    const version = '20261023-report-template2';
+    const version = '20261023-consolidate1';
     const core = ['admin-notices','class-picker','quran-surahs','report-reference','report-core','assessments-core','teacher-photo','profile','push-notifications','notifications','attention-center','dashboard','rev46-experience','admin','api'];
     const definitions = {
         curriculum: { files: ['curriculum-targets'] },
@@ -11,7 +11,7 @@
         settings: { dependencies: ['progress'], files: ['report-settings','settings-hub','system-reset','account-deletion','accounts'] },
         photo: { files: [] },
         profile: { files: [] },
-        manage: { dependencies: ['photo'], files: ['student-import','enrollment'] },
+        manage: { dependencies: ['photo'], files: ['student-import','enrollment','accounts'] },
         chart: { urls: ['https://cdn.jsdelivr.net/npm/chart.js'] },
         pdf: { urls: ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js'] }
     };
