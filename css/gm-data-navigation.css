@@ -100,3 +100,90 @@ body.gm-enrollment-open{overflow:hidden}
  #kelolaDataSection .gm-account-actions button{flex:1 1 auto;min-width:0}
  #kelolaDataSection .gm-account-directory-search label{max-width:none}
 }
+
+/* Akun Guru 2026-10-23 — daftar rapi seperti master guru, bukan kartu formulir mentah. */
+#kelolaDataSection #studentManageFilters[hidden],
+#kelolaDataSection #manageDirectoryView .manage-search-row[hidden]{display:none!important}
+#kelolaDataSection .gm-account-person{display:flex;align-items:center;gap:12px;min-width:0}
+#kelolaDataSection .gm-account-person>div{min-width:0}
+#kelolaDataSection .gm-account-person strong{color:#1e4634;font-size:12.5px;font-weight:700;line-height:1.5}
+#kelolaDataSection .gm-account-person small{display:block;font-weight:400;color:#718777;font-size:11px}
+#kelolaDataSection .gm-account-avatar{position:relative;display:grid;place-items:center;flex:none;width:43px;height:43px;border-radius:50%;background:#ebf3ed;border:2px solid #f6faf7;overflow:hidden;color:#507762;font-size:13px;font-weight:750}
+#kelolaDataSection .gm-account-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#kelolaDataSection .gm-account-directory-cards{min-width:0}
+#kelolaDataSection .gm-account-list-row{display:grid;grid-template-columns:24px minmax(0,1fr) 44px auto;align-items:center;column-gap:12px;row-gap:6px;padding:15px 16px;border:1px solid #e9efea;background:#fff;min-width:0}
+#kelolaDataSection .gm-account-list-row+.gm-account-list-row{border-top:0}
+#kelolaDataSection .gm-account-list-row:first-child{border-radius:13px 13px 0 0}
+#kelolaDataSection .gm-account-list-row:last-child{border-radius:0 0 13px 13px}
+#kelolaDataSection .gm-account-list-row:only-child{border-radius:13px}
+#kelolaDataSection .gm-account-list-row:hover{background:#fcfdfc}
+#kelolaDataSection .gm-account-sequence{font-size:11px;color:#7e9386;font-weight:600;font-variant-numeric:tabular-nums}
+#kelolaDataSection .gm-account-list-detail{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.45}
+#kelolaDataSection .gm-account-list-detail>strong{font-size:13px;color:#1d4732;font-weight:700}
+#kelolaDataSection .gm-account-full-name{color:#647f6c;font-size:11.5px;overflow-wrap:anywhere}
+#kelolaDataSection .gm-account-email{font-size:11.5px;color:#325b48;overflow-wrap:anywhere}
+#kelolaDataSection .gm-account-small-info{font-size:10.5px;color:#738778;overflow-wrap:anywhere}
+#kelolaDataSection .gm-account-list-row .gm-account-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:nowrap}
+#kelolaDataSection .gm-account-list-row .gm-account-actions button{font-weight:650;min-height:36px;padding:8px 10px;border:0;background:transparent;white-space:nowrap;border-radius:9px}
+#kelolaDataSection .gm-account-list-row .gm-account-actions .gm-account-edit{color:#24654b}
+#kelolaDataSection .gm-account-list-row .gm-account-actions .gm-account-delete{color:#b64d50}
+#kelolaDataSection .gm-account-list-row .gm-account-actions button:hover{background:#eaf3ed}
+#kelolaDataSection .gm-account-list-row .gm-account-actions .gm-account-delete:hover{background:#fff0ef}
+#kelolaDataSection .gm-account-list-row .gm-account-actions button:focus-visible{outline:2px solid #25664d;outline-offset:2px}
+@media(max-width:900px){
+  #kelolaDataSection .gm-account-directory-table{display:none!important}
+  #kelolaDataSection #manageAccountCards{display:block!important}
+}
+@media(max-width:630px){
+  #kelolaDataSection .gm-manage-account-view{padding:4px 10px 22px}
+  #kelolaDataSection .gm-account-list-row{grid-template-columns:18px minmax(0,1fr) 39px 78px;column-gap:8px;padding:13px 8px}
+  #kelolaDataSection .gm-account-avatar{width:37px;height:37px}
+  #kelolaDataSection .gm-account-list-row .gm-account-actions{flex-direction:column;align-items:stretch;gap:1px}
+  #kelolaDataSection .gm-account-list-row .gm-account-actions button{font-size:10px;text-align:center;min-height:32px;padding:6px 3px;flex:none}
+  #kelolaDataSection .gm-account-list-detail>strong{font-size:12.5px}
+  #kelolaDataSection .gm-account-email{font-size:10.5px}
+  #kelolaDataSection .gm-account-full-name{font-size:10.5px}
+}
+@media(max-width:355px){
+  #kelolaDataSection .gm-account-list-row{grid-template-columns:15px minmax(0,1fr) 32px 65px;column-gap:5px;padding:12px 6px}
+  #kelolaDataSection .gm-account-avatar{width:32px;height:32px;font-size:11px}
+  #kelolaDataSection .gm-account-list-row .gm-account-actions button{font-size:9px}
+}
+/* Modal pengaturan hak akses; form asli dipakai kembali (bukan duplikasi fungsi). */
+body.gm-access-modal-open{overflow:hidden}
+#manageAccessModal.hidden{display:none!important}
+#manageAccessModal.gm-access-overlay{position:fixed;inset:0;z-index:1300;display:flex;align-items:center;justify-content:center;padding:max(15px,env(safe-area-inset-top)) 15px max(15px,env(safe-area-inset-bottom));background:rgba(13,37,26,.6);backdrop-filter:blur(5px)}
+#manageAccessModal .gm-access-dialog{display:flex;flex-direction:column;width:min(100%,620px);max-height:calc(100dvh - 30px);min-height:0;overflow:hidden;background:#fff;border-radius:19px;box-shadow:0 25px 80px rgba(12,34,23,.23)}
+#manageAccessModal .gm-access-header{padding:18px 23px 15px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex:none;border-bottom:1px solid #e6eee8}
+#manageAccessModal .gm-access-eyebrow{margin:0 0 4px;font-size:9px;letter-spacing:.16em;font-weight:750;color:#6d927c}
+#manageAccessModal .gm-access-header h2{font-size:18px;font-weight:750;line-height:1.4;color:#214c34;margin:0}
+#manageAccessModal .gm-access-header p:not(.gm-access-eyebrow){font-size:11.5px;color:#77897c;margin:6px 0 0;line-height:1.6}
+#manageAccessModal .gm-access-close{min-width:39px;width:39px;height:39px;border:1px solid #dfebe2;border-radius:10px;background:#f9fbf9;color:#5d7968;font-size:25px;cursor:pointer;flex:none}
+#manageAccessModal .gm-access-close:hover{background:#eef5f0}
+#manageAccessModal .gm-access-body{padding:19px 23px;min-height:0;overflow:auto;overscroll-behavior:contain}
+#manageAccessModal #settingsViewAccounts,
+#manageAccessModal .gm-manage-access-panel,
+#manageAccessModal .account-settings{background:transparent!important;margin:0!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:0!important}
+#manageAccessModal .account-settings .section-heading,
+#manageAccessModal .gm-account-link-tools{display:none!important}
+#manageAccessModal #accountForm.detail-filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;align-items:start}
+#manageAccessModal #accountForm>label{min-width:0;display:flex;flex-direction:column;gap:7px;color:#42624e;font-size:12px}
+#manageAccessModal #accountForm>label[for="accountEmail"]{grid-column:1/-1}
+#manageAccessModal #accountForm :is(input,select){box-sizing:border-box;width:100%;min-width:0;min-height:44px;border:1px solid #cadcd0;background:#fff;color:#213e2d;border-radius:10px;padding:10px 12px;font-size:13px}
+#manageAccessModal #accountEmailHint{display:block;font-size:11px;line-height:1.55;color:#788d7d}
+#manageAccessModal #accountFeedback{margin:12px 0 0;font-size:12px;line-height:1.6}
+#manageAccessModal .gm-access-footer{flex:none;display:flex;justify-content:flex-end;gap:10px;padding:14px 23px 17px;border-top:1px solid #e4ede7;background:#fbfdfb}
+#manageAccessModal .gm-access-footer button{min-height:44px;border-radius:10px;padding:10px 20px;min-width:105px;font-size:12px;font-weight:700}
+#manageAccessModal .gm-access-footer .primary-action{background:#216454;color:white}
+#manageAccessModal .gm-access-footer .secondary-action{border:1px solid #cbd9d0;background:#fff;color:#44624f}
+@media(max-width:630px){
+  #manageAccessModal.gm-access-overlay{align-items:flex-end;padding:0}
+  #manageAccessModal .gm-access-dialog{width:100%;max-height:calc(100dvh - env(safe-area-inset-top) - 14px);border-radius:20px 20px 0 0}
+  #manageAccessModal .gm-access-header{padding:17px 17px 13px}
+  #manageAccessModal .gm-access-body{padding:16px 17px}
+  #manageAccessModal #accountForm.detail-filter-grid{grid-template-columns:minmax(0,1fr);gap:13px}
+  #manageAccessModal #accountForm>label[for="accountEmail"]{grid-column:1}
+  #manageAccessModal .gm-access-footer{padding:12px 17px max(14px,env(safe-area-inset-bottom))}
+  #manageAccessModal .gm-access-footer button{flex:1 1 0}
+}
+@media(prefers-reduced-motion:reduce){#manageAccessModal *{transition:none!important}}
