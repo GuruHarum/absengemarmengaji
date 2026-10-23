@@ -13,8 +13,8 @@ for (const page of ['admin.html', 'guru.html']) {
     }
     assert.match(profile, /class="profile-username-section"/);
     assert.doesNotMatch(profile, /<section class="assessment-controls"><form[^>]*id="profileUsernameForm"/);
-    assert.match(html, /css\/ui-polish-20260928.css\?v=20261022-profile1/);
-    assert.match(html, /js\/panel-modules.js\?v=20261022-profile1/);
+    assert.match(html, /css\/ui-polish-20260928.css\?v=20261023-archive-light1/);
+    assert.match(html, /js\/panel-modules.js\?v=20261023-archive-light1/);
   });
 }
 
@@ -44,5 +44,5 @@ test('CSS profil dibatasi ke halaman profil dan PWA menaikkan cache', () => {
   assert.match(css, /#page-profil \.profile-local-feedback/);
   assert.match(css, /#page-profil \[hidden\] \{ display:none!important; \}/);
   assert.match(css, /max-width:420px/);
-  assert.match(sw, /profile-settings-20261022a/);
+  assert.match(sw, /report-archive-light-20261023f/);
 });
