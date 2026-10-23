@@ -277,9 +277,11 @@ window.StudentReports = (() => {
                 line.append(label, result);
                 metrics.append(line);
             }
-            status.replaceChildren(badge, metrics);
+            const studentTitle = document.createElement('strong');
+            studentTitle.textContent = report.student.name + ' · ' + report.student.class;
+            status.replaceChildren(studentTitle, badge, metrics);
             renderIdentityAudit(report, errors);
-            const canvas = await ReportPDF.render(report, { draft: !checked.complete });
+            const canvas = GMReportTemplate.renderPreview(report, { draft: !checked.complete });
             if (token === previewToken)
                 el('reportPreview').replaceChildren(canvas);
         }
@@ -397,7 +399,8 @@ window.StudentReports = (() => {
     function open() {
         if (AppAccess.profile?.role !== 'koordinator') return;
         el('reportYear').value ||= String(new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0));
-        if (!previewVisited && activeTab === 'preview') void randomPreview();
+        if (activeTab === 'preview' && !busy) void randomPreview();
+        if (activeTab === 'print' && !busy) void load(true);
         changeTab(activeTab);
     }
     async function openMissing(options = {}) {
