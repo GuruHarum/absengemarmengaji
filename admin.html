@@ -521,97 +521,91 @@
 <div id="page-dashboard" class="hidden space-y-4"></div>
 
 <div id="page-arsip" class="hidden space-y-4"><section class="gm-panel-card"><div class="section-heading"><div><h2>Arsip Rapor</h2></div></div><p class="gm-muted">Salinan data penerbitan baru akan tersimpan sebagai arsip. Rapor dapat diunduh ulang dalam format Word atau Excel.</p><p id="gmArchiveStatus" class="gm-muted" role="status" aria-live="polite">Buka menu Arsip Rapor untuk memuat daftar.</p></section></div>
+
 <div id="page-rapor" class="hidden space-y-5">
-    <section class="report-panel report-period-panel">
-        <div class="section-heading"><div><h2>Periode Rapor</h2><p>Pilih periode dan tingkat kelas, lalu muat data rapor.</p></div></div>
-        <fieldset id="reportControls" class="report-grid">
-            <label class="field-label">Tahun awal ajaran<input id="reportYear" type="number" min="2000" max="2200"></label>
-            <label class="field-label">Jenis ujian<select id="reportExam"><option value="pts">PTS</option><option value="pas">PAS</option></select></label>
-            <label class="field-label">Semester<select id="reportSemester"><option value="ganjil">1</option><option value="genap">2</option></select></label>
-            <label class="field-label">Tingkat kelas<select id="reportGrade"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
-            <button id="loadReports" type="button" class="primary-action">Muat Rapor</button>
+  <nav id="reportSubmenu" class="manage-tabs report-submenu" aria-label="Submenu rapor" role="tablist">
+    <button type="button" class="active" role="tab" data-rapor-view="preview" aria-controls="reportViewPreview" aria-selected="true">Pratinjau Siswa</button>
+    <button type="button" role="tab" data-rapor-view="print" aria-controls="reportViewPrint" aria-selected="false">Unduh Rapor</button>
+  </nav>
+  <section id="reportViewPreview" class="report-subview" role="tabpanel" aria-label="Pratinjau rapor siswa">
+    <div class="report-workspace report-workspace-simple">
+      <section class="report-panel report-selection-card" aria-labelledby="reportSelectionTitle">
+        <h3 id="reportSelectionTitle">Pratinjau Otomatis</h3>
+        <p class="gm-muted">Contoh rapor diambil secara acak dari siswa yang nilainya sudah lengkap.</p>
+        <button id="reportNext" type="button" class="secondary-action report-shuffle-button">↻ Siswa lain</button>
+        <p id="reportStudentStatus" class="report-student-status" role="status" aria-live="polite">Menyiapkan contoh rapor...</p>
+        <label class="report-paper-option"><input id="reportPaperTint" type="checkbox"> Simulasi kertas berwarna</label>
+        <details id="reportIdentityDetails" class="report-identity-details">
+          <summary>Periksa identitas rapor</summary><div id="reportDataAudit" class="report-identity-audit" aria-live="polite"></div>
+        </details>
+        <fieldset id="reportSelection" hidden>
+          <select id="reportStudent"><option value="">Pilih siswa</option></select>
+          <select id="reportClass"><option value="">Semua rombel</option></select>
+          <input id="reportSearch" type="search"><button id="reportPrevious" type="button">Sebelumnya</button>
         </fieldset>
-        <p id="reportChecks" role="status" class="report-summary"></p>
-        <p id="reportFeedback" role="status" aria-live="polite" class="report-action-feedback"></p>
-    </section>
-    <nav id="reportSubmenu" class="manage-tabs report-submenu" aria-label="Submenu rapor siswa" role="tablist">
-        <button type="button" class="active" role="tab" data-rapor-view="preview" aria-controls="reportViewPreview" aria-selected="true">Pratinjau Siswa</button>
-        <button type="button" role="tab" data-rapor-view="missing" aria-controls="reportViewMissing" aria-selected="false">Cek Nilai Kosong</button>
-        <button type="button" role="tab" data-rapor-view="print" aria-controls="reportViewPrint" aria-selected="false">Unduh Rapor</button>
-    </nav>
-    <section id="reportViewPreview" class="report-subview" role="tabpanel" aria-label="Pratinjau rapor siswa">
-        <div class="report-workspace">
-            <section class="report-panel report-selection-card" aria-labelledby="reportSelectionTitle">
-                <h3 id="reportSelectionTitle">Pilih Siswa</h3>
-                <fieldset id="reportSelection" class="report-selection-form">
-                    <div class="report-selection-fields">
-                        <label class="field-label" for="reportClass">Rombel<select id="reportClass"><option value="">Semua rombel</option></select></label>
-                        <label class="field-label" for="reportSearch">Cari nama siswa<input type="search" id="reportSearch" placeholder="Nama siswa..." autocomplete="off"></label>
-                        <label class="field-label" for="reportStudent">Siswa<select id="reportStudent"><option value="">Pilih siswa</option></select></label>
-                    </div>
-                    <div class="report-selection-navigation" aria-label="Navigasi pratinjau siswa">
-                        <button id="reportPrevious" type="button" class="secondary-action">← Sebelumnya</button>
-                        <button id="reportNext" type="button" class="secondary-action">Berikutnya →</button>
-                    </div>
-                </fieldset>
-                <div id="reportStudentStatus" class="report-student-status" role="status" aria-live="polite">Muat rapor untuk memulai.</div>
-                <label class="report-paper-option"><input id="reportPaperTint" type="checkbox"> Simulasi kertas berwarna</label>
-                <details id="reportIdentityDetails" class="report-identity-details">
-                    <summary>Periksa identitas rapor</summary>
-                    <div id="reportDataAudit" class="report-identity-audit" aria-live="polite"></div>
-                </details>
-            </section>
-            <div id="reportPreview" class="report-preview" aria-label="Pratinjau satu rapor siswa"></div>
-        </div>
-    </section>
-    <section id="reportViewMissing" class="report-panel report-subview" role="tabpanel" aria-label="Pemeriksaan nilai kosong" hidden>
-        <div class="report-view-heading"><h3>Nilai Wajib yang Belum Diisi</h3>
-            <button id="checkMissingScores" type="button" class="secondary-action">Perbarui Pemeriksaan</button></div>
-        <p id="missingSummary" role="status"></p>
-        <div class="report-grid">
-            <label class="field-label">Cari siswa<input id="missingSearch" type="search"></label>
-            <label class="field-label">Rombel<select id="missingClass"><option value="">Semua rombel</option></select></label>
-            <label class="field-label">Guru<select id="missingTeacher"><option value="">Semua guru</option></select></label>
-            <label class="field-label">Program<select id="missingSubject"><option value="">Semua program</option><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label>
-        </div>
-        <div class="report-table-scroll"><table><thead><tr><th>Nama siswa</th><th>Kelas/rombel</th><th>Aspek nilai kosong</th><th>Guru terkait</th></tr></thead><tbody id="missingRows"></tbody></table></div>
-        <details><summary>Masalah lain dan kelengkapan administrasi</summary><pre id="reportProblems" class="report-problems"></pre></details>
-    </section>
-    <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Unduh rapor" hidden>
-        <h3>Unduh Rapor</h3>
-        <p class="report-export-intro">Pilih cakupan siswa, lalu unduh rapor dalam format Word atau Excel. Rapor yang berhasil diterbitkan dapat diunduh kembali melalui Arsip Rapor.</p>
-        <div class="report-grid report-download-grid">
-            <label class="field-label">Jenis unduhan<select id="reportDownloadMode"><option value="grade">Satu tingkat (semua rombel)</option><option value="class">Satu rombel</option></select></label>
-            <label id="reportDownloadClassField" class="field-label" hidden>Rombel<select id="reportDownloadClass"><option value="">Pilih rombel</option></select></label>
-        </div>
-        <p id="reportDownloadSummary" class="report-download-summary" role="status">Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.</p>
-        <div id="reportActions" class="report-export-options">
-            <article class="report-export-card" aria-labelledby="reportWordTitle">
-                <span class="report-format-label">DOCX</span>
-                <h4 id="reportWordTitle">Word</h4>
-                <p>Satu dokumen dengan satu halaman A4 per siswa. Teks dan tabel dapat diedit.</p>
-                <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Word</button>
-            </article>
-            <article class="report-export-card" aria-labelledby="reportExcelTitle">
-                <span class="report-format-label">XLSX</span>
-                <h4 id="reportExcelTitle">Excel</h4>
-                <p>Satu workbook dengan satu lembar rapor per siswa. Cetak seluruh workbook untuk semua siswa.</p>
-                <button id="downloadReportsExcel" type="button" class="primary-action">Unduh ZIP Excel</button>
-            </article>
-        </div>
-        <div class="report-export-recovery">
-            <button id="reportRetryDownload" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button>
-            <a id="reportPdfLink" class="secondary-action" target="_blank" rel="noopener" hidden>Simpan ZIP Rapor</a>
-        </div>
-        <div id="reportPdfProgress" class="report-pdf-progress" hidden aria-live="polite">
-            <div class="report-progress-heading"><strong id="reportPdfProgressTitle">Menyiapkan rapor</strong><span id="reportPdfProgressPercent">0%</span></div>
-            <progress id="reportPdfProgressBar" max="100" value="0">0%</progress>
-            <p id="reportPdfProgressDetail">Menunggu proses dimulai.</p>
-        </div>
-        <p class="report-paper-note">Word dan Excel menggunakan latar tanpa isian, termasuk sel tabel, untuk kertas berwarna. Warna putih di layar mengikuti tampilan aplikasi. Warna asli logo tetap dipertahankan.</p>
-    </section>
+      </section>
+      <div id="reportPreview" class="report-preview" aria-label="Pratinjau rapor siswa"></div>
+    </div>
+  </section>
+  <section id="reportViewPrint" class="report-panel report-subview report-print-panel" role="tabpanel" aria-label="Unduh rapor" hidden>
+    <div class="section-heading"><div><h2>Unduh Rapor</h2><p>Hanya tiga pilihan: periode, tingkat kelas, dan rombel.</p></div></div>
+    <fieldset id="reportControls" class="report-grid report-controls-simple">
+      <label class="field-label">Periode penilaian
+        <select id="reportPeriod">
+          <option value="pts_ganjil">PTS · Semester 1</option>
+          <option value="pas_ganjil">PAS · Semester 1</option>
+          <option value="pts_genap">PTS · Semester 2</option>
+          <option value="pas_genap">PAS · Semester 2</option>
+        </select>
+      </label>
+      <label class="field-label">Tingkat kelas
+        <select id="reportGrade"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+      </label>
+      <label class="field-label">Rombel
+        <select id="reportDownloadClass"><option value="">Semua rombel</option></select>
+      </label>
+      <input type="hidden" id="reportExam" value="pts"><input type="hidden" id="reportSemester" value="ganjil">
+      <input type="hidden" id="reportDownloadMode" value="grade">
+      <details class="report-year-details" id="reportAdvancedYear">
+        <summary>Ganti tahun ajaran</summary>
+        <label class="field-label" for="reportYear">Tahun awal ajaran <input id="reportYear" type="number" min="2000" max="2200"></label>
+      </details>
+      <button id="loadReports" type="button" class="secondary-action report-refresh-button">↻ Perbarui data</button>
+    </fieldset>
+    <p id="reportChecks" role="status" class="report-summary">Data akan dimuat otomatis.</p>
+    <p id="reportDownloadSummary" class="report-download-summary" role="status"></p>
+    <p id="reportFeedback" role="status" aria-live="polite" class="report-action-feedback"></p>
+    <div id="reportActions" class="report-export-options">
+      <article class="report-export-card" aria-labelledby="reportWordTitle">
+        <span class="report-format-label">DOCX</span><h4 id="reportWordTitle">Word</h4>
+        <p>Rapor A4 dapat diedit, mengikuti template sekolah yang disetujui.</p>
+        <button id="downloadReports" type="button" class="primary-action">Unduh ZIP Word</button>
+      </article>
+      <article class="report-export-card" aria-labelledby="reportExcelTitle">
+        <span class="report-format-label">XLSX</span><h4 id="reportExcelTitle">Excel</h4>
+        <p>Lembar rapor per siswa dengan nilai dari periode terpilih.</p>
+        <button id="downloadReportsExcel" type="button" class="primary-action">Unduh ZIP Excel</button>
+      </article>
+    </div>
+    <div class="report-export-recovery">
+      <button id="reportRetryDownload" type="button" class="secondary-action" hidden>Coba Lagi yang Gagal</button>
+      <a id="reportPdfLink" class="secondary-action" target="_blank" rel="noopener" hidden>Simpan ZIP Rapor</a>
+    </div>
+    <div id="reportPdfProgress" class="report-pdf-progress" hidden aria-live="polite">
+      <div class="report-progress-heading"><strong id="reportPdfProgressTitle">Menyiapkan rapor</strong><span id="reportPdfProgressPercent">0%</span></div>
+      <progress id="reportPdfProgressBar" max="100" value="0">0%</progress>
+      <p id="reportPdfProgressDetail">Menunggu proses dimulai.</p>
+    </div>
+  </section>
+  <section id="reportViewMissing" class="report-panel report-subview" role="tabpanel" hidden>
+    <p id="missingSummary"></p><select id="missingTeacher"><option value="">Semua guru</option></select>
+    <select id="missingClass"><option value="">Semua rombel</option></select>
+    <select id="missingSubject"><option value="">Semua program</option></select>
+    <input type="hidden" id="missingSearch"><div hidden><table><tbody id="missingRows"></tbody></table></div>
+    <pre id="reportProblems" hidden></pre><button id="checkMissingScores" hidden type="button">Perbarui</button>
+  </section>
 </div>
-    <div id="page-identitas" class="hidden space-y-6">
+<div id="page-identitas" class="hidden space-y-6">
         <section class="assessment-controls school-identity-header">
             <div class="section-heading"><div>
                 <p class="section-kicker">PROFIL SEKOLAH</p>
