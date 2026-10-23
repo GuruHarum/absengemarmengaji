@@ -1,5 +1,5 @@
 window.StudentReports = (() => {
-    let rows = [], busy = false, previewToken = 0, previewSearchToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0, previewVisited = false;
+    let rows = [], busy = false, previewToken = 0, previewSearchToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0, previewVisited = false, pendingDownloadLoad = false;
     const currentLoadKey = () => `${Number(el('reportYear').value || 0)}|${period()}|${String(el('reportGrade').value || '')}`;
     const el = id => document.getElementById(id);
     const esc = value => escapeHtml(String(value ?? ''));
@@ -177,6 +177,10 @@ window.StudentReports = (() => {
         }
         finally {
             setBusy(false);
+            if (pendingDownloadLoad && activeTab === 'print') {
+                pendingDownloadLoad = false;
+                void load(true);
+            }
         }
     }
     const isMissing = value => value == null || !String(value).trim();
@@ -394,13 +398,20 @@ window.StudentReports = (() => {
             button.tabIndex = chosen ? 0 : -1;
         });
         if (tab === 'preview' && previous !== tab && previewVisited) void randomPreview();
-        if (tab === 'print' && previous !== tab) void load(true);
+        if (tab === 'print' && previous !== tab) {
+            ++previewSearchToken;
+            if (busy) pendingDownloadLoad = true;
+            else void load(true);
+        }
     }
     function open() {
         if (AppAccess.profile?.role !== 'koordinator') return;
         el('reportYear').value ||= String(new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0));
         if (activeTab === 'preview' && !busy) void randomPreview();
-        if (activeTab === 'print' && !busy) void load(true);
+        if (activeTab === 'print') {
+            if (busy) pendingDownloadLoad = true;
+            else void load(true);
+        }
         changeTab(activeTab);
     }
     async function openMissing(options = {}) {
@@ -414,7 +425,6 @@ window.StudentReports = (() => {
         el('reportSemester').value = semester;
         el('reportGrade').value = String(options.className || '').match(/(\d+)/)?.[1] || '1';
         changeTab('print');
-        await load(true);
         return true;
     }
     ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))(() => {
@@ -443,11 +453,15 @@ window.StudentReports = (() => {
             const [exam,semester] = el('reportPeriod').value.split('_');
             el('reportExam').value = exam; el('reportSemester').value = semester;
             rows = []; loadedKey = ''; previewVisited = false;
-            el('reportDownloadClass').value = ''; if (activeTab === 'print') void load(true);
+            el('reportDownloadClass').value = ''; if (activeTab === 'print') {
+                if (busy) pendingDownloadLoad = true; else void load(true);
+            }
         });
         for (const id of ['reportGrade','reportYear']) el(id).addEventListener('change', () => {
             rows = []; loadedKey = ''; el('reportDownloadClass').value = '';
-            if (activeTab === 'print') void load(true);
+            if (activeTab === 'print') {
+                if (busy) pendingDownloadLoad = true; else void load(true);
+            }
         });
     });
     return { open, openMissing, isBusy: () => busy };
