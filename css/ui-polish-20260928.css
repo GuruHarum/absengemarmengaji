@@ -736,3 +736,26 @@ body.admin-page #page-profil .profile-security-actions { gap:10px; }
     body.admin-page #page-profil .profile-security-actions { display:grid; grid-template-columns:1fr; }
     body.admin-page #page-profil .profile-security-actions > * { width:100%; min-width:0; }
 }
+
+/* Profil ringkas: navigasi dua tab, semua form tetap utuh dan tersedia. */
+body.admin-page #page-profil.profile-settings-grid {grid-template-columns:minmax(0,1fr);justify-items:stretch;gap:16px;max-width:1080px;margin-inline:auto;width:100%}
+body.admin-page #page-profil .gm-profile-tabs {display:flex;flex-wrap:wrap;grid-column:1/-1;gap:7px;border:1px solid var(--theme-line,#dce6df);padding:6px;background:var(--theme-paper,#fff);border-radius:15px;width:100%;box-sizing:border-box}
+body.admin-page #page-profil .gm-profile-tabs button {flex:1 1 170px;min-height:44px;padding:10px 16px;border:0;border-radius:10px;background:transparent;color:var(--theme-muted,#60756b);font-size:13px;font-weight:650;cursor:pointer}
+body.admin-page #page-profil .gm-profile-tabs button.active {background:var(--brand-color,#216454);color:#fff}
+body.admin-page #page-profil .gm-profile-tabs button:focus-visible {outline:3px solid var(--theme-gold,#d1b581);outline-offset:2px}
+body.admin-page #page-profil>.assessment-controls {grid-column:1/-1;box-sizing:border-box;max-width:1080px;width:100%}
+body.admin-page #page-profil[data-profile-section="account"]>.profile-security-card,
+body.admin-page #page-profil[data-profile-section="security"]>.profile-main-card {display:none!important}
+body.admin-page #page-profil .profile-security-card {padding:clamp(18px,3vw,32px)}
+body.admin-page #page-profil .profile-security-card #passwordForm {max-width:620px}
+body.admin-page #page-profil .profile-photo-card {max-width:850px}
+body.admin-page #page-profil .profile-identity-form,
+body.admin-page #page-profil .profile-username-section {max-width:740px}
+@media(max-width:640px){body.admin-page #page-profil .gm-profile-tabs{width:100%}body.admin-page #page-profil .gm-profile-tabs button{flex:1 1 0;font-size:12px;padding-inline:8px}}
+/* Hak Akses disatukan dengan tab Akun Guru; hanya formulir lanjutan yang dilipat. */
+body.admin-page .gm-manage-access-details {margin-top:20px;padding:15px;border:1px solid var(--theme-line,#dce6df);border-radius:14px;background:var(--theme-soft,#edf3ed)}
+body.admin-page .gm-manage-access-details>summary {cursor:pointer;font-size:14px;font-weight:700;color:var(--theme-ink,#234334);padding:4px 2px;min-height:36px}
+body.admin-page .gm-manage-access-details .gm-manage-access-panel {margin-top:16px;min-width:0}
+body.admin-page .gm-manage-access-details .account-settings {padding:clamp(14px,2vw,22px);border-radius:12px;background:var(--theme-paper,#fff)}
+body.admin-page .gm-manage-access-details .detail-filter-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:14px}
+body.admin-page .gm-manage-access-details .comparison-table {min-width:620px}
