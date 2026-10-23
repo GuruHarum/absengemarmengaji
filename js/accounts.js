@@ -228,7 +228,12 @@ function gmApplyAccountLinkFilter() {
             if (error)
                 throw error;
             feedback.textContent = role === 'koordinator' && chosenTeacher ? 'Koordinator berhasil ditautkan ke data guru tanpa mengubah hak akses Koordinator. Silakan masuk kembali untuk memperbarui panel.' : 'Akses disimpan. Akun yang diubah perlu masuk kembali untuk memperbarui panel.';
-            await loadAccountSettings();
+            // Segarkan baris guru, email dan role pada direktori yang sama setelah simpan.
+            if (document.getElementById('manageAccountView')?.hidden === false &&
+                typeof loadManageTeacherAccounts === 'function')
+                await loadManageTeacherAccounts();
+            else
+                await loadAccountSettings();
         }
         catch (error) {
             feedback.textContent = error.message || 'Gagal menyimpan akses akun.';
