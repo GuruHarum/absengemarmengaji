@@ -185,8 +185,11 @@ window.GMUpgrade = (()=>{
        } else {
          q=q.eq('class_name',rombel);
        }
-       if(!search&&year)q=q.eq('academic_year_start',Number(year));
-       if(!search&&period)q=q.eq('period',period);
+       // Filter pilihan tetap opsional ketika mencari nama; pengguna tidak wajib mengisinya.
+       if(search && rombel)q=q.eq('class_name',rombel);
+       else if(search && grade)q=q.ilike('class_name',grade+'%');
+       if(year)q=q.eq('academic_year_start',Number(year));
+       if(period)q=q.eq('period',period);
        return q;
      };
      const query=makeQuery();
