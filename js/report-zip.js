@@ -12,7 +12,7 @@ window.ReportZip = (() => {
     if(!rows?.length) throw Error('Tidak ada rapor yang dipilih.');
     onProgress(0, rows.length);
     if(format === 'word') {
-      const document = await word(rows, onProgress, {date});
+      const document = await GMReportTemplate.build(rows, {onProgress,date});
       return pack([{name: safe(fileName).replace(/\.(?:zip|pdf|docx)$/i,'') + '.docx', bytes: new Uint8Array(await document.arrayBuffer())}]);
     }
     if(format === 'excel') {
