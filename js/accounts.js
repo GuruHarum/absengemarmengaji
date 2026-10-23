@@ -234,6 +234,8 @@ function gmApplyAccountLinkFilter() {
                 await loadManageTeacherAccounts();
             else
                 await loadAccountSettings();
+            window.closeManageAccountEditor?.();
+            window.AdminNotice?.notify?.('Hak akses guru berhasil disimpan.', 'success');
         }
         catch (error) {
             feedback.textContent = error.message || 'Gagal menyimpan akses akun.';
