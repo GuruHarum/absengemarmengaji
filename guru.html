@@ -46,7 +46,7 @@
 <link href="css/layout-responsive.css" rel="stylesheet"/>
 <link href="css/admin-refinement.css?v=20260928-submenu-level-1" rel="stylesheet"/>
 <link href="css/gm-upgrade-20260928.css?v=20260928-1" rel="stylesheet"/>
-<link href="css/ui-polish-20260928.css?v=20261022-profile1" rel="stylesheet"/>
+<link href="css/ui-polish-20260928.css?v=20261023-consolidate1" rel="stylesheet"/>
 <link href="css/ux-stage5.css?v=20260929-ux27" rel="stylesheet"/>
 <link href="css/visual-stage8.css?v=20260929-loader37" rel="stylesheet"/>
 <link href="css/rev37-visual-fixes.css?v=20260929-rev37" rel="stylesheet"/>
@@ -479,7 +479,11 @@
 </div>
 </div>
 <div class="hidden space-y-4" id="page-dashboard"></div>
-<div class="hidden profile-settings-grid" id="page-profil">
+<div class="hidden profile-settings-grid" id="page-profil" data-profile-section="account">
+<nav class="gm-profile-tabs" role="tablist" aria-label="Pengaturan profil">
+<button type="button" class="active" data-profile-tab="account" aria-selected="true" role="tab">Profil &amp; Username</button>
+<button type="button" data-profile-tab="security" aria-selected="false" role="tab">Ubah Password</button>
+</nav>
 <section class="assessment-controls profile-main-card">
 <div class="profile-section-heading"><div><p class="section-kicker">IDENTITAS AKUN</p><h2>Profil Saya</h2><p>Atur nama yang tampil pada dashboard dan foto profil akun Anda.</p></div></div>
 <div id="pwaProfileInstallSlot" aria-label="Pemasangan aplikasi"></div>
@@ -683,7 +687,7 @@
 <script src="js/database.js?v=20261007-data63"></script>
 
 <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
-<script src="js/panel-modules.js?v=20261023-report-template2"></script>
+<script src="js/panel-modules.js?v=20261023-consolidate1"></script>
 <script src="js/panel-start-guru.js?v=20261007-data63"></script>
 <script src="js/gm-upgrade-20260928.js?v=20261007-data63"></script>
 <div class="hidden" style="display: none;">
