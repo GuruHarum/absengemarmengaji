@@ -35,9 +35,9 @@ test('Word and Excel actions keep distinct formats and ZIP filenames, and issue 
 test('retry preserves Excel format and original scope, and failed exports do not issue reports',async()=>{
     const f=fixture();f.context.ReportZip.build=async(_,options)=>{f.builds.push(options.format);throw Error('Unduhan terhenti');};
     await f.context.download(false,'excel');assert.equal(f.issued.length,0);assert.equal(f.el('reportRetryDownload').hidden,false);
-    f.el('reportDownloadMode').value='class';f.el('reportDownloadClass').value='2 B';
+    f.el('reportDownloadClass').value='2 B';
     f.context.ReportZip.build=async(_,options)=>{f.builds.push(options.format);return new Blob(['zip']);};
-    await f.context.download(true);assert.deepEqual(f.builds,['excel','excel']);assert.equal(f.el('reportDownloadMode').value,'grade');
+    await f.context.download(true);assert.deepEqual(f.builds,['excel','excel']);assert.equal(f.el('reportDownloadClass').value,'');
     assert.equal(f.issued.length,1);assert.equal(f.el('reportRetryDownload').hidden,true);
 });
 test('incomplete data blocks both formats without building or issuing',async()=>{
