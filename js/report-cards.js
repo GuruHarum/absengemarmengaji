@@ -396,7 +396,8 @@ window.StudentReports = (() => {
                 changeTab(tabs[next].dataset.raporView);tabs[next].focus();
             });
         });
-        changeTab('print');
+        el('reportViewPrint').hidden = false;
+        el('page-arsip').classList.add('hidden');
         el('loadReports').addEventListener('click',()=>void load(true));
         el('downloadReports').addEventListener('click',()=>void download(false,'word'));
         el('downloadReportsExcel').addEventListener('click',()=>void download(false,'excel'));
