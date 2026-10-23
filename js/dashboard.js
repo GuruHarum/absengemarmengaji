@@ -961,6 +961,7 @@ async function loadManageTeacherAccounts() {
         gmTeacherAccountRows = Array.isArray(data) ? data : [];
         gmTeacherAccountsLoaded = true;
         renderManageTeacherAccounts();
+        if (AppAccess.full() && typeof loadAccountSettings === 'function') void loadAccountSettings();
     } catch (error) {
         gmTeacherAccountsLoaded = false;
         if (feedback) feedback.textContent = 'Daftar akun belum dapat dimuat: ' + error.message;
@@ -2028,6 +2029,11 @@ function switchPage(pageId) {
     return window.GMPanel ? GMPanel.navigate(target, () => switchPageReady(pageId)) : switchPageReady(pageId);
 }
 function switchPageReady(pageId) {
+    if (pageId === 'arsip') {
+        switchPageReady('rapor');
+        StudentReports.open('archive');
+        return;
+    }
     if (pageId === 'laporan') { switchPageReady('presentasi'); switchPresentationTab('reports'); return; }
     if (['infografik', 'analitik'].includes(pageId)) pageId = 'presentasi';
     const currentPage = document.body?.dataset?.activePage || '';
@@ -2041,7 +2047,7 @@ function switchPageReady(pageId) {
         });
         return;
     }
-    const pages = ['dashboard','rapor','laporan','arsip','analitik','presentasi','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
+    const pages = ['dashboard','rapor','laporan','analitik','presentasi','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
     if (!pages.includes(pageId) || !AppAccess.canPage(pageId))
         return;
     if (document.body?.dataset) document.body.dataset.activePage = pageId;
@@ -2120,8 +2126,6 @@ function switchPageReady(pageId) {
         PeriodicAssessments.open();
     if (pageId === 'rapor')
         StudentReports.open();
-    if (pageId === 'arsip')
-        GMUpgrade.archive();
     if (pageId === 'infografik')
         populateInfographicFilters();
     if (pageId === 'identitas')
