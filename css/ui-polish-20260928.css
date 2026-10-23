@@ -759,3 +759,23 @@ body.admin-page .gm-manage-access-details .gm-manage-access-panel {margin-top:16
 body.admin-page .gm-manage-access-details .account-settings {padding:clamp(14px,2vw,22px);border-radius:12px;background:var(--theme-paper,#fff)}
 body.admin-page .gm-manage-access-details .detail-filter-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:14px}
 body.admin-page .gm-manage-access-details .comparison-table {min-width:620px}
+
+/* Arsip: pencarian langsung atau filter tingkat + rombel. */
+body.admin-page #page-arsip .gm-archive-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px;align-items:end}
+body.admin-page #page-arsip .gm-archive-search{grid-column:1/-1}
+body.admin-page #page-arsip .gm-archive-filter{min-width:0}
+body.admin-page #page-arsip .gm-archive-filter :is(input,select){min-width:0;width:100%;min-height:44px;box-sizing:border-box}
+body.admin-page #page-arsip .gm-archive-pagination[hidden]{display:none!important}
+body.admin-page #page-arsip .gm-archive-status{min-height:20px;margin:14px 0}
+body.admin-page #page-arsip .gm-archive-entries:empty{display:none}
+body.admin-page #page-arsip .gm-archive-item{align-items:center;gap:12px}
+body.admin-page #page-arsip .gm-archive-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+body.admin-page #page-arsip .gm-archive-actions button{min-height:38px;white-space:nowrap}
+@media(max-width:900px){body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+ body.admin-page #page-arsip .gm-archive-search{grid-column:1/-1}
+ body.admin-page #page-arsip .gm-archive-item{display:flex;flex-direction:column;align-items:stretch}
+ body.admin-page #page-arsip .gm-archive-actions button{flex:1 1 0}
+}
+@media(max-width:360px){body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:minmax(0,1fr)}body.admin-page #page-arsip .gm-archive-search{grid-column:1}}
