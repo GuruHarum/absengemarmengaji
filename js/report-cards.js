@@ -1,5 +1,5 @@
 window.StudentReports = (() => {
-    let rows = [], busy = false, previewToken = 0, previewSearchToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0, previewVisited = false, pendingDownloadLoad = false;
+    let rows = [], busy = false, previewToken = 0, previewSearchToken = 0, pdfUrl = null, activeTab = 'print', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0, previewVisited = false, pendingDownloadLoad = false;
     const currentLoadKey = () => `${Number(el('reportYear').value || 0)}|${period()}|${String(el('reportGrade').value || '')}`;
     const el = id => document.getElementById(id);
     const esc = value => escapeHtml(String(value ?? ''));
@@ -12,7 +12,7 @@ window.StudentReports = (() => {
         el('reportControls').disabled = value;
         ['checkMissingScores','downloadReports','downloadReportsExcel','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
         ['reportDownloadMode','reportDownloadClass'].forEach(id => { if (el(id)) el(id).disabled = value; });
-        el('reportSelection').disabled = value;
+        if (el('reportSelection')) el('reportSelection').disabled = value;
     }
     function formatDuration(ms) {
         const seconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
@@ -112,8 +112,6 @@ window.StudentReports = (() => {
             return false;
         const requestKey = currentLoadKey();
         if (!force && rows.length && loadedKey === requestKey) {
-            studentOptions();
-            checks();
             tell('Data rapor yang sudah dimuat dipakai kembali.');
             refreshDownloadScope();
             return true;
@@ -137,28 +135,15 @@ window.StudentReports = (() => {
             rows = ReportPDF.sorted(all);
             loadedKey = requestKey;
             const classes = [...new Set(rows.map(row => row.student.class))];
-            const previousReportClass = el('reportClass').value;
             const previousDownloadClass = el('reportDownloadClass')?.value || '';
-            for (const id of ['reportClass', 'missingClass']) {
-                const previous = el(id).value;
-                el(id).replaceChildren(new Option('Semua rombel', ''));
-                classes.forEach(name => el(id).add(new Option(name, name)));
-                if (classes.includes(previous)) el(id).value = previous;
-            }
-            if (classes.includes(previousReportClass)) el('reportClass').value = previousReportClass;
             if (el('reportDownloadClass')) {
                 el('reportDownloadClass').replaceChildren(new Option('Semua rombel', ''));
                 classes.forEach(name => el('reportDownloadClass').add(new Option(name, name)));
                 if (classes.includes(previousDownloadClass)) el('reportDownloadClass').value = previousDownloadClass;
                 refreshDownloadScope();
             }
-            el('missingTeacher').replaceChildren(new Option('Semua guru', ''));
-            [...new Set(ReportCore.missingByStudent(rows).flatMap(pupil => pupil.programs.map(p => p.teacher)))].sort()
-                .forEach(name => el('missingTeacher').add(new Option(name, name)));
             const complete = rows.filter(row => ReportCore.reportCheck(row).complete).length;
             el('reportChecks').textContent = `${rows.length} siswa · ${classes.length} rombel · ${complete} lengkap · ${rows.length - complete} belum lengkap`;
-            checks();
-            studentOptions();
             tell('Data nilai terbaru dimuat. Identitas pratinjau menggunakan data Supabase, bukan contoh Excel.');
             return true;
         }
@@ -166,12 +151,12 @@ window.StudentReports = (() => {
             rows = [];
             loadedKey = '';
             previewToken++;
-            el('reportPreview').replaceChildren();
-            el('reportDataAudit').replaceChildren();
-            el('reportStudent').replaceChildren();
+
+
+
             el('reportChecks').textContent = 'Data belum tersedia';
-            el('missingRows').replaceChildren();
-            el('reportProblems').textContent = '';
+
+
             tell(error.message);
             return false;
         }
@@ -316,7 +301,7 @@ window.StudentReports = (() => {
         catch (error) { tell(error.message); refreshDownloadScope(); return; }
         const selectedRows = selection.rows;
         if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
-            checks(); tell(`Belum dapat mengunduh ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`); return;
+            tell(`Belum dapat mengunduh ${selection.label}: nilai wajib atau identitas belum lengkap. Periksa melalui Dashboard.`); return;
         }
         const formatName = format === 'excel' ? 'Excel' : 'Word';
         lastDownloadAttempt = {
@@ -364,127 +349,69 @@ window.StudentReports = (() => {
             tell(`${error.message}. Tekan Coba Lagi yang Gagal untuk mengulang tanpa memuat ulang data yang masih valid.`);
         } finally { setBusy(false); refreshDownloadScope(); }
     }
-    async function randomPreview() {
-        if (busy || activeTab !== 'preview') return;
-        const token = ++previewSearchToken;
-        el('reportStudentStatus').textContent = 'Mencari contoh rapor dengan nilai lengkap...';
-        const grades = [1,2,3,4,5,6].sort(() => Math.random() - 0.5);
-        for (const grade of grades) {
-            if (token !== previewSearchToken || activeTab !== 'preview') return;
-            try {
-                const candidates = [];
-                for (let start = 0;; start += 250) {
-                    const response = await supabase.rpc('report_roster', {
-                        yr: Number(el('reportYear').value), pr: period(), grade, start_at: start
-                    });
-                    if (response.error) throw response.error;
-                    const found = (response.data || []).filter(row => ReportCore.reportCheck(row).complete);
-                    candidates.push(...found);
-                    if (response.data.length < 250 || candidates.length >= 20) break;
-                }
-                if (token !== previewSearchToken || activeTab !== 'preview') return;
-                if (candidates.length) {
-                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-                    rows = [chosen];
-                    loadedKey = ''; // Sampel tidak pernah digunakan untuk unduhan tingkat/rombel.
-                    el('reportStudent').replaceChildren(new Option(chosen.student.name, String(chosen.student.id)));
-                    el('reportStudent').value = String(chosen.student.id);
-                    previewVisited = true;
-                    await preview();
-                    return;
-                }
-            } catch (error) {
-                if (token === previewSearchToken) {
-                    el('reportStudentStatus').textContent = 'Pratinjau belum tersedia: ' + error.message;
-                    el('reportPreview').replaceChildren();
-                }
-                return;
-            }
-        }
-        rows = []; loadedKey = '';
-        el('reportPreview').replaceChildren();
-        el('reportStudentStatus').textContent = 'Belum ada siswa dengan nilai Tahsin dan Tahfidz lengkap untuk periode ini.';
-    }
     function changeTab(tab) {
-        if (!['preview','print'].includes(tab)) return;
-        const previous = activeTab;
+        if (!['print','archive'].includes(tab)) return;
         activeTab = tab;
-        for (const key of ['preview','missing','print']) {
-            const panel = el('reportView' + key[0].toUpperCase() + key.slice(1));
-            if (panel) panel.hidden = key !== tab;
-        }
+        el('reportViewPrint').hidden = tab !== 'print';
+        el('page-arsip').classList.toggle('hidden',tab !== 'archive');
         document.querySelectorAll('[data-rapor-view]').forEach(button => {
             const chosen = button.dataset.raporView === tab;
-            button.classList.toggle('active', chosen);
-            button.setAttribute('aria-selected', String(chosen));
+            button.classList.toggle('active',chosen);
+            button.setAttribute('aria-selected',String(chosen));
             button.tabIndex = chosen ? 0 : -1;
         });
-        if (tab === 'preview' && previous !== tab && previewVisited) void randomPreview();
-        if (tab === 'print' && previous !== tab) {
-            ++previewSearchToken;
+        if (tab === 'print') {
             if (busy) pendingDownloadLoad = true;
-            else void load(true);
+            else void load(false);
+        } else {
+            ++previewSearchToken;
+            void GMUpgrade.archive();
         }
     }
-    function open() {
+    function open(tab = null) {
         if (AppAccess.profile?.role !== 'koordinator') return;
         el('reportYear').value ||= String(new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0));
-        if (activeTab === 'preview' && !busy) void randomPreview();
-        if (activeTab === 'print') {
-            if (busy) pendingDownloadLoad = true;
-            else void load(true);
-        }
-        changeTab(activeTab);
+        changeTab(tab === 'archive' ? 'archive' : activeTab);
     }
     async function openMissing(options = {}) {
-        // Menu pemeriksaan nilai kosong tetap berada di Dashboard.
-        // Tautan lama diarahkan ke Rapor tanpa membuka submenu lama.
         if (AppAccess.profile?.role !== 'koordinator') return false;
         const [exam = 'pts', semester = 'ganjil'] = String(options.period || 'pts_ganjil').split('_');
         el('reportYear').value = String(options.year || el('reportYear').value);
         el('reportPeriod').value = exam + '_' + semester;
         el('reportExam').value = exam;
         el('reportSemester').value = semester;
-        el('reportGrade').value = String(options.className || '').match(/(\d+)/)?.[1] || '1';
+        el('reportGrade').value = String(options.className || '').match(/(\\d+)/)?.[1] || '1';
         changeTab('print');
         return true;
     }
-    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))(() => {
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready',callback))(() => {
         const tabs = [...document.querySelectorAll('[data-rapor-view]')];
-        tabs.forEach((button, index) => {
-            button.addEventListener('click', () => changeTab(button.dataset.raporView));
-            button.addEventListener('keydown', event => {
+        tabs.forEach((button,index) => {
+            button.addEventListener('click',()=>changeTab(button.dataset.raporView));
+            button.addEventListener('keydown',event=>{
                 if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
                 event.preventDefault();
-                const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
-                    (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-                changeTab(tabs[next].dataset.raporView); tabs[next].focus();
+                const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:
+                    (index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+                changeTab(tabs[next].dataset.raporView);tabs[next].focus();
             });
         });
-        el('reportPaperTint').addEventListener('change', event => {
-            el('reportPreview').classList.toggle('paper-tint', event.target.checked);
+        changeTab('print');
+        el('loadReports').addEventListener('click',()=>void load(true));
+        el('downloadReports').addEventListener('click',()=>void download(false,'word'));
+        el('downloadReportsExcel').addEventListener('click',()=>void download(false,'excel'));
+        el('reportRetryDownload').addEventListener('click',()=>void download(true));
+        el('reportDownloadClass').addEventListener('change',refreshDownloadScope);
+        el('reportPeriod').addEventListener('change',()=>{
+            const [exam,semester]=el('reportPeriod').value.split('_');
+            el('reportExam').value=exam;el('reportSemester').value=semester;
+            rows=[];loadedKey='';el('reportDownloadClass').value='';
+            if(activeTab==='print'){if(busy)pendingDownloadLoad=true;else void load(true)}
         });
-        changeTab('preview');
-        el('reportNext').addEventListener('click', () => void randomPreview());
-        el('loadReports').addEventListener('click', () => void load(true));
-        el('downloadReports').addEventListener('click', () => void download(false, 'word'));
-        el('downloadReportsExcel').addEventListener('click', () => void download(false, 'excel'));
-        el('reportRetryDownload').addEventListener('click', () => void download(true));
-        el('reportDownloadClass').addEventListener('change', refreshDownloadScope);
-        el('reportPeriod').addEventListener('change', () => {
-            const [exam,semester] = el('reportPeriod').value.split('_');
-            el('reportExam').value = exam; el('reportSemester').value = semester;
-            rows = []; loadedKey = ''; previewVisited = false;
-            el('reportDownloadClass').value = ''; if (activeTab === 'print') {
-                if (busy) pendingDownloadLoad = true; else void load(true);
-            }
-        });
-        for (const id of ['reportGrade','reportYear']) el(id).addEventListener('change', () => {
-            rows = []; loadedKey = ''; el('reportDownloadClass').value = '';
-            if (activeTab === 'print') {
-                if (busy) pendingDownloadLoad = true; else void load(true);
-            }
+        for(const id of ['reportGrade','reportYear']) el(id).addEventListener('change',()=>{
+            rows=[];loadedKey='';el('reportDownloadClass').value='';
+            if(activeTab==='print'){if(busy)pendingDownloadLoad=true;else void load(true)}
         });
     });
-    return { open, openMissing, isBusy: () => busy };
+    return {open,openMissing,isBusy:()=>busy};
 })();
