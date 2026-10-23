@@ -123,6 +123,7 @@
                     return;
                 }
                 errorDiv.classList.add('hidden');
+                try { sessionStorage.setItem('gm_login_transition','1'); } catch (_) {}
                 window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
             } else {
                 errorDiv.textContent = 'Email/username atau password salah.';
