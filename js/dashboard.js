@@ -960,8 +960,8 @@ async function loadManageTeacherAccounts() {
         if (error) throw error;
         gmTeacherAccountRows = Array.isArray(data) ? data : [];
         gmTeacherAccountsLoaded = true;
+        if (typeof loadAccountSettings === 'function') await loadAccountSettings();
         renderManageTeacherAccounts();
-        if (AppAccess.full() && typeof loadAccountSettings === 'function') void loadAccountSettings();
     } catch (error) {
         gmTeacherAccountsLoaded = false;
         if (feedback) feedback.textContent = 'Daftar akun belum dapat dimuat: ' + error.message;
@@ -969,33 +969,78 @@ async function loadManageTeacherAccounts() {
 }
 
 function renderManageTeacherAccounts() {
-    const tbody = document.getElementById('manageAccountRows');
-    const cards = document.getElementById('manageAccountCards');
-    const count = document.getElementById('manageAccountCount');
-    if (!tbody || !cards || !count) return;
-    const search = (document.getElementById('manageAccountSearch')?.value || '').trim().toLowerCase();
-    const rows = gmTeacherAccountRows.filter(row =>
-        [row.teacher_name, row.teacher_type, row.email, row.username]
-            .some(value => String(value || '').toLowerCase().includes(search))
-    );
-    count.textContent = new Set(rows.map(row => String(row.teacher_id))).size + ' guru';
-    if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="3">Tidak ada data guru yang sesuai.</td></tr>';
-        cards.innerHTML = '<div class="gm-directory-empty">Tidak ada data guru yang sesuai.</div>';
+    const tbody=document.getElementById('manageAccountRows');
+    const cards=document.getElementById('manageAccountCards');
+    const count=document.getElementById('manageAccountCount');
+    if(!tbody||!cards||!count)return;
+    const search=(document.getElementById('manageAccountSearch')?.value||'').trim().toLocaleLowerCase('id');
+    // Data dari satu RPC. Kolom akses dipadukan pada baris guru yang sama, bukan tabel terpisah.
+    const rows=gmTeacherAccountRows.filter(row=>
+        [row.teacher_name,row.teacher_type,row.email,row.username,row.account_role]
+          .some(value=>String(value||'').toLocaleLowerCase('id').includes(search)));
+    count.textContent=new Set(rows.map(row=>String(row.teacher_id))).size+' guru';
+    if(!rows.length){
+        tbody.innerHTML='<tr><td colspan="5">Tidak ada akun guru yang sesuai.</td></tr>';
+        cards.innerHTML='<div class="gm-directory-empty">Tidak ada akun guru yang sesuai.</div>';
         return;
     }
-    tbody.innerHTML = rows.map(row => '<tr><td>' + manageEscape(row.teacher_name || '-') +
-        '</td><td>' + manageEscape(row.email || 'Belum ada akun') +
-        '</td><td>' + manageEscape(row.username || 'Belum diatur') + '</td></tr>').join('');
-    cards.innerHTML = rows.map(row =>
-        '<article class="gm-account-card"><h3>' + manageEscape(row.teacher_name || '-') + '</h3><dl>' +
-        '<div><dt>Email</dt><dd>' + manageEscape(row.email || 'Belum ada akun') + '</dd></div>' +
-        '<div><dt>Username</dt><dd>' + manageEscape(row.username || 'Belum diatur') + '</dd></div>' +
-        '</dl></article>'
-    ).join('');
+    const status=row=>!row.email?'Belum memiliki akun':(row.account_role==='koordinator'?'Koordinator · tertaut':'Guru · tertaut');
+    const actions=row=>'<button type="button" class="secondary-action gm-account-edit" data-manage-account-id="'+manageEscape(row.teacher_id)+'" data-manage-account-email="'+manageEscape(row.email||'')+'">Atur akses</button>'+
+        (row.email&&row.account_role!=='koordinator'?'<button type="button" class="gm-account-delete" data-manage-account-delete="'+manageEscape(row.email)+'">Hapus akun</button>':'');
+    tbody.innerHTML=rows.map(row=>'<tr><td><strong>'+manageEscape(row.teacher_name||'-')+'</strong><small class="gm-account-type">'+manageEscape(row.teacher_type||'Guru')+'</small></td>'+
+        '<td>'+manageEscape(row.email||'Belum ada akun')+'</td><td>'+manageEscape(row.username||'Belum diatur')+'</td>'+
+        '<td><span class="gm-account-status '+(row.email?'is-linked':'is-unlinked')+'">'+manageEscape(status(row))+'</span></td>'+
+        '<td><div class="gm-account-actions">'+actions(row)+'</div></td></tr>').join('');
+    cards.innerHTML=rows.map(row=>'<article class="gm-account-card"><h3>'+manageEscape(row.teacher_name||'-')+'</h3><small>'+manageEscape(row.teacher_type||'Guru')+'</small><dl>'+
+        '<div><dt>Email login</dt><dd>'+manageEscape(row.email||'Belum ada akun')+'</dd></div>'+
+        '<div><dt>Username</dt><dd>'+manageEscape(row.username||'Belum diatur')+'</dd></div>'+
+        '<div><dt>Peran dan tautan</dt><dd>'+manageEscape(status(row))+'</dd></div></dl><div class="gm-account-actions">'+actions(row)+'</div></article>').join('');
 }
-((callback) => window.GMPanel ? GMPanel.onPage('kelola', callback) : document.addEventListener('panelready', callback))(() => {
-    document.getElementById('manageAccountSearch')?.addEventListener('input', renderManageTeacherAccounts);
+function openManageAccountEditor(button){
+    const email=button.dataset.manageAccountEmail||'';
+    const teacherId=button.dataset.manageAccountId||'';
+    const details=document.getElementById('manageAccessDetails');
+    if(!details||!AppAccess.full())return;
+    details.open=true;
+    const role=gmTeacherAccountRows.find(row=>String(row.teacher_id)===String(teacherId)&&String(row.email||'')===email)?.account_role||'guru';
+    const teacher=document.getElementById('accountTeacher');
+    const roleSelect=document.getElementById('accountRoleSelect');
+    const account=document.getElementById('accountEmail');
+    if(teacher&&roleSelect&&account){
+        roleSelect.value=['guru','koordinator','admin'].includes(role)?role:'guru';
+        roleSelect.dispatchEvent(new Event('change'));
+        teacher.value=teacherId;
+        teacher.dispatchEvent(new Event('change'));
+        // Tidak menimpa email koordinator saat membuka tautan guru.
+        account.value=email;
+        account.dispatchEvent(new Event('change'));
+        document.getElementById('accountEmailHint').textContent=email
+            ?'Akun dipilih dari direktori guru. Periksa perubahan peran sebelum menyimpan.'
+            :'Guru ini belum memiliki akun. Pilih alamat yang sudah terdaftar di Authentication.';
+    }
+    details.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+    roleSelect?.focus({preventScroll:true});
+}
+((callback)=>window.GMPanel?GMPanel.onPage('kelola',callback):document.addEventListener('panelready',callback))(()=>{
+    document.getElementById('manageAccountSearch')?.addEventListener('input',renderManageTeacherAccounts);
+    const directory=document.getElementById('manageAccountView');
+    directory?.addEventListener('click',async event=>{
+        const edit=event.target.closest('[data-manage-account-id]');
+        if(edit){openManageAccountEditor(edit);return;}
+        const remove=event.target.closest('[data-manage-account-delete]');
+        if(!remove||!AppAccess.full())return;
+        const email=remove.dataset.manageAccountDelete;
+        if(!email)return;
+        if(!(await AdminNotice.confirm('Hapus akun login '+email+'? Data guru tetap ada, tetapi akun tidak dapat masuk lagi.')))return;
+        remove.disabled=true;
+        try{
+            await deleteSchoolAccount('account',email);
+            gmTeacherAccountsLoaded=false;
+            await loadManageTeacherAccounts();
+            AdminNotice.notify('Akun berhasil dihapus. Data guru dipertahankan.','success');
+        }catch(error){AdminNotice.notify(error.message||'Penghapusan akun gagal.','error');}
+        finally{remove.disabled=false;}
+    });
     switchManageTab('siswa');
 });
 async function fetchTeachers() {
