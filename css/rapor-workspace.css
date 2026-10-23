@@ -234,3 +234,9 @@ body.admin-page #page-rapor .gm-rapor-draft {pointer-events:none;position:absolu
  body.admin-page #page-rapor .gm-rapor-description{padding:4px;min-height:20px}
  body.admin-page #page-rapor .gm-rapor-sign-line{min-height:30px}
 }
+
+/* Rapor siswa: Unduh + Arsip saja; submenu biasa, tidak sticky. */
+body.admin-page #page-rapor>#reportSubmenu {position:static!important;inset:auto!important;box-shadow:none!important}
+body.admin-page #page-rapor #page-arsip {min-width:0}
+body.admin-page #page-rapor #page-arsip.hidden {display:none!important}
+body.admin-page #page-rapor #reportViewPrint[hidden] {display:none!important}
