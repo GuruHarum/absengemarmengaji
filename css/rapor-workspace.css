@@ -133,3 +133,51 @@ body.admin-page #page-arsip .gm-archive-empty{text-align:center;padding:28px 12p
 @media(max-width:900px){body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){body.admin-page #page-arsip .gm-archive-item{flex-direction:column;align-items:stretch}body.admin-page #page-arsip .gm-archive-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}body.admin-page #page-arsip .gm-archive-actions :is(button,.gm-archive-legacy){min-width:0;width:100%;text-align:center}body.admin-page #page-arsip .gm-archive-heading{flex-direction:column}}
 @media(max-width:390px){body.admin-page #page-arsip .gm-archive-filters,body.admin-page #page-arsip .gm-archive-actions{grid-template-columns:minmax(0,1fr)}}
+
+/* Rapor ringkas: dua submenu tanpa sticky, satu kumpulan filter unduhan saja. */
+body.admin-page #page-rapor #reportSubmenu {
+  position: static !important; top: auto !important; bottom: auto !important;
+  z-index: auto !important; box-shadow: none !important; align-self: start;
+}
+body.admin-page #page-rapor .report-workspace-simple {
+  grid-template-columns: minmax(220px, 265px) minmax(0,1fr);
+  align-items: start;
+}
+body.admin-page #page-rapor .report-workspace-simple .report-selection-card { padding: 20px; }
+body.admin-page #page-rapor .report-workspace-simple .report-selection-card h3 { margin: 0 0 7px; }
+body.admin-page #page-rapor .report-workspace-simple .gm-muted { font-size: 13px; line-height: 1.6; }
+body.admin-page #page-rapor .report-shuffle-button { width:100%; min-height:44px; margin:18px 0 8px; }
+body.admin-page #page-rapor .report-workspace-simple fieldset[hidden] { display:none !important; }
+body.admin-page #page-rapor #reportControls.report-controls-simple {
+  display: grid; grid-template-columns:repeat(3,minmax(0,1fr)); column-gap:16px; row-gap:10px;
+  margin:20px 0 0; align-items:end; width:100%; padding:0; border:0;
+}
+body.admin-page #page-rapor .report-controls-simple > input[type=hidden] { display:none; }
+body.admin-page #page-rapor .report-year-details { grid-column:1 / -1; min-width:0; }
+body.admin-page #page-rapor .report-year-details summary {
+  display:inline-flex; cursor:pointer; font-size:12px; font-weight:600;
+  color:var(--brand-color,#216454); min-height:36px; align-items:center;
+}
+body.admin-page #page-rapor .report-year-details .field-label { max-width:200px; margin-top:8px; }
+body.admin-page #page-rapor #loadReports.report-refresh-button {
+  grid-column:1 / -1; justify-self:start; min-height:40px; padding:8px 18px;
+}
+body.admin-page #page-rapor #reportViewPrint .report-export-options { grid-template-columns: repeat(2,minmax(0,1fr)); max-width:860px; }
+body.admin-page #page-rapor #reportViewPrint .report-summary { margin-top:8px; padding-top:12px; }
+body.admin-page #page-rapor #reportViewMissing { display:none !important; }
+@media(max-width:920px){
+ body.admin-page #page-rapor .report-workspace-simple { grid-template-columns:minmax(0,1fr); }
+ body.admin-page #page-rapor .report-workspace-simple .report-selection-card { padding:16px; }
+ body.admin-page #page-rapor .report-shuffle-button { width:auto; }
+}
+@media(max-width:680px){
+ body.admin-page #page-rapor #reportControls.report-controls-simple { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ body.admin-page #page-rapor #reportControls.report-controls-simple > :first-child { grid-column:1 / -1; }
+ body.admin-page #page-rapor .report-submenu { width:100%; }
+ body.admin-page #page-rapor .report-submenu button { flex:1 1 0; white-space:normal; }
+ body.admin-page #page-rapor #reportViewPrint .report-export-options { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:375px){
+ body.admin-page #page-rapor #reportControls.report-controls-simple { grid-template-columns:minmax(0,1fr); }
+ body.admin-page #page-rapor #reportControls.report-controls-simple > :first-child { grid-column:auto; }
+}
