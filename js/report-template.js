@@ -108,5 +108,56 @@ window.GMReportTemplate = (() => {
     files.push({name:'word/media/image1.png',bytes:new Uint8Array(await logo.arrayBuffer())});
     return ReportZip.pack(files,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   }
-  return {build,source,data};
+
+  // Pratinjau A4 HTML menggunakan kunci data yang sama dengan template DOCX.
+  // Rendering browser adalah representasi layar, bukan dokumen cetak independen.
+  const html = value => escapeXml(value);
+  function renderPreview(row,{draft=false}={}) {
+    const v=data(row);
+    const h=key=>html(v[key] ?? '-');
+    const cells=(sub,fields)=>{
+      const left=sub==='TAHSIN'?'<td class="gm-rapor-program" rowspan="6">TAHSIN</td>':'<td class="gm-rapor-program" rowspan="5">TAHFIDZ</td>';
+      const rows=fields.map(([label,key],i)=>'<tr>'+(i?'':left)+
+        '<td>'+html(label)+'</td><td class="num">'+h(sub+'_'+key+'_SCORE')+'</td>'+
+        '<td class="gm-rapor-aspect">'+h(sub+'_'+key+'_ASPECT')+'</td>'+
+        (i?'':'<td class="gm-rapor-progress" rowspan="'+fields.length+'">'+h(sub+'_PROGRESS')+'</td>')+'</tr>').join('');
+      return '<table class="gm-rapor-table"><colgroup><col style="width:13%"><col style="width:23%"><col style="width:8%"><col style="width:30%"><col style="width:26%"></colgroup>'+
+        '<tr class="'+(sub==='TAHSIN'?'gm-rapor-yellow':'gm-rapor-salmon')+'"><th>PROGRAM</th><th colspan="4">TARGET PEMBELAJARAN '+sub+'</th></tr>'+
+        '<tr><td class="gm-rapor-program" rowspan="2"></td><td colspan="4" class="gm-rapor-target">'+h(sub+'_TARGET')+'</td></tr>'+
+        '<tr><th>ASPEK</th><th>NILAI</th><th>KETERANGAN</th><th>PENCAPAIAN '+sub+'</th></tr>'+
+        rows+
+        '<tr class="gm-rapor-gray"><td colspan="5"><div class="gm-rapor-three"><span>JUMLAH : '+h(sub+'_SUM')+'</span><span>RATA-RATA : '+h(sub+'_AVERAGE')+'</span><span>GRADE NILAI : '+h(sub+'_GRADE')+'</span></div></td></tr>'+
+        '</table>';
+    };
+    // Program row uses simple table cells in browser while DOCX uses actual merged cells.
+    const subject=(sub,fields)=>{
+      return '<section class="gm-rapor-subject">'+cells(sub,fields)+
+        '<div class="gm-rapor-gray gm-rapor-meta"><span>NILAI KKM : '+h(sub+'_KKM')+'</span>'+
+        '<span>PREDIKAT : '+h(sub+'_PREDICATE')+'</span>'+
+        '<span>GURU PEMBIMBING : '+h(sub+'_TEACHER')+'</span></div>'+
+        '<div class="gm-rapor-section-label">CAPAIAN KOMPETENSI :</div>'+
+        '<div class="gm-rapor-description">'+h(sub+'_DESCRIPTION')+'</div></section>';
+    };
+    const sheet=document.createElement('div');
+    sheet.className='gm-rapor-sheet';
+    sheet.innerHTML='<div class="gm-rapor-letterhead"><img src="assets/school-logo.png" alt="Logo SDIT">'+
+      '<div class="gm-rapor-letterhead-copy"><strong>LAPORAN PENILAIAN HASIL BELAJAR TAHSIN & TAHFIDZ</strong>'+
+      '<span>'+h('PERIOD_LABEL')+'</span><strong>'+h('SCHOOL_LEVEL')+'</strong>'+
+      '<strong>'+h('SCHOOL_NAME')+'</strong></div></div>'+
+      '<div class="gm-rapor-identities"><div><b>NAMA</b><span>:</span><span>'+h('STUDENT_NAME')+'</span></div>'+
+      '<div><b>NISN</b><span>:</span><span>'+h('STUDENT_NISN')+'</span></div>'+
+      '<div><b>NIS</b><span>:</span><span>'+h('STUDENT_NIS')+'</span></div>'+
+      '<div><b>KELAS</b><span>:</span><span>'+h('STUDENT_CLASS')+'</span></div></div>'+
+      subject('TAHSIN',[['MAKHORIJUL HURUF','MAKHRAJ'],['TAJWID','TAJWID'],['TARTIL/KELANCARAN','TARTIL'],['GHARIB MUSYKILAT','GHARIB']])+
+      subject('TAHFIDZ',[['MAKHORIJUL HURUF','MAKHRAJ'],['TAJWID','TAJWID'],['TARTIL/KELANCARAN','HAFALAN']])+
+      '<div class="gm-rapor-section-label">CATATAN GURU MENGENAI SISWA</div>'+
+      '<div class="gm-rapor-description">'+h('TEACHER_NOTE')+'</div>'+
+      '<div class="gm-rapor-date">'+h('ISSUE_DATE')+'</div>'+
+      '<div class="gm-rapor-signatures"><div><strong>ORANG TUA / WALI<br/>SISWA</strong><div class="gm-rapor-sign-line"></div><span> </span></div>'+
+      '<div><strong>KEPALA SEKOLAH<br/>'+h('SIGNATURE_SCHOOL')+'</strong><div class="gm-rapor-sign-line">'+h('PRINCIPAL_NAME')+'</div><span>'+h('PRINCIPAL_NIY')+'</span></div>'+
+      '<div><strong>KOORDINATOR STUDI<br/>AL-QUR’AN</strong><div class="gm-rapor-sign-line">'+h('COORDINATOR_NAME')+'</div><span>'+h('COORDINATOR_NIY')+'</span></div></div>';
+    if(draft){const mark=document.createElement('div');mark.className='gm-rapor-draft';mark.textContent='DRAF';sheet.appendChild(mark);}
+    return sheet;
+  }
+  return {build,source,data,renderPreview};
 })();
