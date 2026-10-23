@@ -11,7 +11,7 @@
         settings: { dependencies: ['progress'], files: ['report-settings','settings-hub','system-reset','account-deletion','accounts'] },
         photo: { files: [] },
         profile: { files: [] },
-        manage: { dependencies: ['photo'], files: ['student-import','enrollment','accounts'] },
+        manage: { dependencies: ['photo'], files: ['student-import','enrollment','account-deletion','accounts'] },
         chart: { urls: ['https://cdn.jsdelivr.net/npm/chart.js'] },
         pdf: { urls: ['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js'] }
     };
