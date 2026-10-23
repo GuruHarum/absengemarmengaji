@@ -1057,6 +1057,10 @@ function openManageAccountEditor(button){
     const directory=document.getElementById('manageAccountView');
     const modal=document.getElementById('manageAccessModal');
     if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);
+    // Gunakan tombol Simpan yang sama milik form akun, pindahkan ke kaki dialog.
+    // Atribut form menjaga validasi dan submit meski tombol berada di luar form.
+    const save=document.getElementById('accountSave'),footer=modal?.querySelector('.gm-access-footer');
+    if(save&&footer){save.setAttribute('form','accountForm');footer.appendChild(save);}
     modal?.addEventListener('click',event=>{if(event.target===modal)closeManageAccountEditor()});
     document.getElementById('manageAccessClose')?.addEventListener('click',closeManageAccountEditor);
     document.getElementById('manageAccessCancel')?.addEventListener('click',closeManageAccountEditor);
@@ -1332,6 +1336,7 @@ function switchManageTab(tab) {
     if (!['siswa', 'guru', 'guru-tahsin', 'guru-tahfidz', 'akun-guru', 'impor'].includes(tab)) return;
     if ((tab === 'impor' || tab === 'akun-guru') && !AppAccess.full()) return;
     if (tab === 'guru') tab = 'guru-tahsin';
+    if(tab !== 'akun-guru')window.closeManageAccountEditor?.();
     currentManageView = tab === 'siswa' || tab === 'impor' ? 'students' : 'teachers';
     currentManageTab = tab === 'siswa' || tab === 'impor' || tab === 'akun-guru' ? tab : 'guru';
     if (currentManageTab === 'guru')
