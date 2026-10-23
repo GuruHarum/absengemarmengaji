@@ -1,4 +1,4 @@
-const VERSION = 'report-archive-light-20261023g';
+const VERSION = 'report-archive-light-20261023h';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -25,15 +25,16 @@ const PRECACHE = [
   '/css/gm-presentation-responsive.css',
   '/css/rev51-responsive.css',
   '/css/rev54-panels.css',
-  '/css/rapor-workspace.css?v=20261023-archive-light2',
+  '/css/rapor-workspace.css?v=20261023-archive-light3',
+  '/css/gm-data-navigation.css?v=20261023-archive-light3',
   '/js/pwa.js',
   '/js/panel-preboot.js',
-  '/js/panel-modules.js?v=20261023-archive-light2',
-  '/js/report-template-data.js?v=20261023-archive-light2',
-  '/js/report-template.js?v=20261023-archive-light2',
-  '/js/report-zip.js?v=20261023-archive-light2',
-  '/js/report-cards.js?v=20261023-archive-light2',
-  '/js/panel-start-guru.js?v=20261023-archive-light2',
+  '/js/panel-modules.js?v=20261023-archive-light3',
+  '/js/report-template-data.js?v=20261023-archive-light3',
+  '/js/report-template.js?v=20261023-archive-light3',
+  '/js/report-zip.js?v=20261023-archive-light3',
+  '/js/report-cards.js?v=20261023-archive-light3',
+  '/js/panel-start-guru.js?v=20261023-archive-light3',
   '/js/islamic-quotes.js',
   '/assets/school-logo.png',
   '/assets/icon-192.png',
