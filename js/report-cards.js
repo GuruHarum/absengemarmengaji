@@ -290,8 +290,10 @@ window.StudentReports = (() => {
                 el('reportPreview').replaceChildren(canvas);
         }
         catch (error) {
-            if (token === previewToken)
+            if (token === previewToken) {
+                el('reportStudentStatus').textContent = 'Pratinjau belum dapat ditampilkan: ' + error.message;
                 tell(error.message);
+            }
         }
     }
     function step(amount) {
@@ -365,21 +367,41 @@ window.StudentReports = (() => {
     async function randomPreview() {
         if (busy || activeTab !== 'preview') return;
         const token = ++previewSearchToken;
-        el('reportStudentStatus').textContent = 'Mencari siswa dengan nilai lengkap...';
+        el('reportStudentStatus').textContent = 'Mencari contoh rapor dengan nilai lengkap...';
         const grades = [1,2,3,4,5,6].sort(() => Math.random() - 0.5);
         for (const grade of grades) {
             if (token !== previewSearchToken || activeTab !== 'preview') return;
-            el('reportGrade').value = String(grade);
-            if (!await load(true)) continue;
-            const complete = visible();
-            if (complete.length) {
-                const chosen = complete[Math.floor(Math.random() * complete.length)];
-                el('reportStudent').value = String(chosen.student.id);
-                previewVisited = true;
-                await preview();
+            try {
+                const candidates = [];
+                for (let start = 0;; start += 250) {
+                    const response = await supabase.rpc('report_roster', {
+                        yr: Number(el('reportYear').value), pr: period(), grade, start_at: start
+                    });
+                    if (response.error) throw response.error;
+                    const found = (response.data || []).filter(row => ReportCore.reportCheck(row).complete);
+                    candidates.push(...found);
+                    if (response.data.length < 250 || candidates.length >= 20) break;
+                }
+                if (token !== previewSearchToken || activeTab !== 'preview') return;
+                if (candidates.length) {
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    rows = [chosen];
+                    loadedKey = ''; // Sampel tidak pernah digunakan untuk unduhan tingkat/rombel.
+                    el('reportStudent').replaceChildren(new Option(chosen.student.name, String(chosen.student.id)));
+                    el('reportStudent').value = String(chosen.student.id);
+                    previewVisited = true;
+                    await preview();
+                    return;
+                }
+            } catch (error) {
+                if (token === previewSearchToken) {
+                    el('reportStudentStatus').textContent = 'Pratinjau belum tersedia: ' + error.message;
+                    el('reportPreview').replaceChildren();
+                }
                 return;
             }
         }
+        rows = []; loadedKey = '';
         el('reportPreview').replaceChildren();
         el('reportStudentStatus').textContent = 'Belum ada siswa dengan nilai Tahsin dan Tahfidz lengkap untuk periode ini.';
     }
