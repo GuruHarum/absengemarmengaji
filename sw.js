@@ -1,4 +1,4 @@
-const VERSION = 'profile-archive-dark-20261023d';
+const VERSION = 'report-archive-light-20261023e';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -26,7 +26,6 @@ const PRECACHE = [
   '/css/rev51-responsive.css',
   '/css/rev54-panels.css',
   '/css/rapor-workspace.css?v=20261023-consolidate1',
-  '/css/comfortable-dark-20261023.css?v=20261023-consolidate1',
   '/js/pwa.js',
   '/js/panel-preboot.js',
   '/js/panel-modules.js?v=20261023-consolidate1',
