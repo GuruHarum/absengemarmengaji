@@ -5,7 +5,12 @@
     <meta charset="UTF-8">
     <script>window.GM_INITIAL_LOADER_STARTED_AT = performance.now();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <script>(function(){try{var saved=localStorage.getItem('gm_theme_v46'),t=saved?JSON.parse(saved):'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.gmTheme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';if(sessionStorage.getItem('gm_login_transition')==='1'){document.documentElement.classList.add('gm-login-transition');sessionStorage.removeItem('gm_login_transition');}}catch(e){}})();</script><style>html.gm-login-transition #loadingIndicator{display:none!important}</style>
+    <script>(function(){try{document.documentElement.dataset.gmTheme='light';document.documentElement.style.colorScheme='light';localStorage.setItem('gm_theme_v46',JSON.stringify('light'));if(sessionStorage.getItem('gm_login_transition')==='1'){document.documentElement.classList.add('gm-login-transition');sessionStorage.removeItem('gm_login_transition');}}catch(e){document.documentElement.dataset.gmTheme='light';}})();</script><style>
+html.gm-login-transition #loadingIndicator{display:flex!important;align-items:center;justify-content:center;background:#f4f8f4!important;color:#1d4c39!important}
+html.gm-login-transition #loadingIndicator>*,html.gm-login-transition #loadingIndicator::after{display:none!important}
+html.gm-login-transition #loadingIndicator::before{content:'Menyiapkan dashboard…';display:flex;align-items:center;gap:8px;font:600 14px/1.5 Poppins,system-ui,sans-serif;letter-spacing:.01em}
+html.gm-login-transition body.admin-page{background:#f4f8f4!important}
+</style>
     <title>Dashboard Admin - SDIT Harapan Umat Karawang</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,8 +166,7 @@
 <link rel="stylesheet" href="/css/gm-learning-navigation.css?v=20261022b">
 <link rel="stylesheet" href="/css/gm-assessment-refinement.css?v=20261022d">
 <link rel="stylesheet" href="/css/gm-presentation-responsive.css?v=20261022a">
-    <link rel="stylesheet" href="css/comfortable-dark-20261023.css?v=20261023-consolidate1">
-</head>
+    </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="coordinator">
 
     <div id="loadingIndicator" class="islamic-loader" role="status" aria-live="polite" aria-label="Memuat panel administrasi">
