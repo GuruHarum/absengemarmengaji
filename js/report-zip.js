@@ -12,8 +12,18 @@ window.ReportZip = (() => {
     if(!rows?.length) throw Error('Tidak ada rapor yang dipilih.');
     onProgress(0, rows.length);
     if(format === 'word') {
-      const document = await GMReportTemplate.build(rows, {onProgress,date});
-      return pack([{name: safe(fileName).replace(/\.(?:zip|pdf|docx)$/i,'') + '.docx', bytes: new Uint8Array(await document.arrayBuffer())}]);
+      // Satu berkas Word A4 per siswa: tidak ada risiko gabungan DOCX
+      // memecah tanda tangan siswa berikutnya ke halaman tambahan.
+      const documents = [];
+      const sorted = ReportPDF.sorted(rows);
+      for(let i=0;i<sorted.length;i++) {
+        const record = sorted[i];
+        const document = await GMReportTemplate.build([record], {date});
+        const name = safe('Rapor - '+record.student.name+' - '+record.student.class+' - '+record.period+' - '+record.year+' - '+String(i+1).padStart(3,'0'))+'.docx';
+        documents.push({name,bytes:new Uint8Array(await document.arrayBuffer())});
+        onProgress(i+1,sorted.length,record);
+      }
+      return pack(documents);
     }
     if(format === 'excel') {
       if(window.GMPanel) await GMPanel.load('excel');
