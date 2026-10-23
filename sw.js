@@ -1,4 +1,4 @@
-const VERSION = 'profile-archive-dark-20261023c';
+const VERSION = 'profile-archive-dark-20261023d';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
