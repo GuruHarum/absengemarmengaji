@@ -8,16 +8,26 @@ window.ReportZip = (() => {
   const safe = v => String(v||'').replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim().slice(0,140) || 'Tanpa Nama';
   function dos(){const d=new Date();return {time:(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date:((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate()};}
 
-  async function build(rows,{fileName='Rapor.pdf',format='pdf',onProgress=()=>{}}={}){
+  async function build(rows,{fileName='Rapor.pdf',format='pdf',onProgress=()=>{},date=null}={}){
     if(!rows?.length) throw Error('Tidak ada rapor yang dipilih.');
     onProgress(0, rows.length);
     if(format === 'word') {
-      const document = await word(rows, onProgress);
-      return pack([{name: safe(fileName).replace(/\.(?:zip|pdf|docx)$/i,'') + '.docx', bytes: new Uint8Array(await document.arrayBuffer())}]);
+      // Satu berkas Word A4 per siswa: tidak ada risiko gabungan DOCX
+      // memecah tanda tangan siswa berikutnya ke halaman tambahan.
+      const documents = [];
+      const sorted = ReportPDF.sorted(rows);
+      for(let i=0;i<sorted.length;i++) {
+        const record = sorted[i];
+        const document = await GMReportTemplate.build([record], {date});
+        const name = safe('Rapor - '+record.student.name+' - '+record.student.class+' - '+record.period+' - '+record.year+' - '+String(i+1).padStart(3,'0'))+'.docx';
+        documents.push({name,bytes:new Uint8Array(await document.arrayBuffer())});
+        onProgress(i+1,sorted.length,record);
+      }
+      return pack(documents);
     }
     if(format === 'excel') {
       if(window.GMPanel) await GMPanel.load('excel');
-      const workbook = await ReportExcel.build(rows, {onProgress});
+      const workbook = await ReportExcel.build(rows, {onProgress,date});
       return pack([{name: safe(fileName).replace(/\.(?:zip|pdf|docx|xlsx)$/i,'') + '.xlsx', bytes: new Uint8Array(await workbook.arrayBuffer())}]);
     }
     const pdf = await ReportPDF.build(rows,{draft:false,onProgress});
@@ -57,11 +67,12 @@ window.ReportZip = (() => {
     const central=join(centrals);
     return new Blob([...locals,central,join([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(central.length),u32(offset),u16(0)])],{type});
   }
-  async function word(rows,onProgress=()=>{}, {capture=false}={}) {
+  async function word(rows,onProgress=()=>{}, {capture=false,date:archiveDate=null}={}) {
     const list=ReportPDF.sorted(rows);
     if(!list.length) throw Error('Tidak ada siswa');
     if(list.some(row=>!ReportCore.reportCheck(row).complete)) throw Error('Seluruh nilai wajib dan pengaturan rapor harus lengkap');
-    const files=[], body=[], rels=[], logos=new Map(); const date=new Date();
+    const files=[], body=[], rels=[], logos=new Map(); const date=archiveDate ? new Date(archiveDate) : new Date();
+    if(Number.isNaN(date.getTime())) throw Error('Tanggal arsip tidak valid.');
     const esc=value=>String(value??'-').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const mm=value=>Math.round(value*1440/25.4);
     const empty='<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="1" w:lineRule="exact"/></w:pPr></w:p>';
@@ -191,5 +202,5 @@ window.ReportZip = (() => {
     xml('word/document.xml','<w:document xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>'+body.join('')+'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>');
     return pack(files,'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   }
-  return {build,safe,word,pack,layout:(rows,onProgress)=>word(rows,onProgress,{capture:true})};
+  return {build,safe,word,pack,layout:(rows,onProgress,options={})=>word(rows,onProgress,{...options,capture:true})};
 })();

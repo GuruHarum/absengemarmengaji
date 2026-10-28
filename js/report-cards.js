@@ -1,19 +1,18 @@
 window.StudentReports = (() => {
-    let rows = [], busy = false, previewToken = 0, pdfUrl = null, activeTab = 'preview', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0;
+    let rows = [], busy = false, previewToken = 0, previewSearchToken = 0, pdfUrl = null, activeTab = 'print', loadedKey = '', lastDownloadAttempt = null, downloadStartedAt = 0, previewVisited = false, pendingDownloadLoad = false;
     const currentLoadKey = () => `${Number(el('reportYear').value || 0)}|${period()}|${String(el('reportGrade').value || '')}`;
     const el = id => document.getElementById(id);
     const esc = value => escapeHtml(String(value ?? ''));
     const period = () => `${el('reportExam').value}_${el('reportSemester').value}`;
     const tell = message => { el('reportFeedback').textContent = message; };
     const selected = () => rows.find(row => String(row.student.id) === el('reportStudent').value);
-    const visible = () => rows.filter(row => (!el('reportClass').value || row.student.class === el('reportClass').value) &&
-        row.student.name.toLocaleLowerCase('id').includes(el('reportSearch').value.toLocaleLowerCase('id')));
+    const visible = () => rows.filter(row => ReportCore.reportCheck(row).complete);
     function setBusy(value) {
         busy = value;
         el('reportControls').disabled = value;
-        ['checkMissingScores','downloadReports','downloadReportsExcel','reportDirectPrint','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
+        ['checkMissingScores','downloadReports','downloadReportsExcel','reportRetryDownload'].forEach(id => { if (el(id)) el(id).disabled = value; });
         ['reportDownloadMode','reportDownloadClass'].forEach(id => { if (el(id)) el(id).disabled = value; });
-        el('reportSelection').disabled = value;
+        if (el('reportSelection')) el('reportSelection').disabled = value;
     }
     function formatDuration(ms) {
         const seconds = Math.max(0, Math.round(Number(ms || 0) / 1000));
@@ -44,39 +43,20 @@ window.StudentReports = (() => {
     }
 
     function refreshDownloadScope() {
-        const classMode = el('reportDownloadMode')?.value === 'class';
-        const classField = el('reportDownloadClassField');
-        if (classField) classField.hidden = !classMode;
-        const button = el('downloadReports');
-        const summary = el('reportDownloadSummary');
-        if (!classMode) {
-            if (button) button.textContent = 'Unduh ZIP Word';
-            if (summary) {
-                summary.textContent = rows.length
-                    ? `${rows.length} siswa dari seluruh rombel tingkat ${el('reportGrade').value} akan dimasukkan.`
-                    : 'Mode satu tingkat akan mengunduh seluruh siswa dari semua rombel pada tingkat yang dimuat.';
-                summary.classList.remove('is-warning');
-            }
-            return;
-        }
-        if (button) button.textContent = 'Unduh ZIP Word';
         const className = el('reportDownloadClass')?.value || '';
-        const count = className ? rows.filter(row => row.student.class === className).length : 0;
-        if (summary) {
-            summary.textContent = !className
-                ? 'Pilih satu rombel yang akan diunduh.'
-                : `${count} siswa dari ${className} akan dimasukkan.`;
-            summary.classList.toggle('is-warning', !className || !count);
-        }
+        const summary = el('reportDownloadSummary');
+        if (!summary) return;
+        const count = className ? rows.filter(row => row.student.class === className).length : rows.length;
+        summary.textContent = rows.length
+            ? `${count} siswa · ${className || 'semua rombel tingkat ' + el('reportGrade').value} · ${rows.filter(row => ReportCore.reportCheck(row).complete && (!className || row.student.class === className)).length} rapor lengkap`
+            : 'Mencari data siswa dan nilai periode terpilih...';
+        summary.classList.toggle('is-warning', !count);
     }
     function downloadSelection() {
-        const mode = el('reportDownloadMode')?.value || 'grade';
-        if (mode !== 'class') return { rows: [...rows], label: `Kelas ${el('reportGrade').value}` };
         const className = el('reportDownloadClass')?.value || '';
-        if (!className) throw Error('Pilih rombel yang akan diunduh terlebih dahulu.');
-        const selectedRows = rows.filter(row => row.student.class === className);
-        if (!selectedRows.length) throw Error('Tidak ada siswa pada rombel yang dipilih.');
-        return { rows: selectedRows, label: className };
+        const selectedRows = className ? rows.filter(row => row.student.class === className) : [...rows];
+        if (!selectedRows.length) throw Error('Belum ada siswa pada pilihan ini.');
+        return { rows: selectedRows, label: className || `Kelas ${el('reportGrade').value} (semua rombel)` };
     }
     function updateNavigationButtons() {
         const candidates = visible();
@@ -92,7 +72,7 @@ window.StudentReports = (() => {
         if (candidates.some(row => String(row.student.id) === previous))
             el('reportStudent').value = previous;
         else if (candidates.length)
-            el('reportStudent').value = String(candidates[0].student.id);
+            el('reportStudent').value = String(candidates[Math.floor(Math.random() * candidates.length)].student.id);
         updateNavigationButtons();
         if (activeTab === 'preview') preview();
     }
@@ -132,8 +112,6 @@ window.StudentReports = (() => {
             return false;
         const requestKey = currentLoadKey();
         if (!force && rows.length && loadedKey === requestKey) {
-            studentOptions();
-            checks();
             tell('Data rapor yang sudah dimuat dipakai kembali.');
             refreshDownloadScope();
             return true;
@@ -157,28 +135,15 @@ window.StudentReports = (() => {
             rows = ReportPDF.sorted(all);
             loadedKey = requestKey;
             const classes = [...new Set(rows.map(row => row.student.class))];
-            const previousReportClass = el('reportClass').value;
             const previousDownloadClass = el('reportDownloadClass')?.value || '';
-            for (const id of ['reportClass', 'missingClass']) {
-                const previous = el(id).value;
-                el(id).replaceChildren(new Option('Semua rombel', ''));
-                classes.forEach(name => el(id).add(new Option(name, name)));
-                if (classes.includes(previous)) el(id).value = previous;
-            }
-            if (classes.includes(previousReportClass)) el('reportClass').value = previousReportClass;
             if (el('reportDownloadClass')) {
-                el('reportDownloadClass').replaceChildren(new Option('Pilih rombel', ''));
+                el('reportDownloadClass').replaceChildren(new Option('Semua rombel', ''));
                 classes.forEach(name => el('reportDownloadClass').add(new Option(name, name)));
                 if (classes.includes(previousDownloadClass)) el('reportDownloadClass').value = previousDownloadClass;
                 refreshDownloadScope();
             }
-            el('missingTeacher').replaceChildren(new Option('Semua guru', ''));
-            [...new Set(ReportCore.missingByStudent(rows).flatMap(pupil => pupil.programs.map(p => p.teacher)))].sort()
-                .forEach(name => el('missingTeacher').add(new Option(name, name)));
             const complete = rows.filter(row => ReportCore.reportCheck(row).complete).length;
             el('reportChecks').textContent = `${rows.length} siswa · ${classes.length} rombel · ${complete} lengkap · ${rows.length - complete} belum lengkap`;
-            checks();
-            studentOptions();
             tell('Data nilai terbaru dimuat. Identitas pratinjau menggunakan data Supabase, bukan contoh Excel.');
             return true;
         }
@@ -186,17 +151,21 @@ window.StudentReports = (() => {
             rows = [];
             loadedKey = '';
             previewToken++;
-            el('reportPreview').replaceChildren();
-            el('reportDataAudit').replaceChildren();
-            el('reportStudent').replaceChildren();
+
+
+
             el('reportChecks').textContent = 'Data belum tersedia';
-            el('missingRows').replaceChildren();
-            el('reportProblems').textContent = '';
+
+
             tell(error.message);
             return false;
         }
         finally {
             setBusy(false);
+            if (pendingDownloadLoad && activeTab === 'print') {
+                pendingDownloadLoad = false;
+                void load(true);
+            }
         }
     }
     const isMissing = value => value == null || !String(value).trim();
@@ -297,15 +266,19 @@ window.StudentReports = (() => {
                 line.append(label, result);
                 metrics.append(line);
             }
-            status.replaceChildren(badge, metrics);
+            const studentTitle = document.createElement('strong');
+            studentTitle.textContent = report.student.name + ' · ' + report.student.class;
+            status.replaceChildren(studentTitle, badge, metrics);
             renderIdentityAudit(report, errors);
-            const canvas = await ReportPDF.render(report, { draft: !checked.complete });
+            const canvas = GMReportTemplate.renderPreview(report, { draft: !checked.complete });
             if (token === previewToken)
                 el('reportPreview').replaceChildren(canvas);
         }
         catch (error) {
-            if (token === previewToken)
+            if (token === previewToken) {
+                el('reportStudentStatus').textContent = 'Pratinjau belum dapat ditampilkan: ' + error.message;
                 tell(error.message);
+            }
         }
     }
     function step(amount) {
@@ -315,75 +288,20 @@ window.StudentReports = (() => {
         el('reportStudent').value = String(list[Math.max(0, Math.min(list.length - 1, index + amount))].student.id);
         preview();
     }
-    async function directPrint() {
-        if (busy) return;
-        if (!await load(false) || !rows.length) return;
-        let selection;
-        try { selection = downloadSelection(); }
-        catch (error) { tell(error.message); refreshDownloadScope(); return; }
-        const selectedRows = selection.rows;
-        if (window.AdminNotice?.confirm) {
-            const ok = await AdminNotice.confirm(`Cetak langsung ${selection.label}? ${selectedRows.length} halaman rapor final akan disiapkan dan dibuka pada dialog cetak perangkat.`);
-            if (!ok) return;
-        }
-        if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
-            checks();
-            tell(`Belum dapat mencetak ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`);
-            return;
-        }
-        const popup = window.open('', '_blank');
-        if (popup) {
-            popup.document.write('<title>Menyiapkan Rapor</title><p style="font-family:sans-serif;padding:24px">Menyiapkan PDF untuk dicetak…</p>');
-        }
-        downloadStartedAt = Date.now();
-        updatePdfProgress({ visible: true, title: `Menyiapkan cetak ${selection.label}`, total: selectedRows.length });
-        setBusy(true);
-        try {
-            const pdf = await ReportPDF.build(selectedRows, {
-                draft: false,
-                onProgress: (n, total, row) => {
-                    updatePdfProgress({ visible: true, title: 'Menyusun halaman untuk cetak', n, total, row });
-                    tell(`Menyiapkan cetak ${n}/${total} halaman (${Math.round(n / total * 100)}%)...`);
-                }
-            });
-            pdf.autoPrint?.();
-            const blob = pdf.output('blob');
-            const url = URL.createObjectURL(blob);
-            if (popup && !popup.closed) {
-                popup.location.replace(url);
-                setTimeout(() => { try { popup.focus(); popup.print?.(); } catch (_) { } }, 1200);
-            } else {
-                const anchor = document.createElement('a');
-                anchor.href = url;
-                anchor.target = '_blank';
-                anchor.rel = 'noopener';
-                anchor.click();
-            }
-            updatePdfProgress({ visible: true, title: 'PDF siap dicetak', n: selectedRows.length, total: selectedRows.length, row: selectedRows.at(-1) });
-            tell(`PDF ${selection.label} siap dicetak langsung · ${selectedRows.length} halaman.`);
-            setTimeout(() => URL.revokeObjectURL(url), 120000);
-        } catch (error) {
-            if (popup && !popup.closed) popup.close();
-            tell(`Cetak langsung gagal: ${error.message}`);
-            updatePdfProgress({ visible: false });
-        } finally { setBusy(false); }
-    }
-
     async function download(retry = false, format = 'word') {
         if (busy) return;
         if (retry && lastDownloadAttempt) {
             format = lastDownloadAttempt.format || 'word';
-            if (el('reportDownloadMode')) el('reportDownloadMode').value = lastDownloadAttempt.mode;
             if (el('reportDownloadClass')) el('reportDownloadClass').value = lastDownloadAttempt.className || '';
             refreshDownloadScope();
         }
-        if (!await load(false) || !rows.length) return;
+        if (!await load(true) || !rows.length) return;
         let selection;
         try { selection = downloadSelection(); }
         catch (error) { tell(error.message); refreshDownloadScope(); return; }
         const selectedRows = selection.rows;
         if (selectedRows.some(row => !ReportCore.reportCheck(row).complete)) {
-            checks(); tell(`Belum dapat mengunduh ${selection.label}: masih ada nilai wajib, identitas, atau pengaturan yang belum lengkap.`); return;
+            tell(`Belum dapat mengunduh ${selection.label}: nilai wajib atau identitas belum lengkap. Periksa melalui Dashboard.`); return;
         }
         const formatName = format === 'excel' ? 'Excel' : 'Word';
         lastDownloadAttempt = {
@@ -432,95 +350,69 @@ window.StudentReports = (() => {
         } finally { setBusy(false); refreshDownloadScope(); }
     }
     function changeTab(tab) {
-        if (!['preview','missing','print'].includes(tab)) return;
+        if (!['print','archive'].includes(tab)) return;
         activeTab = tab;
-        for (const key of ['preview','missing','print']) {
-            const panel = el('reportView' + key[0].toUpperCase() + key.slice(1));
-            panel.hidden = key !== tab;
-        }
+        el('reportViewPrint').hidden = tab !== 'print';
+        el('page-arsip').classList.toggle('hidden',tab !== 'archive');
         document.querySelectorAll('[data-rapor-view]').forEach(button => {
             const chosen = button.dataset.raporView === tab;
-            button.classList.toggle('active', chosen);
-            button.setAttribute('aria-selected', String(chosen));
+            button.classList.toggle('active',chosen);
+            button.setAttribute('aria-selected',String(chosen));
             button.tabIndex = chosen ? 0 : -1;
         });
-        if (tab === 'preview' && selected() && !el('reportPreview').firstChild) preview();
-        if (tab === 'missing' && rows.length) checks();
+        if (tab === 'print') {
+            if (busy) pendingDownloadLoad = true;
+            else void load(false);
+        } else {
+            ++previewSearchToken;
+            void GMUpgrade.archive();
+        }
     }
-    function open() {
-        if (AppAccess.profile?.role !== 'koordinator')
-            return;
-        changeTab(activeTab);
+    function open(tab = null) {
+        if (AppAccess.profile?.role !== 'koordinator') return;
         el('reportYear').value ||= String(new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0));
+        changeTab(tab === 'archive' ? 'archive' : activeTab);
     }
     async function openMissing(options = {}) {
-        if (AppAccess.profile?.role !== 'koordinator')
-            return false;
-        const year = Number(options.year || (new Date().getFullYear() - (new Date().getMonth() < 6 ? 1 : 0)));
+        if (AppAccess.profile?.role !== 'koordinator') return false;
         const [exam = 'pts', semester = 'ganjil'] = String(options.period || 'pts_ganjil').split('_');
-        const grade = String(options.className || '').match(/^\s*(?:kelas\s*)?(\d+)/i)?.[1] || '1';
-        el('reportYear').value = String(year);
+        el('reportYear').value = String(options.year || el('reportYear').value);
+        el('reportPeriod').value = exam + '_' + semester;
         el('reportExam').value = exam;
         el('reportSemester').value = semester;
-        el('reportGrade').value = grade;
-        changeTab('missing');
-        const ok = await load(true);
-        if (!ok) return false;
-        if (options.className && [...el('missingClass').options].some(option => option.value === options.className))
-            el('missingClass').value = options.className;
-        if (options.subject)
-            el('missingSubject').value = options.subject;
-        if (options.teacher && [...el('missingTeacher').options].some(option => option.value === options.teacher))
-            el('missingTeacher').value = options.teacher;
-        el('missingSearch').value = options.studentName || '';
-        checks();
+        el('reportGrade').value = String(options.className || '').match(/(\\d+)/)?.[1] || '1';
+        changeTab('print');
         return true;
     }
-    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
+    ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready',callback))(() => {
         const tabs = [...document.querySelectorAll('[data-rapor-view]')];
-        tabs.forEach((button, index) => {
-            button.addEventListener('click', () => changeTab(button.dataset.raporView));
-            button.addEventListener('keydown', event => {
+        tabs.forEach((button,index) => {
+            button.addEventListener('click',()=>changeTab(button.dataset.raporView));
+            button.addEventListener('keydown',event=>{
                 if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
                 event.preventDefault();
-                const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 :
-                    (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
-                changeTab(tabs[next].dataset.raporView);
-                tabs[next].focus();
+                const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:
+                    (index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+                changeTab(tabs[next].dataset.raporView);tabs[next].focus();
             });
         });
-        el('reportPaperTint').addEventListener('change', event => {
-            el('reportPreview').classList.toggle('paper-tint', event.target.checked);
+        el('reportViewPrint').hidden = false;
+        el('page-arsip').classList.add('hidden');
+        el('loadReports').addEventListener('click',()=>void load(true));
+        el('downloadReports').addEventListener('click',()=>void download(false,'word'));
+        el('downloadReportsExcel').addEventListener('click',()=>void download(false,'excel'));
+        el('reportRetryDownload').addEventListener('click',()=>void download(true));
+        el('reportDownloadClass').addEventListener('change',refreshDownloadScope);
+        el('reportPeriod').addEventListener('change',()=>{
+            const [exam,semester]=el('reportPeriod').value.split('_');
+            el('reportExam').value=exam;el('reportSemester').value=semester;
+            rows=[];loadedKey='';el('reportDownloadClass').value='';
+            if(activeTab==='print'){if(busy)pendingDownloadLoad=true;else void load(true)}
         });
-        changeTab('preview');
-        el('loadReports').addEventListener('click', () => load(true));
-        el('checkMissingScores').addEventListener('click', () => load(true));
-        el('reportClass').addEventListener('change', studentOptions);
-        el('reportSearch').addEventListener('input', studentOptions);
-        el('reportStudent').addEventListener('change', preview);
-        el('reportPrevious').addEventListener('click', () => step(-1));
-        el('reportNext').addEventListener('click', () => step(1));
-        el('downloadReports').addEventListener('click', () => download(false, 'word'));
-        el('downloadReportsExcel')?.addEventListener('click', () => download(false, 'excel'));
-        el('reportDirectPrint')?.addEventListener('click', directPrint);
-        el('reportRetryDownload')?.addEventListener('click', () => download(true));
-        el('reportDownloadMode')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
-        el('reportDownloadClass')?.addEventListener('change', () => { el('reportPdfLink').hidden = true; refreshDownloadScope(); });
-        refreshDownloadScope();
-        ['missingSearch', 'missingClass', 'missingTeacher', 'missingSubject']
-            .forEach(id => el(id).addEventListener('input', checks));
-        ['reportYear', 'reportExam', 'reportSemester', 'reportGrade'].forEach(id => el(id).addEventListener('change', () => {
-            rows = [];
-            loadedKey = '';
-            studentOptions();
-            el('reportChecks').textContent = 'Filter berubah. Muat rapor kembali.';
-            checks();
-            el('reportPdfLink').hidden = true;
-            if (el('reportRetryDownload')) el('reportRetryDownload').hidden = true;
-            updatePdfProgress({ visible: false });
-            if (el('reportDownloadClass')) el('reportDownloadClass').value = '';
-            refreshDownloadScope();
-        }));
+        for(const id of ['reportGrade','reportYear']) el(id).addEventListener('change',()=>{
+            rows=[];loadedKey='';el('reportDownloadClass').value='';
+            if(activeTab==='print'){if(busy)pendingDownloadLoad=true;else void load(true)}
+        });
     });
-    return { open, openMissing, isBusy: () => busy };
+    return {open,openMissing,isBusy:()=>busy};
 })();

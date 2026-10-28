@@ -841,6 +841,9 @@ async function loadMaintenanceMode() {
     }
 }
 let currentManageTab = 'siswa';
+let currentManageView = 'students';
+let gmTeacherAccountRows = [];
+let gmTeacherAccountsLoaded = false;
 let currentTeacherGroup = 'tahsin';
 let editingIndex = null;
 let identifierAuditLoaded = false;
@@ -857,31 +860,239 @@ async function gmOpenManageData() {
         try { await gmManageDataPending; }
         catch (error) { AdminNotice.notify('Gagal memuat master: '+error.message,'error'); return; }
     }
-    renderManageTable();
-    switchManageView('directory');
+    switchManageView('students');
 }
 function switchManageView(view) {
-    if (!['directory', 'enrollment'].includes(view)) return;
-    if (view === 'enrollment' && !AppAccess.full()) return;
-    const directory = document.getElementById('manageViewDirectory');
+    if (view === 'enrollment') return openTeacherEnrollmentModal();
+    if (view === 'directory') view = 'students';
+    if (!['students', 'teachers'].includes(view)) return;
+    if (view === 'students') switchManageTab('siswa');
+    else switchManageTab('guru-tahsin');
+}
+
+function openManagePrimaryAdd() {
+    if (currentManageView === 'teachers') return openTeacherEnrollmentModal();
+    if (currentManageTab === 'siswa') return openManageModal();
+}
+
+async function openTeacherEnrollmentModal() {
+    if (!AppAccess.full()) return;
     const enrollment = document.getElementById('teacherEnrollment');
-    const directoryButton = document.getElementById('manageViewDirectoryButton');
-    const enrollmentButton = document.getElementById('manageViewEnrollmentButton');
-    if (enrollmentButton) enrollmentButton.hidden = !AppAccess.full();
-    if (directory) directory.hidden = view !== 'directory';
-    if (enrollment) enrollment.hidden = view !== 'enrollment';
-    [[directoryButton, view === 'directory'], [enrollmentButton, view === 'enrollment']].forEach(([button, active]) => {
-        if (!button) return;
-        button.setAttribute('aria-pressed', String(active));
-        button.classList.toggle('active', active);
-    });
-    if (view === 'directory') {
-        renderManageTable();
-    } else {
-        void TeacherEnrollment.open();
+    if (!enrollment || !window.TeacherEnrollment) {
+        AdminNotice.notify('Formulir tambah guru belum siap. Buka kembali Kelola Data.', 'error');
+        return;
+    }
+    let overlay = document.getElementById('gmEnrollmentOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'gmEnrollmentOverlay';
+        overlay.className = 'gm-enrollment-overlay';
+        overlay.hidden = true;
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'gmEnrollmentTitle');
+
+        const dialog = document.createElement('div');
+        dialog.className = 'gm-enrollment-dialog';
+        const header = document.createElement('div');
+        header.className = 'gm-enrollment-header';
+        const title = document.createElement('h2');
+        title.id = 'gmEnrollmentTitle';
+        title.textContent = 'Tambah Guru';
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'gm-enrollment-close';
+        close.textContent = '×';
+        close.setAttribute('aria-label', 'Tutup formulir');
+        close.addEventListener('click', closeTeacherEnrollmentModal);
+        header.append(title, close);
+        dialog.append(header, enrollment);
+        overlay.append(dialog);
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay) closeTeacherEnrollmentModal();
+        });
+        document.body.append(overlay);
+    }
+    const attendance = document.getElementById('enrollmentAttendance');
+    if (attendance) attendance.value = currentTeacherGroup === 'tahfidz' ? 'false' : 'true';
+    const feedback = document.getElementById('enrollmentFeedback');
+    if (feedback) feedback.textContent = '';
+    const form = document.getElementById('enrollmentForm');
+    if (form) form.reset();
+    const selectedTeacher = document.getElementById('enrollmentTeacher');
+    if (selectedTeacher) {
+        selectedTeacher.value = '';
+        selectedTeacher.dispatchEvent(new Event('change'));
+    }
+    if (attendance) attendance.value = currentTeacherGroup === 'tahfidz' ? 'false' : 'true';
+    enrollment.hidden = false;
+    overlay.hidden = false;
+    document.body.classList.add('gm-enrollment-open');
+    try {
+        await TeacherEnrollment.open();
+        document.getElementById('enrollmentName')?.focus();
+    } catch (error) {
+        AdminNotice.notify('Gagal membuka formulir: ' + error.message, 'error');
     }
 }
-((callback) => window.GMPanel ? GMPanel.onPage('kelola', callback) : document.addEventListener('panelready', callback))(() => switchManageTab('siswa'));
+
+function closeTeacherEnrollmentModal() {
+    const overlay = document.getElementById('gmEnrollmentOverlay');
+    if (overlay) overlay.hidden = true;
+    const enrollment = document.getElementById('teacherEnrollment');
+    if (enrollment) enrollment.hidden = true;
+    document.body.classList.remove('gm-enrollment-open');
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !document.getElementById('gmEnrollmentOverlay')?.hidden)
+        closeTeacherEnrollmentModal();
+});
+
+async function loadManageTeacherAccounts() {
+    if (!AppAccess.full() || currentManageTab !== 'akun-guru') return;
+    const feedback = document.getElementById('manageAccountFeedback');
+    if (feedback) feedback.textContent = '';
+    const count = document.getElementById('manageAccountCount');
+    if (count && !gmTeacherAccountsLoaded) count.textContent = 'Memuat akun...';
+    try {
+        const { data, error } = await supabase.rpc('gm_list_teacher_accounts');
+        if (error) throw error;
+        gmTeacherAccountRows = Array.isArray(data) ? data : [];
+        gmTeacherAccountsLoaded = true;
+        if (typeof loadAccountSettings === 'function') await loadAccountSettings();
+        renderManageTeacherAccounts();
+    } catch (error) {
+        gmTeacherAccountsLoaded = false;
+        if (feedback) feedback.textContent = 'Daftar akun belum dapat dimuat: ' + error.message;
+    }
+}
+
+function renderManageTeacherAccounts() {
+    const tbody=document.getElementById('manageAccountRows');
+    const list=document.getElementById('manageAccountCards');
+    const count=document.getElementById('manageAccountCount');
+    if(!tbody||!list||!count)return;
+    const query=(document.getElementById('manageAccountSearch')?.value||'').trim().toLocaleLowerCase('id');
+    const rows=gmTeacherAccountRows.filter(row=>
+        [row.teacher_name,row.teacher_type,row.email,row.username,row.account_role,
+         (teachersData||[]).find(t=>String(t.id)===String(row.teacher_id))?.nama_lengkap]
+          .some(value=>String(value||'').toLocaleLowerCase('id').includes(query)));
+    count.textContent=new Set(rows.map(row=>String(row.teacher_id))).size+' guru';
+    if(!rows.length){
+        tbody.innerHTML='<tr><td colspan="5">Tidak ada akun guru yang sesuai.</td></tr>';
+        list.innerHTML='<div class="gm-directory-empty">Tidak ada akun guru yang sesuai.</div>';
+        return;
+    }
+    const status=row=>!row.email?'Belum ada akun':row.account_role==='koordinator'?'Koordinator · tertaut':row.account_role==='admin'?'Admin · tertaut':'Guru · tertaut';
+    const actions=row=>'<button type="button" class="gm-account-edit secondary-action" data-manage-account-id="'+manageEscape(row.teacher_id)+'" data-manage-account-email="'+manageEscape(row.email||'')+'">Atur akses</button>'+
+        (row.email&&row.account_role!=='koordinator'?'<button type="button" class="gm-account-delete" data-manage-account-delete="'+manageEscape(row.email)+'">Hapus akun</button>':'');
+    const ordered=rows.map((row,index)=>{
+        const person=(teachersData||[]).find(t=>String(t.id)===String(row.teacher_id))||{};
+        const shortName=String(person.nama||row.teacher_name||'Guru').trim();
+        const fullName=String(person.nama_lengkap||row.teacher_name||shortName).trim();
+        const initials=shortName.split(/\s+/).filter(Boolean).slice(0,2).map(t=>t[0]).join('').toLocaleUpperCase('id');
+        const photoUrl=person.attendance_enabled!==false&&/^https?:\/\//i.test(String(person.foto||''))?String(person.foto):'';
+        const avatar='<span class="gm-account-avatar" aria-hidden="true"><span>'+manageEscape(initials||'G')+'</span>'+
+            (photoUrl?'<img src="'+manageEscape(photoUrl)+'" alt="" loading="lazy" decoding="async">':'')+'</span>';
+        return {row,index,shortName,fullName,avatar};
+    });
+    tbody.innerHTML=ordered.map(({row,shortName,fullName,avatar})=>
+        '<tr><td><div class="gm-account-person">'+avatar+'<div><strong>'+manageEscape(shortName)+'</strong><small>'+manageEscape(fullName)+'</small></div></div></td>'+
+        '<td>'+manageEscape(row.email||'Belum ada akun')+'</td>'+
+        '<td>'+manageEscape(row.username||'Belum diatur')+'</td>'+
+        '<td><span class="gm-account-status '+(row.email?'is-linked':'is-unlinked')+'">'+manageEscape(status(row))+'</span></td>'+
+        '<td><div class="gm-account-actions">'+actions(row)+'</div></td></tr>').join('');
+    list.innerHTML=ordered.map(({row,index,shortName,fullName,avatar})=>
+        '<article class="gm-account-list-row">'+
+        '<span class="gm-account-sequence">'+(index+1)+'</span>'+
+        '<div class="gm-account-list-detail"><strong>'+manageEscape(shortName)+'</strong>'+
+        '<span class="gm-account-full-name">'+manageEscape(fullName)+'</span>'+
+        '<span class="gm-account-email" title="'+manageEscape(row.email||'')+'">'+manageEscape(row.email||'Belum ada akun')+'</span>'+
+        '<span class="gm-account-small-info">'+manageEscape(row.username||'Username belum diatur')+' · '+manageEscape(status(row))+'</span></div>'+
+        avatar+'<div class="gm-account-actions">'+actions(row)+'</div></article>').join('');
+}
+function closeManageAccountEditor() {
+    const overlay=document.getElementById('manageAccessModal');
+    if(!overlay||overlay.classList.contains('hidden'))return;
+    overlay.classList.add('hidden');
+    document.body.classList.remove('gm-access-modal-open');
+    const original=window.GM_ACCESS_PREVIOUS_FOCUS;
+    window.GM_ACCESS_PREVIOUS_FOCUS=null;
+    if(original?.isConnected)original.focus({preventScroll:true});
+}
+window.closeManageAccountEditor=closeManageAccountEditor;
+function openManageAccountEditor(button){
+    if(!AppAccess.full())return;
+    const modal=document.getElementById('manageAccessModal');
+    const teacherId=button.dataset.manageAccountId||'';
+    const email=button.dataset.manageAccountEmail||'';
+    if(!modal)return;
+    const selected=gmTeacherAccountRows.find(row=>String(row.teacher_id)===String(teacherId)&&String(row.email||'')===email);
+    if(!selected){AdminNotice.notify('Data akun tidak ditemukan. Perbarui daftar dan coba lagi.','error');return;}
+    window.GM_ACCESS_PREVIOUS_FOCUS=button;
+    const teacher=document.getElementById('accountTeacher');
+    const roleSelect=document.getElementById('accountRoleSelect');
+    const account=document.getElementById('accountEmail');
+    const hint=document.getElementById('accountEmailHint');
+    const feedback=document.getElementById('accountFeedback');
+    if(!teacher||!roleSelect||!account)return;
+    feedback.textContent='';
+    roleSelect.value=['guru','koordinator','admin'].includes(selected.account_role)?selected.account_role:'guru';
+    roleSelect.dispatchEvent(new Event('change'));
+    teacher.value=teacherId;
+    teacher.dispatchEvent(new Event('change'));
+    // Set email setelah tautan agar alamat koordinator tidak tertimpa.
+    account.value=email;
+    account.dispatchEvent(new Event('change'));
+    if(hint)hint.textContent=email?'Periksa tautan dan peran akun sebelum menyimpan.':
+        'Belum ada akun login. Pilih email yang sudah didaftarkan terlebih dahulu.';
+    document.getElementById('manageAccessTitle').textContent='Atur Akses · '+(selected.teacher_name||'Guru');
+    modal.classList.remove('hidden');
+    document.body.classList.add('gm-access-modal-open');
+    document.getElementById('manageAccessClose')?.focus({preventScroll:true});
+}
+((callback)=>window.GMPanel?GMPanel.onPage('kelola',callback):document.addEventListener('panelready',callback))(()=>{
+    document.getElementById('manageAccountSearch')?.addEventListener('input',renderManageTeacherAccounts);
+    const directory=document.getElementById('manageAccountView');
+    const modal=document.getElementById('manageAccessModal');
+    if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);
+    // Gunakan tombol Simpan yang sama milik form akun, pindahkan ke kaki dialog.
+    // Atribut form menjaga validasi dan submit meski tombol berada di luar form.
+    const save=document.getElementById('accountSave'),footer=modal?.querySelector('.gm-access-footer');
+    if(save&&footer){save.setAttribute('form','accountForm');footer.appendChild(save);}
+    modal?.addEventListener('click',event=>{if(event.target===modal)closeManageAccountEditor()});
+    document.getElementById('manageAccessClose')?.addEventListener('click',closeManageAccountEditor);
+    document.getElementById('manageAccessCancel')?.addEventListener('click',closeManageAccountEditor);
+    document.addEventListener('keydown',event=>{
+        if(modal?.classList.contains('hidden'))return;
+        if(event.key==='Escape'){event.preventDefault();closeManageAccountEditor();return;}
+        if(event.key!=='Tab')return;
+        const focusable=[...modal.querySelectorAll('button:not(:disabled):not([hidden]),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')].filter(el=>el.getClientRects().length);
+        if(!focusable.length)return;
+        const first=focusable[0],last=focusable[focusable.length-1];
+        if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+        else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+    });
+    directory?.addEventListener('click',async event=>{
+        const edit=event.target.closest('[data-manage-account-id]');
+        if(edit){openManageAccountEditor(edit);return;}
+        const remove=event.target.closest('[data-manage-account-delete]');
+        if(!remove||!AppAccess.full())return;
+        const email=remove.dataset.manageAccountDelete;
+        if(!email)return;
+        if(!(await AdminNotice.confirm('Hapus akun login '+email+'? Data guru tetap ada, tetapi akun tidak dapat masuk lagi.')))return;
+        remove.disabled=true;
+        try{
+            await deleteSchoolAccount('account',email);
+            gmTeacherAccountsLoaded=false;
+            await loadManageTeacherAccounts();
+            AdminNotice.notify('Akun berhasil dihapus. Data guru dipertahankan.','success');
+        }catch(error){AdminNotice.notify(error.message||'Penghapusan akun gagal.','error');}
+        finally{remove.disabled=false;}
+    });
+    switchManageTab('siswa');
+});
 async function fetchTeachers() {
     try {
         teachersData = await getTeachers();
@@ -939,8 +1150,12 @@ function refreshStudentManageFilters() {
     const filterWrap = document.getElementById('studentManageFilters');
     if (!filterWrap)
         return;
-    filterWrap.classList.toggle('hidden', currentManageTab !== 'siswa');
-    if (currentManageTab !== 'siswa')
+    const studentOnly=currentManageTab === 'siswa';
+    filterWrap.hidden=!studentOnly;
+    filterWrap.classList.toggle('hidden',!studentOnly);
+    const searchRow=document.querySelector('#manageDirectoryView .manage-search-row');
+    if(searchRow)searchRow.hidden=!studentOnly;
+    if (!studentOnly)
         return;
     const levelSelect = document.getElementById('manageLevelFilter');
     const modeSelect = document.getElementById('manageStudentFilterMode');
@@ -974,17 +1189,33 @@ function refreshStudentManageFilters() {
 function renderManageTable() {
     const header = document.getElementById('manageTableHeader');
     const body = document.getElementById('manageTableBody');
-    if (!header || !body)
-        return;
+    if (!header || !body) return;
     const importTab = currentManageTab === 'impor';
-    document.getElementById('manageDirectoryView').hidden = importTab;
-    document.getElementById('manageDirectoryTable').hidden = importTab;
-    document.getElementById('manageDirectoryPagination').hidden = importTab;
-    document.getElementById('manageImportView').hidden = !importTab;
-    document.getElementById('tab-impor').hidden = !AppAccess.full();
-    document.getElementById('manageAddBtn').hidden = importTab || (AppAccess.teacher() && currentManageTab === 'guru');
+    const accountTab = currentManageTab === 'akun-guru';
+    const directory = document.getElementById('manageDirectoryView');
+    const table = document.getElementById('manageDirectoryTable');
+    const pagination = document.getElementById('manageDirectoryPagination');
+    const importView = document.getElementById('manageImportView');
+    const accountView = document.getElementById('manageAccountView');
+    const mobileCards = document.getElementById('manageMobileCards');
+    if (directory) directory.hidden = importTab || accountTab;
+    if (table) table.hidden = importTab || accountTab;
+    if (pagination) pagination.hidden = importTab || accountTab;
+    if (importView) importView.hidden = !importTab;
+    if (accountView) accountView.hidden = !accountTab;
+    if (mobileCards) mobileCards.hidden = importTab || accountTab;
+
+    const addButton = document.getElementById('manageAddBtn');
+    if (addButton) {
+        addButton.hidden = importTab || (currentManageView === 'teachers' && !AppAccess.full());
+        addButton.textContent = currentManageView === 'teachers' ? 'Tambah Guru' : 'Tambah Siswa';
+    }
     document.getElementById('manageIdentifierActions').hidden = !(AppAccess.full() && currentManageTab === 'siswa');
     document.getElementById('manageIdentifierAudit').hidden = !(identifierAuditLoaded && AppAccess.full() && currentManageTab === 'siswa');
+    if (accountTab) {
+        renderManageTeacherAccounts();
+        return;
+    }
     refreshManageImportControls();
     if (importTab) return;
     refreshStudentManageFilters();
@@ -1003,7 +1234,7 @@ function renderManageTable() {
         }
         const studentSearch = `${item['nama siswa'] || item.nama_siswa || ''} ${gmTahsinGroupTeacher(item)} ${item.kelas || ''}`;
         const teacherSearch = `${item.nama || item.nama_guru || ''} ${item.nama_lengkap || ''} ${item.foto || ''}`;
-        return !search || (currentManageTab === 'guru' ? teacherSearch : studentSearch).toLowerCase().includes(search);
+        return currentManageTab!=='siswa'||!search||studentSearch.toLowerCase().includes(search);
     }).sort((a, b) => {
         if (currentManageTab === 'siswa') {
             const classCompare = String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id');
@@ -1040,6 +1271,51 @@ function renderManageTable() {
             return `${classGroup}<tr class="hover:bg-slate-50"><td class="px-6 py-3 text-slate-500">${startNumber + offset + 1}</td><td class="px-6 py-3 font-semibold">${manageEscape(getManageTitle(item))}</td><td class="px-6 py-3">${manageEscape(gmTahsinGroupTeacher(item))}</td><td class="px-6 py-3">${manageEscape(item.kelas || '-')}</td>${actions}</tr>`;
         }).join('');
     }
+    // Daftar mobile terpisah dari tabel desktop agar nama, label dan aksi tidak bertabrakan.
+    // Data, filter, urutan, pagination dan izin edit/hapus tetap sama.
+    if (mobileCards) {
+        if (!pageRows.length) {
+            mobileCards.innerHTML = '<div class="gm-directory-empty" role="status">Data tidak ditemukan.</div>';
+        } else {
+            const start = (managePage - 1) * manageRowsPerPage;
+            mobileCards.innerHTML = pageRows.map((item, offset) => {
+                const id = manageEscape(item.id);
+                const title = manageEscape(getManageTitle(item));
+                const number = start + offset + 1;
+                const isTeacher = currentManageTab === 'guru';
+                const canEdit = !(AppAccess.teacher() && isTeacher && (currentTeacherGroup !== 'tahsin' || String(AppAccess.profile.teacher_id) !== String(item.id)));
+                const edit = canEdit ? `<button type="button" class="gm-directory-action gm-directory-action--edit" onclick="openManageModal('${id}')">Edit</button>` : '';
+                const remove = isTeacher && !AppAccess.teacher()
+                    ? `<button type="button" class="gm-directory-action gm-directory-action--remove" onclick="deleteData('${id}')">Hapus</button>`
+                    : !isTeacher && AppAccess.profile.role === 'koordinator'
+                        ? `<button type="button" class="gm-directory-action gm-directory-action--remove" onclick="deleteStudentVerified('${id}')">Hapus</button>`
+                        : '';
+                const actions = edit || remove ? `<div class="gm-directory-card-actions">${edit}${remove}</div>` : '';
+                if (isTeacher) {
+                    const fullName = String(item.nama_lengkap || '').trim();
+                    const subtitle = fullName && fullName !== getManageTitle(item)
+                        ? `<div class="gm-directory-card-subtitle">${manageEscape(fullName)}</div>` : '';
+                    const photo = currentTeacherGroup === 'tahsin' && item.foto
+                        ? `<img class="gm-directory-photo" src="${manageEscape(item.foto)}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.style.display='none'">`
+                        : '';
+                    return `<article class="gm-directory-card" aria-label="Guru ${title}">
+                        <div class="gm-directory-card-top"><span class="gm-directory-number">#${number}</span><span class="gm-directory-kind">${currentTeacherGroup === 'tahfidz' ? 'Tahfidz' : 'Tahsin'}</span></div>
+                        <div class="gm-directory-person">${photo}<div class="gm-directory-person-name"><h3>${title}</h3>${subtitle}</div></div>
+                        ${actions}
+                    </article>`;
+                }
+                return `<article class="gm-directory-card" aria-label="Siswa ${title}">
+                    <div class="gm-directory-card-top"><span class="gm-directory-number">#${number}</span></div>
+                    <h3 class="gm-directory-student-name">${title}</h3>
+                    <dl class="gm-directory-details">
+                        <div><dt>Kelas</dt><dd>${manageEscape(item.kelas || '-')}</dd></div>
+                        <div><dt>Tahsin</dt><dd>${manageEscape(gmTahsinGroupTeacher(item))}</dd></div>
+                    </dl>
+                    ${actions}
+                </article>`;
+            }).join('');
+        }
+    }
     document.getElementById('manageRecordInfo').textContent = `${rows.length} data`;
     document.getElementById('managePageInfo').textContent = `Halaman ${managePage} / ${totalPages}`;
     document.getElementById('managePrevPage').disabled = managePage <= 1;
@@ -1057,22 +1333,44 @@ function refreshManageImportControls() {
     document.getElementById('csvImportHint').textContent = 'Impor 2 tahap. Identitas dicocokkan berdasarkan NISN, lalu NIS; perubahan nama/kelas/guru diperbarui untuk ID yang sama. Nomor ganda atau NIS dan NISN yang bertentangan akan diblokir untuk diperiksa. Guru Tahfidz pada Excel menyinkronkan anggota kelompok.';
 }
 function switchManageTab(tab) {
-    if (!['siswa', 'guru', 'guru-tahsin', 'guru-tahfidz', 'impor'].includes(tab))
-        return;
-    if (tab === 'impor' && !AppAccess.full()) return;
-    if (tab === 'guru')
-        tab = 'guru-tahsin';
-    currentManageTab = (tab === 'siswa' || tab === 'impor') ? tab : 'guru';
+    if (!['siswa', 'guru', 'guru-tahsin', 'guru-tahfidz', 'akun-guru', 'impor'].includes(tab)) return;
+    if ((tab === 'impor' || tab === 'akun-guru') && !AppAccess.full()) return;
+    if (tab === 'guru') tab = 'guru-tahsin';
+    if(tab !== 'akun-guru')window.closeManageAccountEditor?.();
+    currentManageView = tab === 'siswa' || tab === 'impor' ? 'students' : 'teachers';
+    currentManageTab = tab === 'siswa' || tab === 'impor' || tab === 'akun-guru' ? tab : 'guru';
     if (currentManageTab === 'guru')
         currentTeacherGroup = tab === 'guru-tahfidz' ? 'tahfidz' : 'tahsin';
     managePage = 1;
-    ['siswa', 'guru-tahsin', 'guru-tahfidz', 'impor'].forEach(name => {
-        const button = document.getElementById(`tab-${name}`);
-        button.setAttribute('aria-pressed', String(name === tab));
-        button.className = name === tab ? 'px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 transition-all' : 'px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all';
+
+    const nav = [
+        ['manageViewDirectoryButton', currentManageView === 'students'],
+        ['manageViewEnrollmentButton', currentManageView === 'teachers']
+    ];
+    nav.forEach(([id, active]) => {
+        const button = document.getElementById(id);
+        if (!button) return;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('active', active);
+    });
+    const directory = document.getElementById('manageViewDirectory');
+    if (directory) directory.hidden = false;
+
+    ['siswa', 'guru-tahsin', 'guru-tahfidz', 'akun-guru', 'impor'].forEach(name => {
+        const button = document.getElementById('tab-' + name);
+        if (!button) return;
+        const studentTab = name === 'siswa' || name === 'impor';
+        button.hidden = studentTab !== (currentManageView === 'students') ||
+            (name === 'impor' && !AppAccess.full()) ||
+            (name === 'akun-guru' && !AppAccess.full());
+        const active = name === tab;
+        button.setAttribute('aria-pressed', String(active));
+        button.classList.toggle('active', active);
     });
     renderManageTable();
+    if (currentManageTab === 'akun-guru') void loadManageTeacherAccounts();
 }
+
 async function openManageModal(id = null) {
     if (AppAccess.teacher() && currentManageTab === "guru" && !id)
         return;
@@ -1080,12 +1378,12 @@ async function openManageModal(id = null) {
     if (id && !item)
         return AdminNotice.notify('Data tidak ditemukan. Silakan muat ulang halaman.');
     document.getElementById('entityId').value = item?.id || '';
-    document.getElementById('modalTitle').textContent = `${item ? 'Ubah' : 'Tambah'} Data ${currentManageTab === 'guru' ? 'Guru' : 'Siswa'}`;
+    document.getElementById('modalTitle').textContent = `${item ? 'Edit' : 'Tambah'} ${currentManageTab === 'guru' ? 'Guru' : 'Siswa'}`;
     const fields = document.getElementById('formFields');
     if (currentManageTab === 'guru') {
         fields.innerHTML = `<div><label class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama Guru</label><input id="inputGuruNama" required value="${manageEscape(item?.nama || item?.nama_guru || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"></div>`;
         if (AppAccess.full())
-            fields.innerHTML += `<div><label for="inputGuruNamaLengkap" class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama lengkap untuk rapor</label><input id="inputGuruNamaLengkap" maxlength="160" value="${manageEscape(item?.nama_lengkap || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Nama lengkap beserta gelar"><p class="mt-2 text-xs text-slate-500">Terpisah dari nama guru yang digunakan pada absensi.</p></div>`;
+            fields.innerHTML += `<div><label for="inputGuruNamaLengkap" class="block text-xs font-bold text-slate-600 uppercase mb-2">Nama lengkap untuk rapor</label><input id="inputGuruNamaLengkap" maxlength="160" value="${manageEscape(item?.nama_lengkap || '')}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Nama lengkap beserta gelar"></div>`;
         if (AppAccess.full())
             fields.innerHTML += `<div><label for="inputGuruAttendance" class="block text-xs font-bold text-slate-600 uppercase mb-2">Tampil pada absensi (Tahsin)</label><select id="inputGuruAttendance" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm"><option value="true" ${(item ? item.attendance_enabled !== false : currentTeacherGroup === 'tahsin') ? 'selected' : ''}>Ya - guru Tahsin / kedua pelajaran</option><option value="false" ${(item ? item.attendance_enabled === false : currentTeacherGroup === 'tahfidz') ? 'selected' : ''}>Tidak - khusus Tahfidz</option></select></div>`;
     }
@@ -1104,11 +1402,11 @@ async function openManageModal(id = null) {
                 <label class="block text-xs font-semibold text-slate-700" for="inputSiswaNisn">NISN
                     <input id="inputSiswaNisn" type="text" inputmode="numeric" autocomplete="off" maxlength="32" value="${manageEscape(ids?.nisn || '')}" placeholder="Kosongkan jika belum valid" class="mt-1 w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm">
                 </label>
-                <p class="text-xs text-amber-800">Nomor tidak wajib. Nomor yang digunakan siswa lain akan ditolak, bukan menimpa pemiliknya.</p>
+                <p class="text-xs text-amber-800">NIS dan NISN harus unik.</p>
             </div>`;
         }
         else if (AppAccess.full() && !item) {
-            fields.innerHTML += '<p class="text-xs text-slate-500">Setelah siswa dibuat, klik Edit untuk melengkapi NIS dan NISN.</p>';
+            fields.innerHTML += '';
         }
 
     }
@@ -1180,6 +1478,26 @@ async function handleFormSubmit(event) {
                 throw error;
             saved = data;
         }
+        else if (teacherTab && AppAccess.full()) {
+            const slug = value => String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '');
+            const local = slug(payload.nama);
+            if (!local) throw new Error('Nama guru tidak dapat dijadikan email akun.');
+            const { data, error } = await supabase.functions.invoke('create-teacher-account', {
+                body: {
+                    email: local + '@harum.com',
+                    name: payload.nama,
+                    full_name: payload.nama_lengkap || payload.nama,
+                    attendance_enabled: payload.attendance_enabled
+                }
+            });
+            if (error) {
+                let detail;
+                try { detail = await error.context?.json(); } catch (_) {}
+                throw new Error(detail?.error || error.message || 'Akun guru belum berhasil dibuat.');
+            }
+            if (!data?.ok) throw new Error(data?.error || 'Pembuatan akun guru belum terkonfirmasi.');
+            saved = { ...payload, email: data.email || local + '@harum.com' };
+        }
         else if (!teacherTab && AppAccess.full()) {
             const { data, error } = await supabase.rpc('gm_create_student_master', {
                 p_student_name: payload['nama siswa'],
@@ -1211,8 +1529,11 @@ async function handleFormSubmit(event) {
             studentsData = await getStudents();
         closeManageModal();
         renderManageTable();
+        if (teacherTab && !id && AppAccess.full()) {
+            AdminNotice.notify('Akun guru berhasil dibuat. Email: ' + saved.email + ' | Password awal: 123456. Guru wajib menggantinya setelah login.', 'success');
+        }
         if (identifierAuditLoaded && AppAccess.full() && !teacherTab) await checkMissingStudentIdentifiers();
-        AdminNotice.notify('Data berhasil disimpan.', 'success');
+        if (!(teacherTab && !id && AppAccess.full())) AdminNotice.notify('Data berhasil disimpan.', 'success');
     }
     catch (error) {
         AdminNotice.notify('Gagal menyimpan: ' + error.message, 'error');
@@ -1782,10 +2103,37 @@ async function showInfographic() {
 }
 function switchPage(pageId) {
     const target = ['laporan', 'infografik', 'analitik'].includes(pageId) ? 'presentasi' : pageId;
+    if (AppAccess.profile?.temporaryPassword && target !== 'profil') {
+        AdminNotice.notify('Silakan ganti password awal melalui Profil sebelum melanjutkan.', 'error');
+        return;
+    }
     if (!AppAccess.canPage(target)) return;
+    const currentPage = document.body?.dataset?.activePage || '';
+    if (['kelompok', 'kelompok-tahsin'].includes(currentPage) && currentPage !== pageId && window.LearningGroups) {
+        const subject = currentPage === 'kelompok' ? 'tahfidz' : 'tahsin';
+        if (LearningGroups.isBusy(subject)) {
+            AdminNotice.notify('Tunggu proses pengelolaan kelompok selesai sebelum berpindah halaman.', 'info');
+            return;
+        }
+        if (LearningGroups.hasUnsavedChanges(subject)) {
+            void Promise.resolve(LearningGroups.confirmLeave(subject, 'berpindah halaman atau submenu'))
+                .then(approved => {
+                    if (!approved) return;
+                    LearningGroups.discardDraft(subject);
+                    void switchPage(pageId);
+                })
+                .catch(error => AdminNotice.notify(error.message || 'Konfirmasi perpindahan halaman gagal.', 'error'));
+            return;
+        }
+    }
     return window.GMPanel ? GMPanel.navigate(target, () => switchPageReady(pageId)) : switchPageReady(pageId);
 }
 function switchPageReady(pageId) {
+    if (pageId === 'arsip') {
+        switchPageReady('rapor');
+        StudentReports.open('archive');
+        return;
+    }
     if (pageId === 'laporan') { switchPageReady('presentasi'); switchPresentationTab('reports'); return; }
     if (['infografik', 'analitik'].includes(pageId)) pageId = 'presentasi';
     const currentPage = document.body?.dataset?.activePage || '';
@@ -1799,7 +2147,7 @@ function switchPageReady(pageId) {
         });
         return;
     }
-    const pages = ['dashboard','rapor','laporan','arsip','analitik','presentasi','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
+    const pages = ['dashboard','rapor','laporan','analitik','presentasi','absensi','kelola','kelompok','kelompok-tahsin','profil','penilaian','infografik','identitas','pengaturan','maintenance'];
     if (!pages.includes(pageId) || !AppAccess.canPage(pageId))
         return;
     if (document.body?.dataset) document.body.dataset.activePage = pageId;
@@ -1810,8 +2158,8 @@ function switchPageReady(pageId) {
         analitik: ['Analitik Periode', 'Bandingkan ketercapaian target secara agregat.', 'Tanpa menampilkan identitas siswa.'],
         presentasi: ['Laman Presentasi', 'Ringkasan data Gemar Mengaji untuk presentasi.', 'Data ditampilkan per tingkat dan kelas.'],
         rapor: ['Rapor Siswa', 'Laporan perkembangan siswa.', 'Periksa dan terbitkan rapor per tingkat kelas.'],
-        kelompok: ['Kelola Tahfidz', 'Kelola kelompok Tahfidz.', ''],
-        'kelompok-tahsin': ['Kelola Tahsin', 'Kelola kelompok Tahsin.', ''],
+        kelompok: ['Kelola Pembelajaran', 'Kelola Pembelajaran', ''],
+        'kelompok-tahsin': ['Kelola Pembelajaran', 'Kelola Pembelajaran', ''],
         profil: ['Pengaturan Profil', 'Profil rapi, akses lebih personal.', 'Kelola nama profil, foto dan keamanan akun dalam satu tempat.'],
         absensi: ['Data Absensi', 'Catat kehadiran, dampingi kebaikan.', 'Pantau dan kelola rekap kehadiran siswa dalam satu tempat.'],
         penilaian: ['Penilaian Periodik', 'Catat perkembangan, rawat potensi.', 'Penilaian Tahsin dan Tahfidz untuk setiap tahap belajar siswa.'],
@@ -1830,7 +2178,7 @@ function switchPageReady(pageId) {
     if (eyebrow && pageId !== 'dashboard') eyebrow.textContent = 'PANEL ADMINISTRASI';
     pages.forEach(name => {
         const item = document.getElementById(`menu-${name}`);
-        if (name === pageId)
+        if (name === pageId || (pageId === 'kelompok' && name === 'kelompok-tahsin'))
             item?.setAttribute('aria-current', 'page');
         else
             item?.removeAttribute('aria-current');
@@ -1845,8 +2193,23 @@ function switchPageReady(pageId) {
             requestAnimationFrame(() => page.classList.add('page-animate-in'));
         }
     });
+    // Kedua materi tetap memakai halaman dan alur penugasan yang sudah ada.
+    // Hanya menu utamanya yang disatukan.
+    const isGroupPage = pageId === 'kelompok' || pageId === 'kelompok-tahsin';
+    const groupSubnav = document.getElementById('gmLearningSubnav');
+    if (groupSubnav) {
+        groupSubnav.hidden = !isGroupPage;
+        [['gmLearningTabTahsin', pageId === 'kelompok-tahsin'],
+         ['gmLearningTabTahfidz', pageId === 'kelompok']].forEach(([id, pressed]) => {
+            const tab = document.getElementById(id);
+            if (!tab) return;
+            tab.setAttribute('aria-pressed', String(pressed));
+            if (pressed) tab.setAttribute('aria-current', 'page');
+            else tab.removeAttribute('aria-current');
+        });
+    }
     ['menu-dashboard','menu-rapor','menu-laporan','menu-arsip','menu-analitik','menu-presentasi','menu-kelompok','menu-kelompok-tahsin','menu-profil','menu-absensi','menu-kelola','menu-penilaian','menu-infografik','menu-identitas','menu-pengaturan','menu-maintenance'].forEach(id => document.getElementById(id)?.classList.remove('bg-indigo-600', 'text-white'));
-    const active = document.getElementById(`menu-${pageId}`);
+    const active = document.getElementById(pageId === 'kelompok' ? 'menu-kelompok-tahsin' : `menu-${pageId}`);
     active?.classList.add('bg-indigo-600', 'text-white');
     if (pageId === 'absensi') void loadAttendanceLog();
     if (pageId === 'dashboard')
@@ -1863,8 +2226,6 @@ function switchPageReady(pageId) {
         PeriodicAssessments.open();
     if (pageId === 'rapor')
         StudentReports.open();
-    if (pageId === 'arsip')
-        GMUpgrade.archive();
     if (pageId === 'infografik')
         populateInfographicFilters();
     if (pageId === 'identitas')

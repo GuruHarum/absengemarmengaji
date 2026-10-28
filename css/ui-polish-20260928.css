@@ -672,3 +672,110 @@ body.admin-page .profile-push-actions .secondary-action,body.admin-page .profile
   body.admin-page .profile-push-icon{width:36px;height:36px}
   body.admin-page .profile-push-actions{grid-column:2;justify-content:flex-start}
 }
+
+/* PROFIL 2026-10-22 — satu lapis kartu, feedback setempat, sentuh nyaman. */
+body.admin-page #page-profil.profile-settings-grid { min-width:0; }
+body.admin-page #page-profil > .profile-main-card,
+body.admin-page #page-profil > .profile-security-card { min-width:0; overflow:visible; }
+body.admin-page #page-profil .profile-section-heading h2 { font-size:clamp(19px,2vw,22px); line-height:1.4; }
+body.admin-page #page-profil .profile-section-heading p:not(.section-kicker) { font-size:12.5px; line-height:1.6; }
+body.admin-page #page-profil .profile-photo-card {
+    border:0; box-shadow:none; padding:16px; border-radius:16px; background:#f4f9f5;
+}
+body.admin-page #page-profil .profile-photo-copy>strong { font-size:15px; }
+body.admin-page #page-profil .profile-photo-copy>span { font-size:12px; }
+body.admin-page #page-profil .profile-photo-actions { gap:10px; }
+body.admin-page #page-profil .profile-photo-actions :is(button,label),
+body.admin-page #page-profil .profile-actions-row button,
+body.admin-page #page-profil .profile-security-actions button,
+body.admin-page #page-profil .profile-identity-form button {
+    display:inline-flex; justify-content:center; align-items:center; min-height:44px;
+    padding:10px 14px; font-size:13px; line-height:1.4; text-align:center;
+    white-space:normal;
+}
+body.admin-page #page-profil .profile-danger-link,
+body.admin-page #page-profil .profile-danger-action { color:#9b493f; }
+body.admin-page #page-profil .profile-danger-action { border:1px solid #edcfc8; background:#fff7f4; border-radius:10px; }
+body.admin-page #page-profil .profile-danger-action:hover { background:#fdeee9; }
+body.admin-page #page-profil .profile-username-section {
+    min-width:0; margin-top:22px; padding-top:20px; border-top:1px solid #e3eae4;
+}
+body.admin-page #page-profil .profile-subheading { margin-bottom:14px; }
+body.admin-page #page-profil .profile-subheading strong { display:block; color:#25483a; font-size:15px; font-weight:700; }
+body.admin-page #page-profil .profile-subheading p { margin:5px 0 0; font-size:12.5px; line-height:1.6; color:#60766a; }
+body.admin-page #page-profil .profile-actions-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+body.admin-page #page-profil [hidden] { display:none!important; }
+body.admin-page #page-profil .profile-actions-row [hidden],
+body.admin-page #page-profil .profile-local-feedback[hidden],
+body.admin-page #page-profil #profileFeedback[hidden] { display:none!important; }
+body.admin-page #page-profil .field-label { min-width:0; font-size:13px; line-height:1.5; }
+body.admin-page #page-profil .field-label :is(input,textarea,select) {
+    box-sizing:border-box; width:100%; min-width:0; max-width:100%;
+    min-height:44px; font-size:14px; line-height:1.5;
+}
+body.admin-page #page-profil .assessment-help { font-size:12.5px; line-height:1.6; overflow-wrap:anywhere; }
+body.admin-page #page-profil .profile-local-feedback {
+    margin:12px 0 0; padding:10px 12px; border:1px solid #cfe2d6; border-radius:10px;
+    background:#edf7f0; color:#245940; font-size:13px; line-height:1.55; overflow-wrap:anywhere;
+}
+body.admin-page #page-profil .profile-local-feedback[data-feedback-error="true"] {
+    border-color:#edcecb; background:#fff2f0; color:#963b3b;
+}
+body.admin-page #page-profil .profile-security-actions { gap:10px; }
+@media (max-width:600px) {
+    body.admin-page #page-profil.profile-settings-grid { grid-template-columns:minmax(0,1fr); gap:14px; }
+    body.admin-page #page-profil > .assessment-controls { padding:clamp(15px,4vw,22px); border-radius:16px; }
+    body.admin-page #page-profil .profile-photo-card { padding:14px; gap:12px; }
+}
+@media (max-width:420px) {
+    body.admin-page #page-profil .profile-photo-card { grid-template-columns:1fr; text-align:center; }
+    body.admin-page #page-profil .profile-photo-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    body.admin-page #page-profil .profile-photo-actions .profile-danger-link { grid-column:1 / -1; }
+    body.admin-page #page-profil .profile-photo-preview { margin-inline:auto; }
+    body.admin-page #page-profil .profile-actions-row { display:grid; grid-template-columns:1fr; }
+    body.admin-page #page-profil .profile-security-actions { display:grid; grid-template-columns:1fr; }
+    body.admin-page #page-profil .profile-security-actions > * { width:100%; min-width:0; }
+}
+
+/* Profil ringkas: navigasi dua tab, semua form tetap utuh dan tersedia. */
+body.admin-page #page-profil.profile-settings-grid {grid-template-columns:minmax(0,1fr);justify-items:stretch;gap:16px;max-width:1080px;margin-inline:auto;width:100%}
+body.admin-page #page-profil .gm-profile-tabs {display:flex;flex-wrap:wrap;grid-column:1/-1;gap:7px;border:1px solid var(--theme-line,#dce6df);padding:6px;background:var(--theme-paper,#fff);border-radius:15px;width:100%;box-sizing:border-box}
+body.admin-page #page-profil .gm-profile-tabs button {flex:1 1 170px;min-height:44px;padding:10px 16px;border:0;border-radius:10px;background:transparent;color:var(--theme-muted,#60756b);font-size:13px;font-weight:650;cursor:pointer}
+body.admin-page #page-profil .gm-profile-tabs button.active {background:var(--brand-color,#216454);color:#fff}
+body.admin-page #page-profil .gm-profile-tabs button:focus-visible {outline:3px solid var(--theme-gold,#d1b581);outline-offset:2px}
+body.admin-page #page-profil>.assessment-controls {grid-column:1/-1;box-sizing:border-box;max-width:1080px;width:100%}
+body.admin-page #page-profil[data-profile-section="account"]>.profile-security-card,
+body.admin-page #page-profil[data-profile-section="security"]>.profile-main-card {display:none!important}
+body.admin-page #page-profil .profile-security-card {padding:clamp(18px,3vw,32px)}
+body.admin-page #page-profil .profile-security-card #passwordForm {max-width:620px}
+body.admin-page #page-profil .profile-photo-card {max-width:850px}
+body.admin-page #page-profil .profile-identity-form,
+body.admin-page #page-profil .profile-username-section {max-width:740px}
+@media(max-width:640px){body.admin-page #page-profil .gm-profile-tabs{width:100%}body.admin-page #page-profil .gm-profile-tabs button{flex:1 1 0;font-size:12px;padding-inline:8px}}
+/* Hak Akses disatukan dengan tab Akun Guru; hanya formulir lanjutan yang dilipat. */
+body.admin-page .gm-manage-access-details {margin-top:20px;padding:15px;border:1px solid var(--theme-line,#dce6df);border-radius:14px;background:var(--theme-soft,#edf3ed)}
+body.admin-page .gm-manage-access-details>summary {cursor:pointer;font-size:14px;font-weight:700;color:var(--theme-ink,#234334);padding:4px 2px;min-height:36px}
+body.admin-page .gm-manage-access-details .gm-manage-access-panel {margin-top:16px;min-width:0}
+body.admin-page .gm-manage-access-details .account-settings {padding:clamp(14px,2vw,22px);border-radius:12px;background:var(--theme-paper,#fff)}
+body.admin-page .gm-manage-access-details .detail-filter-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:14px}
+body.admin-page .gm-manage-access-details .comparison-table {min-width:620px}
+
+/* Arsip: pencarian langsung atau filter tingkat + rombel. */
+body.admin-page #page-arsip .gm-archive-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px;align-items:end}
+body.admin-page #page-arsip .gm-archive-search{grid-column:1/-1}
+body.admin-page #page-arsip .gm-archive-filter{min-width:0}
+body.admin-page #page-arsip .gm-archive-filter :is(input,select){min-width:0;width:100%;min-height:44px;box-sizing:border-box}
+body.admin-page #page-arsip .gm-archive-pagination[hidden]{display:none!important}
+body.admin-page #page-arsip .gm-archive-status{min-height:20px;margin:14px 0}
+body.admin-page #page-arsip .gm-archive-entries:empty{display:none}
+body.admin-page #page-arsip .gm-archive-item{align-items:center;gap:12px}
+body.admin-page #page-arsip .gm-archive-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+body.admin-page #page-arsip .gm-archive-actions button{min-height:38px;white-space:nowrap}
+@media(max-width:900px){body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){
+ body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+ body.admin-page #page-arsip .gm-archive-search{grid-column:1/-1}
+ body.admin-page #page-arsip .gm-archive-item{display:flex;flex-direction:column;align-items:stretch}
+ body.admin-page #page-arsip .gm-archive-actions button{flex:1 1 0}
+}
+@media(max-width:360px){body.admin-page #page-arsip .gm-archive-filters{grid-template-columns:minmax(0,1fr)}body.admin-page #page-arsip .gm-archive-search{grid-column:1}}

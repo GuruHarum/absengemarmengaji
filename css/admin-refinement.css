@@ -111,6 +111,7 @@ body.admin-page .gm-group-form-grid { display: grid; grid-template-columns: repe
 body.admin-page .gm-member-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
 body.admin-page .gm-member-tools strong { margin-left: auto; color: var(--gm-muted); font-size: 12px; }
 body.admin-page .gm-member-picker { max-height: min(45vh, 430px); overflow: auto; border: 1px solid var(--gm-border); border-radius: 12px; padding: 8px; }
+body.admin-page .gm-member-count { margin: 3px 0 8px; color: var(--gm-muted); font-size: 12px; line-height: 1.5; }
 body.admin-page .gm-group-savebar { display: flex; justify-content: flex-end; margin-top: 12px; }
 body.admin-page .gm-empty-state { border: 1px dashed var(--gm-border); border-radius: 12px; padding: 18px; text-align: center; color: var(--gm-muted); background: #fbfcfb; }
 

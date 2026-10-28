@@ -9,7 +9,9 @@
         document.dispatchEvent(new Event('panelready', { bubbles: true }));
         if (window.panelDataReady) Promise.resolve(window.panelDataReady).catch(error => console.error('Pemuatan data awal tertunda:', error));
         if (AppAccess.profile.temporaryPassword) await switchPage('profil');
-        else switchPage('dashboard');
+        else await switchPage('dashboard');
+        if (document.documentElement.classList.contains('gm-login-transition'))
+            await new Promise(resolve => requestAnimationFrame(resolve));
         window.panelBooting = false;
         showLoading(false);
     } catch (error) {

@@ -37,9 +37,18 @@ test('Book 1 Tajwid/Gharib never reported; Finishing Gharib reported', () => {
     const finishing = { ...book, tahsin_progress_type: 'FINISHING', tahsin_tajwid: 75 };
     assert.deepEqual(Array.from(R.check(finishing, 'tahsin').missing), ['tahsin_gharib']);
 });
-test('Raport checks list four columns, one identity audit, separate school page and three settings categories', () => {
-    assert.match(html, /<th>Nama siswa<\/th><th>Kelas\/rombel<\/th><th>Aspek nilai kosong<\/th><th>Guru terkait<\/th>/);
-    assert.match(html, /id="reportDataAudit"/);
+test('Menu Rapor berisi Unduh dan Arsip tanpa pratinjau, serta identitas sekolah tetap terpisah', () => {
+    // Pemeriksaan nilai kosong tetap ada pada Dashboard; submenu Rapor disederhanakan.
+    const raporMenu = html.match(/<nav id="reportSubmenu"[\s\S]*?<\/nav>/)?.[0] || '';
+    assert.equal((raporMenu.match(/data-rapor-view=/g)||[]).length,2);
+    assert.match(raporMenu,/data-rapor-view="print"/);
+    assert.match(raporMenu,/data-rapor-view="archive"/);
+    assert.doesNotMatch(raporMenu,/data-rapor-view="preview"|data-rapor-view="missing"/);
+    assert.match(html,/id="reportPeriod"/);
+    assert.match(html,/id="reportAdvancedYear"/);
+    assert.match(html,/id="reportDownloadClass"/);
+    assert.match(html, /id="page-arsip"/);
+    assert.doesNotMatch(html, /id="menu-arsip"/);
     for (const section of ['page-identitas', 'settingsViewReport', 'settingsViewAccounts', 'settingsViewReference']) {
         assert.equal((html.match(new RegExp(`id="${section}"`, 'g')) || []).length, 1, section);
     }

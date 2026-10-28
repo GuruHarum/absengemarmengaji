@@ -1,8 +1,8 @@
 window.PeriodicAssessments = (() => {
     const state = {
         initialized: false, busy: false, context: null, teachers: [], students: [], saved: new Map(), drafts: new Map(), page: 1,
-        problemOnly: false, lastFailedSave: [], lastSubject: 'tahsin', pendingWorkspaceFilter: null, draftTimer: null,
-        renderLimit: 12, lazyObserver: null, prefetchedMarkup: new Map()
+        problemOnly: false, teacherRequestId: 0, eligibleTeachers: [], lastFailedSave: [], lastSubject: 'tahsin', pendingWorkspaceFilter: null, draftTimer: null,
+        renderLimit: 12, lazyObserver: null, prefetchedMarkup: new Map(), autoGrade: ''
     };
     const el = id => document.getElementById(id);
     const escape = value => escapeHtml(value);
@@ -35,12 +35,40 @@ window.PeriodicAssessments = (() => {
         node.classList.toggle('is-error', error);
     };
     const storageAvailable = () => { try { return Boolean(window.localStorage); } catch (_) { return false; } };
-    const storageScope = () => String(AppAccess?.profile?.id || AppAccess?.profile?.teacher_id || AppAccess?.profile?.email || 'shared');
+    const storageScope = () => String(AppAccess?.profile?.userId || AppAccess?.profile?.email || 'anonymous');
     const scopedKey = key => `${key}:${storageScope()}`;
     function readStorage(key, fallback = null) {
         if (!storageAvailable()) return fallback;
-        try { const raw = localStorage.getItem(scopedKey(key)); return raw ? JSON.parse(raw) : fallback; }
-        catch (_) { return fallback; }
+        try {
+            const raw = localStorage.getItem(scopedKey(key));
+            if (raw) return JSON.parse(raw);
+            // Pulihkan draf pengguna lama yang dahulu disimpan dengan ID guru,
+            // tetapi pindahkan ke penyimpanan yang terikat akun Auth saat ini.
+            const profile = AppAccess?.profile;
+            const oldScope = AppAccess?.teacher?.() ? String(profile?.teacher_id || '') : String(profile?.email || '');
+            if (key === STORAGE.drafts && oldScope && oldScope !== storageScope()) {
+                const previousKey = key + ':' + oldScope;
+                const previousRaw = localStorage.getItem(previousKey);
+                if (previousRaw) {
+                    const previous = JSON.parse(previousRaw);
+                    if (previous && typeof previous === 'object' && !Array.isArray(previous)) {
+                        const selected = {};
+                        for (const [name,bucket] of Object.entries(previous)) {
+                            if (!AppAccess?.teacher?.() ||
+                                String(bucket?.context?.teacherId || '') === String(profile?.teacher_id || '')) selected[name] = bucket;
+                        }
+                        if (Object.keys(selected).length) {
+                            if (writeStorage(key, selected)) localStorage.removeItem(previousKey);
+                            else state.draftMigrationFailed = true;
+                            // Meski browser penuh, draf lama tetap dapat dipulihkan
+                            // dari kunci lamanya; jangan menghapus sumber sebelum sukses.
+                            return selected;
+                        }
+                    }
+                }
+            }
+            return fallback;
+        } catch (_) { return fallback; }
     }
     function writeStorage(key, value) {
         if (!storageAvailable()) return false;
@@ -48,8 +76,8 @@ window.PeriodicAssessments = (() => {
         catch (_) { return false; }
     }
     function removeStorage(key) {
-        if (!storageAvailable()) return;
-        try { localStorage.removeItem(scopedKey(key)); } catch (_) { }
+        if (!storageAvailable()) return false;
+        try { localStorage.removeItem(scopedKey(key)); return true; } catch (_) { return false; }
     }
     const contextKey = (context = state.context) => context ? `${context.year}|${context.period}|${context.subject}|${context.teacherId}` : '';
 
@@ -93,8 +121,9 @@ window.PeriodicAssessments = (() => {
             teacherId: String(el('assessmentTeacher')?.value || state.context?.teacherId || ''),
             subject: el('assessmentSubject')?.value || state.context?.subject || 'tahsin',
             level: el('assessmentLevel')?.value || '',
-            className: el('assessmentClass')?.value || '',
-            problemOnly: Boolean(state.problemOnly)
+            status: el('assessmentStatusFilter')?.value || 'all',
+            search: el('assessmentSearch')?.value.trim() || '',
+            problemOnly: el('assessmentStatusFilter')?.value === 'problem'
         };
     }
     function rememberLastFilter() { writeStorage(STORAGE.last, filterSnapshot()); }
@@ -138,14 +167,21 @@ window.PeriodicAssessments = (() => {
         }
         if (Object.keys(entries).length) {
             store[key] = { savedAt: Date.now(), context: { ...state.context }, entries };
-            writeStorage(STORAGE.drafts, store);
+            if (!writeStorage(STORAGE.drafts, store)) {
+                draftStatus('PERINGATAN: draf belum aman. Penyimpanan perangkat gagal atau penuh. Simpan nilai ke database sebelum keluar.', 'error');
+                return false;
+            }
             const now = new Date();
-            draftStatus(`Draf sementara tersimpan di perangkat · ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`, 'saved');
+            draftStatus(`Draf belum dikirim, tersimpan di perangkat · ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`, 'saved');
         } else {
             delete store[key];
-            writeStorage(STORAGE.drafts, store);
-            draftStatus('Semua perubahan sudah tersimpan ke database.', 'clean');
+            if (!writeStorage(STORAGE.drafts, store)) {
+                draftStatus('Nilai sudah sesuai database; penyimpanan lokal tidak tersedia.', 'error');
+            } else {
+                draftStatus('Tidak ada draf tertunda. Nilai tersimpan di database atau belum diisi.', 'clean');
+            }
         }
+        return true;
     }
     function scheduleDraftSave() {
         if (window.clearTimeout && state.draftTimer) window.clearTimeout(state.draftTimer);
@@ -171,7 +207,10 @@ window.PeriodicAssessments = (() => {
             state.drafts.set(id, AssessmentData.draft(savedDraft.draft));
             restored++;
         }
-        if (restored) draftStatus(`${restored} draf sementara dipulihkan dari perangkat.${skipped ? ` ${skipped} draf dilewati karena data database sudah berubah.` : ''}`, 'restored');
+        if (restored || skipped || state.draftMigrationFailed) draftStatus(
+            `${restored} draf dipulihkan dari perangkat.${skipped ? ` ${skipped} draf dilewati karena data database sudah berubah.` : ''}${state.draftMigrationFailed ? ' Draf lama belum dapat dipindahkan karena penyimpanan browser penuh. Simpan nilai ke database agar aman.' : ''}`,
+            (skipped || state.draftMigrationFailed) ? 'error' : 'restored');
+        state.draftMigrationFailed = false;
         return restored;
     }
 
@@ -194,19 +233,39 @@ window.PeriodicAssessments = (() => {
         state.busy = busy;
         if (el('assessmentContextFields')) el('assessmentContextFields').disabled = busy;
         el('assessmentCards')?.querySelectorAll('input, select, button').forEach(control => { control.disabled = busy || control.closest('form')?.dataset.reviewLocked === 'true'; });
-        ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentClass', 'assessmentSearch', 'assessmentProblemOnly', 'assessmentExport', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
-        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan / memuat...' : 'Simpan Semua';
+        ['assessmentSaveAll', 'assessmentRetrySave', 'assessmentLevel', 'assessmentSearch', 'assessmentStatusFilter', 'assessmentExport', 'assessmentExportConfirm', 'assessmentExportScope', 'assessmentFavoriteSave', 'assessmentFavoriteUse', 'assessmentPasteExcel', 'assessmentPeriodPrev', 'assessmentPeriodNext', 'assessmentMobileSave', 'assessmentMobileProblems'].forEach(id => { if (el(id)) el(id).disabled = busy || (id === 'assessmentFavoriteUse' && !readStorage(STORAGE.favorite)); });
+        if (el('assessmentSaveAll')) el('assessmentSaveAll').textContent = busy ? 'Menyimpan...' : 'Simpan Semua';
         pagination();
     }
 
-    // Setiap halaman hanya satu kelas nyata, bukan gabungan tingkat/rombel.
+    // Pada mode otomatis hanya satu tingkat ditampilkan; seluruh rombel guru
+    // pada tingkat itu tetap digabung. Pemilihan tingkat manual menonaktifkan navigasi.
+    const availableLevels = () => [...new Set(state.students.map(student => classLevel(student.kelas)).filter(Boolean))]
+        .sort((a, b) => Number(a) - Number(b));
+    const activeGrade = () => {
+        const selected = el('assessmentLevel')?.value || '';
+        if (selected) return selected;
+        const levels = availableLevels();
+        return levels.includes(state.autoGrade) ? state.autoGrade : (levels[0] || '');
+    };
+    const gradeStudents = () => {
+        const grade = activeGrade();
+        return state.students.filter(student => !grade || classLevel(student.kelas) === grade);
+    };
+    const dirtyInGrade = () => gradeStudents().filter(isDirty);
+    function statusOf(student) {
+        const saved = state.saved.get(String(student.id));
+        if (saved?.needs_review) return 'review';
+        if (isDirty(student)) return 'draft';
+        if (!saved) return 'ungraded';
+        return issueDetail(student).problem ? 'incomplete' : 'saved';
+    }
     function visible() {
-        const kelas = el('assessmentClass')?.value;
-        if (!kelas) return [];
         const search = el('assessmentSearch')?.value.trim().toLocaleLowerCase('id') || '';
-        return state.students.filter(student => student.kelas === kelas &&
-            String(student['nama siswa']).toLocaleLowerCase('id').includes(search) &&
-            (!state.problemOnly || issueDetail(student).problem));
+        const filter = el('assessmentStatusFilter')?.value || 'all';
+        return gradeStudents().filter(student =>
+            String(student['nama siswa'] || '').toLocaleLowerCase('id').includes(search) &&
+            (filter === 'all' || (filter === 'problem' ? issueDetail(student).problem : statusOf(student) === filter)));
     }
     function resetLazy() {
         state.renderLimit = 12;
@@ -216,10 +275,46 @@ window.PeriodicAssessments = (() => {
     }
     function pagination() {
         state.page = 1;
+        const levels = availableLevels(), active = activeGrade();
+        const position = levels.indexOf(active);
+        const manual = Boolean(el('assessmentLevel')?.value);
+        const searching = Boolean(el('assessmentSearch')?.value.trim());
+        const filtered = el('assessmentStatusFilter')?.value !== 'all';
         const rows = visible();
-        if (el('assessmentPrev')) { el('assessmentPrev').disabled = true; el('assessmentPrev').hidden = true; }
-        if (el('assessmentNext')) { el('assessmentNext').disabled = true; el('assessmentNext').hidden = true; }
-        if (el('assessmentPageInfo')) el('assessmentPageInfo').textContent = el('assessmentClass')?.value ? classLabel(el('assessmentClass').value) : 'Pilih kelas';
+        const allLoaded = state.renderLimit >= rows.length;
+        const show = !manual && !searching && !filtered && levels.length > 1 && allLoaded && position >= 0;
+        const nav = el('assessmentLevelNav');
+        if (nav) nav.hidden = !show;
+        const prev = el('assessmentPrev'), next = el('assessmentNext');
+        if (prev) {
+            prev.hidden = !show || position <= 0;
+            prev.disabled = state.busy || position <= 0;
+            prev.textContent = position > 0 ? `← Tingkat ${levels[position - 1]}` : '← Sebelumnya';
+        }
+        if (next) {
+            next.hidden = !show || position >= levels.length - 1;
+            next.disabled = state.busy || position >= levels.length - 1;
+            next.textContent = position < levels.length - 1 ? `Tingkat ${levels[position + 1]} →` : 'Tingkat berikutnya →';
+        }
+        if (el('assessmentPageInfo'))
+            el('assessmentPageInfo').textContent = `Tingkat ${active} · ${position + 1}/${levels.length}`;
+    }
+
+    function changeAutoGrade(offset) {
+        if (state.busy || el('assessmentLevel')?.value ||
+            el('assessmentStatusFilter')?.value !== 'all' || el('assessmentSearch')?.value.trim()) return;
+        const levels = availableLevels(), position = levels.indexOf(activeGrade());
+        const next = position + offset;
+        if (position < 0 || next < 0 || next >= levels.length) return;
+        if (dirtyStudents().length && !persistDrafts()) {
+            message('Draf belum aman di perangkat. Simpan nilai sebelum berpindah tingkat.', true);
+            return;
+        }
+        state.autoGrade = levels[next];
+        state.page = 1;
+        render();
+        const workspace = el('assessmentWorkspace');
+        workspace?.scrollIntoView?.({ behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     }
     function prefetchNext(rows) {
         const start = state.renderLimit;
@@ -254,24 +349,27 @@ window.PeriodicAssessments = (() => {
         }
     }
     function summaries() {
-        const shown = visible();
-        const cleanSaved = shown.filter(student => state.saved.has(String(student.id)) && !isDirty(student) && !issueDetail(student).problem).length;
-        if (el('assessmentTotal')) el('assessmentTotal').textContent = shown.length;
-        if (el('assessmentSaved')) el('assessmentSaved').textContent = cleanSaved;
-        if (el('assessmentDirty')) el('assessmentDirty').textContent = shown.length - cleanSaved;
-        if (el('assessmentProblems')) el('assessmentProblems').textContent = state.students.filter(student => student.kelas === el('assessmentClass')?.value && issueDetail(student).problem).length;
+        const group = gradeStudents();
+        const count = { saved: 0, draft: 0, ungraded: 0, incomplete: 0, review: 0 };
+        group.forEach(student => { count[statusOf(student)] += 1; });
+        const completedPct = group.length ? Math.round(100 * count.saved / group.length) : 0;
+        if (el('assessmentProgressText')) el('assessmentProgressText').textContent =
+            `Tingkat ${activeGrade() || '-'} · ${count.saved}/${group.length} tersimpan`;
+        if (el('assessmentProgressPct')) el('assessmentProgressPct').textContent = `${completedPct}%`;
+        if (el('assessmentProgressFill')) el('assessmentProgressFill').style.width = completedPct + '%';
+        if (el('assessmentProgressBar')) el('assessmentProgressBar').setAttribute('aria-valuenow', String(completedPct));
+        for (const [key,id] of [['saved','assessmentSaved'],['draft','assessmentDirty'],['ungraded','assessmentUnrated'],['incomplete','assessmentIncomplete'],['review','assessmentProblems']])
+            if (el(id)) el(id).textContent = count[key];
+        if (el('assessmentTotal')) el('assessmentTotal').textContent = group.length;
+        if (!state.busy && el('assessmentSaveAll')) el('assessmentSaveAll').textContent = 'Simpan Semua';
         if (el('assessmentMobileStatus')) {
-            const dirty = shown.filter(isDirty).length, problems = shown.filter(student => issueDetail(student).problem).length;
-            el('assessmentMobileStatus').textContent = dirty ? `${dirty} belum disimpan` : (problems ? `${problems} perlu diperiksa` : 'Semua aman');
-        }
-        const problemButton = el('assessmentProblemOnly');
-        if (problemButton) {
-            problemButton.classList.toggle('active', state.problemOnly);
-            problemButton.setAttribute?.('aria-pressed', String(state.problemOnly));
-            problemButton.textContent = state.problemOnly ? 'Tampilkan semua siswa' : 'Hanya bermasalah';
+            const pending = count.draft + count.incomplete + count.review;
+            el('assessmentMobileStatus').textContent = count.draft ? count.draft + ' draf' :
+                (pending ? pending + ' perlu dicek' : count.saved + '/' + group.length + ' tersimpan');
         }
         el('assessmentCards')?.querySelectorAll('[data-student-index]').forEach(card => {
             const student = state.students[Number(card.dataset.studentIndex)];
+            if (!student) return;
             const badge = card.querySelector('.assessment-state');
             const summary = card.querySelector('[data-report-summary]');
             if (summary && window.ReportCore) {
@@ -279,12 +377,14 @@ window.PeriodicAssessments = (() => {
                 const totals = ReportCore.stats(scores, state.context.subject);
                 summary.textContent = `Jumlah: ${totals.sum ?? '-'} · Rata-rata: ${totals.average == null ? '-' : totals.average.toFixed(1).replace('.', ',')} · Grade: ${totals.grade}${totals.complete ? '' : ' · BELUM LENGKAP'}`;
             }
-            const issue = issueDetail(student), dirty = isDirty(student);
-            badge.textContent = issue.reason || (state.saved.has(String(student.id)) ? 'Tersimpan' : 'Belum diisi');
-            badge.dataset.dirty = String(dirty);
-            card.dataset.problem = String(issue.problem);
+            const status = statusOf(student);
+            badge.textContent = { saved:'Tersimpan', draft:'Draf belum dikirim', ungraded:'Belum dinilai', incomplete:'Belum lengkap', review:'Perlu verifikasi' }[status];
+            badge.dataset.dirty = String(status === 'draft');
+            badge.dataset.state = status;
+            card.dataset.problem = String(status !== 'saved');
         });
     }
+
     function surahLabel(number) {
         const row = QURAN_SURAHS.find(row => String(row.number) === String(number));
         return row ? row.number + '. ' + row.name : '';
@@ -299,9 +399,9 @@ window.PeriodicAssessments = (() => {
         const input = (field, label, attributes) => `<label class="field-label" for="assessment-${index}-${field}">${label}<input id="assessment-${index}-${field}" data-field="${field}" value="${escape(draft[field])}" ${attributes}></label>`;
         const score = field => input(field, AssessmentData.scores[field].replace(' Tahsin', '').replace(' Tahfidz', ''), `type="number" min="0" max="100" step="0.01" inputmode="decimal" enterkeyhint="next" placeholder="0–100" required`);
         const markup = `<form novalidate class="assessment-student" data-student-index="${index}"><header><div class="assessment-student-identity"><span class="assessment-card-order" aria-label="Nomor urut ${displayOrder}">${displayOrder}</span><div><p>${escape(classLabel(student.kelas))}</p><h3>${escape(student['nama siswa'])}</h3></div></div><span class="assessment-state"></span></header>
-            <div class="assessment-subjects"><fieldset data-subject="tahsin" aria-label="Penilaian Tahsin"><div class="assessment-score-grid">${(window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']).map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div></fieldset>
-            <fieldset data-subject="tahfidz" aria-label="Penilaian Tahfidz"><div class="assessment-score-grid">${['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'].map(score).join('')}</div><h4>Capaian akhir</h4><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div ${['REVIEW', 'TES'].includes(draft.tahfidz_progress_type) ? 'hidden' : ''}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div></fieldset></div>
-            <output data-report-summary class="assessment-result-summary"></output><footer><span>${state.saved.get(String(student.id))?.needs_review ? 'Nilai lama: pengelola perlu memeriksa dan menyimpan untuk verifikasi pengampu.' : state.context.subject === 'tahsin' ? 'Nilai mengikuti capaian aktual siswa.' : 'Tahfidz'}</span><button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
+            <div class="assessment-subjects"><fieldset data-subject="tahsin" aria-label="Penilaian Tahsin"><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahsin', 'assessment-' + index) : input('tahsin_book', 'Buku/Jilid', 'required') + input('tahsin_page', 'Halaman terakhir', 'type="number" required')}</div><h4 class="assessment-values-heading" ${draft.tahsin_progress_type ? '' : 'hidden'}>Nilai</h4><div class="assessment-score-grid" ${draft.tahsin_progress_type ? '' : 'hidden'}>${(draft.tahsin_progress_type ? (window.ReportCore ? ReportCore.applicable(draft, 'tahsin').keys : ['tahsin_makhraj', 'tahsin_tajwid', 'tahsin_tartil', 'tahsin_gharib']) : []).map(score).join('')}</div></fieldset>
+            <fieldset data-subject="tahfidz" aria-label="Penilaian Tahfidz"><div class="assessment-attainment">${window.ProgressForm ? ProgressForm.markup(draft, 'tahfidz', 'assessment-' + index) : ''}<div class="assessment-surah-fields" ${draft.tahfidz_progress_type === 'SURAT' ? '' : 'hidden'}>${SurahPicker.markup(`assessment-${index}-surah`, draft.tahfidz_surah, student['nama siswa'], window.ReportCore ? ReportCore.surahsForJuz(draft.tahfidz_juz).map(s => s.number) : null)}<label class="field-label" for="assessment-${index}-ayah">Ayat terakhir<select id="assessment-${index}-ayah" data-field="tahfidz_ayah" required>${optionsAyah(draft.tahfidz_surah, draft.tahfidz_ayah)}</select></label></div></div><h4 class="assessment-values-heading" ${draft.tahfidz_progress_type ? '' : 'hidden'}>Nilai</h4><div class="assessment-score-grid" ${draft.tahfidz_progress_type ? '' : 'hidden'}>${(draft.tahfidz_progress_type ? ['tahfidz_makhraj', 'tahfidz_tajwid', 'tahfidz_hafalan'] : []).map(score).join('')}</div></fieldset></div>
+            <output data-report-summary class="assessment-result-summary"></output><footer>${state.saved.get(String(student.id))?.needs_review ? '<span>Perlu verifikasi pengelola.</span>' : ''}<button class="primary-action" type="submit">${state.saved.get(String(student.id))?.needs_review && AppAccess.full() ? 'Verifikasi & Simpan' : 'Simpan Nilai'}</button></footer></form>`;
         const selectedMarkup = markup.replace(/<fieldset data-subject="(tahsin|tahfidz)"[^>]*>[\s\S]*?<\/fieldset>/g, (block, subject) => subject === state.context.subject ? block : '');
         return state.saved.get(String(student.id))?.needs_review && !AppAccess.full()
             ? selectedMarkup.replace('<form ', '<form data-review-locked="true" ').replace('<fieldset ', '<fieldset disabled ').replace('type="submit"', 'type="submit" disabled')
@@ -316,7 +416,7 @@ window.PeriodicAssessments = (() => {
             const markup = rows.length ? rows.map((student, visibleIndex) => {
                 const cached = state.prefetchedMarkup.get(String(student.id));
                 return cached || cardMarkup(student, state.students.indexOf(student), visibleIndex + 1);
-            }).join('') : `<div class="assessment-empty">${state.problemOnly ? 'Tidak ada siswa bermasalah pada kelas ini.' : 'Tidak ada siswa pada kelas ini.'}</div>`;
+            }).join('') : `<div class="assessment-empty">${gradeStudents().length ? 'Tidak ada siswa yang cocok dengan pencarian/status.' : 'Belum ada murid pada tingkat ini.'}</div>`;
             const more = rows.length < allRows.length ? `<div id="assessmentLazySentinel" class="assessment-lazy-sentinel">Menyiapkan siswa berikutnya… <button type="button" class="secondary-action">Muat berikutnya</button></div>` : '';
             el('assessmentCards').innerHTML = markup + more;
         }
@@ -334,9 +434,14 @@ window.PeriodicAssessments = (() => {
     }
 
     async function chooseUnsaved(messageText) {
-        persistDrafts();
+        const draftSafe = persistDrafts();
         const count = dirtyStudents().length;
         if (!count) return 'continue';
+        if (!draftSafe) {
+            const saveNow = await AdminNotice.confirm('Penyimpanan draf perangkat gagal. Nilai akan hilang bila keluar tanpa menyimpan ke database. Simpan sekarang?');
+            if (!saveNow) return 'cancel';
+            return (await save(dirtyStudents(), { showSummary: true, source: 'leave-storage-failed' })) ? 'continue' : 'cancel';
+        }
         if (window.AdminNotice?.choose) {
             const choice = await AdminNotice.choose({
                 title: `${count} siswa memiliki perubahan belum disimpan`,
@@ -383,31 +488,36 @@ window.PeriodicAssessments = (() => {
             }
             state.context = context;
             state.lastSubject = context.subject;
-            state.students = students.sort((a, b) => String(a.kelas).localeCompare(String(b.kelas), 'id', { numeric: true }) || String(a['nama siswa']).localeCompare(String(b['nama siswa']), 'id'));
+            state.students = students.sort((a, b) =>
+                Number(classLevel(a.kelas) || 999) - Number(classLevel(b.kelas) || 999) ||
+                String(a['nama siswa']).localeCompare(String(b['nama siswa']), 'id') ||
+                String(a.kelas).localeCompare(String(b.kelas), 'id', { numeric: true }));
             state.saved = new Map(saved.map(row => [String(row.student_id), { ...row, ...row.scores }]));
             state.drafts = new Map(students.map(student => [String(student.id), AssessmentData.draft(state.saved.get(String(student.id)))]));
             state.lastFailedSave = [];
+            state.autoGrade = availableLevels()[0] || '';
             if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = true;
             const restored = restoreDrafts();
             state.page = 1;
-            el('assessmentLevel').replaceChildren(new Option('Semua tingkat', ''));
+            el('assessmentLevel').replaceChildren(new Option('Otomatis per tingkat', ''));
             [...new Set(students.map(row => classLevel(row.kelas)).filter(Boolean))].sort((a, b) => Number(a) - Number(b)).forEach(level => el('assessmentLevel').add(new Option(`Kelas ${level}`, level)));
-            el('assessmentClass').replaceChildren(new Option('Pilih kelas', ''));
-            const classes = [...new Set(students.map(row => row.kelas).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'id', { numeric: true }));
-            classes.forEach(kelas => el('assessmentClass').add(new Option(classLabel(kelas), kelas)));
             const preferred = options.preferredFilter || state.pendingWorkspaceFilter || readStorage(STORAGE.last, {});
             const sameContext = preferred && Number(preferred.year) === context.year && preferred.period === context.period && preferred.subject === context.subject && String(preferred.teacherId || '') === String(context.teacherId);
-            const preferredClass = sameContext && classes.includes(preferred.className) ? preferred.className : classes[0] || '';
-            el('assessmentClass').value = preferredClass;
-            el('assessmentLevel').value = preferredClass ? classLevel(preferredClass) : '';
-            state.problemOnly = Boolean(sameContext && preferred.problemOnly);
-            el('assessmentSearch').value = '';
+            const gradeOptions = [...el('assessmentLevel').options].map(option => option.value);
+            const savedGrade = preferred?.level || classLevel(preferred?.className);
+            el('assessmentLevel').value = sameContext && gradeOptions.includes(savedGrade) ? savedGrade : '';
+            const savedStatus = sameContext ? (preferred.status || (preferred.problemOnly ? 'problem' : 'all')) : 'all';
+            el('assessmentStatusFilter').value = [...el('assessmentStatusFilter').options].some(o => o.value === savedStatus) ? savedStatus : 'all';
+            el('assessmentSearch').value = sameContext ? String(preferred.search || '') : '';
+            state.problemOnly = el('assessmentStatusFilter').value === 'problem';
             el('assessmentActivePeriod').textContent = `${context.year}/${context.year + 1} · ${AssessmentData.periods[context.period]} · ${teacher.nama} / ${context.subject.toUpperCase()}`;
             el('assessmentWorkspace').hidden = false;
+            if (el('assessmentPendingFilter')) el('assessmentPendingFilter').hidden = true;
             state.pendingWorkspaceFilter = null;
+            if (el('assessmentSaveSummary')) el('assessmentSaveSummary').hidden = true;
             render();
             rememberLastFilter();
-            message(students.length ? `${restored ? `${restored} draf sementara dipulihkan. ` : ''}Nilai siap diisi. Data kosong tidak dihitung sebagai nilai nol.` : 'Belum ada anggota kelompok aktif untuk guru dan pelajaran ini.');
+            message(students.length ? '' : 'Belum ada siswa pada pilihan ini.');
             return true;
         } catch (error) {
             console.error(error);
@@ -417,38 +527,49 @@ window.PeriodicAssessments = (() => {
     }
 
     function saveSummary(savedCount, attemptedCount) {
-        const className = el('assessmentClass')?.value;
-        const classRows = state.students.filter(student => !className || student.kelas === className);
-        const problems = classRows.filter(student => issueDetail(student).problem).length;
-        const dirty = classRows.filter(isDirty).length;
+        const gradeRows = gradeStudents();
+        const problems = gradeRows.filter(student => issueDetail(student).problem).length;
+        const dirty = gradeRows.filter(isDirty).length;
         const node = el('assessmentSaveSummary');
         if (node) {
             node.hidden = false;
             node.innerHTML = `<strong>${savedCount} siswa berhasil disimpan.</strong><span>${problems} siswa masih perlu diperiksa · ${dirty} draf belum masuk database.</span>`;
         }
-        return `${savedCount} dari ${attemptedCount} siswa berhasil disimpan. ${problems ? `${problems} siswa masih perlu diperiksa.` : 'Semua siswa pada kelas ini sudah lengkap.'}`;
+        return `${savedCount} dari ${attemptedCount} siswa berhasil disimpan. ${problems ? `${problems} siswa masih perlu diperiksa.` : 'Semua siswa pada tingkat yang dipilih sudah lengkap.'}`;
     }
 
     async function save(students, options = {}) {
         if (state.busy || !state.context) return false;
         if (!students.length) { message('Tidak ada perubahan yang perlu disimpan.'); return true; }
-        const payload = [];
+        const payload = [], invalid = [];
         for (const student of students) {
             try {
-                payload.push(AssessmentData.payload(state.context, student, state.drafts.get(String(student.id)), state.saved.get(String(student.id))));
+                payload.push(AssessmentData.payload(state.context, student,
+                    state.drafts.get(String(student.id)), state.saved.get(String(student.id))));
             } catch (error) {
-                state.lastFailedSave = [student];
-                if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = false;
-                message(`${student['nama siswa']}: ${error.message} Belum ada perubahan yang dikirim.`, true);
-                el('assessmentLevel').value = classLevel(student.kelas);
-                el('assessmentClass').value = student.kelas;
-                el('assessmentSearch').value = '';
-                state.problemOnly = false;
-                state.page = 1;
-                render();
-                el('assessmentCards').querySelector(`[data-student-index="${state.students.indexOf(student)}"]`)?.reportValidity();
-                return false;
+                invalid.push({ student, reason: error.message });
             }
+        }
+        if (invalid.length) {
+            state.lastFailedSave = students;
+            if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = false;
+            // Validasi semua siswa terlebih dahulu: tidak ada sebagian nilai
+            // yang dikirim tanpa pengetahuan guru.
+            const first = invalid[0].student;
+            el('assessmentLevel').value = classLevel(first.kelas);
+            el('assessmentSearch').value = '';
+            el('assessmentStatusFilter').value = 'all';
+            state.page = 1;
+            render();
+            const summary = el('assessmentSaveSummary');
+            if (summary) {
+                summary.hidden = false;
+                summary.innerHTML = `<strong>${invalid.length} siswa perlu diperbaiki. Belum ada nilai yang dikirim.</strong><span>${invalid.slice(0, 5).map(row =>
+                    escape(row.student['nama siswa']) + ': ' + escape(row.reason)).join(' • ')}${invalid.length > 5 ? ' • dan ' + (invalid.length - 5) + ' siswa lainnya' : ''}</span>`;
+            }
+            message(`Tidak dapat menyimpan. ${invalid.length} siswa perlu diperiksa, termasuk ${first['nama siswa']}: ${invalid[0].reason}. Semua draf tetap tersedia.`, true);
+            persistDrafts();
+            return false;
         }
         setBusy(true);
         message(`Menyimpan ${payload.length} siswa...`);
@@ -466,6 +587,7 @@ window.PeriodicAssessments = (() => {
             if (el('assessmentRetrySave')) el('assessmentRetrySave').hidden = true;
             persistDrafts();
             render();
+            if (!options.showSummary && el('assessmentSaveSummary')) el('assessmentSaveSummary').hidden = true;
             message(options.showSummary ? saveSummary(data.length, payload.length) : `${data.length} siswa berhasil disimpan untuk ${AssessmentData.periods[state.context.period]}.`);
             return true;
         } catch (error) {
@@ -493,42 +615,70 @@ window.PeriodicAssessments = (() => {
     function clipboardPlan(text) {
         const matrix = parseClipboard(text);
         const targets = visible();
-        if (!matrix.length) return { rows: [], errors: ['Clipboard kosong.'] };
+        const errors = [], rows = [];
+        if (!matrix.length) return { rows, errors: ['Clipboard kosong.'] };
+        if (matrix.length > 1000) return { rows, errors: ['Maksimal 1000 baris sekali tempel.'] };
         const keys = scoreKeysForSubject(state.context?.subject);
-        const byName = new Map(targets.map(student => [normalizeStudentName(student['nama siswa']), student]));
-        const firstLooksNumeric = matrix[0].every((cell, idx) => idx >= keys.length || cell === '' || !Number.isNaN(Number(String(cell).replace(',', '.'))));
-        const rows = [], errors = [];
-        matrix.forEach((cells, rowIndex) => {
-            let student, values;
-            const first = cells[0] || '';
-            const firstNumber = Number(String(first).replace(',', '.'));
-            const hasName = Number.isNaN(firstNumber) || cells.length > keys.length;
-            if (hasName) {
-                student = byName.get(normalizeStudentName(first));
+        const byName = new Map(), byId = new Map(targets.map(student => [String(student.id), student]));
+        for (const student of targets) {
+            const key = normalizeStudentName(student['nama siswa']);
+            byName.set(key, [...(byName.get(key) || []), student]);
+        }
+        const used = new Set();
+        matrix.forEach((cells, index) => {
+            const first = String(cells[0] || '').trim();
+            const number = Number(first.replace(',', '.'));
+            const hasIdentity = !first || !Number.isFinite(number) || cells.length > keys.length;
+            let student, values = cells;
+            if (hasIdentity) {
+                const idMatch = first.match(/^(?:#|ID\s*[:#]\s*)(\d+)$/i);
+                const matchingId = idMatch ? idMatch[1] : (/^\d+$/.test(first) ? first : null);
+                if (matchingId && byId.has(matchingId)) {
+                    student = byId.get(matchingId);
+                } else {
+                    const matches = byName.get(normalizeStudentName(first)) || [];
+                    if (matches.length > 1) {
+                        errors.push(`Baris ${index + 1}: nama "${first}" ditemukan lebih dari sekali. Gunakan ID siswa (#ID).`);
+                        return;
+                    }
+                    student = matches[0];
+                }
                 values = cells.slice(1);
-                if (!student) { errors.push(`Baris ${rowIndex + 1}: nama "${first}" tidak ditemukan pada kelas yang tampil.`); return; }
+                if (!student) {
+                    errors.push(`Baris ${index + 1}: siswa "${first}" tidak ditemukan pada tingkat dan filter saat ini.`);
+                    return;
+                }
             } else {
-                student = targets[rowIndex];
-                values = cells;
-                if (!student) { errors.push(`Baris ${rowIndex + 1}: jumlah baris melebihi siswa yang tampil.`); return; }
+                student = targets[index];
+                if (!student) {
+                    errors.push(`Baris ${index + 1}: jumlah baris melebihi hasil filter siswa.`);
+                    return;
+                }
             }
+            if (used.has(String(student.id))) {
+                errors.push(`Baris ${index + 1}: siswa "${student['nama siswa']}" terulang dalam data tempelan.`);
+                return;
+            }
+            used.add(String(student.id));
             const draft = state.drafts.get(String(student.id));
-            const applicable = state.context.subject === 'tahsin' && window.ReportCore ? new Set(ReportCore.applicable(draft, 'tahsin').keys) : new Set(keys);
+            const applicable = state.context.subject === 'tahsin' && window.ReportCore
+                ? new Set(ReportCore.applicable(draft, 'tahsin').keys) : new Set(keys);
             const changes = [];
             keys.forEach((field, idx) => {
                 if (!applicable.has(field)) return;
                 const raw = String(values[idx] ?? '').trim();
                 if (raw === '') return;
                 const value = Number(raw.replace(',', '.'));
-                if (!Number.isFinite(value) || value < 0 || value > 100) {
-                    errors.push(`Baris ${rowIndex + 1}: nilai ${raw} tidak valid untuk ${AssessmentData.scores[field]}.`);
+                if (!Number.isFinite(value) || value < 0 || value > 100 || !/^\d{1,3}([.,]\d{1,2})?$/.test(raw)) {
+                    errors.push(`Baris ${index + 1}: nilai "${raw}" tidak valid untuk ${AssessmentData.scores[field]}.`);
                     return;
                 }
                 changes.push({ field, value: String(value) });
             });
             if (changes.length) rows.push({ student, changes });
+            else errors.push(`Baris ${index + 1}: tidak ada nilai yang bisa diterapkan.`);
         });
-        return { rows, errors, matrix, firstLooksNumeric };
+        return { rows, errors };
     }
     function ensurePasteDialog() {
         let dialog = el('assessmentPasteDialog');
@@ -537,9 +687,9 @@ window.PeriodicAssessments = (() => {
         dialog.id = 'assessmentPasteDialog';
         dialog.className = 'assessment-paste-dialog';
         dialog.innerHTML = `<div class="assessment-paste-shell">
-            <header><h3>Tempel nilai dari Excel</h3><p>Salin sel nilai dari Excel lalu tempel di bawah. Bisa memakai urutan siswa yang sedang tampil, atau sertakan nama siswa di kolom pertama. Fitur ini hanya mengisi angka nilai dan tidak mengubah capaian akhir.</p></header>
+            <header><h3>Tempel nilai dari Excel</h3><p>Tempel angka sesuai urutan seluruh hasil filter tingkat/status/pencarian, atau sertakan nama atau ID siswa (#ID) di kolom pertama. Periksa pratinjau; jika ada kesalahan, tidak ada baris yang diterapkan. Capaian akhir tidak berubah.</p></header>
             <textarea id="assessmentPasteText" spellcheck="false" placeholder="Contoh tanpa nama:&#10;85&#9;88&#9;90&#10;80&#9;82&#9;87&#10;&#10;Contoh dengan nama:&#10;Ahmad Fauzan&#9;85&#9;88&#9;90"></textarea>
-            <div id="assessmentPastePreview" class="assessment-paste-preview">Tempel data untuk melihat pratinjau.</div>
+            <div id="assessmentPastePreview" class="assessment-paste-preview">Tempel nilai untuk memeriksa seluruh baris sebelum diterapkan ke draf.</div>
             <div class="assessment-paste-actions"><button id="assessmentPasteCancel" type="button" class="secondary-action">Batal</button><button id="assessmentPasteApply" type="button" class="primary-action" disabled>Terapkan ke Draf</button></div>
         </div>`;
         document.body.append(dialog);
@@ -547,14 +697,24 @@ window.PeriodicAssessments = (() => {
             const plan = clipboardPlan(el('assessmentPasteText').value);
             dialog._gmPlan = plan;
             const preview = el('assessmentPastePreview');
-            preview.innerHTML = `${plan.rows.length ? `<strong>${plan.rows.length} siswa siap diisi.</strong>` : '<strong>Belum ada nilai yang siap diterapkan.</strong>'}
-                ${plan.errors.length ? `<div style="margin-top:6px">${plan.errors.slice(0,8).map(e => `• ${escape(e)}`).join('<br>')}${plan.errors.length > 8 ? `<br>• dan ${plan.errors.length-8} peringatan lain` : ''}</div>` : '<div style="margin-top:6px">Tidak ada masalah yang terdeteksi.</div>'}`;
-            el('assessmentPasteApply').disabled = !plan.rows.length;
+            const examples = plan.rows.slice(0, 8).map(row => escape(row.student['nama siswa']) + ' (' + escape(classLabel(row.student.kelas)) + ')');
+            preview.innerHTML = `${plan.rows.length ? `<strong>${plan.rows.length} siswa terdeteksi.</strong>` : '<strong>Belum ada nilai yang siap diterapkan.</strong>'}
+                ${examples.length ? '<p>Pratinjau: ' + examples.join(' · ') + (plan.rows.length > 8 ? ' · ...' : '') + '</p>' : ''}
+                ${plan.errors.length ? '<strong>' + plan.errors.length + ' kesalahan. Perbaiki seluruhnya sebelum melanjutkan.</strong><div>' +
+                    plan.errors.slice(0, 10).map(e => '• ' + escape(e)).join('<br>') +
+                    (plan.errors.length > 10 ? '<br>• dan ' + (plan.errors.length - 10) + ' kesalahan lain' : '') + '</div>' :
+                    '<p>Semua baris siap diterapkan sebagai draf; belum disimpan ke database.</p>'}`;
+            el('assessmentPasteApply').disabled = !plan.rows.length || plan.errors.length > 0;
+            el('assessmentPasteApply').textContent = plan.errors.length ? 'Perbaiki kesalahan dulu' : `Terapkan ${plan.rows.length} siswa ke draf`;
         };
         el('assessmentPasteText').addEventListener('input', update);
         el('assessmentPasteCancel').addEventListener('click', () => dialog.close());
         el('assessmentPasteApply').addEventListener('click', () => {
-            const plan = dialog._gmPlan || clipboardPlan(el('assessmentPasteText').value);
+            const plan = clipboardPlan(el('assessmentPasteText').value);
+            if (!plan.rows.length || plan.errors.length) {
+                message('Tempelan belum dapat diterapkan karena masih ada kesalahan. Periksa pratinjau.', true);
+                return;
+            }
             for (const row of plan.rows) {
                 const draft = state.drafts.get(String(row.student.id));
                 row.changes.forEach(change => { draft[change.field] = change.value; if (change.field === 'tahfidz_hafalan') draft.tahfidz_aspect_confirmed = 'true'; });
@@ -572,6 +732,7 @@ window.PeriodicAssessments = (() => {
         el('assessmentPasteText').value = '';
         el('assessmentPastePreview').textContent = 'Tempel data untuk melihat pratinjau.';
         el('assessmentPasteApply').disabled = true;
+        el('assessmentPasteApply').textContent = 'Terapkan ke Draf';
         dialog.showModal?.();
         setTimeout(() => el('assessmentPasteText')?.focus(), 50);
     }
@@ -592,8 +753,7 @@ window.PeriodicAssessments = (() => {
     function exportRows() {
         const scope = el('assessmentExportScope')?.value || 'view';
         if (scope === 'all') return [...state.students];
-        const kelas = el('assessmentClass')?.value;
-        if (scope === 'class') return state.students.filter(student => student.kelas === kelas);
+        if (scope === 'level') return gradeStudents();
         return visible();
     }
     async function exportExcel() {
@@ -605,61 +765,127 @@ window.PeriodicAssessments = (() => {
         try {
             const XLSX = await ensureXlsx();
             const subject = state.context.subject;
+            const includeDrafts = Boolean(el('assessmentExportIncludeDrafts')?.checked);
             const data = list.map((student, index) => {
-                const draft = state.drafts.get(String(student.id));
-                const stats = ReportCore.stats(draft, subject);
-                const issue = issueDetail(student);
-                const base = { No: index + 1, 'Nama Siswa': student['nama siswa'], Kelas: classLabel(student.kelas), Status: issue.reason || 'Tersimpan' };
-                const excelValue = value => value === '' || value == null ? '' : value;
+                const saved = state.saved.get(String(student.id));
+                const status = statusOf(student);
+                const localDraft = includeDrafts && status === 'draft';
+                const scores = localDraft ? state.drafts.get(String(student.id)) :
+                    (saved ? AssessmentData.draft(saved) : AssessmentData.draft());
+                const hasValues = Boolean(saved || localDraft);
+                const stats = hasValues ? ReportCore.stats(scores, subject) : null;
+                const labels = { saved: 'Tersimpan di database', draft: 'Draf belum dikirim',
+                    ungraded: 'Belum dinilai', incomplete: 'Belum lengkap', review: 'Perlu verifikasi' };
+                const base = {
+                    No: index + 1,
+                    'ID Siswa': String(student.id),
+                    'Nama Siswa': student['nama siswa'],
+                    Kelas: classLabel(student.kelas),
+                    Status: status === 'draft' && !includeDrafts ?
+                        'Draf belum dikirim (tidak ikut ekspor)' : labels[status],
+                    'Sumber Nilai': localDraft ? 'Draf perangkat (BELUM MASUK DATABASE)' :
+                        (status === 'draft' ? (saved ? 'Database (versi sebelum perubahan draf)' :
+                            'Belum ada nilai database; draf tidak disertakan') :
+                            (saved ? 'Database' : 'Belum ada nilai'))
+                };
+                const excelValue = value => hasValues && value !== '' && value != null ? value : '';
                 if (subject === 'tahsin') Object.assign(base, {
-                    'Makhorijul Huruf': excelValue(draft.tahsin_makhraj), Tajwid: excelValue(draft.tahsin_tajwid), 'Tartil/Kelancaran': excelValue(draft.tahsin_tartil), 'Gharib Musykilat': excelValue(draft.tahsin_gharib),
-                    'Capaian Akhir': ReportCore.progress(draft, 'tahsin')
+                    'Makhorijul Huruf': excelValue(scores.tahsin_makhraj),
+                    Tajwid: excelValue(scores.tahsin_tajwid),
+                    'Tartil/Kelancaran': excelValue(scores.tahsin_tartil),
+                    'Gharib Musykilat': excelValue(scores.tahsin_gharib),
+                    'Capaian Akhir': hasValues ? ReportCore.progress(scores, 'tahsin') : ''
                 });
                 else Object.assign(base, {
-                    'Makhorijul Huruf': excelValue(draft.tahfidz_makhraj), Tajwid: excelValue(draft.tahfidz_tajwid), 'Tartil/Kelancaran': excelValue(draft.tahfidz_hafalan),
-                    'Capaian Akhir': ReportCore.progress(draft, 'tahfidz')
+                    'Makhorijul Huruf': excelValue(scores.tahfidz_makhraj),
+                    Tajwid: excelValue(scores.tahfidz_tajwid),
+                    'Tartil/Kelancaran': excelValue(scores.tahfidz_hafalan),
+                    'Capaian Akhir': hasValues ? ReportCore.progress(scores, 'tahfidz') : ''
                 });
-                base.Jumlah = stats.sum ?? '';
-                base['Rata-rata'] = stats.average == null ? '' : Number(stats.average.toFixed(2));
-                base.Grade = stats.grade;
+                base.Jumlah = stats?.sum ?? '';
+                base['Rata-rata'] = stats?.average == null ? '' : Number(stats.average.toFixed(2));
+                base.Grade = stats?.grade ?? '';
                 return base;
             });
             const sheet = XLSX.utils.json_to_sheet(data);
             sheet['!cols'] = Object.keys(data[0]).map(key => ({ wch: Math.min(45, Math.max(12, key.length + 3, ...data.slice(0, 80).map(row => String(row[key] ?? '').length + 2))) }));
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, sheet, state.context.subject.toUpperCase());
-            const scopeLabel = el('assessmentExportScope')?.value === 'all' ? 'Semua Siswa' : (el('assessmentClass')?.value || 'Tampilan Saat Ini');
-            const fileName = window.GMFileName?.assessment?.({ subject: state.context.subject, scope: classLabel(scopeLabel), period: state.context.period, year: state.context.year })
+            const scopeLabel = el('assessmentExportScope')?.value === 'all' ? 'Semua Siswa' :
+                (el('assessmentExportScope')?.value === 'level' ? (el('assessmentLevel').value ? 'Tingkat ' + el('assessmentLevel').value : 'Seluruh Tingkat') : 'Tampilan Saat Ini');
+            const originalName = window.GMFileName?.assessment?.({ subject: state.context.subject, scope: classLabel(scopeLabel), period: state.context.period, year: state.context.year })
                 || `Penilaian ${state.context.subject.toUpperCase()} - ${scopeLabel} - ${state.context.period} - ${state.context.year}-${state.context.year + 1}.xlsx`;
+            const fileName = includeDrafts ? String(originalName).replace(/\.xlsx$/i, ' - DRAF BELUM DIKIRIM.xlsx') : originalName;
             XLSX.writeFile(workbook, fileName);
-            message(`Excel berhasil dibuat untuk ${list.length} siswa.`);
+            message(`Excel berhasil dibuat untuk ${list.length} siswa. ${includeDrafts ? 'Draf perangkat ditandai dan dibedakan dari database.' : 'Nilai yang diekspor berasal dari database; draf tidak disertakan.'}`);
         } catch (error) { message(`Export Excel gagal: ${error.message}`, true); }
-        finally { if (button) { button.disabled = false; button.textContent = 'Export Excel'; } }
+        finally { if (button) { button.disabled = false; button.textContent = 'Ekspor Excel'; } }
+    }
+
+    function renderTeacherOptions() {
+        const select = el('assessmentTeacher');
+        const search = el('assessmentTeacherSearch')?.value.trim().toLocaleLowerCase('id') || '';
+        const eligible = state.eligibleTeachers || [];
+        const selectedId = String(state.selectedTeacherId || '');
+        const matches = eligible.filter(teacher =>
+            `${teacher.nama || ''} ${teacher.nama_lengkap || ''}`.toLocaleLowerCase('id').includes(search));
+        const selected = eligible.find(teacher => String(teacher.id) === selectedId);
+        const visible = selected && !matches.some(teacher => String(teacher.id) === selectedId)
+            ? [selected, ...matches] : matches;
+        select.replaceChildren(new Option('Pilih guru', ''), ...visible.map(teacher =>
+            new Option(teacher.nama_lengkap || teacher.nama, String(teacher.id))));
+        select.value = selectedId;
+        select.disabled = !AppAccess.full();
+        const label = select.closest('label');
+        if (label) label.hidden = !AppAccess.full();
+        if (el('assessmentTeacherSearch')) el('assessmentTeacherSearch').disabled = !AppAccess.full();
+        if (el('assessmentTeacherSearch')) el('assessmentTeacherSearch').hidden = !AppAccess.full();
     }
 
     async function refreshSubjectTeachers() {
+        const sequence = ++state.teacherRequestId;
         const subject = el('assessmentSubject').value || 'tahsin';
-        const previous = el('assessmentTeacher').value;
+        const previous = el('assessmentTeacher').value || state.selectedTeacherId || '';
         const year = Number(el('assessmentYear').value);
-        const assignmentCacheKey = `${SESSION_CACHE.assignments}:${year}:${subject}`;
-        let assignmentRows = readSession(assignmentCacheKey, 5 * 60 * 1000);
-        if (!assignmentRows) {
-            assignmentRows = await fetchAllRows(() => supabase.from('teaching_assignments')
+        if (!Number.isInteger(year) || year < 2000 || year > 2200) return false;
+        const cacheKey = `${SESSION_CACHE.assignments}:${year}:${subject}`;
+        let rows = readSession(cacheKey, 5 * 60 * 1000);
+        if (!rows) {
+            rows = await fetchAllRows(() => supabase.from('teaching_assignments')
                 .select('teacher_id').eq('subject', subject).eq('active', true)
                 .eq('academic_year_start', year));
-            writeSession(assignmentCacheKey, assignmentRows);
+            writeSession(cacheKey, rows);
         }
-        const ids = new Set(assignmentRows.map(row => String(row.teacher_id)));
-        const eligible = state.teachers.filter(row => ids.has(String(row.id)) && (subject !== 'tahsin' || row.attendance_enabled !== false));
-        el('assessmentTeacher').replaceChildren(new Option('Pilih guru', ''));
-        eligible.forEach(row => el('assessmentTeacher').add(new Option(row.nama, row.id)));
-        const wanted = AppAccess.teacher?.() ? String(AppAccess.profile.teacher_id) : (previous || String(AppAccess.profile.teacher_id || ''));
-        if (eligible.some(row => String(row.id) === wanted)) el('assessmentTeacher').value = wanted;
-        else el('assessmentTeacher').value = '';
-        el('assessmentTeacher').disabled = !AppAccess.full();
-        const teacherLabel = el('assessmentTeacher').closest?.('label');
-        if (teacherLabel) teacherLabel.hidden = !AppAccess.full();
-        return Boolean(el('assessmentTeacher').value);
+        if (sequence !== state.teacherRequestId) return false;
+        const ids = new Set(rows.map(row => String(row.teacher_id)));
+        state.eligibleTeachers = state.teachers
+            .filter(teacher => ids.has(String(teacher.id)) &&
+                (subject !== 'tahsin' || teacher.attendance_enabled !== false))
+            .sort((x, y) => String(x.nama_lengkap || x.nama || '').localeCompare(String(y.nama_lengkap || y.nama || ''), 'id'));
+        const wanted = AppAccess.teacher() ? String(AppAccess.profile.teacher_id) :
+            (previous || String(AppAccess.profile.teacher_id || ''));
+        state.selectedTeacherId = state.eligibleTeachers.some(row => String(row.id) === wanted) ? wanted : '';
+        renderTeacherOptions();
+        markPendingFilter();
+        return Boolean(state.selectedTeacherId);
+    }
+
+    function markPendingFilter() {
+        if (!state.context) return;
+        const c = state.context;
+        const teacherId = AppAccess.full() ? el('assessmentTeacher').value : AppAccess.profile.teacher_id;
+        const changed = c.year !== Number(el('assessmentYear').value) ||
+            c.period !== el('assessmentPeriod').value ||
+            c.subject !== el('assessmentSubject').value ||
+            c.teacherId !== String(teacherId || '');
+        if (el('assessmentPendingFilter')) el('assessmentPendingFilter').hidden = !changed;
+        if (changed) {
+            persistDrafts();
+            el('assessmentWorkspace').hidden = true;
+            message('');
+        } else {
+            el('assessmentWorkspace').hidden = false;
+        }
     }
 
     async function applyStoredFilter(filter, { loadData = true } = {}) {
@@ -670,9 +896,12 @@ window.PeriodicAssessments = (() => {
         state.lastSubject = el('assessmentSubject').value;
         yearLabel();
         await refreshSubjectTeachers();
-        if (filter.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(filter.teacherId))) el('assessmentTeacher').value = String(filter.teacherId);
+        if (filter.teacherId && state.eligibleTeachers.some(teacher => String(teacher.id) === String(filter.teacherId))) {
+            state.selectedTeacherId = String(filter.teacherId);
+            renderTeacherOptions();
+        }
         state.pendingWorkspaceFilter = filter;
-        if (loadData && el('assessmentTeacher').value) return load({ preferredFilter: filter });
+        if (loadData && el('assessmentTeacher').value) return load({ preferredFilter: filter, skipUnsavedPrompt: true });
         return true;
     }
 
@@ -690,7 +919,7 @@ window.PeriodicAssessments = (() => {
             return;
         }
         state.busy = true;
-        message('Memuat daftar guru...');
+        message('');
         try {
             await AppAccess.ready;
             if (window.ReportCore) await loadReportReferenceCached();
@@ -705,13 +934,14 @@ window.PeriodicAssessments = (() => {
             state.lastSubject = el('assessmentSubject').value;
             yearLabel();
             await refreshSubjectTeachers();
-            if (last.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(last.teacherId))) el('assessmentTeacher').value = String(last.teacherId);
+            if (last.teacherId && state.eligibleTeachers.some(teacher => String(teacher.id) === String(last.teacherId))) {
+                state.selectedTeacherId = String(last.teacherId); renderTeacherOptions();
+            }
             state.pendingWorkspaceFilter = last;
-            el('assessmentScopeNote').textContent = AppAccess.full() ? 'Daftar siswa mengikuti anggota kelompok pelajaran yang aktif. Filter terakhir disimpan di perangkat.' : 'Hanya siswa dari kelompok pelajaran Anda. Filter terakhir disimpan di perangkat.';
             state.initialized = true;
             refreshFavoriteButtons();
             draftStatus('Autosave draf sementara aktif di perangkat ini.', 'clean');
-            message('Pilih pelajaran, guru, dan periode untuk memuat kelas.');
+            message('');
         } catch (error) { message(error.message, true); }
         finally { state.busy = false; }
     }
@@ -726,18 +956,26 @@ window.PeriodicAssessments = (() => {
         el('assessmentSubject').value = options.subject || 'tahsin';
         state.lastSubject = el('assessmentSubject').value;
         await refreshSubjectTeachers();
-        if (AppAccess.full() && options.teacherId && [...el('assessmentTeacher').options].some(option => String(option.value) === String(options.teacherId))) el('assessmentTeacher').value = String(options.teacherId);
+        if (AppAccess.full() && options.teacherId && state.eligibleTeachers.some(teacher => String(teacher.id) === String(options.teacherId))) {
+            state.selectedTeacherId = String(options.teacherId); renderTeacherOptions();
+        }
         el('assessmentPeriod').value = options.period || 'pts_ganjil';
-        await load();
-        if (options.className && state.students.some(student => student.kelas === options.className)) el('assessmentClass').value = options.className;
+        const loaded = await load();
+        if (!loaded) return false;
+        if (options.className && state.students.some(student => student.kelas === options.className)) el('assessmentLevel').value = classLevel(options.className);
         el('assessmentSearch').value = options.studentName || '';
+        el('assessmentStatusFilter').value = options.problemOnly ? 'problem' : 'all';
         state.problemOnly = Boolean(options.problemOnly);
         state.page = 1;
         render();
         return true;
     }
 
-    function yearLabel() { const year = Number(el('assessmentYear').value); el('assessmentYearLabel').textContent = `Tahun ajaran ${year}/${year + 1}`; }
+    function yearLabel() {
+        const year = Number(el('assessmentYear').value);
+        el('assessmentYearLabel').textContent = Number.isInteger(year) && year >= 2000 && year <= 2200
+            ? `${year}/${year + 1}` : 'Tahun tidak valid';
+    }
 
     async function confirmLeave() {
         if (!dirtyStudents().length) return true;
@@ -746,10 +984,18 @@ window.PeriodicAssessments = (() => {
     }
 
     ((callback) => window.GMPanel ? GMPanel.onReady(callback) : document.addEventListener('panelready', callback))( () => {
-        el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); return load(); });
-        el('assessmentYear').addEventListener('input', () => { yearLabel(); rememberLastFilter(); refreshSubjectTeachers().catch(error => message(error.message, true)); });
-        el('assessmentPeriod').addEventListener('change', rememberLastFilter);
-        el('assessmentTeacher').addEventListener('change', rememberLastFilter);
+        el('assessmentLoadForm').addEventListener('submit', event => { event.preventDefault(); void load(); });
+        el('assessmentYear').addEventListener('input', () => { yearLabel(); markPendingFilter(); });
+        el('assessmentYear').addEventListener('change', () => {
+            rememberLastFilter();
+            refreshSubjectTeachers().catch(error => message(error.message, true));
+        });
+        el('assessmentPeriod').addEventListener('change', () => { rememberLastFilter(); markPendingFilter(); });
+        el('assessmentTeacher').addEventListener('change', () => {
+            state.selectedTeacherId = el('assessmentTeacher').value;
+            rememberLastFilter(); markPendingFilter();
+        });
+        el('assessmentTeacherSearch').addEventListener('input', renderTeacherOptions);
         el('assessmentSubject').addEventListener('change', async () => {
             const next = el('assessmentSubject').value;
             const previous = state.context?.subject || state.lastSubject || 'tahsin';
@@ -760,6 +1006,8 @@ window.PeriodicAssessments = (() => {
             state.lastSubject = next;
             el('assessmentWorkspace').hidden = true;
             state.students = []; state.saved.clear(); state.drafts.clear(); state.context = null; state.problemOnly = false;
+            el('assessmentPendingFilter').hidden = false;
+            message('Pelajaran berubah. Tekan Tampilkan Siswa untuk memuat kelompok pelajaran baru.');
             rememberLastFilter();
             refreshSubjectTeachers().catch(error => message(error.message, true));
         });
@@ -834,11 +1082,16 @@ window.PeriodicAssessments = (() => {
         });
         SurahPicker.bind(el('assessmentCards'));
         el('assessmentCards').addEventListener('submit', event => { event.preventDefault(); const student = state.students[Number(event.target.dataset.studentIndex)]; if (student) return save([student], { showSummary: false }); });
-        el('assessmentSaveAll').addEventListener('click', () => save(visible().filter(isDirty), { showSummary: true, source: 'save-all' }));
+        el('assessmentSaveAll').addEventListener('click', () => save(dirtyInGrade(), { showSummary: true, source: 'save-all' }));
         el('assessmentRetrySave')?.addEventListener('click', () => save(state.lastFailedSave.filter(Boolean), { showSummary: true, source: 'retry' }));
-        ['assessmentClass', 'assessmentSearch'].forEach(id => el(id).addEventListener('input', () => { state.page = 1; render(); }));
-        el('assessmentLevel').addEventListener('input', () => { const level = el('assessmentLevel').value; const row = state.students.find(s => !level || classLevel(s.kelas) === level); el('assessmentClass').value = row?.kelas || ''; state.page = 1; render(); });
-        el('assessmentProblemOnly')?.addEventListener('click', () => { state.problemOnly = !state.problemOnly; state.page = 1; render(); });
+        ['assessmentLevel','assessmentSearch','assessmentStatusFilter'].forEach(id => el(id).addEventListener(
+            id === 'assessmentSearch' ? 'input' : 'change', () => {
+                // Mengosongkan filter tingkat selalu kembali ke tingkat terendah.
+                if (id === 'assessmentLevel' && !el('assessmentLevel').value)
+                    state.autoGrade = availableLevels()[0] || '';
+                state.problemOnly = el('assessmentStatusFilter').value === 'problem';
+                state.page = 1; render();
+            }));
         el('assessmentFavoriteSave')?.addEventListener('click', saveFavorite);
         el('assessmentFavoriteUse')?.addEventListener('click', async () => {
             const favorite = readStorage(STORAGE.favorite);
@@ -849,30 +1102,39 @@ window.PeriodicAssessments = (() => {
             }
             await applyStoredFilter(favorite, { loadData: true });
         });
-        el('assessmentExport')?.addEventListener('click', exportExcel);
+        const exportDialog = el('assessmentExportMenu'), exportButton = el('assessmentExport');
+        exportButton?.addEventListener('click', () => {
+            if (!state.context || !state.students.length) {
+                message('Tampilkan data penilaian sebelum ekspor.', true);
+                return;
+            }
+            if (!exportDialog || exportDialog.open) return;
+            exportDialog.showModal();
+            exportButton.setAttribute('aria-expanded', 'true');
+        });
+        exportDialog?.addEventListener('close', () => exportButton?.setAttribute('aria-expanded', 'false'));
+        el('assessmentExportCancel')?.addEventListener('click', () => exportDialog?.close());
+        el('assessmentExportConfirm')?.addEventListener('click', () => {
+            exportDialog?.close();
+            void exportExcel();
+        });
+        exportDialog?.addEventListener('click', event => {
+            if (event.target === exportDialog) exportDialog.close();
+        });
         el('assessmentPasteExcel')?.addEventListener('click', openPasteDialog);
-        const movePeriod = amount => {
-            const order = ['pts_ganjil','pas_ganjil','pts_genap','pas_genap'];
-            const current = order.indexOf(el('assessmentPeriod').value);
-            const next = Math.max(0, Math.min(order.length - 1, current + amount));
-            if (next === current) return;
-            el('assessmentPeriod').value = order[next];
-            rememberLastFilter();
-        };
-        el('assessmentPeriodPrev')?.addEventListener('click', () => movePeriod(-1));
-        el('assessmentPeriodNext')?.addEventListener('click', () => movePeriod(1));
         el('assessmentRuleHelp')?.addEventListener('click', () => {
             const pop = el('assessmentRuleHelpText'), btn = el('assessmentRuleHelp');
             if (!pop) return;
             pop.hidden = !pop.hidden;
             btn?.setAttribute('aria-expanded', String(!pop.hidden));
         });
-        el('assessmentMobileSave')?.addEventListener('click', () => save(visible().filter(isDirty), { showSummary: true, source: 'mobile-save' }));
+        el('assessmentMobileSave')?.addEventListener('click', () => save(dirtyInGrade(), { showSummary: true, source: 'mobile-save' }));
         el('assessmentMobileProblems')?.addEventListener('click', () => {
-            state.problemOnly = !state.problemOnly; state.page = 1; render();
+            el('assessmentStatusFilter').value = el('assessmentStatusFilter').value === 'problem' ? 'all' : 'problem';
+            state.problemOnly = el('assessmentStatusFilter').value === 'problem'; state.page = 1; render();
         });
-        el('assessmentPrev').addEventListener('click', () => { state.page--; render(); });
-        el('assessmentNext').addEventListener('click', () => { state.page++; render(); });
+        el('assessmentPrev').addEventListener('click', () => changeAutoGrade(-1));
+        el('assessmentNext').addEventListener('click', () => changeAutoGrade(1));
         refreshFavoriteButtons();
     });
 

@@ -1,0 +1,246 @@
+/* Filter pembelajaran: pencarian guru, status anggota, dan tahun ajaran. */
+body.admin-page .gm-group-pagebar .gm-teacher-picker {
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+body.admin-page .gm-group-pagebar .gm-teacher-picker .field-label {
+  margin:0;
+}
+body.admin-page .gm-group-pagebar .gm-teacher-picker :is(input,select) {
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:9px 11px;
+  border:1px solid var(--gm-border,#dce5dc);
+  border-radius:10px;
+  background:var(--gm-surface,#fff);
+  color:var(--gm-text,#315847);
+  font:inherit;
+  font-size:13px;
+}
+body.admin-page .gm-group-pagebar .gm-teacher-picker :is(input,select):focus-visible {
+  outline:2px solid var(--gm-accent,#216454);
+  outline-offset:1px;
+}
+body.admin-page .gm-group-pagebar .gm-teacher-picker small,
+body.admin-page .gm-group-pagebar .gm-year-preview {
+  display:block;
+  min-height:16px;
+  color:var(--gm-muted,#64776b);
+  font-size:11px;
+  font-weight:500;
+  line-height:1.45;
+}
+body.admin-page .gm-group-manager .gm-group-form-grid {
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:end;
+}
+body.admin-page .gm-group-manager .gm-group-form-grid :is(input,select) {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+body.admin-page .gm-group-manager .gm-copy-tahsin-help {
+  margin:1px 0 10px;
+  color:var(--gm-muted,#64776b);
+  font-size:12px;
+  line-height:1.55;
+}
+@media(max-width:1060px) {
+  body.admin-page .gm-group-manager .gm-group-form-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(max-width:640px) {
+  body.admin-page .gm-group-manager .gm-group-form-grid {
+    grid-template-columns:minmax(0,1fr);
+  }
+}
+
+/* Kelola Pembelajaran + header adaptif, 22 Oktober 2026.
+   Tampilan saja: semua operasi kelompok tetap ditangani LearningGroups. */
+body.admin-page .gm-learning-subnav{
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:7px;
+  width:max-content;
+  max-width:100%;
+  margin-bottom:14px;
+  border-radius:14px;
+  border:1px solid var(--gm-border,#dce5dc);
+  background:var(--gm-surface,#fff);
+  box-shadow:0 2px 9px rgba(20,60,40,.045);
+}
+body.admin-page .gm-learning-subnav[hidden]{display:none!important}
+body.admin-page .gm-learning-subnav button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:115px;
+  min-height:44px;
+  padding:10px 18px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:transparent;
+  color:var(--gm-text,#315847);
+  font-size:13px;
+  line-height:1.35;
+  font-weight:650;
+  cursor:pointer;
+  transition:background .15s,box-shadow .15s,color .15s;
+}
+body.admin-page .gm-learning-subnav button:hover{
+  background:var(--gm-soft,#eef5ef);
+}
+body.admin-page .gm-learning-subnav button[aria-pressed="true"]{
+  background:var(--gm-accent,#216454);
+  color:#fff;
+  box-shadow:0 3px 9px rgba(21,71,49,.12);
+}
+body.admin-page .gm-learning-subnav button:focus-visible{
+  outline:2px solid var(--gm-accent,#216454);
+  outline-offset:2px;
+}
+/* Halaman non-dashboard cukup satu header utama; hindari dua judul
+   dan banner kosong yang menghabiskan ruang mobile. */
+body.admin-page:not([data-active-page="dashboard"]) .admin-workspace > .admin-welcome{
+  display:none!important;
+}
+/* Navigasi utama tetap satu baris dan tidak menabrak ikon akun. */
+body.admin-page #adminMain > header{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+  padding:12px clamp(13px,2.3vw,28px)!important;
+  background:var(--gm-surface,#fff)!important;
+  border-bottom:1px solid var(--gm-border,#dce5dc)!important;
+}
+body.admin-page #adminMain > header > div:first-child{
+  display:flex;
+  align-items:center;
+  flex:1 1 auto;
+  min-width:0;
+  gap:11px;
+}
+body.admin-page #adminMain > header .mobile-menu-button{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  min-width:42px;
+  min-height:42px;
+}
+body.admin-page #adminMain > header .admin-header-copy{
+  flex:1 1 auto;
+  min-width:0;
+  max-width:100%;
+}
+body.admin-page #adminMain > header .admin-header-copy > p{
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+body.admin-page #adminMain > header #adminHeaderTitle{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin:2px 0 0;
+  font-size:clamp(13px,1.45vw,18px);
+  font-weight:700;
+  line-height:1.4;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow-wrap:normal;
+}
+body.admin-page #adminMain > header .admin-account-actions{
+  flex:0 0 auto;
+  min-width:0;
+  max-width:48%;
+  display:flex;
+  flex-wrap:nowrap!important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  margin:0;
+}
+body.admin-page #adminMain > header :is(.admin-icon-button,.admin-profile-button,.admin-logout-button){
+  flex-shrink:0;
+}
+body.admin-page #adminMain > header .admin-profile-name{
+  max-width:clamp(70px,10vw,130px);
+}
+@media(max-width:767px){
+  body.admin-page #adminMain > header{
+    gap:8px;
+    padding:10px max(11px,env(safe-area-inset-right)) 10px max(11px,env(safe-area-inset-left))!important;
+  }
+  body.admin-page #adminMain > header > div:first-child{gap:8px}
+  body.admin-page #adminMain > header .mobile-menu-button{
+    flex-basis:40px;
+    min-width:40px;
+    min-height:40px;
+    width:40px;
+    height:40px;
+  }
+  body.admin-page #adminMain > header .admin-header-copy > p{display:none}
+  body.admin-page #adminMain > header #adminHeaderTitle{
+    margin:0;
+    font-size:14px;
+    max-width:none;
+  }
+  body.admin-page #adminMain > header .admin-account-actions{
+    max-width:none;
+    gap:6px;
+  }
+  body.admin-page #adminMain > header :is(.admin-icon-button,.admin-logout-button){
+    width:40px!important;
+    min-height:40px;
+    padding:0!important;
+  }
+  body.admin-page #adminMain > header .admin-profile-button{
+    width:40px;
+    max-width:40px;
+    min-height:40px;
+    padding:2px!important;
+    justify-content:center;
+  }
+  body.admin-page #adminMain > header .admin-profile-name{display:none!important}
+  body.admin-page #adminMain > header .admin-notification-popover{
+    right:10px;
+    top:calc(100% + 8px);
+    width:min(355px,calc(100vw - 20px));
+    max-width:none;
+  }
+  body.admin-page .gm-learning-subnav{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    width:100%;
+    gap:6px;
+    padding:5px;
+    border-radius:12px;
+  }
+  body.admin-page .gm-learning-subnav button{
+    min-width:0;
+    width:100%;
+    min-height:44px;
+    padding:10px 8px;
+  }
+}
+@media(max-width:420px){
+  /* Keluar tetap tersedia di sidebar: tidak memenuhi header 320px. */
+  body.admin-page #adminMain > header #topLogoutBtn{display:none!important}
+  body.admin-page #adminMain > header .admin-account-actions{gap:5px}
+  body.admin-page #adminMain > header #adminHeaderTitle{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  body.admin-page .gm-learning-subnav button{transition:none}
+}

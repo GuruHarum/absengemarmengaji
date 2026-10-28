@@ -19,34 +19,12 @@ window.GMRev46 = (() => {
   };
   window.GMFileName = FileName;
 
-  function applyTheme(theme) {
-    const resolved = theme === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme;
-    document.documentElement.dataset.gmTheme = resolved;
-    document.documentElement.style.colorScheme = resolved;
-    storage.set('gm_theme_v46', theme);
-    const button = $('gmThemeToggle');
-    if (button) {
-      button.setAttribute('aria-pressed', String(resolved === 'dark'));
-      button.title = resolved === 'dark' ? 'Gunakan mode terang' : 'Gunakan mode gelap';
-      button.innerHTML = resolved === 'dark'
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg><span class="sr-only">Mode terang</span>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15.2A8.5 8.5 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"/></svg><span class="sr-only">Mode gelap</span>';
-    }
-    try { refreshPresentationChartTheme(); } catch(_) {}
-  }
-
+  // Tema gelap dinonaktifkan. Pilihan lama di perangkat direset ke terang.
   function mountThemeToggle() {
-    const actions = document.querySelector('.admin-account-actions');
-    if (!actions || $('gmThemeToggle')) return;
-    const button = document.createElement('button');
-    button.id = 'gmThemeToggle'; button.type = 'button'; button.className = 'admin-icon-button gm-theme-toggle'; button.setAttribute('aria-label','Ganti tema');
-    button.addEventListener('click', () => {
-      const current = document.documentElement.dataset.gmTheme || 'light';
-      applyTheme(current === 'dark' ? 'light' : 'dark');
-    });
-    actions.insertBefore(button, actions.firstChild);
-    applyTheme(storage.get('gm_theme_v46','system'));
-    matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => { if (storage.get('gm_theme_v46','system') === 'system') applyTheme('system'); });
+    document.documentElement.dataset.gmTheme = 'light';
+    document.documentElement.style.colorScheme = 'light';
+    storage.set('gm_theme_v46','light');
+    $('gmThemeToggle')?.remove();
   }
 
   async function fetchAll(factory){

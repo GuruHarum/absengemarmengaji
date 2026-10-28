@@ -6,7 +6,13 @@
 <meta charset="utf-8"/>
 <script>window.GM_INITIAL_LOADER_STARTED_AT = performance.now();</script>
 <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
-<script>(function(){try{var t=localStorage.getItem('gm_theme_v46')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.gmTheme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light';}catch(e){}})();</script>
+<script>(function(){try{document.documentElement.dataset.gmTheme='light';document.documentElement.style.colorScheme='light';localStorage.setItem('gm_theme_v46',JSON.stringify('light'));if(sessionStorage.getItem('gm_login_transition')==='1'){document.documentElement.classList.add('gm-login-transition');document.documentElement.style.visibility='visible';sessionStorage.removeItem('gm_login_transition');}}catch(e){document.documentElement.dataset.gmTheme='light';}})();</script><style>
+html.gm-login-transition #loadingIndicator{display:flex!important;align-items:center;justify-content:center;background:#f4f8f4!important;color:#1d4c39!important}
+html.gm-login-transition #loadingIndicator.is-hidden{display:none!important}
+html.gm-login-transition #loadingIndicator>*,html.gm-login-transition #loadingIndicator::after{display:none!important}
+html.gm-login-transition #loadingIndicator::before{content:'Menyiapkan dashboard…';display:flex;align-items:center;gap:8px;font:600 14px/1.5 Poppins,system-ui,sans-serif;letter-spacing:.01em}
+html.gm-login-transition body.admin-page{background:#f4f8f4!important}
+</style>
 <title>Panel Guru - Gemar Mengaji SDIT Harapan Umat Karawang</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -46,7 +52,7 @@
 <link href="css/layout-responsive.css" rel="stylesheet"/>
 <link href="css/admin-refinement.css?v=20260928-submenu-level-1" rel="stylesheet"/>
 <link href="css/gm-upgrade-20260928.css?v=20260928-1" rel="stylesheet"/>
-<link href="css/ui-polish-20260928.css?v=20260929-groups26" rel="stylesheet"/>
+<link href="css/ui-polish-20260928.css?v=20261023-archive-light3" rel="stylesheet"/>
 <link href="css/ux-stage5.css?v=20260929-ux27" rel="stylesheet"/>
 <link href="css/visual-stage8.css?v=20260929-loader37" rel="stylesheet"/>
 <link href="css/rev37-visual-fixes.css?v=20260929-rev37" rel="stylesheet"/>
@@ -58,7 +64,105 @@
     <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
 <link rel="stylesheet" href="css/page-refinements.css?v=20261001-log2">
 <script src="js/page-refinements.js?v=20261007-data63" defer></script>
-</head>
+<style id="gm-manage-redesign-20261022">
+/* Kelola Data: tabel untuk desktop, kartu khusus untuk mobile. */
+#kelolaDataSection{width:100%;min-width:0;overflow:hidden;border:1px solid #dce8e3;border-radius:20px;background:#fff;box-shadow:0 8px 28px rgba(22,64,49,.045)}
+#kelolaDataSection .manage-toolbar{padding:clamp(16px,2.4vw,28px);background:#fff;border-bottom:1px solid #e8eeeb}
+#kelolaDataSection .section-heading{display:flex;align-items:center;justify-content:space-between;flex-direction:row;gap:16px;flex-wrap:wrap}
+#kelolaDataSection .section-heading h2{margin:0;color:#163e33;font-weight:750;font-size:clamp(19px,2.1vw,25px);line-height:1.35;letter-spacing:-.025em}
+#kelolaDataSection #manageAddBtn{min-height:43px;padding:10px 18px;border-radius:11px;font-size:13px;background:#216454;color:white;white-space:nowrap}
+#kelolaDataSection #manageAddBtn[hidden]{display:none!important}
+#kelolaDataSection .manage-tabs{display:flex;flex-wrap:nowrap;gap:5px;width:max-content;max-width:100%;margin:20px 0 0;padding:4px;background:#eef5f0;border:1px solid #e2ebe4;border-radius:13px;overflow-x:auto;scrollbar-width:thin}
+#kelolaDataSection .manage-tabs button{flex:0 0 auto;min-height:42px;padding:10px 17px;border:0;border-radius:10px;font-size:13px;font-weight:650;white-space:nowrap;color:#536e5d;background:transparent}
+#kelolaDataSection .manage-tabs button[aria-pressed="true"]{background:#fff;color:#176246;box-shadow:0 2px 7px rgba(15,65,48,.1)}
+#kelolaDataSection .manage-search-row{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0 0}
+#kelolaDataSection .manage-search-row>.field-label{flex:1 1 270px;max-width:580px}
+#kelolaDataSection .field-label{min-width:0;gap:7px;color:#4d685a;font-weight:600;font-size:12px;line-height:1.4}
+#kelolaDataSection .field-label :is(input,select){width:100%;min-width:0;min-height:44px;padding:10px 12px;background:#fff;border:1px solid #cadad0;border-radius:11px;color:#214638;font-size:13px;line-height:1.4}
+#kelolaDataSection .field-label :is(input,select):focus-visible{outline:2px solid #35866a;outline-offset:1px}
+#kelolaDataSection #manageRecordInfo{display:inline-flex;align-items:center;padding:9px 12px;border:0;border-radius:9px;background:#eef6ef;color:#37624b;font-size:12px;font-weight:600;white-space:nowrap}
+#kelolaDataSection .detail-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:15px}
+#kelolaDataSection #manageDirectoryTable{width:100%;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#kelolaDataSection #manageDirectoryTable table{width:100%;min-width:610px;border-collapse:collapse;table-layout:auto}
+#kelolaDataSection #manageDirectoryTable th{padding:15px 14px;font-size:11px;letter-spacing:.025em;color:#567264;background:#f4f8f5}
+#kelolaDataSection #manageDirectoryTable td{padding:13px 14px;font-size:12px;vertical-align:middle;overflow-wrap:anywhere}
+#kelolaDataSection #manageDirectoryTable tbody tr:not(.gm-manage-class-row):hover{background:#f8fbf8}
+#kelolaDataSection #manageDirectoryTable .gm-manage-class-row td{font-size:12px;font-weight:650;background:#eff5f1}
+#kelolaDataSection #manageDirectoryPagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;padding:14px 18px;background:#fff}
+#kelolaDataSection #manageDirectoryPagination button{min-height:42px;border-radius:11px;font-size:12px}
+#kelolaDataSection #manageDirectoryPagination span{font-size:12px;white-space:nowrap}
+#kelolaDataSection #manageMobileCards{display:none}
+#kelolaDataSection [hidden],#pwaProfileInstallSlot [hidden]{display:none!important}
+#manageModal{padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));overscroll-behavior:contain}
+#manageModal #modalContent{width:min(100%,540px);max-height:calc(100dvh - 24px)!important;border-radius:18px;background:#fff;overscroll-behavior:contain}
+#manageModal #modalContent>div:first-child{position:sticky;top:0;z-index:2;background:#fff;padding:18px 22px;border-bottom:1px solid #e6ede7}
+#manageModal #modalTitle{font-size:18px;font-weight:700;color:#214b37}
+#manageModal #manageForm{padding:20px 22px}
+#manageModal #formFields{display:grid;gap:15px}
+#manageModal #formFields>div{min-width:0}
+#manageModal #formFields label{font-size:12px;line-height:1.5;font-weight:650;letter-spacing:0;text-transform:none;color:#405d4d}
+#manageModal #formFields :is(input,select){width:100%;min-height:44px;margin-top:7px;border-radius:10px;border-color:#cbdcd2;background:#fff;font-size:13px}
+#manageModal #formFields p{line-height:1.5}
+#manageModal .gm-manage-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:14px;margin-top:18px}
+#manageModal .gm-manage-modal-actions button{min-height:44px;min-width:0;margin:0;border-radius:10px;font-size:13px}
+#manageModal #submitBtn{background:#216454;color:#fff}
+#pwaProfileInstallSlot{margin:0 0 14px;min-height:0}
+#pwaProfileInstallSlot .pwa-install-chip{position:static;display:inline-flex;margin:0;box-shadow:none;border-radius:10px;min-height:44px;background:#edf6f0;color:#1d634a;border:1px solid #cbded3}
+@media(max-width:900px) and (min-width:641px){
+#kelolaDataSection .detail-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#kelolaDataSection .manage-tabs{max-width:100%}
+}
+@media(max-width:640px){
+#kelolaDataSection{border-radius:14px}
+#kelolaDataSection .manage-toolbar{padding:16px 12px 14px}
+#kelolaDataSection .section-heading{display:flex;flex-direction:row;align-items:center;gap:10px;margin:0}
+#kelolaDataSection .section-heading>div{flex:1 1 150px}
+#kelolaDataSection .section-heading h2{font-size:19px}
+#kelolaDataSection #manageAddBtn{flex:0 0 auto;width:auto;min-width:104px;padding:10px 12px;font-size:12px}
+#kelolaDataSection .manage-tabs{margin:14px 0 0;width:100%;max-width:100%;gap:3px;padding:4px}
+#kelolaDataSection .manage-tabs button{flex:1 0 auto;min-height:42px;padding:10px 12px;font-size:12px}
+#kelolaDataSection .manage-search-row{margin:14px 0 0;align-items:center;gap:9px}
+#kelolaDataSection .manage-search-row>.field-label{flex:1 1 100%;max-width:none}
+#kelolaDataSection #manageRecordInfo{padding:6px 10px;font-size:11px}
+#kelolaDataSection .detail-filter-grid{grid-template-columns:1fr;gap:9px;margin-top:13px}
+#kelolaDataSection #manageDirectoryTable{display:none!important}
+#kelolaDataSection #manageMobileCards{display:grid;gap:10px;padding:12px;background:#f8fbf9}
+#kelolaDataSection .gm-directory-card{min-width:0;padding:15px;background:#fff;border:1px solid #dfe9e2;border-radius:14px;box-shadow:0 2px 9px rgba(12,55,34,.035)}
+#kelolaDataSection .gm-directory-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
+#kelolaDataSection .gm-directory-number{font-size:11px;font-weight:650;color:#80958a}
+#kelolaDataSection .gm-directory-kind{display:inline-flex;align-items:center;min-height:25px;border-radius:7px;padding:4px 9px;background:#eef6ef;color:#2a694d;font-size:11px;font-weight:650}
+#kelolaDataSection .gm-directory-student-name,#kelolaDataSection .gm-directory-person-name h3{margin:0;color:#173d30;font-size:14px;line-height:1.5;font-weight:750;overflow-wrap:anywhere}
+#kelolaDataSection .gm-directory-details{display:grid;gap:9px;margin:12px 0 0}
+#kelolaDataSection .gm-directory-details>div{display:grid;grid-template-columns:63px minmax(0,1fr);column-gap:10px;align-items:start}
+#kelolaDataSection .gm-directory-details dt{color:#72877a;font-size:11px;font-weight:600}
+#kelolaDataSection .gm-directory-details dd{margin:0;color:#3a5545;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+#kelolaDataSection .gm-directory-person{display:flex;gap:12px;align-items:center;min-width:0}
+#kelolaDataSection .gm-directory-person-name{min-width:0}
+#kelolaDataSection .gm-directory-card-subtitle{margin-top:3px;color:#718476;font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+#kelolaDataSection .gm-directory-photo{flex:0 0 44px;width:44px;height:44px;object-fit:cover;border-radius:50%;border:1px solid #dce5df}
+#kelolaDataSection .gm-directory-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-top:12px;margin-top:13px;border-top:1px solid #edf2ed}
+#kelolaDataSection .gm-directory-action{display:inline-flex;align-items:center;justify-content:center;width:100%;min-width:0;min-height:44px;border:1px solid #d4e3da;border-radius:10px;background:#f8fbf9;color:#20654d;font-size:12px;font-weight:700;cursor:pointer}
+#kelolaDataSection .gm-directory-action--remove{border-color:#f1d4d4;background:#fffafa;color:#b44646}
+#kelolaDataSection .gm-directory-card-actions>.gm-directory-action:only-child{grid-column:1/-1}
+#kelolaDataSection .gm-directory-empty{padding:30px 12px;text-align:center;color:#758a7a;font-size:13px}
+#kelolaDataSection #manageDirectoryPagination{justify-content:center;gap:7px;padding:13px 8px}
+#kelolaDataSection #manageDirectoryPagination button{min-height:42px;padding:8px 11px}
+#manageModal #modalContent{border-radius:15px}
+#manageModal #modalContent>div:first-child{padding:16px}
+#manageModal #manageForm{padding:16px}
+}
+@media(max-width:360px){
+#kelolaDataSection .section-heading h2{font-size:17px}
+#kelolaDataSection #manageAddBtn{min-width:94px;padding:9px 10px;font-size:11px}
+#kelolaDataSection .gm-directory-card{padding:12px}
+#kelolaDataSection .manage-tabs button{padding:9px 10px}
+}
+@media(prefers-reduced-motion:reduce){#kelolaDataSection *,#manageModal *{transition:none!important}}
+</style>
+<link rel="stylesheet" href="/css/gm-data-navigation.css?v=20261023-archive-light3">
+<link rel="stylesheet" href="/css/gm-learning-navigation.css?v=20261022b">
+<link rel="stylesheet" href="/css/gm-assessment-refinement.css?v=20261022d">
+    </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="teacher">
 <div aria-label="Memuat panel guru" aria-live="polite" class="islamic-loader" id="loadingIndicator" role="status">
 <div aria-hidden="true" class="loader-pattern"></div>
@@ -125,8 +229,7 @@
 <button aria-current="page" aria-label="Data Absensi" class="admin-nav-item bg-indigo-600 text-white" id="menu-absensi" onclick="switchPage('absensi')" title="Data Absensi" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24"><path d="M4 5h16v15H4z M8 3v4 M16 3v4 M4 10h16 M8 14h2 M14 14h2 M8 17h2" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sidebar-text">Data Absensi</span></button>
 <p class="sidebar-section-label sidebar-text">PEMBELAJARAN &amp; DATA</p>
 <button aria-label="Kelola Data" class="admin-nav-item" id="menu-kelola" onclick="switchPage('kelola')" title="Kelola Data" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v7c0 4 16 4 16 0V5M4 12v7c0 4 16 4 16 0v-7"></path></svg><span class="sidebar-text">Kelola Data</span></button>
-<button aria-label="Kelola Tahsin" class="admin-nav-item" id="menu-kelompok-tahsin" onclick="switchPage('kelompok-tahsin')" title="Kelola Tahsin" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24"><path d="M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3zM12 6v15M6 9h3M15 9h3M6 13h3M15 13h3"></path></svg><span class="sidebar-text">Kelola Tahsin</span></button>
-<button aria-label="Kelola Tahfidz" class="admin-nav-item" id="menu-kelompok" onclick="switchPage('kelompok')" title="Kelola Tahfidz" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24"><path d="M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3zM12 6v15M6 9h3M15 9h3M6 13h3M15 13h3"></path></svg><span class="sidebar-text">Kelola Tahfidz</span></button>
+<button aria-label="Kelola Pembelajaran" class="admin-nav-item" id="menu-kelompok-tahsin" onclick="switchPage('kelompok-tahsin')" title="Kelola Pembelajaran" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24"><path d="M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3zM12 6v15M6 9h3M15 9h3M6 13h3M15 13h3"></path></svg><span class="sidebar-text">Kelola Pembelajaran</span></button>
 <button aria-label="Penilaian Periodik" class="admin-nav-item" id="menu-penilaian" onclick="switchPage('penilaian')" title="Penilaian Periodik" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" viewbox="0 0 24 24"><path d="M8 4H5v17h14V4h-3 M8 3h8v4H8z M8 12l2 2 5-5 M8 18h7" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="sidebar-text">Penilaian Periodik</span></button>
 <p class="sidebar-section-label sidebar-text">PENGATURAN &amp; AKSES</p>
 <button aria-label="Pengaturan Profil" class="admin-nav-item" id="menu-profil" onclick="switchPage('profil')" title="Pengaturan Profil" type="button"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewbox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M4 21v-2a8 8 0 0 1 16 0v2"></path></svg><span class="sidebar-text">Pengaturan Profil</span></button>
@@ -299,25 +402,25 @@
 </div>
 <div class="hidden space-y-6" id="page-kelola">
 <nav aria-label="Submenu Kelola Data" class="gm-local-nav">
-<button aria-pressed="true" class="gm-local-nav-button active" id="manageViewDirectoryButton" onclick="switchManageView('directory')" type="button">Data Sekolah</button>
-<button aria-pressed="false" class="gm-local-nav-button" id="manageViewEnrollmentButton" onclick="switchManageView('enrollment')" type="button">Daftarkan Data &amp; Akun Guru</button>
+<button type="button" id="manageViewDirectoryButton" class="gm-local-nav-button active" aria-pressed="true" onclick="switchManageView('students')">Data Siswa</button>
+<button type="button" id="manageViewEnrollmentButton" class="gm-local-nav-button" aria-pressed="false" onclick="switchManageView('teachers')">Data Guru</button>
 </nav>
 <section class="assessment-controls gm-manage-subpanel" hidden="" id="teacherEnrollment">
-<div class="section-heading gm-compact-heading"><div><h2>Daftarkan Data dan Akun Guru</h2></div></div>
-<p class="assessment-help">Gunakan email aktif sebagai akun login. Password sementara diberikan langsung kepada guru dan dapat diganti dari Pengaturan Profil.</p>
+<div class="section-heading gm-compact-heading"><div><h2>Tambah Guru</h2></div></div>
+
 <form id="enrollmentForm"><fieldset class="assessment-context-grid" id="enrollmentFields">
 <label class="field-label" for="enrollmentTeacher">Data guru<select id="enrollmentTeacher"><option value="">Buat data guru baru</option></select></label>
-<label class="field-label" for="enrollmentName">Nama guru (untuk data baru)<input id="enrollmentName" maxlength="80" required=""/></label>
-<label class="field-label" for="enrollmentFullName">Nama lengkap (untuk data baru)<input id="enrollmentFullName" maxlength="160" required=""/></label>
-<label class="field-label" for="enrollmentAttendance">Tampil pada absensi (data baru)<select id="enrollmentAttendance"><option value="true">Ya, mengajar Tahsin</option><option value="false">Tidak, khusus Tahfidz</option></select></label>
-<label class="field-label" for="enrollmentEmail">Email / nama pengguna login<input autocomplete="off" id="enrollmentEmail" required="" type="email"/></label>
-<label class="field-label" for="enrollmentPassword">Password sementara<input autocomplete="new-password" id="enrollmentPassword" maxlength="128" minlength="10" required="" type="password"/></label>
+<label class="field-label" for="enrollmentName">Nama Guru<input id="enrollmentName" maxlength="80" required=""/></label>
+<label class="field-label" for="enrollmentFullName">Nama Lengkap<input id="enrollmentFullName" maxlength="160" required=""/></label>
+<label class="field-label" for="enrollmentAttendance">Jenis Guru<select id="enrollmentAttendance"><option value="true">Ya, mengajar Tahsin</option><option value="false">Tidak, khusus Tahfidz</option></select></label>
+<label class="field-label" for="enrollmentEmail">Email login otomatis<input id="enrollmentEmail" type="email" autocomplete="off" readonly placeholder="Diisi otomatis dari nama guru"/></label>
+<p class="assessment-help">Password awal: <strong>123456</strong>. Guru akan diminta menggantinya setelah masuk.</p>
 <button class="primary-action" type="submit">Buat Data dan Akun Guru</button></fieldset></form><p class="assessment-feedback" id="enrollmentFeedback" role="status"></p></section>
 <div id="manageViewDirectory">
 <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden" id="kelolaDataSection">
 <div class="manage-toolbar">
-<div class="section-heading"><div><p class="section-kicker">DIREKTORI SEKOLAH</p><h2>Pusat Data Sekolah</h2><p>Data siswa dan guru, tertata dalam satu tempat.</p></div><button class="primary-action" id="manageAddBtn" onclick="openManageModal()" type="button">Tambah Data Baru</button></div>
-<div aria-label="Jenis data" class="manage-tabs"><button aria-pressed="true" id="tab-siswa" onclick="switchManageTab('siswa')" type="button">Siswa</button><button aria-pressed="false" id="tab-guru-tahsin" onclick="switchManageTab('guru-tahsin')" type="button">Guru Tahsin</button><button aria-pressed="false" id="tab-guru-tahfidz" onclick="switchManageTab('guru-tahfidz')" type="button">Guru Tahfidz</button><button aria-pressed="false" hidden="" id="tab-impor" onclick="switchManageTab('impor')" type="button">Impor Siswa</button></div>
+<div class="section-heading"><div><h2>Kelola Data</h2></div><button type="button" id="manageAddBtn" onclick="openManagePrimaryAdd()" class="primary-action">Tambah Data Baru</button></div>
+<div aria-label="Jenis data" class="manage-tabs"><button aria-pressed="true" id="tab-siswa" onclick="switchManageTab('siswa')" type="button">Siswa</button><button aria-pressed="false" id="tab-guru-tahsin" onclick="switchManageTab('guru-tahsin')" type="button">Guru Tahsin</button><button aria-pressed="false" id="tab-guru-tahfidz" onclick="switchManageTab('guru-tahfidz')" type="button">Guru Tahfidz</button><button type="button" id="tab-akun-guru" aria-pressed="false" onclick="switchManageTab('akun-guru')" hidden>Akun Guru</button><button aria-pressed="false" hidden="" id="tab-impor" onclick="switchManageTab('impor')" type="button">Impor Siswa</button></div>
 <div id="manageDirectoryView">
 <div class="manage-search-row"><label class="field-label" for="manageSearch">Cari data<input autocomplete="off" id="manageSearch" placeholder="Nama siswa, guru, atau kelas..." type="search"/></label><span id="manageRecordInfo">0 data</span></div>
 <div class="detail-filter-grid" id="studentManageFilters">
@@ -348,11 +451,21 @@
 </tbody>
 </table>
 </div>
+<div id="manageMobileCards" aria-label="Daftar data" hidden></div>
 <div class="p-4 border-t border-slate-200 flex items-center justify-end gap-3" id="manageDirectoryPagination">
 <button class="px-3 py-2 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40" id="managePrevPage" type="button">Sebelumnya</button>
 <span class="text-xs font-semibold text-slate-600" id="managePageInfo">Halaman 1</span>
 <button class="px-3 py-2 text-sm border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-40" id="manageNextPage" type="button">Berikutnya</button>
 </div>
+<section id="manageAccountView" class="gm-manage-account-view" hidden aria-label="Akun Guru">
+    <div class="gm-account-directory-search">
+       <label for="manageAccountSearch">Cari guru atau akun<input type="search" id="manageAccountSearch" autocomplete="off" placeholder="Nama, email, atau username"></label>
+       <span id="manageAccountCount" aria-live="polite"></span>
+    </div>
+    <div class="gm-account-directory-table"><table><thead><tr><th>Nama Guru</th><th>Email Login</th><th>Username</th></tr></thead><tbody id="manageAccountRows"></tbody></table></div>
+    <div id="manageAccountCards" class="gm-account-directory-cards"></div>
+    <p id="manageAccountFeedback" class="gm-account-directory-feedback" role="status" aria-live="polite"></p>
+</section>
 <div class="px-6 pb-6 border-t border-slate-100 pt-5" hidden="" id="manageImportView">
 <h3 class="text-lg font-semibold text-slate-800 mb-1">Impor Siswa</h3>
 <p class="text-sm text-slate-500 mb-4">Periksa file sebelum menyimpan. Nomor yang dipakai lebih dari satu siswa akan dikosongkan pada siswa yang diimpor; daftar namanya bisa diperiksa pada tab Siswa.</p>
@@ -372,9 +485,14 @@
 </div>
 </div>
 <div class="hidden space-y-4" id="page-dashboard"></div>
-<div class="hidden profile-settings-grid" id="page-profil">
+<div class="hidden profile-settings-grid" id="page-profil" data-profile-section="account">
+<nav class="gm-profile-tabs" role="tablist" aria-label="Pengaturan profil">
+<button type="button" class="active" data-profile-tab="account" aria-selected="true" role="tab">Profil &amp; Username</button>
+<button type="button" data-profile-tab="security" aria-selected="false" role="tab">Ubah Password</button>
+</nav>
 <section class="assessment-controls profile-main-card">
 <div class="profile-section-heading"><div><p class="section-kicker">IDENTITAS AKUN</p><h2>Profil Saya</h2><p>Atur nama yang tampil pada dashboard dan foto profil akun Anda.</p></div></div>
+<div id="pwaProfileInstallSlot" aria-label="Pemasangan aplikasi"></div>
 <p aria-live="polite" class="assessment-feedback" id="profileFeedback" role="status"></p>
 <div class="profile-photo-card" id="profileTeacherCard">
 <div aria-hidden="true" class="profile-photo-preview"><img alt="" hidden="" id="profilePhotoPreview"/><span id="profilePhotoInitials">A</span></div>
@@ -386,6 +504,7 @@
 <button class="profile-danger-link" id="profilePhotoRemove" type="button">Hapus Foto</button>
 </div>
 <p class="assessment-help" id="profilePhotoHint">JPG, PNG atau WebP. Maksimal 2 MB.</p>
+            <p id="profilePhotoFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
 </div>
 </div>
 <form class="space-y-4 profile-identity-form" id="profileForm">
@@ -393,7 +512,22 @@
 <label class="field-label" for="profileName">Nama profil<input autocomplete="name" id="profileName" maxlength="160" name="profileName" placeholder="Contoh: Pak Ahmad"/></label>
 <p class="assessment-help">Nama profil hanya digunakan untuk sapaan dan identitas akun. Nama resmi guru pada rapor tidak berubah.</p>
 <button class="primary-action" type="submit">Simpan Profil</button>
+        <p id="profileIdentityFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
 </form>
+<div class="profile-username-section">
+    <div class="profile-subheading"><strong>Username Login</strong><p>Opsional. Anda dapat masuk menggunakan email maupun username yang tersimpan.</p></div>
+    <form id="profileUsernameForm" class="profile-username-form space-y-3">
+        <label class="field-label" for="profileUsername">Username untuk login
+            <input id="profileUsername" type="text" autocomplete="username" minlength="3" maxlength="30" pattern="[a-z][a-z0-9._]{2,29}" placeholder="Contoh: bagus">
+        </label>
+        <p class="assessment-help">Gunakan 3–30 karakter, dimulai huruf kecil. Diperbolehkan angka, titik dan garis bawah.</p>
+        <div class="profile-actions-row">
+            <button id="profileUsernameSave" class="primary-action" type="submit">Simpan Username</button>
+            <button id="profileUsernameRemove" class="secondary-action profile-danger-action" type="button" hidden>Hapus Username</button>
+        </div>
+        <p id="profileUsernameFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+    </form>
+</div>
 <div class="profile-push-card" hidden="" id="profilePushCard">
 <div aria-hidden="true" class="profile-push-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
 <div class="profile-push-copy"><strong>Notifikasi perangkat</strong><span id="profilePushStatus">Belum aktif</span></div>
@@ -403,75 +537,102 @@
 <section class="assessment-controls profile-security-card">
 <div class="profile-section-heading"><div><p class="section-kicker">KEAMANAN AKUN</p><h2>Ubah Password</h2><p>Perbarui password akun tanpa mengubah data guru.</p></div></div>
 <form class="space-y-4" id="passwordForm">
-<label class="field-label" for="profilePassword">Password baru<input autocomplete="new-password" id="profilePassword" maxlength="128" minlength="10" name="profilePassword" required="" type="password"/></label>
-<label class="field-label" for="profileConfirm">Ulangi password baru<input autocomplete="new-password" id="profileConfirm" maxlength="128" minlength="10" name="profileConfirm" required="" type="password"/></label>
-<p class="assessment-help">Gunakan minimal 10 karakter. Ganti password sementara yang diberikan koordinator.</p>
+<label class="field-label" for="profilePassword">Password baru<input autocomplete="new-password" id="profilePassword" name="profilePassword" required="" type="password"/></label>
+<label class="field-label" for="profileConfirm">Ulangi password baru<input autocomplete="new-password" id="profileConfirm" name="profileConfirm" required="" type="password"/></label>
+<p class="assessment-help">Gunakan password pilihan Anda. Ganti password sementara yang diberikan koordinator.</p>
 <label class="field-label" for="profileNonce">Kode verifikasi (jika diminta)<input autocomplete="one-time-code" id="profileNonce" name="profileNonce"/></label>
 <div class="profile-security-actions"><button class="secondary-action" id="profileReauthenticate" type="button">Kirim kode verifikasi</button><button class="primary-action" type="submit">Ubah Password</button></div>
+        <p id="profilePasswordFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
 </form>
 </section>
 </div>
+<nav id="gmLearningSubnav" class="gm-learning-subnav" aria-label="Submenu Kelola Pembelajaran" hidden>
+    <button id="gmLearningTabTahsin" type="button" onclick="switchPage('kelompok-tahsin')" aria-pressed="true">Tahsin</button>
+    <button id="gmLearningTabTahfidz" type="button" onclick="switchPage('kelompok')" aria-pressed="false">Tahfidz</button>
+</nav>
 <div class="hidden space-y-6" id="page-kelompok-tahsin"><div id="learningGroupTahsin"></div></div>
 <div class="hidden space-y-6" id="page-kelompok"><div id="learningGroupTahfidz"></div></div>
 <div class="hidden space-y-6" id="page-penilaian">
 <section class="assessment-controls assessment-context-card">
-<div class="section-heading"><div><p class="section-kicker">TAHSIN &amp; TAHFIDZ</p><h2>Penilaian Periodik</h2><p>Isi nilai per kelas dengan draf sementara otomatis dan indikator kelengkapan yang lebih jelas.</p></div><span class="assessment-scale">Skala nilai 0-100</span></div>
+<div class="section-heading gm-assessment-heading"><h2>Penilaian Periodik</h2></div>
 <form id="assessmentLoadForm"><fieldset class="assessment-context-grid" id="assessmentContextFields">
-<label class="field-label" for="assessmentYear">Tahun awal ajaran<input id="assessmentYear" max="2200" min="2000" required="" step="1" type="number"/><small id="assessmentYearLabel"></small></label>
-<label class="field-label" for="assessmentPeriod">Periode penilaian
-<div class="assessment-period-nav"><button aria-label="Periode sebelumnya" class="secondary-action" id="assessmentPeriodPrev" type="button">←</button><select id="assessmentPeriod" required=""><option value="pts_ganjil">Tengah Semester Ganjil</option><option value="pas_ganjil">Akhir Semester Ganjil</option><option value="pts_genap">Tengah Semester Genap</option><option value="pas_genap">Akhir Semester Genap</option></select><button aria-label="Periode berikutnya" class="secondary-action" id="assessmentPeriodNext" type="button">→</button></div></label>
-<label class="field-label" for="assessmentTeacher">Guru pengampu<select id="assessmentTeacher" required=""><option value="">Pilih guru</option></select></label>
+<label class="field-label" for="assessmentYear">Tahun ajaran<input id="assessmentYear" max="2200" min="2000" required="" step="1" type="number"/><small id="assessmentYearLabel"></small></label>
+<label class="field-label" for="assessmentPeriod">Periode
+<select id="assessmentPeriod" required=""><option value="pts_ganjil">Tengah Semester Ganjil</option><option value="pas_ganjil">Akhir Semester Ganjil</option><option value="pts_genap">Tengah Semester Genap</option><option value="pas_genap">Akhir Semester Genap</option></select></label>
+<label class="field-label" for="assessmentTeacher">Guru<input id="assessmentTeacherSearch" type="search" autocomplete="off" placeholder="Cari nama guru..." aria-label="Cari guru pengampu"><select id="assessmentTeacher" required><option value="">Pilih guru</option></select></label>
 <label class="field-label" for="assessmentSubject">Pelajaran<select id="assessmentSubject" required=""><option value="tahsin">Tahsin</option><option value="tahfidz">Tahfidz</option></select></label>
-<button class="primary-action" id="assessmentLoad" type="submit">Tampilkan Siswa</button>
+<button class="primary-action" id="assessmentLoad" type="submit">Tampilkan</button>
 </fieldset></form>
-<div class="assessment-filter-memory">
-<div><strong>Filter cepat</strong><span id="assessmentFavoriteStatus">Belum ada filter favorit.</span></div>
-<div class="assessment-filter-memory-actions"><button class="secondary-action" id="assessmentFavoriteSave" type="button">Simpan sebagai Favorit</button><button class="secondary-action" id="assessmentFavoriteUse" type="button">Pakai Favorit</button></div>
+<div class="assessment-filter-memory" aria-label="Filter tersimpan">
+  <button id="assessmentFavoriteSave" type="button" class="secondary-action">Simpan filter</button>
+  <button id="assessmentFavoriteUse" type="button" class="secondary-action">Pakai filter</button>
+  <span id="assessmentFavoriteStatus" class="gm-assessment-sr-only" aria-live="polite"></span>
 </div>
-<p class="assessment-help" id="assessmentScopeNote"></p>
-<p class="assessment-draft-state" data-state="clean" id="assessmentDraftState">Autosave draf sementara aktif di perangkat ini.</p>
-</section>
+<p id="assessmentPendingFilter" class="assessment-pending-filter" role="status" hidden>Filter berubah. Tekan Tampilkan.</p>
+<p id="assessmentDraftState" class="assessment-draft-state" data-state="clean" role="status"></p>
+    </section>
 <p class="assessment-feedback" id="assessmentFeedback" role="status"></p>
 <div hidden="" id="assessmentWorkspace">
-<section class="assessment-summary">
-<div><span>PERIODE AKTIF</span><strong id="assessmentActivePeriod"></strong></div>
-<div><span>SISWA TAMPIL</span><strong id="assessmentTotal">0</strong></div>
-<div><span>TERSIMPAN</span><strong id="assessmentSaved">0</strong></div>
-<div><span>BELUM DISIMPAN</span><strong id="assessmentDirty">0</strong></div>
-<div><span>BERMASALAH</span><strong id="assessmentProblems">0</strong></div>
+<section class="assessment-summary" aria-label="Ringkasan penilaian">
+  <div><span>Siswa</span><strong id="assessmentTotal">0</strong></div>
+  <div><span>Tersimpan</span><strong id="assessmentSaved">0</strong></div>
+  <div><span>Draf</span><strong id="assessmentDirty">0</strong></div>
+  <div><span>Belum dinilai</span><strong id="assessmentUnrated">0</strong></div>
+  <span id="assessmentActivePeriod" hidden></span>
+  <span id="assessmentIncomplete" hidden>0</span>
+  <span id="assessmentProblems" hidden>0</span>
 </section>
-<section aria-label="Filter dan tindakan penilaian" class="assessment-work-toolbar">
-<div class="assessment-toolbar">
-<label class="field-label" for="assessmentLevel">Tingkat kelas<select id="assessmentLevel"><option value="">Semua tingkat</option></select></label>
-<label class="field-label" for="assessmentClass">Kelas<select id="assessmentClass"><option value="">Pilih kelas</option></select></label>
-<label class="field-label" for="assessmentSearch">Cari siswa<input autocomplete="off" id="assessmentSearch" placeholder="Ketik nama siswa..." type="search"/></label>
-</div>
-<div class="assessment-quick-actions">
-<button aria-pressed="false" class="secondary-action" id="assessmentProblemOnly" type="button">Hanya bermasalah</button>
-<button class="secondary-action" id="assessmentPasteExcel" title="Tempel nilai dari Excel tanpa mengubah capaian akhir" type="button">Tempel dari Excel</button>
-<label class="field-label assessment-export-scope" for="assessmentExportScope">Export<select id="assessmentExportScope"><option value="view">Tampilan saat ini</option><option value="class">Seluruh kelas aktif</option><option value="all">Semua siswa guru ini</option></select></label>
-<button class="secondary-action" id="assessmentExport" type="button">Export Excel</button>
-<div class="assessment-inline-help"><button aria-controls="assessmentRuleHelpText" aria-expanded="false" class="assessment-help-button" id="assessmentRuleHelp" title="Mengapa field tertentu tidak muncul?" type="button">?</button><div class="assessment-help-popover" hidden="" id="assessmentRuleHelpText"><strong>Mengapa field tertentu tidak muncul?</strong><span>Tajwid tidak wajib ketika capaian aktual masih Buku 1. Gharib hanya tampil dan wajib pada tahap Finishing. Form mengikuti aturan capaian siswa agar nilai yang tidak berlaku tidak ikut dihitung.</span></div></div>
+<div class="gm-assessment-progress" aria-label="Kemajuan penyimpanan nilai tingkat dipilih"><div class="gm-assessment-progress-heading"><strong id="assessmentProgressText">Belum ada nilai tersimpan</strong><span id="assessmentProgressPct">0%</span></div><div id="assessmentProgressBar" class="gm-assessment-progress-track" role="progressbar" aria-label="Persentase nilai tersimpan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="assessmentProgressFill"></span></div></div>
+<section class="assessment-work-toolbar" aria-label="Filter dan tindakan penilaian">
+  <div class="assessment-toolbar">
+    <label class="field-label" for="assessmentLevel">Tingkat<select id="assessmentLevel"><option value="">Otomatis per tingkat</option></select></label>
+    <label class="field-label gm-assessment-status-field" for="assessmentStatusFilter">Status<select id="assessmentStatusFilter"><option value="all">Semua status</option><option value="ungraded">Belum dinilai</option><option value="draft">Draf</option><option value="saved">Tersimpan</option><option value="incomplete">Belum lengkap</option><option value="review">Perlu verifikasi</option><option value="problem">Perlu dicek</option></select></label>
+    <label class="field-label" for="assessmentSearch">Cari siswa<input id="assessmentSearch" type="search" placeholder="Nama siswa..." autocomplete="off"></label>
+  </div>
+  <div class="assessment-quick-actions">
+  <button id="assessmentPasteExcel" type="button" class="secondary-action">Tempel Excel</button>
+  <div class="gm-assessment-export" id="assessmentExportWrap">
+    <button id="assessmentExport" type="button" class="secondary-action" aria-haspopup="dialog" aria-expanded="false" aria-controls="assessmentExportMenu">Ekspor Excel</button>
+    <dialog id="assessmentExportMenu" class="gm-assessment-export-dialog" aria-label="Ekspor nilai Excel">
+      <label class="field-label assessment-export-scope" for="assessmentExportScope">Cakupan
+        <select id="assessmentExportScope">
+          <option value="view">Siswa yang tampil</option>
+          <option value="level">Seluruh tingkat ini</option>
+          <option value="all">Semua siswa guru</option>
+        </select>
+      </label>
+      <label class="gm-assessment-export-drafts"><input id="assessmentExportIncludeDrafts" type="checkbox"> Sertakan draf lokal</label>
+      <div class="gm-assessment-export-dialog-actions">
+        <button id="assessmentExportCancel" type="button" class="secondary-action">Batal</button>
+        <button id="assessmentExportConfirm" type="button" class="primary-action">Unduh Excel</button>
+      </div>
+    </dialog>
+  </div>
+  <div class="assessment-inline-help"><button id="assessmentRuleHelp" type="button" class="assessment-help-button" aria-expanded="false" aria-controls="assessmentRuleHelpText" title="Aturan penilaian" aria-label="Aturan penilaian">?</button><div id="assessmentRuleHelpText" class="assessment-help-popover" hidden><strong>Aturan penilaian</strong><span>Tajwid dinilai mulai Buku 2. Gharib dinilai pada tahap Finishing.</span></div></div>
 </div>
 </section>
 <div id="assessmentCards"></div>
-<div class="assessment-pagination"><button class="secondary-action" id="assessmentPrev" type="button">Sebelumnya</button><span id="assessmentPageInfo"></span><button class="secondary-action" id="assessmentNext" type="button">Berikutnya</button></div>
+<nav id="assessmentLevelNav" class="assessment-pagination gm-assessment-level-nav" aria-label="Navigasi tingkat kelas" hidden>
+  <button id="assessmentPrev" type="button" class="secondary-action" aria-label="Buka tingkat sebelumnya">← Sebelumnya</button>
+  <span id="assessmentPageInfo" aria-live="polite"></span>
+  <button id="assessmentNext" type="button" class="primary-action" aria-label="Buka tingkat berikutnya">Tingkat berikutnya →</button>
+</nav>
 <div class="assessment-save-all-bottom">
-            <div class="assessment-save-actions"><button class="secondary-action" hidden="" id="assessmentRetrySave" type="button">Coba Lagi yang Gagal</button><button class="primary-action" id="assessmentSaveAll" type="button">Simpan Semua</button></div>
+            <div class="assessment-save-actions"><button class="secondary-action" hidden="" id="assessmentRetrySave" type="button">Coba Lagi yang Gagal</button><button id="assessmentSaveAll" type="button" class="primary-action" title="Simpan semua perubahan pada tingkat terpilih">Simpan Semua</button></div>
 </div>
 <div class="assessment-save-summary" hidden="" id="assessmentSaveSummary"></div>
 <div aria-label="Aksi cepat penilaian" class="assessment-mobile-bar" id="assessmentMobileBar">
-<span class="gm-mobile-status" id="assessmentMobileStatus">Draf aman di perangkat</span>
-<button class="secondary-action" id="assessmentMobileProblems" type="button">Bermasalah</button>
+<span class="gm-mobile-status" id="assessmentMobileStatus">Siap</span>
+<button id="assessmentMobileProblems" type="button" class="secondary-action">Perlu dicek</button>
 <button class="primary-action" id="assessmentMobileSave" type="button">Simpan</button>
 </div>
 </div>
 </div>
-<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="manageModal">
+<div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="manageModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 <div class="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="modalContent" style="max-height:90dvh;overflow-y:auto">
 <div class="p-6 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-lg font-bold text-slate-800" id="modalTitle">Tambah Data</h3>
-<button class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all" onclick="closeManageModal()">
+<button class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-all" onclick="closeManageModal()" type="button" aria-label="Tutup formulir">
 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
 <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
 </svg>
@@ -481,7 +642,7 @@
 <input id="entityId" type="hidden"/>
 <div class="space-y-4" id="formFields">
 </div>
-<div class="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-6">
+<div class="gm-manage-modal-actions border-t border-slate-100">
 <button class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl font-semibold text-sm hover:bg-slate-50 transition-all" onclick="closeManageModal()" type="button">Batal</button>
 <button class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition-all shadow-sm" id="submitBtn" type="submit">Simpan</button>
 </div>
@@ -532,8 +693,8 @@
 <script src="js/database.js?v=20261007-data63"></script>
 
 <script src="js/sidebar.js?v=20260928-nav-close-1"></script>
-<script src="js/panel-modules.js?v=20261007-data63"></script>
-<script src="js/panel-start-guru.js?v=20261007-data63"></script>
+<script src="js/panel-modules.js?v=20261023-archive-light3"></script>
+<script src="js/panel-start-guru.js?v=20261023-archive-light3"></script>
 <script src="js/gm-upgrade-20260928.js?v=20261007-data63"></script>
 <div class="hidden" style="display: none;">
 <button id="prevBtn"></button>

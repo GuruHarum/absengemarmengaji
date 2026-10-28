@@ -12,7 +12,9 @@
         if (AppAccess.profile.temporaryPassword)
             await switchPage('profil');
         else
-            switchPage('dashboard');
+            await switchPage('dashboard');
+        if (document.documentElement.classList.contains('gm-login-transition'))
+            await new Promise(resolve => requestAnimationFrame(resolve));
         window.panelBooting = false;
         showLoading(false);
     }
