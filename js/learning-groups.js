@@ -577,12 +577,11 @@ window.LearningGroups = (() => {
       const bucketStudents = [...bucket.studentIds].map(id => students.get(String(id))).filter(Boolean)
         .sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }) ||
           String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
-      const studentPreview = bucketStudents.slice(0, 5).map(student =>
-        '<span class="gm-grade-student-pill"><strong>' + safe(student['nama siswa'] || 'Nama belum diisi') + '</strong><small>' +
-        safe(student.kelas || 'Kelas belum diisi') + '</small></span>').join('');
       const studentRoster = bucketStudents.map(student =>
-        '<span class="gm-grade-student-row"><strong>' + safe(student['nama siswa'] || 'Nama belum diisi') + '</strong><small>' +
-        safe(student.kelas || 'Kelas belum diisi') + '</small></span>').join('');
+        '<button type="button" class="gm-grade-student-row" data-grade-student-id="' + safe(student.id) +
+        '" data-grade-student-subject="' + safe(subject) + '" aria-label="Lihat informasi ' + safe(student['nama siswa'] || 'siswa') + '">' +
+        '<strong>' + safe(student['nama siswa'] || 'Nama belum diisi') + '</strong><small>' +
+        safe(student.kelas || 'Kelas belum diisi') + '</small><span class="gm-grade-student-open">Lihat detail ›</span></button>').join('');
       const canTransfer = AppAccess.full() && !showArchived && bucket.grade !== 'lain';
       const gradeActions = canTransfer
         ? '<div class="gm-grade-actions">' +
@@ -597,12 +596,8 @@ window.LearningGroups = (() => {
       return '<article class="gm-group-card gm-grade-card">' +
         '<div class="gm-grade-card-head"><div><span class="gm-grade-kicker">TINGKAT</span><h3>' + safe(title) + '</h3></div>' +
           '<strong class="gm-grade-total">' + bucket.studentIds.size + '<small>siswa</small></strong></div>' +
-        (studentPreview
-          ? '<div class="gm-grade-student-preview" aria-label="Contoh nama siswa">' + studentPreview + '</div>' +
-            (bucketStudents.length > 5
-              ? '<details class="gm-grade-roster-details"><summary>Lihat semua siswa <span>' + bucketStudents.length + ' nama</span></summary>' +
-                '<div class="gm-grade-roster-list">' + studentRoster + '</div></details>'
-              : '')
+        (studentRoster
+          ? '<div class="gm-grade-roster-list" role="list" aria-label="Daftar semua siswa tingkat ' + safe(bucket.grade) + '">' + studentRoster + '</div>'
           : '<p class="gm-grade-no-students">Belum ada murid pada kelompok tingkat ini.</p>') +
         gradeActions + '</article>';
     }).join('') || (showArchived
@@ -610,7 +605,87 @@ window.LearningGroups = (() => {
       : '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>');
   }
 
-    async function chooseGradeGroup(subject, grade, groups, actionLabel) {
+    function openStudentDetail(subject, studentId) {
+    const state = views[subject];
+    const student = state?.students.find(row => String(row.id) === String(studentId));
+    if (!student) return AdminNotice.notify('Data siswa tidak ditemukan. Muat ulang daftar kelompok terlebih dahulu.', 'error');
+    const details = [
+      ['ID Siswa', student.id],
+      ['Nama siswa', student['nama siswa'] || student.nama_siswa || student.nama],
+      ['Kelas', student.kelas],
+      ['Guru Tahsin', student['nama guru'] || student.nama_guru],
+      ['Jenis kelamin', student.jenis_kelamin || student.jenis_kelamin_siswa],
+      ['Tanggal lahir', student.tanggal_lahir || student.tgl_lahir],
+      ['Alamat', student.alamat]
+    ].filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '');
+    const dialog = document.createElement('dialog');
+    dialog.className = 'gm-transfer-grade-dialog gm-student-detail-dialog';
+    dialog.innerHTML = '<div class="gm-student-detail">' +
+      '<div class="gm-student-detail-head"><div><span class="gm-grade-kicker">INFORMASI SISWA</span><h3>' +
+      safe(student['nama siswa'] || student.nama_siswa || student.nama || 'Nama belum diisi') +
+      '</h3><p>' + safe(student.kelas || 'Kelas belum diisi') + '</p></div>' +
+      '<button type="button" class="gm-student-detail-close" aria-label="Tutup">×</button></div>' +
+      '<dl class="gm-student-detail-fields">' + details.map(([label, value]) =>
+        '<div><dt>' + safe(label) + '</dt><dd>' + safe(value) + '</dd></div>').join('') + '</dl>' +
+      '<div class="gm-student-detail-actions"><button type="button" class="secondary-action" data-student-detail-close>Tutup</button>' +
+      (AppAccess.full() ? '<button type="button" class="primary-action" data-student-detail-edit>Ubah data siswa</button>' : '') +
+      '</div></div>';
+    document.body.appendChild(dialog);
+    const close = () => { if (dialog.open) dialog.close(); dialog.remove(); };
+    dialog.querySelectorAll('.gm-student-detail-close, [data-student-detail-close]').forEach(button => button.addEventListener('click', close));
+    dialog.addEventListener('click', event => { if (event.target === dialog) close(); });
+    dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    const editButton = dialog.querySelector('[data-student-detail-edit]');
+    if (editButton) editButton.addEventListener('click', async () => {
+      close();
+      if (typeof openManageModal !== 'function' || typeof currentManageTab === 'undefined') {
+        AdminNotice.notify('Form pengeditan siswa tidak tersedia dari halaman ini.', 'error');
+        return;
+      }
+      const previousTab = currentManageTab;
+      currentManageTab = 'siswa';
+      let restored = false;
+      const restoreTab = () => {
+        if (restored) return;
+        restored = true;
+        currentManageTab = previousTab;
+      };
+      const modal = document.getElementById('manageModal');
+      if (!modal) {
+        restoreTab();
+        AdminNotice.notify('Form pengeditan siswa tidak ditemukan.', 'error');
+        return;
+      }
+      const observer = new MutationObserver(() => {
+        if (modal.classList.contains('hidden')) {
+          observer.disconnect();
+          restoreTab();
+          if (views[subject]) void open(subject, true);
+        }
+      });
+      observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+      try {
+        await openManageModal(String(student.id));
+        if (modal.classList.contains('hidden')) {
+          observer.disconnect();
+          restoreTab();
+        }
+      } catch (error) {
+        observer.disconnect();
+        restoreTab();
+        AdminNotice.notify('Form pengeditan gagal dibuka: ' + error.message, 'error');
+      }
+    });
+    dialog.showModal();
+  }
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-grade-student-id][data-grade-student-subject]');
+    if (!button) return;
+    openStudentDetail(button.dataset.gradeStudentSubject, button.dataset.gradeStudentId);
+  });
+
+  async function chooseGradeGroup(subject, grade, groups, actionLabel) {
     const state = views[subject];
     const students = new Map(state.students.map(student => [String(student.id), student]));
     const options = groups.map(group => {
