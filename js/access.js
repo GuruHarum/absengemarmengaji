@@ -33,11 +33,14 @@ window.AppAccess = (() => {
         // allow the shared Supabase session a short moment to become visible here.
         // The login page sets this sessionStorage flag before navigating here.
         // Checking a CSS class was ineffective because no page adds that class.
-        let isLoginTransition = false;
+        let isLoginTransition = document.documentElement.classList.contains('gm-login-transition');
         try {
-            isLoginTransition = sessionStorage.getItem('gm_login_transition') === '1';
+            // The dashboard's early inline bootstrap consumes the sessionStorage flag
+            // after adding this class. Check both signals so that bootstrap order
+            // cannot accidentally disable the first-login retry window.
+            isLoginTransition = isLoginTransition || sessionStorage.getItem('gm_login_transition') === '1';
         } catch (_) {}
-        const attempts = isLoginTransition ? 16 : 1;
+        const attempts = isLoginTransition ? 24 : 1;
         let lastError = null;
         for (let attempt = 0; attempt < attempts; attempt += 1) {
             try {
