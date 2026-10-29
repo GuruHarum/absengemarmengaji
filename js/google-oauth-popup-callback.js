@@ -45,7 +45,16 @@
             ok: result.ok === true,
             userId: result.userId || null,
             role: result.role || null,
-            message: result.message || ''
+            message: result.message || '',
+            // Return only the minimum session tokens needed by the login tab.
+            // The payload travels over a nonce-scoped BroadcastChannel or an
+            // exact-origin postMessage; do not place tokens in URLs or logs.
+            session: mode === 'login' && result.session
+                ? {
+                    access_token: result.session.access_token,
+                    refresh_token: result.session.refresh_token
+                }
+                : null
         };
 
         let delivered = false;
@@ -147,7 +156,17 @@
                 throw new Error('Akun Google belum memiliki akses Gemar Mengaji yang valid. Gunakan akun yang sudah dibuat dan ditautkan oleh pengelola sekolah.');
             }
 
-            complete({ ok: true, userId: user.id, role: access.role });
+            complete({
+                ok: true,
+                userId: user.id,
+                role: access.role,
+                session: mode === 'login'
+                    ? {
+                        access_token: sessionData.session.access_token,
+                        refresh_token: sessionData.session.refresh_token
+                    }
+                    : null
+            });
         } catch (error) {
             const details = String(error?.message || '').toLowerCase();
             let message = 'Verifikasi Google belum berhasil. Kembali ke aplikasi dan coba lagi.';
