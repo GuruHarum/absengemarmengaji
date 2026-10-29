@@ -67,6 +67,23 @@
             </button>
 
             
+            <div class="flex items-center gap-3 py-1" aria-hidden="true">
+                <span class="h-px flex-1 bg-gray-200"></span>
+                <span class="text-xs font-medium tracking-wider text-gray-400">ATAU</span>
+                <span class="h-px flex-1 bg-gray-200"></span>
+            </div>
+            <button id="googleLoginBtn" type="button"
+                class="w-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-3">
+                <svg aria-hidden="true" viewBox="0 0 48 48" class="h-5 w-5 flex-shrink-0">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.04 13.22l7.98 6.19C11.91 13.72 17.46 9.5 24 9.5z" transform="translate(0 4)"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.76 7.18l7.73 6C44.42 38.04 46.98 31.91 46.98 24.55z" transform="translate(0 0)"/>
+                    <path fill="#FBBC05" d="M10.02 28.7a14.4 14.4 0 0 1 0-9.4l-7.98-6.19a24 24 0 0 0 0 21.78z" transform="translate(0 0)"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.14 1.44-4.88 2.3-8.18 2.3-6.54 0-12.09-4.22-13.98-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" transform="translate(0 0)"/>
+                </svg>
+                <span>Masuk dengan Google</span>
+            </button>
+            <p class="text-center text-xs text-gray-500 -mt-2">Gunakan akun Google yang sudah ditautkan ke akun Gemar Mengaji Anda.</p>
+
             <div class="text-center pt-2">
                 <a href="index.html" class="text-sm text-gray-500 hover:text-blue-600 transition-colors inline-flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,6 +155,92 @@
                 submitText.textContent = 'Masuk ke Panel';
             }
         });
+
+        const googleErrorDiv = document.getElementById('errorMessage');
+        const googleLoginBtn = document.getElementById('googleLoginBtn');
+        const googleLoginText = googleLoginBtn?.querySelector('span');
+        const showLoginError = text => {
+            googleErrorDiv.textContent = text;
+            googleErrorDiv.classList.remove('hidden');
+        };
+        const resetGoogleButton = () => {
+            if (googleLoginBtn) googleLoginBtn.disabled = false;
+            if (googleLoginText) googleLoginText.textContent = 'Masuk dengan Google';
+        };
+
+        async function handleGoogleLoginReturn() {
+            if (sessionStorage.getItem('gm_google_login_pending') !== '1') return;
+            const params = new URLSearchParams(window.location.search);
+            const oauthError = params.get('error_description') || params.get('error');
+            if (oauthError) {
+                sessionStorage.removeItem('gm_google_login_pending');
+                showLoginError('Login Google belum berhasil. Silakan coba lagi atau masuk menggunakan email/username dan password.');
+                return;
+            }
+
+            try {
+                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) throw sessionError;
+                const session = sessionData?.session;
+                if (!session) {
+                    sessionStorage.removeItem('gm_google_login_pending');
+                    return;
+                }
+                sessionStorage.removeItem('gm_google_login_pending');
+
+                const { data: userData, error: userError } = await supabase.auth.getUser();
+                const user = userData?.user;
+                if (userError || !user) throw userError || new Error('Sesi Google belum tersedia. Silakan coba kembali.');
+                const linkedGoogle = Array.isArray(user.identities) && user.identities.some(identity => identity.provider === 'google');
+                if (!linkedGoogle) {
+                    await supabase.auth.signOut({ scope: 'local' });
+                    throw new Error('Akun Google ini belum ditautkan. Masuk dahulu dengan akun Gemar Mengaji, lalu buka Profil dan pilih Hubungkan Akun Google.');
+                }
+
+                const { data: access, error: accessError } = await supabase
+                    .from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
+                if (accessError || !access || !['admin', 'koordinator', 'guru'].includes(access.role)) {
+                    await supabase.auth.signOut({ scope: 'local' });
+                    throw new Error('Akun Google belum terhubung dengan hak akses Gemar Mengaji. Masuk dengan akun biasa dan tautkan Google melalui Profil.');
+                }
+
+                googleErrorDiv.classList.add('hidden');
+                sessionStorage.setItem('gm_login_transition', '1');
+                window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
+            } catch (error) {
+                showLoginError(error.message || 'Login Google gagal. Silakan gunakan metode login biasa.');
+                resetGoogleButton();
+            }
+        }
+
+        googleLoginBtn?.addEventListener('click', async () => {
+            if (googleLoginBtn.disabled) return;
+            googleErrorDiv.classList.add('hidden');
+            googleLoginBtn.disabled = true;
+            if (googleLoginText) googleLoginText.textContent = 'Menghubungkan ke Google...';
+            sessionStorage.setItem('gm_google_login_pending', '1');
+            try {
+                const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: new URL('login.html', window.location.origin).toString(),
+                        queryParams: { prompt: 'select_account' }
+                    }
+                });
+                if (error) throw error;
+            } catch (error) {
+                sessionStorage.removeItem('gm_google_login_pending');
+                const detail = String(error?.message || '').toLowerCase();
+                if (detail.includes('provider') && (detail.includes('enabled') || detail.includes('unsupported'))) {
+                    showLoginError('Login Google belum diaktifkan pada pengaturan autentikasi. Silakan masuk dengan email/username dan password untuk sementara.');
+                } else {
+                    showLoginError('Tidak dapat memulai login Google. Coba lagi atau gunakan email/username dan password.');
+                }
+                resetGoogleButton();
+            }
+        });
+
+        void handleGoogleLoginReturn();
     </script>
 
 

@@ -4,6 +4,7 @@ window.AccountProfile = (() => {
     let previewUrl = null;
     let savedUsername = '';
     let usernameBusy = false;
+    let googleLinkBusy = false;
 
     const message = (text, error = false, feedbackId = 'profileFeedback') => {
         const main = el('profileFeedback');
@@ -106,6 +107,130 @@ window.AccountProfile = (() => {
         if (save) save.disabled = usernameBusy;
     }
 
+    function renderGoogleLinkState(user) {
+        const identities = Array.isArray(user?.identities) ? user.identities : [];
+        const googleIdentity = identities.find(identity => identity?.provider === 'google');
+        const linked = Boolean(googleIdentity);
+        const googleEmail = clean(googleIdentity?.identity_data?.email || googleIdentity?.email);
+        const status = el('profileGoogleStatus');
+        const button = el('profileGoogleLinkButton');
+        if (status) {
+            status.textContent = linked
+                ? `Terhubung dengan ${googleEmail || 'akun Google Anda'}. Anda dapat mengganti akun kapan saja.`
+                : 'Belum ada akun Google yang ditautkan. Hubungkan akun pilihan Anda untuk login lebih mudah.';
+        }
+        if (button) {
+            button.textContent = googleLinkBusy ? 'Memproses Google...' : (linked ? 'Ganti Akun Google' : 'Hubungkan Akun Google');
+            button.disabled = googleLinkBusy;
+            button.removeAttribute('aria-pressed');
+        }
+        return linked;
+    }
+
+    function setEmailEditMode(editing) {
+        const form = el('profileEmailForm');
+        const edit = el('profileEmailEdit');
+        if (form) form.hidden = !editing;
+        if (edit) edit.hidden = editing;
+        if (editing) {
+            const input = el('profileEmailNew');
+            if (input) {
+                input.value = '';
+                input.focus?.();
+            }
+            message('', false, 'profileEmailFeedback');
+        }
+    }
+
+    async function linkGoogleIdentity() {
+        if (googleLinkBusy) return;
+        googleLinkBusy = true;
+        let oldGoogleUnlinked = false;
+        const button = el('profileGoogleLinkButton');
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Memproses Google...';
+        }
+        try {
+            const { data, error } = await supabase.auth.getUser();
+            const user = data?.user;
+            if (error || !user) throw error || new Error('Sesi login tidak tersedia. Silakan masuk kembali.');
+
+            if (renderGoogleLinkState(user)) {
+                const question = 'Ganti akun Google yang terhubung? Tautan Google saat ini akan dilepas terlebih dahulu. Anda tetap dapat masuk memakai username/email dan kata sandi Gemar Mengaji. Jika penautan akun baru gagal, Anda bisa mencoba lagi dari halaman Profil.';
+                const approved = window.AdminNotice?.confirm
+                    ? await window.AdminNotice.confirm(question)
+                    : await Promise.resolve(window.confirm?.(question));
+                if (!approved) return;
+
+                const { data: identitiesData, error: identitiesError } = await supabase.auth.getUserIdentities();
+                if (identitiesError) throw identitiesError;
+                const identities = Array.isArray(identitiesData?.identities)
+                    ? identitiesData.identities
+                    : (Array.isArray(user.identities) ? user.identities : []);
+                const googleIdentity = identities.find(identity => identity?.provider === 'google');
+                const alternativeIdentity = identities.find(identity => identity?.provider !== 'google');
+                if (!googleIdentity) throw new Error('Tautan Google yang lama tidak ditemukan. Muat ulang Profil lalu coba kembali.');
+                if (!alternativeIdentity) {
+                    throw new Error('Akun ini tidak memiliki metode login alternatif yang terdeteksi. Demi keamanan, pastikan login email/username dan kata sandi berfungsi sebelum mengganti akun Google.');
+                }
+
+                const { error: unlinkError } = await supabase.auth.unlinkIdentity(googleIdentity);
+                if (unlinkError) throw unlinkError;
+                oldGoogleUnlinked = true;
+
+                const { data: refreshed, error: refreshError } = await supabase.auth.getUser();
+                if (refreshError) throw refreshError;
+                renderGoogleLinkState(refreshed?.user);
+            }
+
+            const page = AppAccess.profile?.role === 'guru' ? 'guru.html' : 'admin.html';
+            const callback = new URL(page, window.location.origin);
+            callback.searchParams.set('gm_google_link', '1');
+            sessionStorage.setItem('gm_google_link_pending', '1');
+
+            const { data: linkData, error: linkError } = await supabase.auth.linkIdentity({
+                provider: 'google',
+                options: {
+                    redirectTo: callback.toString(),
+                    queryParams: { prompt: 'select_account' }
+                }
+            });
+            if (linkError) throw linkError;
+            if (linkData?.url) {
+                window.location.assign(linkData.url);
+                return;
+            }
+            throw new Error('Halaman verifikasi Google belum berhasil dibuka. Silakan coba kembali.');
+        } catch (error) {
+            sessionStorage.removeItem('gm_google_link_pending');
+            const detail = String(error?.message || '').toLowerCase();
+            let text = oldGoogleUnlinked
+                ? 'Akun Google lama sudah dilepas, tetapi akun baru belum berhasil ditautkan. Anda tetap dapat masuk dengan username/email dan kata sandi Gemar Mengaji. Coba hubungkan Google lagi dari Profil.'
+                : 'Akun Google belum berhasil ditautkan. Silakan coba lagi.';
+            if (detail.includes('already linked') || detail.includes('identity is already linked') || detail.includes('identity already exists')) {
+                text = oldGoogleUnlinked
+                    ? 'Akun Google lama sudah dilepas, tetapi Google yang dipilih sudah tertaut ke akun Gemar Mengaji lain. Akun ini tetap dapat diakses dengan username/email dan kata sandi. Pilih akun Google lain.'
+                    : 'Akun Google ini sudah tertaut ke akun Gemar Mengaji lain. Gunakan akun Google lain atau hubungi koordinator.';
+            } else if (detail.includes('manual linking') || (detail.includes('provider') && (detail.includes('enabled') || detail.includes('unsupported')))) {
+                text = 'Penautan Google belum diaktifkan pada pengaturan autentikasi. Hubungi pengelola sistem.';
+            } else if (detail.includes('network') || detail.includes('fetch')) {
+                text = oldGoogleUnlinked
+                    ? 'Koneksi bermasalah setelah tautan Google lama dilepas. Anda tetap dapat masuk dengan username/email dan kata sandi; coba hubungkan Google lagi saat koneksi stabil.'
+                    : 'Koneksi bermasalah saat membuka Google. Periksa internet dan coba kembali.';
+            }
+            message(text, true, 'profileGoogleIdentityFeedback');
+        } finally {
+            googleLinkBusy = false;
+            try {
+                const { data } = await supabase.auth.getUser();
+                renderGoogleLinkState(data?.user);
+            } catch (_) {
+                renderGoogleLinkState(null);
+            }
+        }
+    }
+
     async function refreshTeacher() {
         if (!AppAccess.profile?.teacher_id) return null;
         const row = await AppAccess.loadTeacherProfile();
@@ -117,7 +242,7 @@ window.AccountProfile = (() => {
     async function open() {
         showProfileSection(AppAccess.profile?.temporaryPassword ? 'security' : (el('page-profil')?.dataset.profileSection || 'account'));
         try {
-            for (const id of ['profilePhotoFeedback', 'profileIdentityFeedback', 'profileUsernameFeedback', 'profilePasswordFeedback']) {
+            for (const id of ['profilePhotoFeedback', 'profileIdentityFeedback', 'profileUsernameFeedback', 'profilePasswordFeedback', 'profileEmailFeedback', 'profileGoogleIdentityFeedback']) {
                 const feedback = el(id);
                 if (feedback) {
                     feedback.hidden = true;
@@ -130,6 +255,24 @@ window.AccountProfile = (() => {
             AppAccess.profile.email = data.user.email || '';
             AppAccess.profile.displayName = clean(data.user.user_metadata?.full_name);
             el('profileEmail').value = data.user.email || '';
+            setEmailEditMode(false);
+            const pendingEmail = clean(data.user.new_email);
+            const pendingEmailStatus = el('profileEmailPending');
+            if (pendingEmailStatus) {
+                pendingEmailStatus.hidden = !pendingEmail;
+                pendingEmailStatus.textContent = pendingEmail
+                    ? `Menunggu konfirmasi perubahan email ke ${pendingEmail}. Ikuti instruksi verifikasi yang dikirim.`
+                    : '';
+            }
+            const googleLinked = renderGoogleLinkState(data.user);
+            if (sessionStorage.getItem('gm_google_link_pending') === '1') {
+                sessionStorage.removeItem('gm_google_link_pending');
+                if (googleLinked) {
+                    message('Akun Google berhasil ditautkan. Login Google akan memakai akun Gemar Mengaji yang sama.', false, 'profileGoogleIdentityFeedback');
+                } else {
+                    message('Penautan Google belum selesai. Pastikan Anda menyelesaikan proses di Google, lalu coba kembali.', true, 'profileGoogleIdentityFeedback');
+                }
+            }
             if (el('profileUsername')) {
                 const { data: username, error: usernameError } = await supabase.rpc('gm_my_login_username');
                 if (!usernameError) {
@@ -277,15 +420,17 @@ window.AccountProfile = (() => {
     }
 
     function showProfileSection(name='account') {
-        const wrapper=el('page-profil');
+        const wrapper = el('page-profil');
         if (!wrapper) return;
-        const section=name==='security'?'security':'account';
-        wrapper.dataset.profileSection=section;
-        wrapper.querySelectorAll('[data-profile-tab]').forEach(button=>{
-            const active=button.dataset.profileTab===section;
-            button.classList.toggle('active',active);
-            button.setAttribute('aria-selected',String(active));
-            button.tabIndex=active?0:-1;
+        const section = name === 'security' ? 'security' : 'account';
+        wrapper.dataset.profileSection = section;
+        const passwordDetails = el('profilePasswordDetails');
+        if (passwordDetails) passwordDetails.open = section === 'security';
+        wrapper.querySelectorAll('[data-profile-tab]').forEach(button => {
+            const active = button.dataset.profileTab === section;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-selected', String(active));
+            button.tabIndex = active ? 0 : -1;
         });
     }
     function setupHeader() {
@@ -352,6 +497,27 @@ window.AccountProfile = (() => {
         });
         el('profilePhotoSave')?.addEventListener('click', savePhoto);
         el('profilePhotoRemove')?.addEventListener('click', removePhoto);
+
+        el('profileEmailEdit')?.addEventListener('click', () => setEmailEditMode(true));
+        el('profileEmailCancel')?.addEventListener('click', () => setEmailEditMode(false));
+        el('profileEmailForm')?.addEventListener('submit', event => {
+            event.preventDefault();
+            return submit(event.target, async () => {
+                const newEmail = clean(el('profileEmailNew')?.value).toLowerCase();
+                if (!newEmail) throw new Error('Masukkan alamat email baru.');
+                if (newEmail === clean(el('profileEmail')?.value).toLowerCase()) {
+                    throw new Error('Email baru sama dengan email yang sedang digunakan.');
+                }
+                const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+                if (error) throw error;
+
+                const confirmationTarget = clean(data?.user?.new_email) || newEmail;
+                el('profileEmailNew').value = '';
+                setEmailEditMode(false);
+                message(`Permintaan perubahan email ke ${confirmationTarget} berhasil dibuat. Ikuti instruksi verifikasi yang dikirim oleh sistem autentikasi. Email login baru aktif setelah konfirmasi selesai.`, false, 'profileEmailFeedback');
+            }, 'profileEmailFeedback');
+        });
+        el('profileGoogleLinkButton')?.addEventListener('click', linkGoogleIdentity);
 
         el('profileForm')?.addEventListener('submit', event => {
             event.preventDefault();

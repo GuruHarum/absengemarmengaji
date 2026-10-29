@@ -1,3 +1,18 @@
+const googleLinkReturn = (() => {
+    try {
+        const params = new URLSearchParams(window.location.search || '');
+        const requested = params.get('gm_google_link') === '1';
+        if (requested && window.history?.replaceState) {
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('gm_google_link');
+            window.history.replaceState({}, document.title, cleanUrl.toString());
+        }
+        return requested;
+    } catch (_) {
+        return false;
+    }
+})();
+
 (async () => {
     try {
         await AppAccess.ready;
@@ -8,7 +23,7 @@
         AppAccess.applyUI();
         document.dispatchEvent(new Event('panelready', { bubbles: true }));
         if (window.panelDataReady) Promise.resolve(window.panelDataReady).catch(error => console.error('Pemuatan data awal tertunda:', error));
-        if (AppAccess.profile.temporaryPassword) await switchPage('profil');
+        if (AppAccess.profile.temporaryPassword || googleLinkReturn) await switchPage('profil');
         else await switchPage('dashboard');
         if (document.documentElement.classList.contains('gm-login-transition'))
             await new Promise(resolve => requestAnimationFrame(resolve));
