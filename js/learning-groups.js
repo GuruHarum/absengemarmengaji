@@ -586,20 +586,14 @@ window.LearningGroups = (() => {
       const canTransfer = AppAccess.full() && !showArchived && bucket.grade !== 'lain';
       const gradeActions = canTransfer
         ? '<div class="gm-grade-actions">' +
-            (bucket.studentIds.size ? '<button type="button" class="secondary-action" data-transfer-students-grade="' + safe(bucket.grade) + '">Transfer murid</button>' : '') +
+            (bucket.studentIds.size ? '<button type="button" class="secondary-action" data-transfer-students-grade="' + safe(bucket.grade) + '">Transfer murid</button>' : '<span></span>') +
             '<button type="button" class="secondary-action" data-transfer-grade="' + safe(bucket.grade) + '">Transfer guru</button>' +
+            (AppAccess.full() && bucket.groups.some(item => item.group.active)
+              ? '<button type="button" class="secondary-action" data-edit-grade="' + safe(bucket.grade) + '">Ubah anggota</button>' +
+                '<button type="button" class="secondary-action danger-action" data-delete-grade="' + safe(bucket.grade) + '">Hapus</button>'
+              : '<span></span><span></span>') +
           '</div>'
         : '';
-      const groupRows = bucket.groups.map(({ group, ids, labels }) =>
-        '<div class="gm-grade-group-row"><div><strong>' + safe(labels.join(', ')) + '</strong><small>' + ids.size + ' siswa</small></div>' +
-          '<div class="gm-grade-group-actions">' +
-            (AppAccess.full() ? (group.active
-              ? '<button type="button" class="secondary-action" data-edit="' + safe(group.id) + '">Ubah anggota</button>' +
-                '<button type="button" class="secondary-action" data-end="' + safe(group.id) + '">Arsipkan</button>' +
-                '<button type="button" class="secondary-action danger-action" data-delete-group="' + safe(group.id) + '">Hapus</button>'
-              : '<span class="gm-muted">Arsip</span><button type="button" class="secondary-action danger-action" data-delete-group="' + safe(group.id) + '">Hapus permanen</button>')
-              : '<span class="gm-muted">Lihat saja</span>') + '</div></div>'
-      ).join('');
       return '<article class="gm-group-card gm-grade-card">' +
         '<div class="gm-grade-card-head"><div><span class="gm-grade-kicker">TINGKAT</span><h3>' + safe(title) + '</h3></div>' +
           '<strong class="gm-grade-total">' + bucket.studentIds.size + '<small>siswa</small></strong></div>' +
@@ -610,15 +604,49 @@ window.LearningGroups = (() => {
                 '<div class="gm-grade-roster-list">' + studentRoster + '</div></details>'
               : '')
           : '<p class="gm-grade-no-students">Belum ada murid pada kelompok tingkat ini.</p>') +
-        gradeActions +
-        '<details class="gm-grade-details"><summary>' + bucket.groups.length + ' kelompok kelas <span>Kelola</span></summary>' +
-          '<div class="gm-grade-group-list">' + groupRows + '</div></details></article>';
+        gradeActions + '</article>';
     }).join('') || (showArchived
       ? '<div class="gm-empty-state gm-empty-rich"><strong>Belum ada kelompok di arsip</strong><span>Kelompok yang diarsipkan akan muncul di sini.</span></div>'
       : '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>');
   }
 
-    function renderStudents(subject) {
+    async function chooseGradeGroup(subject, grade, groups, actionLabel) {
+    const state = views[subject];
+    const students = new Map(state.students.map(student => [String(student.id), student]));
+    const options = groups.map(group => {
+      const ids = [...membersOf(state, group.id)];
+      const classes = [...new Set(ids.map(id => students.get(String(id))?.kelas).filter(Boolean))];
+      return { group, count: ids.length, classes };
+    }).sort((a, b) => String(a.group.class_name || '').localeCompare(String(b.group.class_name || ''), 'id'));
+    const dialog = document.createElement('dialog');
+    dialog.className = 'gm-transfer-grade-dialog';
+    dialog.innerHTML = '<form method="dialog" class="gm-grade-group-choice"><h3>' + safe(actionLabel) + ' · Tingkat ' + safe(grade) +
+      '</h3><p>Pilih kelompok yang ingin ' + (actionLabel === 'Hapus kelompok' ? 'dihapus' : 'diubah') +
+      '. Tindakan hanya berlaku pada kelompok yang dipilih.</p><div class="gm-grade-choice-list">' +
+      options.map((item, index) => '<button type="button" class="secondary-action" data-grade-choice="' + index + '"><strong>' +
+        safe(item.group.class_name || 'Kelompok tanpa nama') + '</strong><small>' + item.count + ' siswa' +
+        (item.classes.length ? ' · ' + safe(item.classes.join(', ')) : '') + '</small></button>').join('') +
+      '</div><div class="confirm-actions"><button type="button" class="secondary-action" data-grade-choice-cancel>Batal</button></div></form>';
+    document.body.appendChild(dialog);
+    return await new Promise(resolve => {
+      let settled = false;
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        if (dialog.open) dialog.close();
+        dialog.remove();
+        resolve(value);
+      };
+      dialog.querySelectorAll('[data-grade-choice]').forEach(button => button.addEventListener('click', () => {
+        finish(options[Number(button.dataset.gradeChoice)]?.group || null);
+      }));
+      dialog.querySelector('[data-grade-choice-cancel]').addEventListener('click', () => finish(null));
+      dialog.addEventListener('cancel', event => { event.preventDefault(); finish(null); });
+      dialog.showModal();
+    });
+  }
+
+  function renderStudents(subject) {
     const state = views[subject], host = shell(subject);
     const cls = host.querySelector('[data-class]').value;
     const search = host.querySelector('[data-search]').value.trim().toLocaleLowerCase('id');
@@ -760,6 +788,25 @@ window.LearningGroups = (() => {
         msg(subject, error.message, true);
       }
       busy(subject, false);
+      return;
+    }
+    const editGrade = event.target.closest('[data-edit-grade]');
+    const deleteGrade = event.target.closest('[data-delete-grade]');
+    const gradeAction = editGrade || deleteGrade;
+    if (gradeAction) {
+      const grade = gradeAction.dataset.editGrade || gradeAction.dataset.deleteGrade;
+      const groups = state.groups.filter(group => group.active && gradeOfGroup(state, group) === String(grade));
+      if (!groups.length) return msg(subject, 'Tidak ada kelompok aktif pada tingkat ini.', true);
+      const picked = await chooseGradeGroup(subject, grade, groups, editGrade ? 'Ubah anggota' : 'Hapus kelompok');
+      if (!picked) return;
+      const proxy = document.createElement('button');
+      proxy.type = 'button';
+      proxy.hidden = true;
+      if (editGrade) proxy.dataset.edit = picked.id;
+      else proxy.dataset.deleteGroup = picked.id;
+      host.appendChild(proxy);
+      proxy.click();
+      proxy.remove();
       return;
     }
     const edit = event.target.closest('[data-edit]');
