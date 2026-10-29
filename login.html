@@ -45,6 +45,34 @@
     <link rel="stylesheet" href="css/layout-responsive.css?v=20260928-account-link-4">
     <link rel="stylesheet" href="css/visual-stage8.css?v=20260930-login2">
     <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
+
+<style id="gm-login-theme-refinement">
+/* Penyelarasan login dengan identitas hijau-emas Gemar Mengaji. */
+body.login-page{background:radial-gradient(ellipse at 50% 0%,rgba(199,220,190,.32),transparent 48%),linear-gradient(145deg,#f5f8f3 0%,#edf4ee 54%,#faf8f1 100%);color:#1d4536}
+body.login-page .login-card{border:1px solid #d8e5d9;border-radius:22px;box-shadow:0 22px 65px rgba(21,67,48,.12);overflow:hidden}
+body.login-page .login-card>div:first-child{background:linear-gradient(135deg,#174c3a,#216454 62%,#2e7359);padding-top:28px;padding-bottom:28px}
+body.login-page .login-card>div:first-child .text-blue-100{color:#dce9d7}
+body.login-page .login-card form{padding:clamp(20px,5vw,28px)}
+body.login-page label{color:#365748}
+body.login-page input{min-height:46px;border-color:#cbdacf;border-radius:11px;color:#234a39}
+body.login-page input:focus{--tw-ring-color:#35866a;border-color:#35866a}
+body.login-page form>button[type=submit]{min-height:47px;background:#216454;color:#fff;box-shadow:0 5px 13px rgba(33,100,84,.16)}
+body.login-page form>button[type=submit]:hover{background:#174c3a}
+body.login-page #googleLoginBtn{min-height:47px;border-color:#cbdacf;border-radius:11px;color:#294c3d}
+body.login-page #googleLoginBtn:hover{background:#f3f8f3;border-color:#a9c5b1}
+body.login-page #errorMessage{border-radius:11px;line-height:1.55}
+body.login-page a:hover{color:#216454}
+.gm-login-success-screen{background:radial-gradient(ellipse at 50% 0%,rgba(199,220,190,.28),transparent 48%),linear-gradient(145deg,#0e3025,#174c3a 60%,#102d24);padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom))}
+.gm-login-success-card{border:1px solid rgba(209,181,129,.38);background:#fdfcf7;color:#204637;box-shadow:0 25px 80px rgba(0,0,0,.24);border-radius:22px}
+.gm-login-success-icon{background:#e4eee1;color:#216454}
+.gm-login-success-spinner{border-color:#dbe8dc;border-top-color:#216454}
+.gm-login-success-card .text-gray-900{color:#204637}
+.gm-login-success-card .text-gray-600{color:#63796b}
+.gm-login-success-card .text-blue-700{color:#216454}
+@media(max-width:420px){body.login-page{padding:14px}body.login-page .login-card{border-radius:18px}body.login-page .login-card form{padding:20px}.gm-login-success-card{padding:26px 20px}}
+@media(prefers-reduced-motion:reduce){body.login-page *, .gm-login-success-screen, .gm-login-success-spinner{transition:none!important;animation-duration:2s!important}}
+</style>
+
 </head>
 <body class="login-page min-h-screen flex items-center justify-center p-4">
 
