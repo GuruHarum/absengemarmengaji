@@ -170,7 +170,6 @@
         };
 
         googleLoginBtn?.addEventListener('click', async () => {
-            window.GMGoogleOneTap?.cancel?.();
             if (googleLoginBtn.disabled) return;
             googleErrorDiv.classList.add('hidden');
             googleLoginBtn.disabled = true;
@@ -224,7 +223,6 @@
     </script>
 
 
-<script src="js/google-one-tap.js?v=20261029-onetap2"></script>
 
 <script src="/js/pwa.js?v=20261001-refine1" defer></script>
 </body>
