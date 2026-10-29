@@ -50,6 +50,9 @@ language sql immutable set search_path='' as $$
  select regexp_replace(lower(normalize(app_private.normalize_student_class(value),NFKC)), '[^[:alnum:]]', '', 'g');
 $$;
 revoke all on function app_private.import_student_class_key(text) from public,anon,authenticated;
+-- These helpers back an expression index; keep them executable for roles that may UPDATE students.
+grant execute on function app_private.import_student_name_key(text) to authenticated, service_role;
+grant execute on function app_private.import_student_class_key(text) to authenticated, service_role;
 
 do $$ begin
  if exists(
