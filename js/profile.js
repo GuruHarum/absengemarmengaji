@@ -480,11 +480,6 @@ window.AccountProfile = (() => {
                 el('profileEmailNew').value = '';
                 setEmailEditMode(false);
                 message(`Permintaan perubahan email ke ${confirmationTarget} berhasil dibuat. Ikuti instruksi verifikasi yang dikirim oleh sistem autentikasi. Email login baru aktif setelah konfirmasi selesai.`, false, 'profileEmailFeedback');
-                const pending = el('profileEmailPending');
-                if (pending) {
-                    pending.hidden = false;
-                    pending.textContent = `Menunggu konfirmasi perubahan email ke ${confirmationTarget}. Email login lama tetap berlaku sampai verifikasi selesai.`;
-                }
             }, 'profileEmailFeedback');
         });
         el('profileGoogleLinkButton')?.addEventListener('click', linkGoogleIdentity);
