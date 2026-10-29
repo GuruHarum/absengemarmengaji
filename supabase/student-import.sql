@@ -69,6 +69,9 @@ language sql immutable set search_path='' as $$
  select regexp_replace(lower(normalize(coalesce(label,''),NFKC)), '[^[:alnum:]]', '', 'g');
 $$;
 revoke all on function app_private.import_teacher_name_key(text) from public,anon,authenticated;
+-- The function also backs expression indexes on public.teachers, so UPDATE-capable roles
+-- must be able to execute it while PostgreSQL maintains those indexes.
+grant execute on function app_private.import_teacher_name_key(text) to authenticated, service_role;
 
 create or replace function app_private.find_import_teacher(label text) returns text
 language plpgsql stable security definer set search_path='' as $$
