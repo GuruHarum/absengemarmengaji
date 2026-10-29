@@ -156,11 +156,12 @@
             }
         });
 
+        const googleErrorDiv = document.getElementById('errorMessage');
         const googleLoginBtn = document.getElementById('googleLoginBtn');
         const googleLoginText = googleLoginBtn?.querySelector('span');
         const showLoginError = text => {
-            errorDiv.textContent = text;
-            errorDiv.classList.remove('hidden');
+            googleErrorDiv.textContent = text;
+            googleErrorDiv.classList.remove('hidden');
         };
         const resetGoogleButton = () => {
             if (googleLoginBtn) googleLoginBtn.disabled = false;
@@ -203,7 +204,7 @@
                     throw new Error('Akun Google belum terhubung dengan hak akses Gemar Mengaji. Masuk dengan akun biasa dan tautkan Google melalui Profil.');
                 }
 
-                errorDiv.classList.add('hidden');
+                googleErrorDiv.classList.add('hidden');
                 sessionStorage.setItem('gm_login_transition', '1');
                 window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
             } catch (error) {
@@ -214,7 +215,7 @@
 
         googleLoginBtn?.addEventListener('click', async () => {
             if (googleLoginBtn.disabled) return;
-            errorDiv.classList.add('hidden');
+            googleErrorDiv.classList.add('hidden');
             googleLoginBtn.disabled = true;
             if (googleLoginText) googleLoginText.textContent = 'Menghubungkan ke Google...';
             sessionStorage.setItem('gm_google_login_pending', '1');
