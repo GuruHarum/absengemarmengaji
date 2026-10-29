@@ -321,3 +321,132 @@
     }
   }
 }
+
+
+/* Rekap Absensi: samakan kartu filter dan laporan dengan tema hijau-putih. */
+@media screen {
+  body.admin-page #page-absensi {
+    --attendance-ink: #214638;
+    --attendance-muted: #64786c;
+    --attendance-line: #d9e6dc;
+    color: var(--attendance-ink);
+  }
+  body.admin-page #page-absensi > section {
+    min-width: 0;
+    border-color: var(--attendance-line);
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgb(25 67 48 / 4%);
+  }
+  body.admin-page #page-absensi > section:first-child {
+    padding: clamp(14px, 2vw, 24px);
+  }
+  body.admin-page #page-absensi > section:first-child h3,
+  body.admin-page #page-absensi #reportContainer h3,
+  body.admin-page #page-absensi > section:last-child h3 {
+    color: var(--attendance-ink);
+  }
+  body.admin-page #page-absensi :is(label, .field-label) {
+    color: #496454;
+  }
+  body.admin-page #page-absensi :is(select, input[type="date"], input[type="search"]) {
+    min-width: 0;
+    border-color: #cadbd0;
+    border-radius: 10px;
+    color: var(--attendance-ink);
+  }
+  body.admin-page #page-absensi :is(select, input):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+  body.admin-page #page-absensi #filterBtn {
+    min-height: 42px;
+    border-radius: 10px;
+    background: #216454;
+    box-shadow: none;
+  }
+  body.admin-page #page-absensi #filterBtn:hover {
+    background: #194f42;
+  }
+  body.admin-page #page-absensi #reportContainer {
+    overflow: hidden;
+    padding: clamp(14px, 2vw, 24px);
+  }
+  body.admin-page #page-absensi #reportContainer > div:first-child {
+    border-color: #e3ece5;
+  }
+  body.admin-page #page-absensi #reportContainer .bg-gradient-to-r {
+    border-color: #d9e6dc;
+    background: #f2f7f3;
+    box-shadow: none;
+  }
+  body.admin-page #page-absensi #reportContainer .bg-blue-600 {
+    background: #216454;
+  }
+  body.admin-page #page-absensi #reportContainer .report-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    color: var(--attendance-muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  body.admin-page #page-absensi #reportContainer .overflow-x-auto,
+  body.admin-page #page-absensi > section:last-child .overflow-x-auto {
+    max-width: 100%;
+    border-color: var(--attendance-line);
+    border-radius: 12px;
+  }
+  body.admin-page #page-absensi #monthlyReportTable thead,
+  body.admin-page #page-absensi #attendanceLogTable thead {
+    background: #f0f6f1;
+    color: #315442;
+  }
+  body.admin-page #page-absensi :is(#btn-print, #btn-download) {
+    min-height: 40px;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+  body.admin-page #page-absensi #btn-print {
+    background: #216454;
+  }
+  body.admin-page #page-absensi #btn-print:hover {
+    background: #194f42;
+  }
+  body.admin-page #page-absensi #btn-download {
+    background: #476d59;
+  }
+  body.admin-page #page-absensi #btn-download:hover {
+    background: #365944;
+  }
+  body.admin-page #page-absensi .attendance-log-date {
+    display: grid;
+    gap: 6px;
+    max-width: 300px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-absensi > section,
+    body.admin-page #page-absensi #reportContainer {
+      border-radius: 14px;
+    }
+    body.admin-page #page-absensi #reportContainer > div:first-child {
+      align-items: stretch;
+    }
+    body.admin-page #page-absensi #reportContainer .flex.gap-2\.5 {
+      align-self: stretch;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    body.admin-page #page-absensi #reportContainer .flex.gap-2\.5 button {
+      flex: 1 1 130px;
+      justify-content: center;
+    }
+    body.admin-page #page-absensi #reportContainer .report-legend {
+      gap: 6px 10px;
+    }
+    body.admin-page #page-absensi .attendance-log-date {
+      max-width: none;
+    }
+  }
+}
