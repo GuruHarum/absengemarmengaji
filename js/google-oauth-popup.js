@@ -38,7 +38,7 @@
 
         const nonce = createNonce();
         const redirectTo = new URL('oauth-popup.html', window.location.origin);
-        redirectTo.searchParams.set('v', '20261029-popup2');
+        redirectTo.searchParams.set('v', '20261029-popup3');
         redirectTo.searchParams.set('mode', mode);
         redirectTo.searchParams.set('nonce', nonce);
 
