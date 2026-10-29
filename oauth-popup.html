@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="referrer" content="same-origin">
+    <meta name="theme-color" content="#216454">
+    <title>Verifikasi Google · Gemar Mengaji</title>
+    <link rel="stylesheet" href="css/theme.css">
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh; min-height: 100dvh; margin: 0; padding: 22px;
+            display: grid; place-items: center;
+            font-family: Poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--theme-background, #f2f7f3); color: var(--theme-ink, #244638);
+        }
+        .oauth-window {
+            width: min(100%, 420px); padding: 30px 26px; text-align: center;
+            border: 1px solid var(--theme-line, #dce7df); border-radius: 22px;
+            background: var(--theme-paper, #fffefb); box-shadow: 0 18px 60px rgba(18,65,43,.09);
+        }
+        .school-logo {
+            display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 18px;
+            border-radius: 18px; background: #fff; border: 1px solid var(--theme-line, #dce7df);
+        }
+        .school-logo img { width: 48px; height: 48px; object-fit: contain; }
+        h1 { margin: 0; font-size: 19px; font-weight: 750; line-height: 1.35; letter-spacing: -.02em; }
+        #oauthStatus { margin: 10px 0 0; color: var(--theme-muted, #6e8175); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+        .oauth-loader {
+            width: 30px; height: 30px; margin: 22px auto 0; border-radius: 50%;
+            border: 3px solid var(--theme-line, #dce7df); border-top-color: var(--brand-color, #216454);
+            animation: spin .8s linear infinite;
+        }
+        .oauth-loader[hidden] { display: none; }
+        #oauthClose { margin-top: 22px; min-height: 43px; padding: 10px 18px; border: 1px solid var(--theme-line, #ccdcd1); border-radius: 11px; background: white; color: var(--brand-color, #216454); font-size: 13px; font-weight: 650; cursor: pointer; }
+        #oauthClose[hidden] { display: none; }
+        .oauth-note { margin-top: 24px; padding-top: 17px; border-top: 1px solid var(--theme-line, #e5ece6); color: var(--theme-muted, #7b8a80); font-size: 10px; line-height: 1.6; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .oauth-loader { animation-duration: 2s; } }
+    </style>
+</head>
+<body>
+    <main class="oauth-window" aria-live="polite" aria-busy="true">
+        <div class="school-logo"><img src="assets/school-logo.png" alt="Logo SDIT Harapan Umat"></div>
+        <h1 id="oauthTitle">Memverifikasi akun Google</h1>
+        <p id="oauthStatus">Mohon tunggu, kami sedang memeriksa hasil autentikasi.</p>
+        <div id="oauthLoader" class="oauth-loader" role="status" aria-label="Sedang memproses"></div>
+        <button id="oauthClose" type="button" hidden>Tutup jendela</button>
+        <div class="oauth-note">Absen Gemar Mengaji · SDIT Harapan Umat Karawang</div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/google-oauth-popup-callback.js?v=20261029-popup1"></script>
+</body>
+</html>
