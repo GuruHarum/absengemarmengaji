@@ -308,7 +308,7 @@ window.LearningGroups = (() => {
     host.querySelector('[data-refresh]').disabled = value;
     host.querySelector('[data-year]').disabled = value || AppAccess.teacher();
     host.querySelector('[data-view-teacher]').disabled = value || AppAccess.teacher();
-    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer-grade], [data-transfer-students-grade]').forEach(button => button.disabled = value);
+    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-edit-grade], [data-delete-grade], [data-transfer-grade], [data-transfer-students-grade]').forEach(button => button.disabled = value);
   }
   function selectedTeacher(subject) {
     return shell(subject).querySelector('[data-view-teacher]').value;
