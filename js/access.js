@@ -28,20 +28,39 @@ window.AppAccess = (() => {
         return row;
     }
 
+    async function getVerifiedUser() {
+        // OAuth popup and dashboard are separate tabs. On a first Google login,
+        // allow the shared Supabase session a short moment to become visible here.
+        const isLoginTransition = document.documentElement.classList.contains('gm-login-transition');
+        const attempts = isLoginTransition ? 12 : 1;
+        let lastError = null;
+        for (let attempt = 0; attempt < attempts; attempt += 1) {
+            try {
+                const { data, error } = await supabase.auth.getUser();
+                if (!error && data?.user) return data.user;
+                lastError = error;
+            } catch (error) {
+                lastError = error;
+            }
+            if (attempt + 1 < attempts) {
+                await new Promise(resolve => setTimeout(resolve, 250));
+            }
+        }
+        throw new Error(lastError?.message || 'Sesi login belum tersedia. Silakan kembali ke halaman login dan coba lagi.');
+    }
+
     const ready = (async () => {
-        const { data, error } = await supabase.auth.getUser();
-        if (error || !data.user)
-            throw new Error('Silakan masuk untuk mengakses data sekolah.');
-        const result = await supabase.from('user_roles').select('role,teacher_id').eq('user_id', data.user.id).maybeSingle();
+        const user = await getVerifiedUser();
+        const result = await supabase.from('user_roles').select('role,teacher_id').eq('user_id', user.id).maybeSingle();
         if (result.error)
             throw new Error('Pengaturan hak akses belum tersedia. Hubungi koordinator.');
         if (!result.data || !['admin', 'koordinator', 'guru'].includes(result.data.role))
             throw new Error('Akun belum diberi hak akses. Hubungi koordinator.');
         profile = result.data;
-        profile.userId = data.user.id;
-        profile.email = data.user.email || '';
-        profile.displayName = String(data.user.user_metadata?.full_name || '').trim();
-        profile.temporaryPassword = Boolean(data.user.user_metadata?.temporary_password);
+        profile.userId = user.id;
+        profile.email = user.email || '';
+        profile.displayName = String(user.user_metadata?.full_name || '').trim();
+        profile.temporaryPassword = Boolean(user.user_metadata?.temporary_password);
         await loadTeacherProfile();
         if (teacher() && !profile.teacherName)
             throw new Error('Akun guru belum terhubung dengan data guru yang valid.');
