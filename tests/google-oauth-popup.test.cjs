@@ -7,18 +7,53 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../js/google-oauth-popup.js'), 'utf8');
 
-function createEnvironment({ blocked = false, actualUserId = 'user-1', ignoreWrongOrigin = true } = {}) {
+function createEnvironment({
+    blocked = false,
+    actualUserId = 'user-1',
+    ignoreWrongOrigin = true,
+    coopSevered = false
+} = {}) {
     const listeners = new Set();
+    const channelRegistry = new Map();
     let popup = null;
     let launchCalls = 0;
+
+    class FakeBroadcastChannel {
+        constructor(name) {
+            this.name = name;
+            this.closed = false;
+            this.listeners = new Set();
+            if (!channelRegistry.has(name)) channelRegistry.set(name, new Set());
+            channelRegistry.get(name).add(this);
+        }
+        addEventListener(type, listener) {
+            if (type === 'message') this.listeners.add(listener);
+        }
+        removeEventListener(type, listener) {
+            if (type === 'message') this.listeners.delete(listener);
+        }
+        postMessage(data) {
+            for (const receiver of [...(channelRegistry.get(this.name) || [])]) {
+                if (receiver === this || receiver.closed) continue;
+                queueMicrotask(() => {
+                    if (receiver.closed) return;
+                    for (const listener of [...receiver.listeners]) listener({ data });
+                });
+            }
+        }
+        close() {
+            this.closed = true;
+            channelRegistry.get(this.name)?.delete(this);
+        }
+    }
+
     const windowObject = {
         location: { origin: 'https://school.test' },
         screen: { availWidth: 1280, availHeight: 800 },
         crypto: { getRandomValues(bytes) { bytes.forEach((_, index) => { bytes[index] = index + 1; }); return bytes; } },
+        BroadcastChannel: FakeBroadcastChannel,
         setTimeout,
         clearTimeout,
-        setInterval,
-        clearInterval,
         addEventListener(name, listener) { if (name === 'message') listeners.add(listener); },
         removeEventListener(name, listener) { if (name === 'message') listeners.delete(listener); },
         open(url, name, features) {
@@ -32,9 +67,7 @@ function createEnvironment({ blocked = false, actualUserId = 'user-1', ignoreWro
                     href: url,
                     replace(nextUrl) {
                         this.href = nextUrl;
-                        const callback = new URL(nextUrl === 'https://provider.test/oauth'
-                            ? popup.redirectTo
-                            : popup.redirectTo);
+                        const callback = new URL(popup.redirectTo);
                         const payload = {
                             type: 'GM_GOOGLE_OAUTH_RESULT',
                             mode: callback.searchParams.get('mode'),
@@ -43,6 +76,17 @@ function createEnvironment({ blocked = false, actualUserId = 'user-1', ignoreWro
                             userId: actualUserId,
                             role: 'guru'
                         };
+
+                        if (coopSevered) {
+                            // Browsers may report the WindowProxy as closed after a COOP
+                            // browsing-context switch even though the popup is still running.
+                            popup.closed = true;
+                            const sender = new FakeBroadcastChannel(`gm_google_oauth_${payload.nonce}`);
+                            sender.postMessage(payload);
+                            sender.close();
+                            return;
+                        }
+
                         queueMicrotask(() => {
                             if (ignoreWrongOrigin) {
                                 for (const listener of [...listeners]) {
@@ -84,6 +128,15 @@ test('opens popup synchronously and accepts a valid same-origin callback result'
     assert.equal(result.userId, 'user-1');
     assert.equal(result.role, 'guru');
     assert.equal(env.popup.closed, true, 'the opener closes the popup after receiving the result');
+});
+
+test('returns to the main window through BroadcastChannel when COOP severs the popup reference', async () => {
+    const env = createEnvironment({ coopSevered: true });
+    const flow = env.api.prepare({ mode: 'login' });
+    const result = await flow.start(redirectTo => env.launch(redirectTo));
+    assert.equal(result.userId, 'user-1');
+    assert.equal(result.role, 'guru');
+    assert.equal(env.popup.closed, true, 'the popup reference may report closed after COOP');
 });
 
 test('rejects a callback for a different user when replacing a linked Google identity', async () => {
