@@ -71,12 +71,17 @@ test('REV44 remains canceled: Tahsin target/progress engine stays on REV43 type 
   assert.doesNotMatch(core, /const types = \[[^\]]*'JUZ 27'/);
 });
 
-test('REV45 retains REV43 partial student transfer features', () => {
+test('grade-level transfer retains safe atomic membership movement and unchanged student classes', () => {
   const groups = read('js/learning-groups.js');
-  const sql = read('supabase/20260929-26-transfer-murid-kelompok.sql');
-  assert.match(groups, /data-transfer-students/);
-  assert.match(groups, />Transfer Murid</);
-  assert.match(groups, /gm_transfer_group_students/);
-  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.gm_transfer_group_students/i);
+  const sql = read('supabase/20261029-27-transfer-murid-tingkat.sql');
+  assert.match(groups, /data-transfer-students-grade/);
+  assert.match(groups, /gm_transfer_grade_students/);
+  assert.match(groups, /gm_transfer_grade_groups/);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.gm_transfer_grade_students/i);
+  assert.match(sql, /CREATE OR REPLACE FUNCTION public\.gm_transfer_grade_groups/i);
+  assert.match(sql, /REVOKE ALL ON FUNCTION public\.gm_transfer_grade_students/i);
+  assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.gm_transfer_grade_students[^;]+TO authenticated/i);
+  assert.match(sql, /SET active = false/i);
+  assert.doesNotMatch(sql, /UPDATE public\.students[\s\S]{0,500}SET kelas/i);
   assert.doesNotMatch(sql, /DELETE FROM public\.students/i);
 });
