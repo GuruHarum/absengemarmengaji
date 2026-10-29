@@ -38,12 +38,23 @@
 
         const nonce = createNonce();
         const redirectTo = new URL('oauth-popup.html', window.location.origin);
+        redirectTo.searchParams.set('v', '20261029-popup2');
         redirectTo.searchParams.set('mode', mode);
         redirectTo.searchParams.set('nonce', nonce);
+
+        // The same-origin channel remains usable even when COOP severs window.opener
+        // while the popup navigates to Google's domain.
+        let resultChannel = null;
+        try {
+            if (typeof window.BroadcastChannel === 'function') {
+                resultChannel = new window.BroadcastChannel(`gm_google_oauth_${nonce}`);
+            }
+        } catch (_) {}
 
         // Open synchronously during the user's button click to avoid popup blockers.
         const popup = window.open('about:blank', `gmGoogleOAuth_${nonce}`, popupFeatures());
         if (!popup) {
+            try { resultChannel?.close(); } catch (_) {}
             throw new Error('Jendela Google diblokir browser. Izinkan pop-up untuk situs Gemar Mengaji, lalu coba kembali.');
         }
 
@@ -52,8 +63,6 @@
         let resolveResult;
         let rejectResult;
         let timeoutId = null;
-        let closeCheckId = null;
-        let popupClosedAt = 0;
 
         const resultPromise = new Promise((resolve, reject) => {
             resolveResult = resolve;
@@ -62,10 +71,13 @@
 
         function cleanup() {
             window.removeEventListener('message', onMessage);
+            if (resultChannel) {
+                try { resultChannel.removeEventListener('message', onChannelMessage); } catch (_) {}
+                try { resultChannel.close(); } catch (_) {}
+                resultChannel = null;
+            }
             if (timeoutId !== null) window.clearTimeout(timeoutId);
-            if (closeCheckId !== null) window.clearInterval(closeCheckId);
             timeoutId = null;
-            closeCheckId = null;
         }
 
         function fail(error) {
@@ -82,9 +94,7 @@
             resolveResult(value);
         }
 
-        function onMessage(event) {
-            if (event.origin !== window.location.origin || event.source !== popup) return;
-            const data = event.data;
+        function handlePayload(data) {
             if (!data || data.type !== MESSAGE_TYPE || data.mode !== mode || data.nonce !== nonce) return;
 
             if (data.ok !== true) {
@@ -103,7 +113,18 @@
             succeed(data);
         }
 
+        function onMessage(event) {
+            if (event.origin !== window.location.origin || event.source !== popup) return;
+            handlePayload(event.data);
+        }
+
+        function onChannelMessage(event) {
+            // Random channel name and nonce/mode checks bind the response to this attempt.
+            handlePayload(event.data);
+        }
+
         window.addEventListener('message', onMessage);
+        if (resultChannel) resultChannel.addEventListener('message', onChannelMessage);
 
         return {
             redirectTo: redirectTo.toString(),
@@ -124,18 +145,6 @@
                 timeoutId = window.setTimeout(() => {
                     fail(new Error('Verifikasi Google terlalu lama atau tidak mengirim hasil. Tutup pop-up, lalu coba kembali.'));
                 }, POPUP_TIMEOUT_MS);
-                closeCheckId = window.setInterval(() => {
-                    try {
-                        if (!popup.closed) {
-                            popupClosedAt = 0;
-                            return;
-                        }
-                        if (!popupClosedAt) popupClosedAt = Date.now();
-                        else if (Date.now() - popupClosedAt > 1500) {
-                            fail(new Error('Jendela Google ditutup sebelum proses selesai.'));
-                        }
-                    } catch (_) {}
-                }, 500);
 
                 try {
                     const response = await launch(redirectTo.toString());
@@ -144,7 +153,8 @@
                     if (!url || typeof url !== 'string') {
                         throw new Error('Alamat autentikasi Google tidak diterima dari Supabase.');
                     }
-                    if (popup.closed) throw new Error('Jendela Google sudah ditutup sebelum proses dimulai.');
+                    // Do not infer manual closure from popup.closed: COOP can make it
+                    // return true even while the popup is navigating back to this origin.
                     popup.location.replace(url);
                     try { popup.focus(); } catch (_) {}
                     const result = await resultPromise;
