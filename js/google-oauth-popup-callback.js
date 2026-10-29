@@ -10,6 +10,15 @@
     const closeButton = document.getElementById('oauthClose');
     const allowedRoles = ['admin', 'koordinator', 'guru'];
     let completed = false;
+    let resultChannel = null;
+
+    // Google/provider COOP headers can sever window.opener during cross-origin navigation.
+    // A nonce-scoped same-origin channel returns the verified result when the popup comes back.
+    try {
+        if (/^[a-f0-9]{48}$/.test(nonce || '') && typeof window.BroadcastChannel === 'function') {
+            resultChannel = new window.BroadcastChannel(`gm_google_oauth_${nonce}`);
+        }
+    } catch (_) {}
 
     function renderState(heading, message, isError = false) {
         if (title) title.textContent = heading;
@@ -38,26 +47,42 @@
             role: result.role || null,
             message: result.message || ''
         };
+
+        let delivered = false;
+
+        // Preferred path: BroadcastChannel works even when window.opener is unavailable.
+        if (resultChannel) {
+            try {
+                resultChannel.postMessage(payload);
+                delivered = true;
+            } catch (_) {}
+        }
+
+        // Preserve the existing postMessage path for browsers where the opener survives.
         const openerAvailable = Boolean(window.opener && !window.opener.closed);
         if (openerAvailable) {
             try {
                 window.opener.postMessage(payload, window.location.origin);
-                renderState(
-                    payload.ok ? 'Berhasil' : 'Belum berhasil',
-                    payload.ok
-                        ? (mode === 'login' ? 'Login berhasil. Jendela ini akan menutup dan aplikasi akan dibuka.' : 'Akun Google sudah diverifikasi. Jendela ini akan menutup dan Profil diperbarui.')
-                        : payload.message || 'Google belum berhasil diverifikasi. Kembali ke aplikasi untuk mencoba lagi.',
-                    !payload.ok
-                );
-                window.setTimeout(closeWindow, 300);
-                return;
+                delivered = true;
             } catch (_) {}
+        }
+
+        if (delivered) {
+            renderState(
+                payload.ok ? 'Berhasil' : 'Belum berhasil',
+                payload.ok
+                    ? (mode === 'login' ? 'Login berhasil. Jendela ini akan menutup dan aplikasi akan dibuka.' : 'Akun Google sudah diverifikasi. Jendela ini akan menutup dan Profil diperbarui.')
+                    : payload.message || 'Google belum berhasil diverifikasi. Kembali ke aplikasi untuk mencoba lagi.',
+                !payload.ok
+            );
+            window.setTimeout(closeWindow, 300);
+            return;
         }
 
         renderState(
             payload.ok ? 'Verifikasi selesai' : 'Verifikasi belum berhasil',
             payload.ok
-                ? 'Verifikasi selesai, tetapi halaman utama tidak ditemukan. Tutup jendela ini dan kembali ke aplikasi.'
+                ? 'Verifikasi selesai, tetapi komunikasi ke halaman utama tidak tersedia. Tutup jendela ini dan kembali ke aplikasi.'
                 : payload.message || 'Kembali ke aplikasi Gemar Mengaji dan coba kembali.',
             !payload.ok
         );
