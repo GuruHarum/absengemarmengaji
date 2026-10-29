@@ -610,7 +610,6 @@ window.LearningGroups = (() => {
     const student = state?.students.find(row => String(row.id) === String(studentId));
     if (!student) return AdminNotice.notify('Data siswa tidak ditemukan. Muat ulang daftar kelompok terlebih dahulu.', 'error');
     const details = [
-      ['ID Siswa', student.id],
       ['Nama siswa', student['nama siswa'] || student.nama_siswa || student.nama],
       ['Kelas', student.kelas],
       ['Guru Tahsin', student['nama guru'] || student.nama_guru],
@@ -665,6 +664,17 @@ window.LearningGroups = (() => {
       });
       observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
       try {
+        // Refresh the master list before opening the existing editor; the group view
+        // can hold a narrower/stale student snapshot than Kelola Data.
+        const freshStudents = await getStudents();
+        if (!Array.isArray(freshStudents) || !freshStudents.some(row => String(row.id) === String(student.id))) {
+          observer.disconnect();
+          restoreTab();
+          AdminNotice.notify('Data siswa tidak ditemukan pada data utama. Muat ulang daftar siswa lalu coba lagi.', 'error');
+          return;
+        }
+        studentsData = freshStudents;
+        gmManageDataLoaded = true;
         await openManageModal(String(student.id));
         if (modal.classList.contains('hidden')) {
           observer.disconnect();
