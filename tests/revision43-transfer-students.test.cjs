@@ -5,13 +5,18 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 
-test('REV43 exposes partial student transfer in both learning group pages', () => {
+test('grade-level transfer selects only a teacher and maps students to unchanged class rosters', () => {
   const js = read('js/learning-groups.js');
-  assert.match(js, /data-transfer-students/);
+  assert.match(js, /data-transfer-students-grade/);
+  assert.match(js, /data-transfer-grade/);
   assert.match(js, />Transfer Murid</);
-  assert.match(js, /pickStudentsForTransfer/);
+  assert.match(js, /pickStudentsForGradeTransfer/);
   assert.match(js, /p_student_ids:\s*choice\.studentIds/);
-  assert.match(js, /gm_transfer_group_students/);
+  assert.match(js, /gm_transfer_grade_students/);
+  assert.match(js, /gm_transfer_grade_groups/);
+  assert.match(js, /canMapTransferStudents/);
+  assert.match(js, /Konfirmasi transfer/);
+  assert.doesNotMatch(js, /gm_transfer_group_students/);
 });
 
 test('REV43 transfer SQL moves membership atomically and preserves Tahsin master teacher consistency', () => {
