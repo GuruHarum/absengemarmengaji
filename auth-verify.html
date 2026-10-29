@@ -110,12 +110,13 @@
           if (sessionError) throw sessionError;
           const session = sessionData?.session;
           if (!session) {
-            if (attempts < 5) {
+            if (attempts < 12) {
               setStatus('Menunggu sesi login', 'Mengambil hasil autentikasi dari penyedia login…');
               window.setTimeout(verifyAndContinue, 450);
               return;
             }
-            const detail = params.get('error_description') || params.get('error');
+            const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+            const detail = params.get('error_description') || params.get('error') || hashParams.get('error_description') || hashParams.get('error');
             showError('Login belum selesai', detail
               ? 'Proses login tidak berhasil diselesaikan. Kembali ke halaman login dan coba lagi.'
               : 'Sesi login belum diterima. Pastikan alamat callback Supabase mengarah ke halaman ini, lalu coba login kembali.');
