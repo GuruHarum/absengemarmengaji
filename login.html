@@ -159,51 +159,6 @@
             if (googleLoginText) googleLoginText.textContent = 'Masuk dengan Google';
         };
 
-        async function handleGoogleLoginReturn() {
-            if (sessionStorage.getItem('gm_google_login_pending') !== '1') return;
-            const params = new URLSearchParams(window.location.search);
-            const oauthError = params.get('error_description') || params.get('error');
-            if (oauthError) {
-                sessionStorage.removeItem('gm_auth_provider');
-                showLoginError('Login Google belum berhasil. Silakan coba lagi atau masuk menggunakan email/username dan password.');
-                return;
-            }
-
-            try {
-                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) throw sessionError;
-                const session = sessionData?.session;
-                if (!session) {
-                    sessionStorage.removeItem('gm_google_login_pending');
-                    return;
-                }
-                sessionStorage.removeItem('gm_google_login_pending');
-
-                const { data: userData, error: userError } = await supabase.auth.getUser();
-                const user = userData?.user;
-                if (userError || !user) throw userError || new Error('Sesi Google belum tersedia. Silakan coba kembali.');
-                const linkedGoogle = Array.isArray(user.identities) && user.identities.some(identity => identity.provider === 'google');
-                if (!linkedGoogle) {
-                    await supabase.auth.signOut({ scope: 'local' });
-                    throw new Error('Akun Google ini belum ditautkan. Masuk dahulu dengan akun Gemar Mengaji, lalu buka Profil dan pilih Hubungkan Akun Google.');
-                }
-
-                const { data: access, error: accessError } = await supabase
-                    .from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
-                if (accessError || !access || !['admin', 'koordinator', 'guru'].includes(access.role)) {
-                    await supabase.auth.signOut({ scope: 'local' });
-                    throw new Error('Akun Google belum terhubung dengan hak akses Gemar Mengaji. Masuk dengan akun biasa dan tautkan Google melalui Profil.');
-                }
-
-                googleErrorDiv.classList.add('hidden');
-                sessionStorage.setItem('gm_login_transition', '1');
-                window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
-            } catch (error) {
-                showLoginError(error.message || 'Login Google gagal. Silakan gunakan metode login biasa.');
-                resetGoogleButton();
-            }
-        }
-
         googleLoginBtn?.addEventListener('click', async () => {
             if (googleLoginBtn.disabled) return;
             googleErrorDiv.classList.add('hidden');
@@ -220,7 +175,7 @@
                 });
                 if (error) throw error;
             } catch (error) {
-                sessionStorage.removeItem('gm_google_login_pending');
+                sessionStorage.removeItem('gm_auth_provider');
                 const detail = String(error?.message || '').toLowerCase();
                 if (detail.includes('provider') && (detail.includes('enabled') || detail.includes('unsupported'))) {
                     showLoginError('Login Google belum diaktifkan pada pengaturan autentikasi. Silakan masuk dengan email/username dan password untuk sementara.');
@@ -231,7 +186,6 @@
             }
         });
 
-        void handleGoogleLoginReturn();
     </script>
 
 
