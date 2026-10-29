@@ -162,7 +162,21 @@ html.gm-login-transition body.admin-page{background:#f4f8f4!important}
 <link rel="stylesheet" href="/css/gm-data-navigation.css?v=20261023-archive-light3">
 <link rel="stylesheet" href="/css/gm-learning-navigation.css?v=20261022b">
 <link rel="stylesheet" href="/css/gm-assessment-refinement.css?v=20261022d">
-    </head>
+    <style id="gm-profile-auth-styles">
+.gm-profile-email-panel,.profile-google-card{display:grid;gap:12px;margin:0 0 18px;padding:17px;border:1px solid #dce8e1;border-radius:15px;background:#fbfdfb;min-width:0}
+.gm-profile-auth-heading strong{display:block;color:#244a39;font-size:13px;font-weight:700}
+.gm-profile-auth-heading p{margin:5px 0 0;color:#6b7e72;font-size:12px;line-height:1.65}
+.gm-profile-email-panel .field-label{display:grid;gap:7px}
+.gm-profile-email-panel .field-label input{width:100%;min-width:0;min-height:43px;padding:10px 12px;border:1px solid #cadbd0;border-radius:10px;background:#f3f7f4;color:#52685a;font-size:13px}
+.gm-profile-email-panel .field-label input:focus{outline:2px solid #7aa891;outline-offset:1px}
+.gm-profile-auth-secondary{justify-self:start;min-height:42px;padding:10px 15px;border:1px solid #c9dcd0;border-radius:10px;background:#fff;color:#216454;font-size:12px;font-weight:650}
+.gm-profile-auth-secondary:hover{background:#edf6f0}
+.gm-profile-auth-actions{display:flex;flex-wrap:wrap;gap:9px}
+.gm-profile-auth-actions button{min-height:42px}
+.profile-google-card [hidden],.gm-profile-email-panel [hidden]{display:none!important}
+@media(max-width:640px){.gm-profile-email-panel,.profile-google-card{padding:14px;border-radius:12px}.gm-profile-auth-secondary{width:100%;justify-content:center}.gm-profile-auth-actions{display:grid;grid-template-columns:1fr 1fr}.gm-profile-auth-actions button{min-width:0;padding-inline:8px}}
+</style>
+</head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="teacher">
 <div aria-label="Memuat panel guru" aria-live="polite" class="islamic-loader" id="loadingIndicator" role="status">
 <div aria-hidden="true" class="loader-pattern"></div>
@@ -507,13 +521,33 @@ html.gm-login-transition body.admin-page{background:#f4f8f4!important}
             <p id="profilePhotoFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
 </div>
 </div>
+<div class="gm-profile-email-panel" id="profileEmailSettings">
+    <div class="gm-profile-auth-heading"><strong>Email akun</strong><p>Email ini digunakan untuk login. Perubahan alamat dilakukan oleh pemilik akun dan perlu mengikuti verifikasi email.</p></div>
+    <label class="field-label" for="profileEmail">Email login saat ini<input id="profileEmail" name="profileEmail" type="email" readonly autocomplete="email"></label>
+    <button id="profileEmailEdit" type="button" class="secondary-action gm-profile-auth-secondary">Ubah Email</button>
+    <form id="profileEmailForm" class="space-y-3 gm-profile-email-form" hidden>
+        <label class="field-label" for="profileEmailNew">Email baru<input id="profileEmailNew" name="profileEmailNew" type="email" autocomplete="email" required maxlength="254" placeholder="nama@contoh.com"></label>
+        <p class="assessment-help">Ikuti instruksi verifikasi yang dikirim oleh sistem autentikasi. Email login baru aktif setelah proses konfirmasi selesai.</p>
+        <div class="profile-actions-row gm-profile-auth-actions">
+            <button id="profileEmailSave" type="submit" class="primary-action">Kirim Verifikasi</button>
+            <button id="profileEmailCancel" type="button" class="secondary-action">Batal</button>
+        </div>
+    </form>
+    <p id="profileEmailFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+    <p id="profileEmailPending" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+</div>
 <form class="space-y-4 profile-identity-form" id="profileForm">
-<label class="field-label" for="profileEmail">Email akun<input autocomplete="email" id="profileEmail" name="profileEmail" readonly="" type="email"/></label>
 <label class="field-label" for="profileName">Nama profil<input autocomplete="name" id="profileName" maxlength="160" name="profileName" placeholder="Contoh: Pak Ahmad"/></label>
 <p class="assessment-help">Nama profil hanya digunakan untuk sapaan dan identitas akun. Nama resmi guru pada rapor tidak berubah.</p>
 <button class="primary-action" type="submit">Simpan Profil</button>
         <p id="profileIdentityFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
 </form>
+<div id="profileGoogleCard" class="profile-google-card">
+    <div class="gm-profile-auth-heading"><strong>Login dengan Google</strong><p>Tautkan akun Google pribadi agar Anda dapat masuk tanpa username dan password Gemar Mengaji. Anda harus sudah login ke akun ini.</p></div>
+    <p id="profileGoogleStatus" class="assessment-help" role="status" aria-live="polite">Memeriksa status akun Google...</p>
+    <button id="profileGoogleLinkButton" type="button" class="secondary-action gm-profile-auth-secondary">Hubungkan Akun Google</button>
+    <p id="profileGoogleIdentityFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+</div>
 <div class="profile-username-section">
     <div class="profile-subheading"><strong>Username Login</strong><p>Opsional. Anda dapat masuk menggunakan email maupun username yang tersimpan.</p></div>
     <form id="profileUsernameForm" class="profile-username-form space-y-3">
