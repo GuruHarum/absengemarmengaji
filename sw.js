@@ -1,4 +1,4 @@
-const VERSION = 'redesign-panels-20261029i';
+const VERSION = 'redesign-panels-20261029j';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
