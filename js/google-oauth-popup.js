@@ -147,7 +147,9 @@
                     if (popup.closed) throw new Error('Jendela Google sudah ditutup sebelum proses dimulai.');
                     popup.location.replace(url);
                     try { popup.focus(); } catch (_) {}
-                    return await resultPromise;
+                    const result = await resultPromise;
+                    try { if (!popup.closed) popup.close(); } catch (_) {}
+                    return result;
                 } catch (error) {
                     if (!settled) {
                         settled = true;
