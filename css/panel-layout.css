@@ -576,3 +576,43 @@
     }
   }
 }
+
+
+/* Penilaian Periodik: hilangkan bingkai luar pada ringkasan agar KPI tidak tampak sebagai card di dalam card. */
+@media screen {
+  body.admin-page #page-penilaian .assessment-summary {
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div {
+    min-width: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--assessment-line);
+    border-radius: 12px;
+    background: #f8fbf8;
+    box-shadow: none;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child {
+    background: #216454;
+    color: #fff;
+    border-color: #216454;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+    color: #fff;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:last-of-type {
+    border-right: 1px solid var(--assessment-line);
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian .assessment-summary {
+      gap: 8px;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div {
+      padding: 13px;
+    }
+  }
+}
