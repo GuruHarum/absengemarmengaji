@@ -1,5 +1,5 @@
 (() => {
-    const version = '20261029-profile2';
+    const version = '20261029-google-popup1';
     const core = ['admin-notices','class-picker','quran-surahs','report-reference','report-core','assessments-core','teacher-photo','profile','push-notifications','notifications','attention-center','dashboard','rev46-experience','admin','api'];
     const definitions = {
         curriculum: { files: ['curriculum-targets'] },

@@ -9,7 +9,22 @@
 <link rel="stylesheet" href="/css/theme.css">
 <link rel="stylesheet" href="/css/visual-stage8.css?v=20260929-loader35">
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 10%,#edf5ef 0,#faf9f4 42%,#faf9f4 100%);color:#203e35;font-family:Arial,sans-serif}.offline-card{width:min(430px,100%);padding:30px 26px;text-align:center;border:1px solid #dce6df;border-radius:26px;background:rgba(255,255,255,.9);box-shadow:0 18px 55px rgba(25,68,56,.11)}img{width:82px;height:82px;object-fit:contain;margin-bottom:12px}h1{font-size:22px;margin:0 0 8px}p{margin:0 auto 20px;max-width:330px;color:#60736c;line-height:1.65;font-size:14px}.offline-state{display:inline-flex;align-items:center;gap:7px;margin-bottom:18px;padding:6px 10px;border-radius:999px;background:#fff5d8;color:#755b10;font-size:11px;font-weight:700}.offline-state:before{content:"";width:7px;height:7px;border-radius:50%;background:#d59d1c}button{min-height:42px;padding:0 18px;border:0;border-radius:12px;background:#216454;color:#fff;font:700 13px Arial,sans-serif;cursor:pointer}small{display:block;margin-top:15px;color:#89968f;font-size:11px}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% 0%,rgba(209,181,129,.12),transparent 42%),linear-gradient(145deg,#0d2e23,#174c3a 58%,#102e24);color:#f7f5ed;font-family:Poppins,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.offline-card{width:min(440px,100%);padding:clamp(24px,6vw,34px);text-align:center;border:1px solid rgba(209,181,129,.38);border-radius:22px;background:rgba(20,61,46,.94);box-shadow:0 22px 70px rgba(0,0,0,.24)}
+.offline-card>img{width:76px;height:76px;object-fit:contain;margin:0 auto 17px;padding:8px;border:1px solid rgba(209,181,129,.55);border-radius:18px;background:#fdfcf7}
+h1{font-size:clamp(20px,5vw,24px);line-height:1.35;letter-spacing:-.025em;margin:0 0 10px;color:#fffdf5}
+p{margin:0 auto 21px;max-width:330px;color:#d0dfd2;line-height:1.75;font-size:13px}
+.offline-state{display:inline-flex;align-items:center;gap:8px;margin-bottom:17px;padding:7px 11px;border:1px solid rgba(209,181,129,.35);border-radius:999px;background:rgba(209,181,129,.1);color:#f0d7a1;font-size:11px;font-weight:700}
+.offline-state:before{content:"";width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#d1b581}
+button{min-height:45px;padding:0 20px;border:1px solid #d1b581;border-radius:11px;background:#f7f5ed;color:#174c3a;font:700 13px Poppins,system-ui,sans-serif;cursor:pointer;transition:background .18s ease,transform .18s ease}
+button:hover{background:#e9e6d9}button:active{transform:scale(.98)}button:focus-visible{outline:2px solid #f0d7a1;outline-offset:3px}
+small{display:block;margin-top:16px;color:#b9cdbd;font-size:11px;line-height:1.7}
+.offline-card .site-footer{margin-top:24px;padding-top:16px;border-top:1px solid rgba(220,230,216,.16);color:#b9cdbd}
+.offline-card .site-footer p{margin:0 auto 4px;color:inherit;font-size:10px;line-height:1.6}
+.offline-card .site-footer .site-footer-credit{color:#f0d7a1}
+@media(max-width:380px){.offline-card{padding:23px 18px;border-radius:18px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
 </style>
     <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
 </head>

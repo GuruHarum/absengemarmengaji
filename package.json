@@ -5,7 +5,8 @@
     "build": "node scripts/build-static.cjs",
     "test:performance": "node --test tests/panel-performance.test.cjs tests/panel-css-bundle.test.cjs tests/static-optimization.test.cjs tests/panel-fragments.test.cjs tests/data-performance.test.cjs tests/image-performance.test.cjs",
     "check:compression": "node scripts/check-live-performance.cjs",
-    "test:panel-dom": "node --test tests/panel-dom.test.cjs"
+    "test:panel-dom": "node --test tests/panel-dom.test.cjs",
+    "test:oauth-popup": "node --test tests/google-oauth-popup.test.cjs"
   },
   "devDependencies": {
     "esbuild": "0.25.9",

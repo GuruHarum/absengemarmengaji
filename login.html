@@ -8,7 +8,31 @@
     <link rel="stylesheet" href="css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
+    <script src="js/google-oauth-popup.js?v=20261029-popup5"></script>
     <style>
+        .gm-login-success-screen {
+            position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+            padding: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            opacity: 0; visibility: hidden; transition: opacity .22s ease, visibility .22s ease;
+        }
+        .gm-login-success-screen.is-visible { opacity: 1; visibility: visible; }
+        .gm-login-success-card {
+            width: min(100%, 360px); padding: 30px 24px; border-radius: 22px; text-align: center;
+            background: #fff; box-shadow: 0 18px 55px rgba(15, 23, 42, .12);
+        }
+        .gm-login-success-icon {
+            display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 18px;
+            border-radius: 50%; background: #dcfce7; color: #15803d;
+        }
+        .gm-login-success-spinner {
+            width: 20px; height: 20px; border: 2px solid #dbeafe; border-top-color: #2563eb;
+            border-radius: 50%; animation: gm-login-spin .75s linear infinite;
+        }
+        @keyframes gm-login-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) {
+            .gm-login-success-screen { transition: none; }
+            .gm-login-success-spinner { animation-duration: 2s; }
+        }
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body {
             font-family: 'Poppins', sans-serif;
@@ -21,6 +45,34 @@
     <link rel="stylesheet" href="css/layout-responsive.css?v=20260928-account-link-4">
     <link rel="stylesheet" href="css/visual-stage8.css?v=20260930-login2">
     <link rel="stylesheet" href="css/site-footer.css?v=20260930-footer2">
+
+<style id="gm-login-theme-refinement">
+/* Penyelarasan login dengan identitas hijau-emas Gemar Mengaji. */
+body.login-page{background:radial-gradient(ellipse at 50% 0%,rgba(199,220,190,.32),transparent 48%),linear-gradient(145deg,#f5f8f3 0%,#edf4ee 54%,#faf8f1 100%);color:#1d4536}
+body.login-page .login-card{border:1px solid #d8e5d9;border-radius:22px;box-shadow:0 22px 65px rgba(21,67,48,.12);overflow:hidden}
+body.login-page .login-card>div:first-child{background:linear-gradient(135deg,#174c3a,#216454 62%,#2e7359);padding-top:28px;padding-bottom:28px}
+body.login-page .login-card>div:first-child .text-blue-100{color:#dce9d7}
+body.login-page .login-card form{padding:clamp(20px,5vw,28px)}
+body.login-page label{color:#365748}
+body.login-page input{min-height:46px;border-color:#cbdacf;border-radius:11px;color:#234a39}
+body.login-page input:focus{--tw-ring-color:#35866a;border-color:#35866a}
+body.login-page form>button[type=submit]{min-height:47px;background:#216454;color:#fff;box-shadow:0 5px 13px rgba(33,100,84,.16)}
+body.login-page form>button[type=submit]:hover{background:#174c3a}
+body.login-page #googleLoginBtn{min-height:47px;border-color:#cbdacf;border-radius:11px;color:#294c3d}
+body.login-page #googleLoginBtn:hover{background:#f3f8f3;border-color:#a9c5b1}
+body.login-page #errorMessage{border-radius:11px;line-height:1.55}
+body.login-page a:hover{color:#216454}
+.gm-login-success-screen{background:radial-gradient(ellipse at 50% 0%,rgba(199,220,190,.28),transparent 48%),linear-gradient(145deg,#0e3025,#174c3a 60%,#102d24);padding:max(20px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom))}
+.gm-login-success-card{border:1px solid rgba(209,181,129,.38);background:#fdfcf7;color:#204637;box-shadow:0 25px 80px rgba(0,0,0,.24);border-radius:22px}
+.gm-login-success-icon{background:#e4eee1;color:#216454}
+.gm-login-success-spinner{border-color:#dbe8dc;border-top-color:#216454}
+.gm-login-success-card .text-gray-900{color:#204637}
+.gm-login-success-card .text-gray-600{color:#63796b}
+.gm-login-success-card .text-blue-700{color:#216454}
+@media(max-width:420px){body.login-page{padding:14px}body.login-page .login-card{border-radius:18px}body.login-page .login-card form{padding:20px}.gm-login-success-card{padding:26px 20px}}
+@media(prefers-reduced-motion:reduce){body.login-page *, .gm-login-success-screen, .gm-login-success-spinner{transition:none!important;animation-duration:2s!important}}
+</style>
+
 </head>
 <body class="login-page min-h-screen flex items-center justify-center p-4">
 
@@ -99,6 +151,22 @@
 </footer>
     </div>
 
+    <section id="googleLoginSuccessScreen" class="gm-login-success-screen" role="status" aria-live="polite" aria-hidden="true">
+        <div class="gm-login-success-card">
+            <div class="gm-login-success-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m5 12 4 4L19 6"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900">Verifikasi berhasil</h2>
+            <p class="mt-2 text-sm text-gray-600">Akun Anda sudah terverifikasi.</p>
+            <div class="mt-5 flex items-center justify-center gap-3 text-sm font-medium text-blue-700">
+                <span class="gm-login-success-spinner" aria-hidden="true"></span>
+                <span>Masuk ke beranda…</span>
+            </div>
+        </div>
+    </section>
+
     <script>
         supabase.from('school_profile').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
             if (!data) return;
@@ -168,80 +236,86 @@
             if (googleLoginText) googleLoginText.textContent = 'Masuk dengan Google';
         };
 
-        async function handleGoogleLoginReturn() {
-            if (sessionStorage.getItem('gm_google_login_pending') !== '1') return;
-            const params = new URLSearchParams(window.location.search);
-            const oauthError = params.get('error_description') || params.get('error');
-            if (oauthError) {
-                sessionStorage.removeItem('gm_google_login_pending');
-                showLoginError('Login Google belum berhasil. Silakan coba lagi atau masuk menggunakan email/username dan password.');
-                return;
-            }
-
-            try {
-                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) throw sessionError;
-                const session = sessionData?.session;
-                if (!session) {
-                    sessionStorage.removeItem('gm_google_login_pending');
-                    return;
-                }
-                sessionStorage.removeItem('gm_google_login_pending');
-
-                const { data: userData, error: userError } = await supabase.auth.getUser();
-                const user = userData?.user;
-                if (userError || !user) throw userError || new Error('Sesi Google belum tersedia. Silakan coba kembali.');
-                const linkedGoogle = Array.isArray(user.identities) && user.identities.some(identity => identity.provider === 'google');
-                if (!linkedGoogle) {
-                    await supabase.auth.signOut({ scope: 'local' });
-                    throw new Error('Akun Google ini belum ditautkan. Masuk dahulu dengan akun Gemar Mengaji, lalu buka Profil dan pilih Hubungkan Akun Google.');
-                }
-
-                const { data: access, error: accessError } = await supabase
-                    .from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
-                if (accessError || !access || !['admin', 'koordinator', 'guru'].includes(access.role)) {
-                    await supabase.auth.signOut({ scope: 'local' });
-                    throw new Error('Akun Google belum terhubung dengan hak akses Gemar Mengaji. Masuk dengan akun biasa dan tautkan Google melalui Profil.');
-                }
-
-                googleErrorDiv.classList.add('hidden');
-                sessionStorage.setItem('gm_login_transition', '1');
-                window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
-            } catch (error) {
-                showLoginError(error.message || 'Login Google gagal. Silakan gunakan metode login biasa.');
-                resetGoogleButton();
-            }
-        }
-
         googleLoginBtn?.addEventListener('click', async () => {
             if (googleLoginBtn.disabled) return;
             googleErrorDiv.classList.add('hidden');
             googleLoginBtn.disabled = true;
-            if (googleLoginText) googleLoginText.textContent = 'Menghubungkan ke Google...';
-            sessionStorage.setItem('gm_google_login_pending', '1');
+            if (googleLoginText) googleLoginText.textContent = 'Membuka Google...';
+
+            let popupFlow = null;
             try {
-                const { error } = await supabase.auth.signInWithOAuth({
+                if (!window.GMGoogleOAuthPopup?.prepare) {
+                    throw new Error('Modul login Google belum termuat. Muat ulang halaman dan coba lagi.');
+                }
+                popupFlow = window.GMGoogleOAuthPopup.prepare({ mode: 'login' });
+                const popupResult = await popupFlow.start(redirectTo => supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: new URL('login.html', window.location.origin).toString(),
+                        redirectTo,
+                        skipBrowserRedirect: true,
                         queryParams: { prompt: 'select_account' }
                     }
-                });
-                if (error) throw error;
-            } catch (error) {
-                sessionStorage.removeItem('gm_google_login_pending');
-                const detail = String(error?.message || '').toLowerCase();
-                if (detail.includes('provider') && (detail.includes('enabled') || detail.includes('unsupported'))) {
-                    showLoginError('Login Google belum diaktifkan pada pengaturan autentikasi. Silakan masuk dengan email/username dan password untuk sementara.');
-                } else {
-                    showLoginError('Tidak dapat memulai login Google. Coba lagi atau gunakan email/username dan password.');
+                }));
+
+                // The popup validates the Google identity and role. Explicitly install
+                // its verified Supabase session in this tab instead of waiting for a
+                // cross-tab storage event that may never arrive on some browsers.
+                const role = popupResult.role;
+                if (!popupResult.userId || !['admin', 'koordinator', 'guru'].includes(role)) {
+                    throw new Error('Google berhasil dibuka, tetapi hasil verifikasi akses tidak lengkap. Silakan coba kembali.');
                 }
+
+                const accessToken = popupResult.session?.access_token;
+                const refreshToken = popupResult.session?.refresh_token;
+                if (!accessToken || !refreshToken) {
+                    throw new Error('Google berhasil diverifikasi, tetapi sesi login tidak diterima. Muat ulang halaman lalu coba kembali.');
+                }
+
+                const { data: installedSession, error: installError } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                });
+                if (installError) {
+                    throw new Error('Sesi Google belum dapat dipasang pada halaman utama. Silakan coba login kembali.');
+                }
+                if (installedSession?.session?.user?.id !== popupResult.userId) {
+                    try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {}
+                    throw new Error('Identitas sesi tidak cocok dengan akun yang diverifikasi. Silakan coba kembali.');
+                }
+
+                const { data: verifiedData, error: verifiedError } = await supabase.auth.getUser();
+                if (verifiedError || verifiedData?.user?.id !== popupResult.userId) {
+                    try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {}
+                    throw new Error('Sesi Google belum dapat diverifikasi di halaman utama. Silakan coba kembali.');
+                }
+                googleErrorDiv.classList.add('hidden');
+                const successScreen = document.getElementById('googleLoginSuccessScreen');
+                if (successScreen) {
+                    successScreen.setAttribute('aria-hidden', 'false');
+                    successScreen.classList.add('is-visible');
+                }
+                if (googleLoginText) googleLoginText.textContent = 'Verifikasi berhasil, menyiapkan dashboard...';
+                try { sessionStorage.setItem('gm_login_transition', '1'); } catch (_) {}
+                // Briefly show an explicit success state so the redirect feels intentional,
+                // rather than making the user appear to be bounced away from the login page.
+                await new Promise(resolve => setTimeout(resolve, 850));
+                window.location.href = role === 'guru' ? 'guru.html' : 'admin.html';
+            } catch (error) {
+                const detail = String(error?.message || '').toLowerCase();
+                let message = error.message || 'Login Google belum berhasil. Silakan coba lagi.';
+                if (detail.includes('provider') && (detail.includes('enabled') || detail.includes('unsupported'))) {
+                    message = 'Login Google belum diaktifkan pada pengaturan autentikasi. Silakan masuk memakai email/username dan kata sandi.';
+                } else if (detail.includes('popup') && detail.includes('diblokir')) {
+                    message = 'Jendela Google diblokir browser. Izinkan pop-up untuk situs Gemar Mengaji, lalu coba kembali.';
+                }
+                showLoginError(message);
                 resetGoogleButton();
+            } finally {
+                popupFlow?.cancel?.();
             }
         });
-
-        void handleGoogleLoginReturn();
     </script>
+
 
 
 <script src="/js/pwa.js?v=20261001-refine1" defer></script>
