@@ -130,3 +130,134 @@
     body.admin-page .section-heading > :is(.primary-action, .secondary-action) { width: 100%; }
   }
 }
+
+
+/* Identitas sekolah dan pusat pengaturan: selaraskan dengan tema hijau-putih. */
+@media screen {
+  body.admin-page #page-identitas {
+    --identity-ink: #214638;
+    --identity-muted: #64786c;
+    --identity-line: #d9e6dc;
+    --identity-paper: #ffffff;
+    color: var(--identity-ink);
+  }
+
+  body.admin-page #page-identitas .school-identity-header,
+  body.admin-page #page-identitas .school-identity-form,
+  body.admin-page #page-identitas .school-identity-aside {
+    min-width: 0;
+    border: 1px solid var(--identity-line);
+    border-radius: 16px;
+    background: var(--identity-paper);
+    box-shadow: 0 5px 18px rgb(25 67 48 / 4%);
+  }
+
+  body.admin-page #page-identitas .school-identity-header {
+    padding: clamp(16px, 2.2vw, 24px);
+  }
+
+  body.admin-page #page-identitas :is(h2, h3) {
+    color: var(--identity-ink);
+  }
+
+  body.admin-page #page-identitas .section-heading p:not(.section-kicker),
+  body.admin-page #page-identitas .school-identity-aside > p {
+    color: var(--identity-muted);
+  }
+
+  body.admin-page #page-identitas .school-identity-form,
+  body.admin-page #page-identitas .school-identity-aside {
+    padding: clamp(16px, 2.2vw, 24px);
+  }
+
+  body.admin-page #page-identitas .school-identity-form label {
+    color: #405d4d;
+    font-weight: 650;
+  }
+
+  body.admin-page #page-identitas .school-identity-form :is(input:not([type="color"]):not([type="file"]), textarea) {
+    border-color: #cbdcd1;
+    border-radius: 10px;
+    color: #214638;
+    background: #fff;
+  }
+
+  body.admin-page #page-identitas .school-identity-form :is(input, textarea):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+
+  body.admin-page #page-identitas #settingsPreview {
+    border: 1px solid #d9e6dc;
+    border-radius: 14px;
+    background: #f2f7f3 !important;
+    color: #214638 !important;
+  }
+
+  body.admin-page #page-identitas #settingsPreview :is(h3, p) {
+    color: #214638 !important;
+  }
+
+  body.admin-page #page-identitas #settingsPreview p {
+    opacity: .78;
+  }
+
+  body.admin-page #page-identitas #settingsColorPreview {
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgb(33 70 56 / 10%);
+  }
+
+  body.admin-page #page-pengaturan .settings-intro,
+  body.admin-page #page-pengaturan [data-settings-panel] > section {
+    min-width: 0;
+    border-color: var(--gm-border, #dce5dc);
+    border-radius: 16px;
+  }
+
+  body.admin-page #page-pengaturan .settings-hub-button {
+    min-width: 0;
+    text-align: left;
+    border: 1px solid #d9e6dc;
+    border-radius: 12px;
+    background: #fff;
+    color: #214638;
+    transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+  }
+
+  body.admin-page #page-pengaturan .settings-hub-button span {
+    color: #64786c;
+  }
+
+  body.admin-page #page-pengaturan .settings-hub-button:is(.active, [aria-pressed="true"]) {
+    border-color: #8bb6a0;
+    background: #f0f7f2;
+    box-shadow: inset 3px 0 0 #216454;
+  }
+
+  body.admin-page #page-pengaturan :is(input, select, textarea):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    body.admin-page #page-identitas .school-identity-grid {
+      gap: 14px;
+    }
+
+    body.admin-page #page-identitas .school-identity-form,
+    body.admin-page #page-identitas .school-identity-aside {
+      padding: 16px;
+    }
+
+    body.admin-page #page-pengaturan .settings-hub {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.admin-page #page-pengaturan .settings-hub-button {
+      transition: none;
+    }
+  }
+}
