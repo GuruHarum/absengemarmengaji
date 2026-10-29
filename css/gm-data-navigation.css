@@ -187,3 +187,39 @@ body.gm-access-modal-open{overflow:hidden}
   #manageAccessModal .gm-access-footer button{flex:1 1 0}
 }
 @media(prefers-reduced-motion:reduce){#manageAccessModal *{transition:none!important}}
+
+/* Popup tambah akun guru: hanya email dan pilihan data guru. */
+.gm-create-account-dialog {
+  box-sizing: border-box; width: min(92vw, 520px); max-width: min(92vw, 520px);
+  max-height: min(86dvh, 720px); padding: 0; overflow: hidden; border: 1px solid #dce8df;
+  border-radius: 18px; background: #fffefb; color: #234432; box-shadow: 0 24px 75px rgba(11, 35, 24, .25);
+}
+.gm-create-account-dialog::backdrop { background: rgba(10, 29, 22, .62); }
+.gm-create-account-form { display: flex; flex-direction: column; max-height: inherit; }
+.gm-create-account-header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:20px 22px 16px; border-bottom:1px solid #e4ece5; }
+.gm-create-account-header p { margin:0 0 5px; color:#72907c; font-size:9px; font-weight:800; letter-spacing:.15em; }
+.gm-create-account-header h2 { margin:0; color:#204b37; font-size:19px; line-height:1.35; font-weight:750; }
+.gm-create-account-header span { display:block; margin-top:6px; color:#6d8071; font-size:11px; line-height:1.55; }
+.gm-create-account-close { flex:0 0 auto; width:40px; height:40px; border:1px solid #dce7de; border-radius:10px; background:#fff; color:#4b6a55; font-size:24px; line-height:1; cursor:pointer; }
+.gm-create-account-body { display:grid; gap:15px; min-height:0; overflow-y:auto; padding:20px 22px; }
+.gm-create-account-body label { display:flex; flex-direction:column; gap:7px; color:#3e5c49; font-size:12px; font-weight:700; }
+.gm-create-account-body input, .gm-create-account-body select { box-sizing:border-box; width:100%; min-width:0; min-height:46px; border:1px solid #c9dacf; border-radius:10px; padding:11px 12px; background:#fff; color:#214532; font:inherit; font-size:13px; }
+.gm-create-account-body :is(input,select):focus-visible { outline:3px solid rgba(47,118,78,.17); border-color:#4e8a65; }
+.gm-create-account-help { margin:0; padding:12px 13px; border:1px solid #e3eadc; border-radius:10px; background:#f5f8f0; color:#667867; font-size:11px; line-height:1.65; }
+.gm-create-account-help strong { color:#315840; }
+.gm-create-account-feedback { min-height:0; margin:0; color:#3e6650; font-size:12px; line-height:1.55; overflow-wrap:anywhere; }
+.gm-create-account-feedback:empty { display:none; }
+.gm-create-account-feedback[data-error="true"] { color:#a23f32; }
+.gm-create-account-footer { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:9px; padding:14px 22px 18px; border-top:1px solid #e4ece5; background:#fbfdfb; }
+.gm-create-account-footer button { min-height:44px; min-width:112px; padding:10px 16px; border-radius:10px; font-size:12px; font-weight:700; }
+.gm-create-account-footer .primary-action { border:1px solid #216454; background:#216454; color:#fff; }
+.gm-create-account-footer .secondary-action { border:1px solid #cbd9d0; background:#fff; color:#44624f; }
+.gm-create-account-footer button:disabled, .gm-create-account-close:disabled { opacity:.55; cursor:wait; }
+@media(max-width:640px) {
+  .gm-create-account-dialog { position:fixed; inset:auto 0 0; width:100%; max-width:100%; max-height:calc(100dvh - env(safe-area-inset-top) - 8px); margin:0; border-radius:20px 20px 0 0; border-bottom:0; }
+  .gm-create-account-header { padding:17px 17px 14px; }
+  .gm-create-account-body { padding:17px; }
+  .gm-create-account-footer { padding:12px 17px max(14px, env(safe-area-inset-bottom)); }
+  .gm-create-account-footer button { flex:1 1 0; min-width:0; }
+}
+@media(prefers-reduced-motion:reduce) { .gm-create-account-dialog * { transition:none !important; } }

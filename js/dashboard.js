@@ -871,6 +871,7 @@ function switchManageView(view) {
 }
 
 function openManagePrimaryAdd() {
+    if (currentManageTab === 'akun-guru') return openCreateTeacherAccountModal();
     if (currentManageView === 'teachers') return openTeacherEnrollmentModal();
     if (currentManageTab === 'siswa') return openManageModal();
 }
@@ -1012,6 +1013,141 @@ function renderManageTeacherAccounts() {
         '<span class="gm-account-small-info">'+manageEscape(row.username||'Username belum diatur')+' · '+manageEscape(status(row))+'</span></div>'+
         avatar+'<div class="gm-account-actions">'+actions(row)+'</div></article>').join('');
 }
+function gmTeacherEmailSuggestion(name) {
+    return String(name || '').normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().trim()
+        .replace(/[^a-z0-9]+/g, '.')
+        .replace(/^\.+|\.+$/g, '') + '@harum.com';
+}
+
+async function openCreateTeacherAccountModal() {
+    if (!AppAccess.full()) return;
+    gmTeacherAccountsLoaded = false;
+    await loadManageTeacherAccounts();
+    if (!gmTeacherAccountsLoaded) return;
+
+    try {
+        teachersData = await getTeachers();
+    } catch (error) {
+        AdminNotice.notify('Data guru belum dapat dimuat: ' + error.message, 'error');
+        return;
+    }
+    const accountIds = new Set(gmTeacherAccountRows
+        .filter(row => String(row.email || '').trim() || String(row.account_role || '').trim())
+        .map(row => String(row.teacher_id)));
+    const available = (Array.isArray(teachersData) ? teachersData : [])
+        .filter(row => !accountIds.has(String(row.id)));
+    if (!available.length) {
+        AdminNotice.notify('Semua data guru sudah memiliki akun tertaut. Periksa Atur Akses jika ingin mengelola akun yang ada.', 'info');
+        return;
+    }
+
+    const dialog = document.createElement('dialog');
+    dialog.className = 'gm-create-account-dialog';
+    dialog.setAttribute('aria-labelledby', 'gmCreateAccountTitle');
+    dialog.innerHTML = '<form class="gm-create-account-form">' +
+        '<header class="gm-create-account-header">' +
+          '<div><p>AKUN GURU</p><h2 id="gmCreateAccountTitle">Tambah Akun</h2><span>Tautkan akun login baru ke data guru yang sudah ada.</span></div>' +
+          '<button type="button" class="gm-create-account-close" data-close aria-label="Tutup">×</button>' +
+        '</header>' +
+        '<div class="gm-create-account-body">' +
+          '<label for="gmCreateAccountTeacher">Data guru yang ditautkan' +
+            '<select id="gmCreateAccountTeacher" name="teacher_id" required><option value="">Pilih data guru</option></select>' +
+          '</label>' +
+          '<label for="gmCreateAccountEmail">Email login' +
+            '<input id="gmCreateAccountEmail" name="email" type="email" maxlength="254" autocomplete="off" required placeholder="Pilih guru untuk mengisi email default">' +
+          '</label>' +
+          '<p class="gm-create-account-help">Email yang disarankan otomatis hanya sebagai default. Anda bebas menggantinya sebelum akun dibuat. Password awal: <strong>123456</strong>; guru wajib menggantinya setelah login.</p>' +
+          '<p class="gm-create-account-feedback" role="status" aria-live="polite"></p>' +
+        '</div>' +
+        '<footer class="gm-create-account-footer">' +
+          '<button type="button" class="secondary-action" data-close>Batal</button>' +
+          '<button type="submit" class="primary-action">Buat Akun</button>' +
+        '</footer>' +
+      '</form>';
+    const form = dialog.querySelector('form');
+    const teacherSelect = dialog.querySelector('#gmCreateAccountTeacher');
+    const emailInput = dialog.querySelector('#gmCreateAccountEmail');
+    const feedback = dialog.querySelector('.gm-create-account-feedback');
+    const submitButton = form.querySelector('[type="submit"]');
+    let busy = false;
+    let emailTouched = false;
+    let lastGeneratedEmail = '';
+
+    available.sort((a, b) => String(a.nama || '').localeCompare(String(b.nama || ''), 'id'));
+    available.forEach(teacher => {
+        const type = teacher.attendance_enabled === false ? 'Tahfidz' : 'Tahsin';
+        const full = String(teacher.nama_lengkap || '').trim();
+        const suffix = full && full !== teacher.nama ? ' · ' + full : '';
+        teacherSelect.add(new Option(String(teacher.nama || 'Nama guru belum diisi') + suffix + ' (' + type + ')', String(teacher.id)));
+    });
+
+    teacherSelect.addEventListener('change', () => {
+        const teacher = available.find(row => String(row.id) === teacherSelect.value);
+        const suggestion = teacher ? gmTeacherEmailSuggestion(teacher.nama) : '';
+        const canReplace = !emailTouched || emailInput.value === lastGeneratedEmail || !emailInput.value;
+        if (canReplace) {
+            emailInput.value = suggestion;
+            emailTouched = false;
+        }
+        lastGeneratedEmail = suggestion;
+    });
+    emailInput.addEventListener('input', () => {
+        emailTouched = Boolean(emailInput.value && emailInput.value !== lastGeneratedEmail);
+    });
+
+    const close = () => { if (dialog.open) dialog.close(); };
+    dialog.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', close));
+    dialog.addEventListener('click', event => { if (event.target === dialog) close(); });
+    dialog.addEventListener('close', () => dialog.remove());
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (busy || !AppAccess.full() || !form.reportValidity()) return;
+        const teacherId = teacherSelect.value;
+        const selectedTeacher = available.find(row => String(row.id) === teacherId);
+        const email = emailInput.value.trim();
+        if (!selectedTeacher) {
+            feedback.textContent = 'Pilih data guru yang akan ditautkan.';
+            feedback.dataset.error = 'true';
+            return;
+        }
+        busy = true;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Membuat akun...';
+        form.querySelectorAll('[data-close]').forEach(button => button.disabled = true);
+        feedback.textContent = 'Membuat akun dan memeriksa tautan guru...';
+        feedback.dataset.error = 'false';
+        try {
+            const { data, error } = await supabase.functions.invoke('create-teacher-account', {
+                body: { manual_email: true, email, teacher_id: teacherId }
+            });
+            if (error) {
+                let detail;
+                try { detail = await error.context?.json(); } catch (_) {}
+                throw new Error(detail?.error || error.message || 'Akun belum berhasil dibuat.');
+            }
+            if (!data?.ok) throw new Error(data?.error || 'Pembuatan akun belum terkonfirmasi.');
+            close();
+            gmTeacherAccountsLoaded = false;
+            await loadManageTeacherAccounts();
+            AdminNotice.notify('Akun ' + (data.email || email) + ' berhasil dibuat dan ditautkan ke ' +
+                selectedTeacher.nama + '. Password awal: 123456. Guru wajib menggantinya setelah login.', 'success');
+        } catch (error) {
+            feedback.textContent = error.message || 'Akun belum berhasil dibuat. Periksa email dan status tautan guru.';
+            feedback.dataset.error = 'true';
+        } finally {
+            busy = false;
+            submitButton.disabled = false;
+            submitButton.textContent = 'Buat Akun';
+            form.querySelectorAll('[data-close]').forEach(button => button.disabled = false);
+        }
+    });
+    document.body.appendChild(dialog);
+    dialog.showModal();
+    teacherSelect.focus();
+}
+
 function closeManageAccountEditor() {
     const overlay=document.getElementById('manageAccessModal');
     if(!overlay||overlay.classList.contains('hidden'))return;
@@ -1367,6 +1503,12 @@ function switchManageTab(tab) {
         button.setAttribute('aria-pressed', String(active));
         button.classList.toggle('active', active);
     });
+    const addButton = document.getElementById('manageAddBtn');
+    if (addButton) {
+        addButton.hidden = currentManageTab === 'impor';
+        addButton.textContent = currentManageTab === 'akun-guru' ? 'Tambah Akun' :
+            currentManageTab === 'siswa' ? 'Tambah Siswa' : 'Tambah Guru';
+    }
     renderManageTable();
     if (currentManageTab === 'akun-guru') void loadManageTeacherAccounts();
 }
