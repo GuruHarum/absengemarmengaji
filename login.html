@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
-    <script src="js/google-oauth-popup.js?v=20261029-popup2"></script>
+    <script src="js/google-oauth-popup.js?v=20261029-popup3"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body {
@@ -190,22 +190,18 @@
                     }
                 }));
 
-                const { data: userData, error: userError } = await supabase.auth.getUser();
-                const user = userData?.user;
-                if (userError || !user || user.id !== popupResult.userId) {
-                    throw userError || new Error('Sesi Google belum tersedia pada halaman utama. Silakan coba kembali.');
-                }
-                const { data: access, error: accessError } = await supabase
-                    .from('user_roles').select('role,teacher_id').eq('user_id', user.id).maybeSingle();
-                if (accessError || !access || !['admin', 'koordinator', 'guru'].includes(access.role)
-                    || (access.role === 'guru' && !access.teacher_id)) {
-                    await supabase.auth.signOut({ scope: 'local' });
-                    throw new Error('Akun Google belum memiliki akses Gemar Mengaji yang valid. Gunakan akun yang telah dibuat dan ditautkan oleh pengelola sekolah.');
+                // The popup callback has already verified the Google session, identity,
+                // and user_roles. Do not re-check auth.getUser() in this tab here:
+                // its local session can lag behind the successful popup result.
+                const role = popupResult.role;
+                if (!popupResult.userId || !['admin', 'koordinator', 'guru'].includes(role)) {
+                    throw new Error('Google berhasil dibuka, tetapi hasil verifikasi akses tidak lengkap. Silakan coba kembali.');
                 }
 
                 googleErrorDiv.classList.add('hidden');
+                if (googleLoginText) googleLoginText.textContent = 'Verifikasi berhasil, menyiapkan dashboard...';
                 try { sessionStorage.setItem('gm_login_transition', '1'); } catch (_) {}
-                window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
+                window.location.href = role === 'guru' ? 'guru.html' : 'admin.html';
             } catch (error) {
                 const detail = String(error?.message || '').toLowerCase();
                 let message = error.message || 'Login Google belum berhasil. Silakan coba lagi.';
