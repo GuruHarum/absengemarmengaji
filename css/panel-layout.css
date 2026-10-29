@@ -296,3 +296,28 @@
   }
   @media (prefers-reduced-motion:reduce) { body.admin-page #page-kelola .gm-local-nav-button { transition:none; } }
 }
+
+
+/* Kelola Data: dekatkan judul dengan aksi utama, jangan renggang ke tepi kanan. */
+@media screen {
+  body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading {
+    justify-content: flex-start;
+    column-gap: 16px;
+  }
+  body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading > div {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading #manageAddBtn {
+    margin-left: 0;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading {
+      justify-content: flex-start;
+      gap: 10px;
+    }
+    body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading > div {
+      flex: 0 1 auto;
+    }
+  }
+}
