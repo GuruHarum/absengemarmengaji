@@ -162,20 +162,8 @@ html.gm-login-transition body.admin-page{background:#f4f8f4!important}
 <link rel="stylesheet" href="/css/gm-data-navigation.css?v=20261023-archive-light3">
 <link rel="stylesheet" href="/css/gm-learning-navigation.css?v=20261022b">
 <link rel="stylesheet" href="/css/gm-assessment-refinement.css?v=20261022d">
-    <style id="gm-profile-auth-styles">
-.gm-profile-email-panel,.profile-google-card{display:grid;gap:12px;margin:0 0 18px;padding:17px;border:1px solid #dce8e1;border-radius:15px;background:#fbfdfb;min-width:0}
-.gm-profile-auth-heading strong{display:block;color:#244a39;font-size:13px;font-weight:700}
-.gm-profile-auth-heading p{margin:5px 0 0;color:#6b7e72;font-size:12px;line-height:1.65}
-.gm-profile-email-panel .field-label{display:grid;gap:7px}
-.gm-profile-email-panel .field-label input{width:100%;min-width:0;min-height:43px;padding:10px 12px;border:1px solid #cadbd0;border-radius:10px;background:#f3f7f4;color:#52685a;font-size:13px}
-.gm-profile-email-panel .field-label input:focus{outline:2px solid #7aa891;outline-offset:1px}
-.gm-profile-auth-secondary{justify-self:start;min-height:42px;padding:10px 15px;border:1px solid #c9dcd0;border-radius:10px;background:#fff;color:#216454;font-size:12px;font-weight:650}
-.gm-profile-auth-secondary:hover{background:#edf6f0}
-.gm-profile-auth-actions{display:flex;flex-wrap:wrap;gap:9px}
-.gm-profile-auth-actions button{min-height:42px}
-.profile-google-card [hidden],.gm-profile-email-panel [hidden]{display:none!important}
-@media(max-width:640px){.gm-profile-email-panel,.profile-google-card{padding:14px;border-radius:12px}.gm-profile-auth-secondary{width:100%;justify-content:center}.gm-profile-auth-actions{display:grid;grid-template-columns:1fr 1fr}.gm-profile-auth-actions button{min-width:0;padding-inline:8px}}
-</style>
+    
+    <link rel="stylesheet" href="css/profile-redesign.css?v=20261029-profile1">
 </head>
 <body class="admin-page sidebar-collapsed gm-preboot-pending flex min-h-screen overflow-x-hidden" data-panel="teacher">
 <div aria-label="Memuat panel guru" aria-live="polite" class="islamic-loader" id="loadingIndicator" role="status">
@@ -499,86 +487,194 @@ html.gm-login-transition body.admin-page{background:#f4f8f4!important}
 </div>
 </div>
 <div class="hidden space-y-4" id="page-dashboard"></div>
-<div class="hidden profile-settings-grid" id="page-profil" data-profile-section="account">
-<nav class="gm-profile-tabs" role="tablist" aria-label="Pengaturan profil">
-<button type="button" class="active" data-profile-tab="account" aria-selected="true" role="tab">Profil &amp; Username</button>
-<button type="button" data-profile-tab="security" aria-selected="false" role="tab">Ubah Password</button>
-</nav>
-<section class="assessment-controls profile-main-card">
-<div class="profile-section-heading"><div><p class="section-kicker">IDENTITAS AKUN</p><h2>Profil Saya</h2><p>Atur nama yang tampil pada dashboard dan foto profil akun Anda.</p></div></div>
-<div id="pwaProfileInstallSlot" aria-label="Pemasangan aplikasi"></div>
-<p aria-live="polite" class="assessment-feedback" id="profileFeedback" role="status"></p>
-<div class="profile-photo-card" id="profileTeacherCard">
-<div aria-hidden="true" class="profile-photo-preview"><img alt="" hidden="" id="profilePhotoPreview"/><span id="profilePhotoInitials">A</span></div>
-<div class="profile-photo-copy"><strong id="profileTeacherName">Akun Gemar Mengaji</strong><span id="profileTeacherMeta">Foto profil mengikuti data guru yang tertaut.</span>
-<div class="profile-photo-actions" id="profilePhotoActions">
-<label class="secondary-action profile-file-action" for="profilePhotoFile">Pilih Foto</label>
-<input accept="image/jpeg,image/png,image/webp" hidden="" id="profilePhotoFile" name="profilePhotoFile" type="file"/>
-<button class="primary-action" id="profilePhotoSave" type="button">Simpan Foto</button>
-<button class="profile-danger-link" id="profilePhotoRemove" type="button">Hapus Foto</button>
-</div>
-<p class="assessment-help" id="profilePhotoHint">JPG, PNG atau WebP. Maksimal 2 MB.</p>
-            <p id="profilePhotoFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-</div>
-</div>
-<div class="gm-profile-email-panel" id="profileEmailSettings">
-    <div class="gm-profile-auth-heading"><strong>Email akun</strong><p>Email ini digunakan untuk login. Perubahan alamat dilakukan oleh pemilik akun dan perlu mengikuti verifikasi email.</p></div>
-    <label class="field-label" for="profileEmail">Email login saat ini<input id="profileEmail" name="profileEmail" type="email" readonly autocomplete="email"></label>
-    <button id="profileEmailEdit" type="button" class="secondary-action gm-profile-auth-secondary">Ubah Email</button>
-    <form id="profileEmailForm" class="space-y-3 gm-profile-email-form" hidden>
-        <label class="field-label" for="profileEmailNew">Email baru<input id="profileEmailNew" name="profileEmailNew" type="email" autocomplete="email" required maxlength="254" placeholder="nama@contoh.com"></label>
-        <p class="assessment-help">Ikuti instruksi verifikasi yang dikirim oleh sistem autentikasi. Email login baru aktif setelah proses konfirmasi selesai.</p>
-        <div class="profile-actions-row gm-profile-auth-actions">
-            <button id="profileEmailSave" type="submit" class="primary-action">Kirim Verifikasi</button>
-            <button id="profileEmailCancel" type="button" class="secondary-action">Batal</button>
+<div id="page-profil" class="hidden profile-settings-grid gm-profile-redesign" data-profile-section="account">
+    <header class="gm-profile-page-heading">
+        <div>
+            <h2>Profil Saya</h2>
+            <p>Kelola informasi akun dan pengaturan login Anda.</p>
         </div>
-    </form>
-    <p id="profileEmailFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-    <p id="profileEmailPending" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-</div>
-<form class="space-y-4 profile-identity-form" id="profileForm">
-<label class="field-label" for="profileName">Nama profil<input autocomplete="name" id="profileName" maxlength="160" name="profileName" placeholder="Contoh: Pak Ahmad"/></label>
-<p class="assessment-help">Nama profil hanya digunakan untuk sapaan dan identitas akun. Nama resmi guru pada rapor tidak berubah.</p>
-<button class="primary-action" type="submit">Simpan Profil</button>
-        <p id="profileIdentityFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-</form>
-<div id="profileGoogleCard" class="profile-google-card">
-    <div class="gm-profile-auth-heading"><strong>Login dengan Google</strong><p>Tautkan akun Google pribadi agar Anda dapat masuk tanpa username dan password Gemar Mengaji. Anda harus sudah login ke akun ini.</p></div>
-    <p id="profileGoogleStatus" class="assessment-help" role="status" aria-live="polite">Memeriksa status akun Google...</p>
-    <button id="profileGoogleLinkButton" type="button" class="secondary-action gm-profile-auth-secondary">Hubungkan Akun Google</button>
-    <p id="profileGoogleIdentityFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-</div>
-<div class="profile-username-section">
-    <div class="profile-subheading"><strong>Username Login</strong><p>Opsional. Anda dapat masuk menggunakan email maupun username yang tersimpan.</p></div>
-    <form id="profileUsernameForm" class="profile-username-form space-y-3">
-        <label class="field-label" for="profileUsername">Username untuk login
-            <input id="profileUsername" type="text" autocomplete="username" minlength="3" maxlength="30" pattern="[a-z][a-z0-9._]{2,29}" placeholder="Contoh: bagus">
-        </label>
-        <p class="assessment-help">Gunakan 3–30 karakter, dimulai huruf kecil. Diperbolehkan angka, titik dan garis bawah.</p>
-        <div class="profile-actions-row">
-            <button id="profileUsernameSave" class="primary-action" type="submit">Simpan Username</button>
-            <button id="profileUsernameRemove" class="secondary-action profile-danger-action" type="button" hidden>Hapus Username</button>
+    </header>
+
+    <p id="profileFeedback" class="assessment-feedback gm-profile-message" role="status" aria-live="polite" hidden></p>
+
+    <section class="gm-profile-card gm-profile-identity-card" aria-labelledby="gmProfileIdentityTitle">
+        <div class="gm-profile-card-heading">
+            <div>
+                <p class="section-kicker">IDENTITAS AKUN</p>
+                <h3 id="gmProfileIdentityTitle">Informasi Akun</h3>
+                <p>Atur nama tampilan dan foto profil. Nama resmi guru pada rapor tidak berubah.</p>
+            </div>
         </div>
-        <p id="profileUsernameFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-    </form>
-</div>
-<div class="profile-push-card" hidden="" id="profilePushCard">
-<div aria-hidden="true" class="profile-push-icon"><svg fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-<div class="profile-push-copy"><strong>Notifikasi perangkat</strong><span id="profilePushStatus">Belum aktif</span></div>
-<div class="profile-push-actions"><button class="secondary-action" id="profilePushEnable" type="button">Aktifkan</button><button class="profile-danger-link" hidden="" id="profilePushDisable" type="button">Nonaktifkan</button></div>
-</div>
-</section>
-<section class="assessment-controls profile-security-card">
-<div class="profile-section-heading"><div><p class="section-kicker">KEAMANAN AKUN</p><h2>Ubah Password</h2><p>Perbarui password akun tanpa mengubah data guru.</p></div></div>
-<form class="space-y-4" id="passwordForm">
-<label class="field-label" for="profilePassword">Password baru<input autocomplete="new-password" id="profilePassword" name="profilePassword" required="" type="password"/></label>
-<label class="field-label" for="profileConfirm">Ulangi password baru<input autocomplete="new-password" id="profileConfirm" name="profileConfirm" required="" type="password"/></label>
-<p class="assessment-help">Gunakan password pilihan Anda. Ganti password sementara yang diberikan koordinator.</p>
-<label class="field-label" for="profileNonce">Kode verifikasi (jika diminta)<input autocomplete="one-time-code" id="profileNonce" name="profileNonce"/></label>
-<div class="profile-security-actions"><button class="secondary-action" id="profileReauthenticate" type="button">Kirim kode verifikasi</button><button class="primary-action" type="submit">Ubah Password</button></div>
-        <p id="profilePasswordFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
-</form>
-</section>
+
+        <div id="profileTeacherCard" class="profile-photo-card">
+            <div class="profile-photo-preview" aria-hidden="true">
+                <img id="profilePhotoPreview" alt="" hidden>
+                <span id="profilePhotoInitials">A</span>
+            </div>
+            <div class="profile-photo-copy">
+                <strong id="profileTeacherName">Akun Gemar Mengaji</strong>
+                <span id="profileTeacherMeta">Foto profil mengikuti data guru yang tertaut.</span>
+                <div id="profilePhotoActions" class="profile-photo-actions">
+                    <label for="profilePhotoFile" class="secondary-action profile-file-action">Pilih Foto</label>
+                    <input id="profilePhotoFile" name="profilePhotoFile" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+                    <button id="profilePhotoSave" type="button" class="primary-action">Simpan Foto</button>
+                    <button id="profilePhotoRemove" type="button" class="profile-danger-link">Hapus Foto</button>
+                </div>
+                <p id="profilePhotoHint" class="assessment-help">JPG, PNG atau WebP. Maksimal 2 MB.</p>
+                <p id="profilePhotoFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+            </div>
+        </div>
+
+        <form id="profileForm" class="gm-profile-name-form">
+            <label class="field-label gm-profile-field" for="profileName">Nama profil
+                <input id="profileName" name="profileName" maxlength="160" autocomplete="name" placeholder="Contoh: Pak Ahmad">
+            </label>
+            <button type="submit" class="primary-action">Simpan Profil</button>
+            <p class="assessment-help gm-profile-help">Nama profil hanya digunakan untuk sapaan dan identitas akun.</p>
+            <p id="profileIdentityFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+        </form>
+    </section>
+
+    <section class="gm-profile-card gm-profile-login-card" aria-labelledby="gmProfileLoginTitle">
+        <div class="gm-profile-card-heading">
+            <div>
+                <p class="section-kicker">AKSES AKUN</p>
+                <h3 id="gmProfileLoginTitle">Login &amp; Keamanan</h3>
+                <p>Kelola metode login, username, dan kata sandi Anda.</p>
+            </div>
+        </div>
+
+        <div id="profileGoogleCard" class="gm-profile-setting-row profile-google-card">
+            <span class="gm-profile-setting-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48" role="img" aria-label="Google">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.04 13.22l7.98 6.19C11.91 13.72 17.46 9.5 24 9.5z" transform="translate(0 4)"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.76 7.18l7.73 6C44.42 38.04 46.98 31.91 46.98 24.55z"/>
+                    <path fill="#FBBC05" d="M10.02 28.7a14.4 14.4 0 0 1 0-9.4l-7.98-6.19a24 24 0 0 0 0 21.78z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.14 1.44-4.88 2.3-8.18 2.3-6.54 0-12.09-4.22-13.98-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </svg>
+            </span>
+            <div class="gm-profile-setting-body">
+                <strong>Akun Google</strong>
+                <p id="profileGoogleStatus" role="status" aria-live="polite">Memeriksa status akun Google...</p>
+            </div>
+            <button id="profileGoogleLinkButton" type="button" class="secondary-action gm-profile-auth-secondary">Hubungkan Akun Google</button>
+            <p id="profileGoogleIdentityFeedback" class="profile-local-feedback gm-profile-auth-feedback" role="status" aria-live="polite" hidden></p>
+        </div>
+
+        <div class="gm-profile-username-wrap">
+            <div class="gm-profile-setting-row">
+                <span class="gm-profile-setting-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>
+                </span>
+                <div class="gm-profile-setting-body">
+                    <strong>Username login</strong>
+                    <p>Opsional. Anda tetap dapat masuk memakai email.</p>
+                </div>
+            </div>
+            <form id="profileUsernameForm" class="gm-profile-setting-form profile-username-form">
+                <label class="field-label" for="profileUsername">Username
+                    <input id="profileUsername" type="text" autocomplete="username" minlength="3" maxlength="30" pattern="[a-z][a-z0-9._]{2,29}" placeholder="Contoh: bagus">
+                </label>
+                <div class="profile-actions-row">
+                    <button id="profileUsernameSave" class="primary-action" type="submit">Simpan Username</button>
+                    <button id="profileUsernameRemove" class="secondary-action profile-danger-action" type="button" hidden>Hapus Username</button>
+                </div>
+                <p class="assessment-help">3–30 karakter, dimulai huruf kecil; boleh memakai angka, titik, dan garis bawah.</p>
+                <p id="profileUsernameFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+            </form>
+        </div>
+
+        <details id="profilePasswordDetails" class="gm-profile-password-details">
+            <summary>
+                <span class="gm-profile-setting-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>
+                </span>
+                <span>
+                    <span class="gm-profile-summary-title">Ubah kata sandi</span>
+                    <span class="gm-profile-summary-caption">Perbarui kata sandi akun Anda</span>
+                </span>
+            </summary>
+            <form id="passwordForm" class="space-y-4">
+                <label class="field-label" for="profilePassword">Kata sandi baru
+                    <input id="profilePassword" name="profilePassword" type="password" required autocomplete="new-password">
+                </label>
+                <label class="field-label" for="profileConfirm">Ulangi kata sandi baru
+                    <input id="profileConfirm" name="profileConfirm" type="password" required autocomplete="new-password">
+                </label>
+                <p class="assessment-help">Pilih kata sandi yang Anda ingat. Ganti kata sandi sementara yang diberikan koordinator.</p>
+                <label class="field-label" for="profileNonce">Kode verifikasi (jika diminta)
+                    <input id="profileNonce" name="profileNonce" autocomplete="one-time-code">
+                </label>
+                <div class="profile-security-actions gm-profile-security-actions">
+                    <button id="profileReauthenticate" type="button" class="secondary-action">Kirim kode verifikasi</button>
+                    <button type="submit" class="primary-action">Ubah Kata Sandi</button>
+                </div>
+                <p id="profilePasswordFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+            </form>
+        </details>
+    </section>
+
+    <section class="gm-profile-card gm-profile-email-card" aria-labelledby="gmProfileEmailTitle">
+        <div class="gm-profile-card-heading">
+            <div>
+                <p class="section-kicker">EMAIL</p>
+                <h3 id="gmProfileEmailTitle">Ubah Email</h3>
+                <p>Gunakan email aktif agar proses konfirmasi perubahan alamat dapat diselesaikan.</p>
+            </div>
+        </div>
+        <div class="gm-profile-email-panel" id="profileEmailSettings">
+            <span class="gm-profile-setting-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+            </span>
+            <div class="gm-profile-auth-heading">
+                <strong>Email akun saat ini</strong>
+                <p>Alamat email yang digunakan untuk login.</p>
+            </div>
+            <label class="field-label" for="profileEmail">Email login saat ini
+                <input id="profileEmail" name="profileEmail" type="email" readonly autocomplete="email">
+            </label>
+            <button id="profileEmailEdit" type="button" class="secondary-action gm-profile-auth-secondary">Ubah Email</button>
+            <form id="profileEmailForm" class="gm-profile-email-form" hidden>
+                <label class="field-label" for="profileEmailNew">Email baru
+                    <input id="profileEmailNew" name="profileEmailNew" type="email" autocomplete="email" required maxlength="254" placeholder="nama@contoh.com">
+                </label>
+                <p class="assessment-help">Ikuti instruksi verifikasi dari sistem autentikasi. Email baru aktif setelah proses konfirmasi selesai.</p>
+                <div class="profile-actions-row gm-profile-auth-actions">
+                    <button id="profileEmailSave" type="submit" class="primary-action">Kirim Verifikasi</button>
+                    <button id="profileEmailCancel" type="button" class="secondary-action">Batal</button>
+                </div>
+            </form>
+            <p id="profileEmailFeedback" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+            <p id="profileEmailPending" class="profile-local-feedback" role="status" aria-live="polite" hidden></p>
+        </div>
+    </section>
+
+    <section class="gm-profile-card gm-profile-other-card" aria-labelledby="gmProfileOtherTitle">
+        <div class="gm-profile-card-heading">
+            <div>
+                <p class="section-kicker">PREFERENSI</p>
+                <h3 id="gmProfileOtherTitle">Pengaturan Lainnya</h3>
+                <p>Pengaturan notifikasi perangkat dan pemasangan aplikasi.</p>
+            </div>
+        </div>
+        <div class="gm-profile-other-grid">
+            <div id="pwaProfileInstallSlot" aria-label="Pemasangan aplikasi"></div>
+            <div id="profilePushCard" class="profile-push-card" hidden>
+                <span class="profile-push-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+                </span>
+                <div class="profile-push-copy">
+                    <strong>Notifikasi perangkat</strong>
+                    <span id="profilePushStatus">Belum aktif</span>
+                </div>
+                <div class="profile-push-actions">
+                    <button id="profilePushEnable" type="button" class="secondary-action">Aktifkan</button>
+                    <button id="profilePushDisable" type="button" class="profile-danger-link" hidden>Nonaktifkan</button>
+                </div>
+            </div>
+            <p class="gm-profile-help-note"><strong>Butuh bantuan?</strong> Jika mengalami kendala pada akun, hubungi koordinator atau administrator sekolah.</p>
+        </div>
+    </section>
 </div>
 <nav id="gmLearningSubnav" class="gm-learning-subnav" aria-label="Submenu Kelola Pembelajaran" hidden>
     <button id="gmLearningTabTahsin" type="button" onclick="switchPage('kelompok-tahsin')" aria-pressed="true">Tahsin</button>
