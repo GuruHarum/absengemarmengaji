@@ -10,6 +10,29 @@
     <script src="js/config.js"></script>
     <script src="js/google-oauth-popup.js?v=20261029-popup3"></script>
     <style>
+        .gm-login-success-screen {
+            position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+            padding: 24px; background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            opacity: 0; visibility: hidden; transition: opacity .22s ease, visibility .22s ease;
+        }
+        .gm-login-success-screen.is-visible { opacity: 1; visibility: visible; }
+        .gm-login-success-card {
+            width: min(100%, 360px); padding: 30px 24px; border-radius: 22px; text-align: center;
+            background: #fff; box-shadow: 0 18px 55px rgba(15, 23, 42, .12);
+        }
+        .gm-login-success-icon {
+            display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 18px;
+            border-radius: 50%; background: #dcfce7; color: #15803d;
+        }
+        .gm-login-success-spinner {
+            width: 20px; height: 20px; border: 2px solid #dbeafe; border-top-color: #2563eb;
+            border-radius: 50%; animation: gm-login-spin .75s linear infinite;
+        }
+        @keyframes gm-login-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) {
+            .gm-login-success-screen { transition: none; }
+            .gm-login-success-spinner { animation-duration: 2s; }
+        }
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         body {
             font-family: 'Poppins', sans-serif;
@@ -99,6 +122,22 @@
     <p>Web Design &amp; Management By <span class="site-footer-credit">Geys Amadda Dien.</span></p>
 </footer>
     </div>
+
+    <section id="googleLoginSuccessScreen" class="gm-login-success-screen" role="status" aria-live="polite" aria-hidden="true">
+        <div class="gm-login-success-card">
+            <div class="gm-login-success-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m5 12 4 4L19 6"></path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900">Verifikasi berhasil</h2>
+            <p class="mt-2 text-sm text-gray-600">Akun Anda sudah terverifikasi.</p>
+            <div class="mt-5 flex items-center justify-center gap-3 text-sm font-medium text-blue-700">
+                <span class="gm-login-success-spinner" aria-hidden="true"></span>
+                <span>Masuk ke beranda…</span>
+            </div>
+        </div>
+    </section>
 
     <script>
         supabase.from('school_profile').select('*').eq('id', 1).maybeSingle().then(({ data }) => {
@@ -199,8 +238,16 @@
                 }
 
                 googleErrorDiv.classList.add('hidden');
+                const successScreen = document.getElementById('googleLoginSuccessScreen');
+                if (successScreen) {
+                    successScreen.setAttribute('aria-hidden', 'false');
+                    successScreen.classList.add('is-visible');
+                }
                 if (googleLoginText) googleLoginText.textContent = 'Verifikasi berhasil, menyiapkan dashboard...';
                 try { sessionStorage.setItem('gm_login_transition', '1'); } catch (_) {}
+                // Briefly show an explicit success state so the redirect feels intentional,
+                // rather than making the user appear to be bounced away from the login page.
+                await new Promise(resolve => setTimeout(resolve, 850));
                 window.location.href = role === 'guru' ? 'guru.html' : 'admin.html';
             } catch (error) {
                 const detail = String(error?.message || '').toLowerCase();
