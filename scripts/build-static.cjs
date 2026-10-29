@@ -7,7 +7,7 @@ const out = path.resolve('public-build');
 if (path.dirname(out) !== process.cwd() || path.basename(out) !== 'public-build') {
     throw new Error('Build output must stay inside the project workspace');
 }
-const entries = ['index.html', 'admin.html', 'guru.html', 'login.html', 'maintenance.html', 'offline.html', 'manifest.webmanifest', 'sw.js', '_headers', 'js', 'css', 'assets'];
+const entries = ['index.html', 'admin.html', 'guru.html', 'login.html', 'oauth-popup.html', 'maintenance.html', 'offline.html', 'manifest.webmanifest', 'sw.js', '_headers', 'js', 'css', 'assets'];
 
 // Penting: public-build adalah artefak hasil build, bukan sumber kedua.
 // Selalu hapus versi lama agar tidak ada JS lama yang tertinggal saat deploy Netlify.
