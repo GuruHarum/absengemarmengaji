@@ -450,3 +450,129 @@
     }
   }
 }
+
+
+/* Penilaian Periodik: perjelas filter, ringkasan, dan aksi penyimpanan. */
+@media screen {
+  body.admin-page #page-penilaian {
+    --assessment-ink: #214638;
+    --assessment-muted: #64786c;
+    --assessment-line: #d9e6dc;
+    color: var(--assessment-ink);
+  }
+  body.admin-page #page-penilaian .assessment-context-card {
+    padding: clamp(14px, 2vw, 24px);
+    border: 1px solid var(--assessment-line);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 18px rgb(25 67 48 / 4%);
+  }
+  body.admin-page #page-penilaian .gm-assessment-heading {
+    margin-bottom: 16px;
+  }
+  body.admin-page #page-penilaian .gm-assessment-heading h2 {
+    margin: 0;
+    color: var(--assessment-ink);
+    letter-spacing: -.02em;
+  }
+  body.admin-page #page-penilaian #assessmentContextFields {
+    align-items: end;
+    gap: 14px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  body.admin-page #page-penilaian .field-label {
+    min-width: 0;
+    gap: 7px;
+    color: #496454;
+    font-weight: 650;
+  }
+  body.admin-page #page-penilaian :is(input, select, textarea) {
+    min-width: 0;
+    border-color: #cadbd0;
+    border-radius: 10px;
+  }
+  body.admin-page #page-penilaian :is(input, select, textarea):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+  body.admin-page #page-penilaian #assessmentLoad {
+    min-height: 42px;
+    border-radius: 10px;
+    background: #216454;
+    box-shadow: none;
+  }
+  body.admin-page #page-penilaian #assessmentLoad:hover {
+    background: #194f42;
+  }
+  body.admin-page #page-penilaian .assessment-filter-memory {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div {
+    min-width: 0;
+    border: 1px solid #dce8df;
+    border-radius: 12px;
+    background: #f8fbf8;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div strong {
+    color: var(--assessment-ink);
+  }
+  body.admin-page #page-penilaian .gm-assessment-progress {
+    border-color: #d9e6dc;
+    border-radius: 12px;
+    background: #f7faf7;
+  }
+  body.admin-page #page-penilaian .gm-assessment-progress-track {
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e3ece5;
+  }
+  body.admin-page #page-penilaian #assessmentProgressFill {
+    border-radius: inherit;
+    background: #216454;
+  }
+  body.admin-page #page-penilaian .assessment-work-toolbar {
+    border-color: #d9e6dc;
+    border-radius: 14px;
+    background: #fff;
+  }
+  body.admin-page #page-penilaian .assessment-quick-actions {
+    align-items: center;
+    gap: 8px;
+  }
+  body.admin-page #page-penilaian .assessment-save-all-bottom {
+    border-color: #d9e6dc;
+    border-radius: 14px;
+    background: #f7faf7;
+  }
+  body.admin-page #page-penilaian :is(#assessmentSaveAll, #assessmentMobileSave) {
+    border-radius: 10px;
+    background: #216454;
+  }
+  body.admin-page #page-penilaian :is(#assessmentSaveAll, #assessmentMobileSave):hover {
+    background: #194f42;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian .assessment-context-card {
+      padding: 14px 12px;
+      border-radius: 14px;
+    }
+    body.admin-page #page-penilaian #assessmentContextFields {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    body.admin-page #page-penilaian .assessment-filter-memory > button {
+      flex: 1 1 130px;
+    }
+    body.admin-page #page-penilaian .assessment-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+}
