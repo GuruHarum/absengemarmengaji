@@ -61,7 +61,7 @@ window.LearningGroups = (() => {
     });
   }
 
-  async function pickStudentsForGradeTransfer(state, sourceTeacherId, grade) {
+  async function pickStudentsForGradeTransfer(state, sourceTeacherId, grade, subject) {
     const studentsById = new Map(state.students.map(student => [String(student.id), student]));
     const sourceGroups = state.groups.filter(group =>
       group.active && String(group.teacher_id) === String(sourceTeacherId) &&
@@ -82,7 +82,7 @@ window.LearningGroups = (() => {
     const targets = (state.allowedTeachers || state.teachers)
       .filter(teacher => String(teacher.id) !== String(sourceTeacherId) &&
         destinationGroupCounts.has(String(teacher.id)) &&
-        (state.currentSubject !== 'tahsin' || teacher.attendance_enabled !== false))
+        (subject !== 'tahsin' || teacher.attendance_enabled !== false))
       .sort((a, b) => String(a.nama_lengkap || a.nama || '').localeCompare(String(b.nama_lengkap || b.nama || ''), 'id'));
     if (!targets.length) throw new Error('Belum ada guru tujuan dengan kelompok aktif tingkat ' + grade + '. Buat kelompok tujuan terlebih dahulu.');
 
@@ -577,7 +577,7 @@ window.LearningGroups = (() => {
       ? (sortedCandidates.length > 80
           ? `Menampilkan 80 dari ${sortedCandidates.length} hasil${statusLabel}. Persempit pencarian untuk melihat yang lain.`
           : `${sortedCandidates.length} hasil pencarian${statusLabel}.`)
-      : (cls ? `${sortedCandidates.length} siswa di kelas ${cls}${statusLabel}.`
+      : (cls ? `${sortedCandidates.length} siswa ditampilkan dengan filter kelas ${cls}${state.edit && [...state.selected].some(id => state.students.some(student => String(student.id) === String(id) && student.kelas !== cls)) ? ', termasuk anggota terpilih dari kelas lain' : ''}${statusLabel}.`
         : (state.autoTahsinLevels?.length
           ? `${sortedCandidates.length} siswa salinan Tahsin${statusLabel}.`
           : `Pilih kelas atau cari nama siswa${statusLabel}.`));
@@ -720,8 +720,7 @@ window.LearningGroups = (() => {
       if (!/^[1-6]$/.test(grade) || !sourceTeacherId) return msg(subject, 'Tingkat atau guru asal tidak valid. Muat ulang daftar.', true);
       let choice;
       try {
-        state.currentSubject = subject;
-        choice = await pickStudentsForGradeTransfer(state, sourceTeacherId, grade);
+        choice = await pickStudentsForGradeTransfer(state, sourceTeacherId, grade, subject);
       } catch (error) {
         return msg(subject, error.message, true);
       }
