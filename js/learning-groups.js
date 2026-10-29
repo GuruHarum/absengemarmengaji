@@ -611,7 +611,6 @@ window.LearningGroups = (() => {
               : '')
           : '<p class="gm-grade-no-students">Belum ada murid pada kelompok tingkat ini.</p>') +
         gradeActions +
-        '<div class="gm-group-breakdown">' + (breakdown || '<span>Belum ada anggota</span>') + '</div>' +
         '<details class="gm-grade-details"><summary>' + bucket.groups.length + ' kelompok kelas <span>Kelola</span></summary>' +
           '<div class="gm-grade-group-list">' + groupRows + '</div></details></article>';
     }).join('') || (showArchived
