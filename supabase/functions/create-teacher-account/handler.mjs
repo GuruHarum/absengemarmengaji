@@ -106,7 +106,8 @@ export function createHandler(admin) {
             if (manualEmail && !teacherId) {
                 return reply(400, { error: 'Pilih data guru yang akan ditautkan.' });
             }
-            if (manualEmail && (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(requestedEmail) || requestedEmail.length > 254)) {
+            const emailParts = requestedEmail.split('@');
+            if (manualEmail && (emailParts.length !== 2 || !emailParts[0] || !emailParts[1] || emailParts[1].indexOf('.') < 1 || emailParts[1].endsWith('.') || requestedEmail.length > 254 || requestedEmail.split('').some(char => char.trim() === ''))) {
                 return reply(400, { error: 'Masukkan alamat email yang valid (maksimal 254 karakter).' });
             }
 
