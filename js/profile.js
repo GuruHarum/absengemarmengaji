@@ -146,6 +146,7 @@ window.AccountProfile = (() => {
         if (googleLinkBusy) return;
         googleLinkBusy = true;
         let oldGoogleUnlinked = false;
+        let popupFlow = null;
         const button = el('profileGoogleLinkButton');
         if (button) {
             button.disabled = true;
@@ -162,6 +163,12 @@ window.AccountProfile = (() => {
                     ? await window.AdminNotice.confirm(question)
                     : await Promise.resolve(window.confirm?.(question));
                 if (!approved) return;
+
+                // Open the popup before unlinking. If the browser blocks it, the old Google identity stays linked.
+                if (!window.GMGoogleOAuthPopup?.prepare) {
+                    throw new Error('Modul pop-up Google belum termuat. Muat ulang halaman Profil lalu coba kembali.');
+                }
+                popupFlow = window.GMGoogleOAuthPopup.prepare({ mode: 'link', expectedUserId: user.id });
 
                 const { data: identitiesData, error: identitiesError } = await supabase.auth.getUserIdentities();
                 if (identitiesError) throw identitiesError;
@@ -182,32 +189,47 @@ window.AccountProfile = (() => {
                 const { data: refreshed, error: refreshError } = await supabase.auth.getUser();
                 if (refreshError) throw refreshError;
                 renderGoogleLinkState(refreshed?.user);
+            } else {
+                if (!window.GMGoogleOAuthPopup?.prepare) {
+                    throw new Error('Modul pop-up Google belum termuat. Muat ulang halaman Profil lalu coba kembali.');
+                }
+                popupFlow = window.GMGoogleOAuthPopup.prepare({ mode: 'link', expectedUserId: user.id });
             }
 
-            const page = AppAccess.profile?.role === 'guru' ? 'guru.html' : 'admin.html';
-            const callback = new URL(page, window.location.origin);
-            callback.searchParams.set('gm_google_link', '1');
-            sessionStorage.setItem('gm_google_link_pending', '1');
-
-            const { data: linkData, error: linkError } = await supabase.auth.linkIdentity({
+            const popupResult = await popupFlow.start(redirectTo => supabase.auth.linkIdentity({
                 provider: 'google',
                 options: {
-                    redirectTo: callback.toString(),
+                    redirectTo,
+                    skipBrowserRedirect: true,
                     queryParams: { prompt: 'select_account' }
                 }
-            });
-            if (linkError) throw linkError;
-            if (linkData?.url) {
-                window.location.assign(linkData.url);
-                return;
+            }));
+
+            if (popupResult.userId !== user.id) {
+                throw new Error('Google terhubung ke sesi yang berbeda. Periksa akun Anda sebelum melanjutkan.');
             }
-            throw new Error('Halaman verifikasi Google belum berhasil dibuka. Silakan coba kembali.');
+            const { data: verified, error: verifyError } = await supabase.auth.getUser();
+            const verifiedUser = verified?.user;
+            if (verifyError || !verifiedUser || verifiedUser.id !== user.id) {
+                throw verifyError || new Error('Sesi akun berubah setelah autentikasi Google. Muat ulang Profil untuk memeriksa statusnya.');
+            }
+            if (!Array.isArray(verifiedUser.identities) || !verifiedUser.identities.some(identity => identity?.provider === 'google')) {
+                throw new Error('Google belum tercatat sebagai identitas akun. Muat ulang Profil lalu periksa kembali.');
+            }
+
+            renderGoogleLinkState(verifiedUser);
+            message(
+                oldGoogleUnlinked
+                    ? 'Akun Google baru berhasil ditautkan ke akun Gemar Mengaji yang sama.'
+                    : 'Akun Google berhasil ditautkan. Anda sekarang bisa memilih Masuk dengan Google pada halaman login.',
+                false,
+                'profileGoogleIdentityFeedback'
+            );
         } catch (error) {
-            sessionStorage.removeItem('gm_google_link_pending');
             const detail = String(error?.message || '').toLowerCase();
             let text = oldGoogleUnlinked
                 ? 'Akun Google lama sudah dilepas, tetapi akun baru belum berhasil ditautkan. Anda tetap dapat masuk dengan username/email dan kata sandi Gemar Mengaji. Coba hubungkan Google lagi dari Profil.'
-                : 'Akun Google belum berhasil ditautkan. Silakan coba lagi.';
+                : (error.message || 'Akun Google belum berhasil ditautkan. Silakan coba lagi.');
             if (detail.includes('already linked') || detail.includes('identity is already linked') || detail.includes('identity already exists')) {
                 text = oldGoogleUnlinked
                     ? 'Akun Google lama sudah dilepas, tetapi Google yang dipilih sudah tertaut ke akun Gemar Mengaji lain. Akun ini tetap dapat diakses dengan username/email dan kata sandi. Pilih akun Google lain.'
@@ -218,9 +240,14 @@ window.AccountProfile = (() => {
                 text = oldGoogleUnlinked
                     ? 'Koneksi bermasalah setelah tautan Google lama dilepas. Anda tetap dapat masuk dengan username/email dan kata sandi; coba hubungkan Google lagi saat koneksi stabil.'
                     : 'Koneksi bermasalah saat membuka Google. Periksa internet dan coba kembali.';
+            } else if (detail.includes('popup') && detail.includes('diblokir')) {
+                text = oldGoogleUnlinked
+                    ? 'Tautan Google lama sudah dilepas, tetapi pop-up baru diblokir. Anda tetap dapat masuk dengan username/email dan kata sandi. Izinkan pop-up, lalu hubungkan akun Google baru.'
+                    : 'Jendela Google diblokir browser. Izinkan pop-up untuk situs Gemar Mengaji, lalu coba kembali.';
             }
             message(text, true, 'profileGoogleIdentityFeedback');
         } finally {
+            popupFlow?.cancel?.();
             googleLinkBusy = false;
             try {
                 const { data } = await supabase.auth.getUser();
