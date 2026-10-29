@@ -61,51 +61,54 @@ window.LearningGroups = (() => {
     });
   }
 
-  async function pickStudentsForTransfer(state, sourceGroup) {
-    const sourceIds = [...membersOf(state, sourceGroup.id)];
-    if (!sourceIds.length) throw new Error('Kelompok asal belum memiliki murid aktif.');
+  async function pickStudentsForGradeTransfer(state, sourceTeacherId, grade) {
+    const studentsById = new Map(state.students.map(student => [String(student.id), student]));
+    const sourceGroups = state.groups.filter(group =>
+      group.active && String(group.teacher_id) === String(sourceTeacherId) &&
+      gradeOfGroup(state, group, studentsById) === String(grade));
+    const sourceIds = [...new Set(sourceGroups.flatMap(group => [...membersOf(state, group.id)]))];
+    const students = sourceIds.map(id => studentsById.get(String(id)))
+      .filter(student => student && gradeFromClassName(student.kelas) === String(grade))
+      .sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }) ||
+        String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
+    if (!students.length) throw new Error('Tidak ada murid aktif yang dapat dipindahkan pada tingkat ' + grade + '.');
 
-    const targets = state.groups
-      .filter(group => group.active && group.id !== sourceGroup.id)
-      .sort((a, b) => {
-        const ta = teacherName(state, a.teacher_id);
-        const tb = teacherName(state, b.teacher_id);
-        return ta.localeCompare(tb, 'id') || String(a.class_name || '').localeCompare(String(b.class_name || ''), 'id', { numeric: true });
+    const destinationGroupCounts = new Map();
+    state.groups.filter(group => group.active && String(group.teacher_id) !== String(sourceTeacherId) &&
+      gradeOfGroup(state, group, studentsById) === String(grade)).forEach(group => {
+        const id = String(group.teacher_id);
+        destinationGroupCounts.set(id, (destinationGroupCounts.get(id) || 0) + 1);
       });
-    if (!targets.length) throw new Error('Belum ada kelompok tujuan aktif. Buat kelompok tujuan terlebih dahulu.');
-
-    const students = sourceIds
-      .map(id => state.students.find(student => String(student.id) === String(id)))
-      .filter(Boolean)
-      .sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }) || String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
+    const targets = (state.allowedTeachers || state.teachers)
+      .filter(teacher => String(teacher.id) !== String(sourceTeacherId) &&
+        destinationGroupCounts.has(String(teacher.id)) &&
+        (state.currentSubject !== 'tahsin' || teacher.attendance_enabled !== false))
+      .sort((a, b) => String(a.nama_lengkap || a.nama || '').localeCompare(String(b.nama_lengkap || b.nama || ''), 'id'));
+    if (!targets.length) throw new Error('Belum ada guru tujuan dengan kelompok aktif tingkat ' + grade + '. Buat kelompok tujuan terlebih dahulu.');
 
     const studentMap = new Map(students.map(student => [String(student.id), student]));
     const dialog = document.createElement('dialog');
-    dialog.className = 'admin-confirm gm-transfer-student-dialog';
-    dialog.innerHTML = `<form class="gm-transfer-student-form">
-      <div class="confirm-emblem" aria-hidden="true">↔</div>
-      <h2>Transfer Murid</h2>
-      <p>Pilih murid yang dipindahkan dari <strong>${safe(sourceGroup.class_name)}</strong>, lalu pilih kelompok tujuan. Murid lain tetap berada di kelompok asal.</p>
-      <label class="confirm-field-label" for="gmTransferTarget">Kelompok tujuan</label>
-      <select id="gmTransferTarget" class="confirm-value-field" required>
-        <option value="">Pilih kelompok tujuan</option>
-        ${targets.map(group => {
-          const ids = membersOf(state, group.id);
-          const labels = groupClassLabels(state, group, new Map(state.students.map(student => [String(student.id), student])));
-          const label = `${teacherName(state, group.teacher_id)} · ${labels.join(', ')} · ${ids.size} siswa`;
-          return `<option value="${safe(group.id)}">${safe(label)}</option>`;
-        }).join('')}
-      </select>
-      <div class="gm-transfer-student-toolbar">
-        <strong><span data-transfer-count>0</span> dari ${students.length} murid dipilih</strong>
-        <span><button type="button" class="secondary-action" data-transfer-all>Pilih semua</button><button type="button" class="secondary-action" data-transfer-clear>Kosongkan</button></span>
-      </div>
-      <div class="assignment-student-options gm-member-picker gm-transfer-student-list">
-        ${students.map(student => `<label><input type="checkbox" data-transfer-student="${safe(student.id)}"><span><strong>${safe(student['nama siswa'])}</strong><small>${safe(student.kelas || '-')}</small></span></label>`).join('')}
-      </div>
-      <p class="assessment-feedback is-error" data-transfer-error role="alert"></p>
-      <div class="confirm-actions"><button type="button" data-transfer-cancel class="secondary-action">Batal</button><button type="submit" class="primary-action">Transfer murid</button></div>
-    </form>`;
+    dialog.className = 'admin-confirm gm-transfer-student-dialog gm-transfer-grade-dialog';
+    const targetOptions = targets.map(teacher =>
+      '<option value="' + safe(teacher.id) + '">' + safe(teacher.nama_lengkap || teacher.nama || ('Guru ' + teacher.id)) + '</option>'
+    ).join('');
+    const studentOptions = students.map(student =>
+      '<label><input type="checkbox" data-transfer-student="' + safe(student.id) + '">' +
+      '<span><strong>' + safe(student['nama siswa']) + '</strong><small>' + safe(student.kelas || '-') + '</small></span></label>'
+    ).join('');
+    dialog.innerHTML =
+      '<form class="gm-transfer-student-form">' +
+        '<div class="confirm-emblem" aria-hidden="true">↔</div>' +
+        '<h2>Transfer Murid · Tingkat ' + safe(grade) + '</h2>' +
+        '<p>Pilih murid dari seluruh kelompok tingkat ini, lalu pilih guru tujuan. Sistem akan mencocokkan kelompok tujuan berdasarkan kelas masing-masing siswa. Kelas siswa tidak diubah. Jika pemetaan tidak aman, transfer dibatalkan tanpa memindahkan sebagian siswa.</p>' +
+        '<label class="confirm-field-label" for="gmTransferGradeTarget">Guru tujuan · Tingkat ' + safe(grade) + '</label>' +
+        '<select id="gmTransferGradeTarget" class="confirm-value-field" required><option value="">Pilih guru tujuan</option>' + targetOptions + '</select>' +
+        '<div class="gm-transfer-student-toolbar"><strong><span data-transfer-count>0</span> dari ' + students.length + ' murid dipilih</strong>' +
+          '<span><button type="button" class="secondary-action" data-transfer-all>Pilih semua</button><button type="button" class="secondary-action" data-transfer-clear>Kosongkan</button></span></div>' +
+        '<div class="assignment-student-options gm-member-picker gm-transfer-student-list">' + studentOptions + '</div>' +
+        '<p class="assessment-feedback is-error" data-transfer-error role="alert"></p>' +
+        '<div class="confirm-actions"><button type="button" data-transfer-cancel class="secondary-action">Batal</button><button type="submit" class="primary-action">Transfer murid</button></div>' +
+      '</form>';
     document.body.append(dialog);
 
     const form = dialog.querySelector('form');
@@ -122,7 +125,6 @@ window.LearningGroups = (() => {
       list.querySelectorAll('[data-transfer-student]').forEach(input => { input.checked = false; });
       updateCount();
     });
-
     return await new Promise(resolve => {
       let settled = false;
       const finish = value => {
@@ -136,24 +138,16 @@ window.LearningGroups = (() => {
       dialog.addEventListener('cancel', event => { event.preventDefault(); finish(null); });
       form.addEventListener('submit', event => {
         event.preventDefault();
-        const targetGroupId = dialog.querySelector('#gmTransferTarget').value;
+        const targetTeacherId = dialog.querySelector('#gmTransferGradeTarget').value;
         const studentIds = [...list.querySelectorAll('[data-transfer-student]:checked')]
-          .map(input => input.dataset.transferStudent)
-          .filter(id => studentMap.has(String(id)));
-        if (!targetGroupId) {
-          error.textContent = 'Pilih kelompok tujuan terlebih dahulu.';
-          return;
-        }
-        if (!studentIds.length) {
-          error.textContent = 'Pilih minimal satu murid yang akan dipindahkan.';
-          return;
-        }
-        finish({ targetGroupId, studentIds });
+          .map(input => input.dataset.transferStudent).filter(id => studentMap.has(String(id)));
+        if (!targetTeacherId) { error.textContent = 'Pilih guru tujuan terlebih dahulu.'; return; }
+        if (!studentIds.length) { error.textContent = 'Pilih minimal satu murid yang akan dipindahkan.'; return; }
+        finish({ targetTeacherId, studentIds });
       });
       dialog.showModal();
     });
   }
-
 
   function shell(subject) {
     const title = titleOf(subject);
@@ -268,7 +262,7 @@ window.LearningGroups = (() => {
     host.querySelector('[data-refresh]').disabled = value;
     host.querySelector('[data-year]').disabled = value || AppAccess.teacher();
     host.querySelector('[data-view-teacher]').disabled = value || AppAccess.teacher();
-    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer], [data-transfer-students]').forEach(button => button.disabled = value);
+    host.querySelectorAll('[data-edit], [data-end], [data-delete-group], [data-transfer-grade], [data-transfer-students-grade]').forEach(button => button.disabled = value);
   }
   function selectedTeacher(subject) {
     return shell(subject).querySelector('[data-view-teacher]').value;
@@ -451,6 +445,15 @@ window.LearningGroups = (() => {
     const slash = raw.lastIndexOf(' / ');
     return [slash >= 0 ? raw.slice(slash + 3) : raw || 'Kelompok tanpa kelas'];
   }
+  function gradeOfGroup(state, group, students = new Map(state.students.map(student => [String(student.id), student]))) {
+    const ids = [...membersOf(state, group.id)];
+    const rosterGrades = [...new Set(ids.map(id => gradeFromClassName(students.get(String(id))?.kelas)).filter(Boolean))];
+    if (rosterGrades.length === 1) return rosterGrades[0];
+    if (rosterGrades.length > 1) return '';
+    const labelGrades = [...new Set(groupClassLabels(state, group, students).map(gradeFromClassName).filter(Boolean))];
+    if (labelGrades.length === 1) return labelGrades[0];
+    return gradeFromClassName(group.class_name);
+  }
 
   function renderGroups(subject) {
     const state = views[subject], host = shell(subject), target = host.querySelector('[data-groups]');
@@ -462,7 +465,7 @@ window.LearningGroups = (() => {
       return;
     }
     host.querySelector('[data-editor]').hidden = !AppAccess.full();
-    const students = new Map(state.students.map(s => [String(s.id), s]));
+    const students = new Map(state.students.map(student => [String(student.id), student]));
     const showArchived = host.querySelector('[data-show-archived]')?.checked;
     const teacherGroups = state.groups.filter(group => String(group.teacher_id) === String(teacherId));
     const groups = teacherGroups.filter(group => showArchived ? !group.active : group.active);
@@ -471,52 +474,73 @@ window.LearningGroups = (() => {
     groups.forEach(group => {
       const ids = membersOf(state, group.id);
       const labels = groupClassLabels(state, group, students);
-      const gradeCandidates = [...ids].map(id => gradeFromClassName(students.get(id)?.kelas)).filter(Boolean);
-      const grade = gradeCandidates[0] || gradeFromClassName(labels[0]) || gradeFromClassName(group.class_name) || 'lain';
+      const grade = gradeOfGroup(state, group, students) || 'lain';
       if (!gradeBuckets.has(grade)) gradeBuckets.set(grade, { grade, groups: [], studentIds: new Set(), classCounts: new Map() });
       const bucket = gradeBuckets.get(grade);
       bucket.groups.push({ group, ids, labels });
       ids.forEach(id => bucket.studentIds.add(id));
       labels.forEach(label => {
-        const count = [...ids].filter(id => students.get(id)?.kelas === label).length;
+        const count = [...ids].filter(id => students.get(String(id))?.kelas === label).length;
         bucket.classCounts.set(label, (bucket.classCounts.get(label) || 0) + (count || (ids.size && labels.length === 1 ? ids.size : 0)));
       });
     });
-    const buckets = [...gradeBuckets.values()].sort((a,b) => {
+    const buckets = [...gradeBuckets.values()].sort((a, b) => {
       if (a.grade === 'lain') return 1;
       if (b.grade === 'lain') return -1;
       return Number(a.grade) - Number(b.grade);
     });
-    host.querySelector('[data-page-summary]').textContent = `${teacherName(state, teacherId)} · ${showArchived ? 'Arsip' : 'Aktif'} · ${buckets.length} tingkat · ${totalMembers} siswa`;
+    host.querySelector('[data-page-summary]').textContent =
+      teacherName(state, teacherId) + ' · ' + (showArchived ? 'Arsip' : 'Aktif') + ' · ' + buckets.length + ' tingkat · ' + totalMembers + ' siswa';
     target.innerHTML = buckets.map(bucket => {
-      const title = bucket.grade === 'lain' ? 'Tingkat belum dikenali' : `Tingkat ${bucket.grade}`;
-      const breakdown = [...bucket.classCounts].sort((a,b)=>a[0].localeCompare(b[0],'id',{numeric:true})).map(([c,n])=>`<span>${safe(c)} <b>${n}</b></span>`).join('');
-      const groupRows = bucket.groups.map(({group,ids,labels}) => `<div class="gm-grade-group-row">
-          <div><strong>${safe(labels.join(', '))}</strong><small>${ids.size} siswa</small></div>
-          <div class="gm-grade-group-actions">
-            ${AppAccess.full() ? (group.active
-              ? `<button type="button" class="secondary-action" data-edit="${safe(group.id)}">Ubah anggota</button><button type="button" class="secondary-action" data-transfer-students="${safe(group.id)}">Transfer Murid</button><button type="button" class="secondary-action" data-transfer="${safe(group.id)}">Transfer Guru</button><button type="button" class="secondary-action" data-end="${safe(group.id)}">Arsipkan</button><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus</button>`
-              : `<span class="gm-muted">Arsip</span><button type="button" class="secondary-action danger-action" data-delete-group="${safe(group.id)}">Hapus permanen</button>`)
-              : '<span class="gm-muted">Lihat saja</span>'}
-          </div>
-        </div>`).join('');
-      return `<article class="gm-group-card gm-grade-card">
-        <div class="gm-grade-card-head">
-          <div><span class="gm-grade-kicker">TINGKAT</span><h3>${safe(title)}</h3></div>
-          <strong class="gm-grade-total">${bucket.studentIds.size}<small>siswa</small></strong>
-        </div>
-        <div class="gm-group-breakdown">${breakdown || '<span>Belum ada anggota</span>'}</div>
-        <details class="gm-grade-details">
-          <summary>${bucket.groups.length} kelompok kelas <span>Kelola</span></summary>
-          <div class="gm-grade-group-list">${groupRows}</div>
-        </details>
-      </article>`;
+      const title = bucket.grade === 'lain' ? 'Tingkat belum dikenali' : 'Tingkat ' + bucket.grade;
+      const breakdown = [...bucket.classCounts].sort((a, b) => a[0].localeCompare(b[0], 'id', { numeric: true }))
+        .map(([className, count]) => '<span>' + safe(className) + ' <b>' + count + '</b></span>').join('');
+      const bucketStudents = [...bucket.studentIds].map(id => students.get(String(id))).filter(Boolean)
+        .sort((a, b) => String(a.kelas || '').localeCompare(String(b.kelas || ''), 'id', { numeric: true }) ||
+          String(a['nama siswa'] || '').localeCompare(String(b['nama siswa'] || ''), 'id'));
+      const studentPreview = bucketStudents.slice(0, 5).map(student =>
+        '<span class="gm-grade-student-pill"><strong>' + safe(student['nama siswa'] || 'Nama belum diisi') + '</strong><small>' +
+        safe(student.kelas || 'Kelas belum diisi') + '</small></span>').join('');
+      const studentRoster = bucketStudents.map(student =>
+        '<span class="gm-grade-student-row"><strong>' + safe(student['nama siswa'] || 'Nama belum diisi') + '</strong><small>' +
+        safe(student.kelas || 'Kelas belum diisi') + '</small></span>').join('');
+      const canTransfer = AppAccess.full() && !showArchived && bucket.grade !== 'lain';
+      const gradeActions = canTransfer
+        ? '<div class="gm-grade-actions">' +
+            (bucket.studentIds.size ? '<button type="button" class="secondary-action" data-transfer-students-grade="' + safe(bucket.grade) + '">Transfer murid</button>' : '') +
+            '<button type="button" class="secondary-action" data-transfer-grade="' + safe(bucket.grade) + '">Transfer guru</button>' +
+          '</div>'
+        : '';
+      const groupRows = bucket.groups.map(({ group, ids, labels }) =>
+        '<div class="gm-grade-group-row"><div><strong>' + safe(labels.join(', ')) + '</strong><small>' + ids.size + ' siswa</small></div>' +
+          '<div class="gm-grade-group-actions">' +
+            (AppAccess.full() ? (group.active
+              ? '<button type="button" class="secondary-action" data-edit="' + safe(group.id) + '">Ubah anggota</button>' +
+                '<button type="button" class="secondary-action" data-end="' + safe(group.id) + '">Arsipkan</button>' +
+                '<button type="button" class="secondary-action danger-action" data-delete-group="' + safe(group.id) + '">Hapus</button>'
+              : '<span class="gm-muted">Arsip</span><button type="button" class="secondary-action danger-action" data-delete-group="' + safe(group.id) + '">Hapus permanen</button>')
+              : '<span class="gm-muted">Lihat saja</span>') + '</div></div>'
+      ).join('');
+      return '<article class="gm-group-card gm-grade-card">' +
+        '<div class="gm-grade-card-head"><div><span class="gm-grade-kicker">TINGKAT</span><h3>' + safe(title) + '</h3></div>' +
+          '<strong class="gm-grade-total">' + bucket.studentIds.size + '<small>siswa</small></strong></div>' +
+        (studentPreview
+          ? '<div class="gm-grade-student-preview" aria-label="Contoh nama siswa">' + studentPreview + '</div>' +
+            (bucketStudents.length > 5
+              ? '<details class="gm-grade-roster-details"><summary>Lihat semua siswa <span>' + bucketStudents.length + ' nama</span></summary>' +
+                '<div class="gm-grade-roster-list">' + studentRoster + '</div></details>'
+              : '')
+          : '<p class="gm-grade-no-students">Belum ada murid pada kelompok tingkat ini.</p>') +
+        gradeActions +
+        '<div class="gm-group-breakdown">' + (breakdown || '<span>Belum ada anggota</span>') + '</div>' +
+        '<details class="gm-grade-details"><summary>' + bucket.groups.length + ' kelompok kelas <span>Kelola</span></summary>' +
+          '<div class="gm-grade-group-list">' + groupRows + '</div></details></article>';
     }).join('') || (showArchived
-       ? '<div class="gm-empty-state gm-empty-rich"><strong>Belum ada kelompok di arsip</strong><span>Kelompok yang diarsipkan akan muncul di sini.</span></div>'
-       : '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>');
+      ? '<div class="gm-empty-state gm-empty-rich"><strong>Belum ada kelompok di arsip</strong><span>Kelompok yang diarsipkan akan muncul di sini.</span></div>'
+      : '<div class="gm-empty-state gm-empty-rich"><span class="gm-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6.5C6.6 5.4 9.2 5.6 12 7v12c-2.8-1.4-5.4-1.6-8-.5v-12Z"/><path d="M20 6.5c-2.6-1.1-5.2-.9-8 .5v12c2.8-1.4 5.4-1.6 8-.5v-12Z"/></svg></span><strong>Belum ada kelompok aktif</strong><span>Gunakan Tambah kelompok untuk mulai membuat kelompok baru.</span></div>');
   }
 
-  function renderStudents(subject) {
+    function renderStudents(subject) {
     const state = views[subject], host = shell(subject);
     const cls = host.querySelector('[data-class]').value;
     const search = host.querySelector('[data-search]').value.trim().toLocaleLowerCase('id');
@@ -533,8 +557,9 @@ window.LearningGroups = (() => {
     });
 
     const candidatesBySearch = search
-      ? state.students.filter(student => `${student['nama siswa']} ${student.kelas || ''}`.toLocaleLowerCase('id').includes(search))
-      : (cls ? state.students.filter(student => student.kelas === cls)
+      ? state.students.filter(student => (student['nama siswa'] + ' ' + (student.kelas || '')).toLocaleLowerCase('id').includes(search))
+      : (cls ? state.students.filter(student =>
+          student.kelas === cls || (state.edit && state.selected.has(String(student.id))))
         : (state.autoTahsinLevels?.length ? state.students.filter(student => state.selected.has(String(student.id))) : []));
 
     const candidates = candidatesBySearch.filter(student => {
@@ -686,27 +711,27 @@ window.LearningGroups = (() => {
       host.querySelector('[data-editor]').scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
-    const groupAction = event.target.closest('[data-transfer-students], [data-transfer], [data-delete-group], [data-end]');
+    const groupAction = event.target.closest('[data-transfer-students-grade], [data-transfer-grade], [data-delete-group], [data-end]');
     if (groupAction && !(await confirmLeave(subject, 'mengelola kelompok lain'))) return;
-    const transferStudents = event.target.closest('[data-transfer-students]');
+    const transferStudents = event.target.closest('[data-transfer-students-grade]');
     if (transferStudents) {
-      const g = state.groups.find(row => row.id === transferStudents.dataset.transferStudents);
-      if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
+      const grade = String(transferStudents.dataset.transferStudentsGrade || '');
+      const sourceTeacherId = String(selectedTeacher(subject) || '');
+      if (!/^[1-6]$/.test(grade) || !sourceTeacherId) return msg(subject, 'Tingkat atau guru asal tidak valid. Muat ulang daftar.', true);
       let choice;
       try {
-        choice = await pickStudentsForTransfer(state, g);
+        state.currentSubject = subject;
+        choice = await pickStudentsForGradeTransfer(state, sourceTeacherId, grade);
       } catch (error) {
         return msg(subject, error.message, true);
       }
       if (!choice) return;
-      const target = state.groups.find(row => row.id === choice.targetGroupId);
-      if (!target) return msg(subject, 'Kelompok tujuan sudah berubah. Muat ulang.', true);
       let transferFeedback = '';
       busy(subject, true);
       try {
-        const { data, error } = await supabase.rpc('gm_transfer_group_students', {
-          p_source_group_id: g.id,
-          p_target_group_id: target.id,
+        const { data, error } = await supabase.rpc('gm_transfer_grade_students', {
+          p_subject: subject, p_year: state.year, p_source_teacher_id: sourceTeacherId,
+          p_target_teacher_id: String(choice.targetTeacherId).trim(), p_grade: Number(grade),
           p_student_ids: choice.studentIds
         });
         if (error) throw error;
@@ -714,41 +739,54 @@ window.LearningGroups = (() => {
           try { await refreshPublicTahsinRoster(); }
           catch (refreshError) { console.warn('Daftar publik Tahsin perlu dimuat ulang.', refreshError); }
         }
-        transferFeedback = `${Number(data?.moved || choice.studentIds.length)} murid dipindahkan ke ${data?.target_teacher_name || teacherName(state, target.teacher_id)}. ${Number(data?.source_remaining || 0)} murid tetap di kelompok asal.`;
-      } catch (error) {
-        msg(subject, error.message, true);
-        busy(subject, false);
-        return;
-      }
+        transferFeedback = Number(data?.moved || choice.studentIds.length) + ' murid tingkat ' + grade +
+          ' dipindahkan ke ' + (data?.target_teacher_name || teacherName(state, choice.targetTeacherId)) +
+          '. Kelas siswa tetap seperti semula.';
+      } catch (error) { msg(subject, error.message, true); busy(subject, false); return; }
       busy(subject, false);
       await reloadWithFeedback(subject, transferFeedback);
       return;
     }
-    const transfer = event.target.closest('[data-transfer]');
-    if (transfer) {
-      const g = state.groups.find(row => row.id === transfer.dataset.transfer);
-      if (!g) return msg(subject,'Kelompok sudah berubah. Muat ulang.',true);
-      const choices = state.teachers.filter(t => String(t.id) !== String(g.teacher_id) && (subject !== 'tahsin' || t.attendance_enabled !== false)).map(t => ({ value: String(t.id), label: t.nama_lengkap || t.nama || `Guru ${t.id}` }));
-       if (!choices.length) return msg(subject, 'Tidak ada guru tujuan yang tersedia untuk program ini.', true);
+    const gradeTransfer = event.target.closest('[data-transfer-grade]');
+    if (gradeTransfer) {
+      const grade = String(gradeTransfer.dataset.transferGrade || '');
+      const sourceTeacherId = String(selectedTeacher(subject) || '');
+      const studentsById = new Map(state.students.map(student => [String(student.id), student]));
+      const sourceGroups = state.groups.filter(group => group.active && String(group.teacher_id) === sourceTeacherId &&
+        gradeOfGroup(state, group, studentsById) === grade);
+      if (!/^[1-6]$/.test(grade) || !sourceGroups.length) return msg(subject, 'Kelompok tingkat ini sudah berubah. Muat ulang daftar.', true);
+      const choices = (state.allowedTeachers || state.teachers)
+        .filter(teacher => String(teacher.id) !== sourceTeacherId && (subject !== 'tahsin' || teacher.attendance_enabled !== false))
+        .map(teacher => ({ value: String(teacher.id), label: teacher.nama_lengkap || teacher.nama || ('Guru ' + teacher.id) }));
+      if (!choices.length) return msg(subject, 'Tidak ada guru tujuan yang tersedia untuk program ini.', true);
       const target = await AdminNotice.request({
-        title: 'Transfer kelompok',
-        message: `Pilih guru tujuan untuk ${g.class_name}.`,
-        label: 'Guru tujuan',
-        placeholder: 'Pilih guru',
-        choices,
-        confirmLabel: 'Transfer'
+        title: 'Transfer guru · Tingkat ' + grade,
+        message: 'Semua ' + sourceGroups.length + ' kelompok aktif tingkat ' + grade + ' milik ' +
+          teacherName(state, sourceTeacherId) + ' akan dialihkan kepada guru tujuan. Nama kelas dan daftar murid tetap; untuk Tahsin, nama guru pada data siswa diselaraskan.',
+        label: 'Guru tujuan', placeholder: 'Pilih guru', choices, confirmLabel: 'Transfer tingkat'
       });
       if (!target) return;
       let groupTransferFeedback = '';
-      busy(subject,true);
+      busy(subject, true);
       try {
-        const {data,error}=await supabase.rpc('gm_transfer_learning_group',{p_group_id:g.id,p_teacher_id:String(target).trim()});
-        if(error) throw error;
-        groupTransferFeedback = `Kelompok ditransfer ke ${data?.teacher_name||'guru tujuan'}.`;
-      } catch(error){ msg(subject,error.message,true); busy(subject,false); return; }
-      busy(subject,false); await reloadWithFeedback(subject,groupTransferFeedback); return;
+        const { data, error } = await supabase.rpc('gm_transfer_grade_groups', {
+          p_group_ids: sourceGroups.map(group => group.id), p_source_teacher_id: sourceTeacherId,
+          p_target_teacher_id: String(target).trim(), p_grade: Number(grade)
+        });
+        if (error) throw error;
+        if (subject === 'tahsin') {
+          try { await refreshPublicTahsinRoster(); }
+          catch (refreshError) { console.warn('Daftar publik Tahsin perlu dimuat ulang.', refreshError); }
+        }
+        groupTransferFeedback = Number(data?.groups_updated || sourceGroups.length) + ' kelompok tingkat ' + grade +
+          ' dipindahkan ke ' + (data?.teacher_name || teacherName(state, target)) + '. ' +
+          Number(data?.students_kept || 0) + ' murid tetap di kelasnya.';
+      } catch (error) { msg(subject, error.message, true); busy(subject, false); return; }
+      busy(subject, false);
+      await reloadWithFeedback(subject, groupTransferFeedback);
+      return;
     }
-    const del = event.target.closest('[data-delete-group]');
+        const del = event.target.closest('[data-delete-group]');
     if (del) {
       const g = state.groups.find(row => row.id === del.dataset.deleteGroup);
       if (!g) return msg(subject, 'Kelompok sudah berubah. Muat ulang.', true);
