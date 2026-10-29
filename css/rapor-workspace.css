@@ -240,3 +240,143 @@ body.admin-page #page-rapor>#reportSubmenu {position:static!important;inset:auto
 body.admin-page #page-rapor #page-arsip {min-width:0}
 body.admin-page #page-rapor #page-arsip.hidden {display:none!important}
 body.admin-page #page-rapor #reportViewPrint[hidden] {display:none!important}
+
+
+/* Final polish: report controls, export choices, and year selector. */
+@media screen {
+  body.admin-page #page-rapor #reportViewPrint .section-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .section-heading h2 {
+    margin: 0;
+    letter-spacing: -.02em;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .section-heading p {
+    max-width: 680px;
+    margin-top: 6px;
+    color: var(--theme-muted, #64766c);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  body.admin-page #page-rapor #reportControls.report-controls-simple {
+    padding: 16px;
+    border: 1px solid var(--theme-line, #dbe5df);
+    border-radius: 14px;
+    background: #f7faf7;
+  }
+
+  body.admin-page #page-rapor #reportControls.report-controls-simple .field-label {
+    gap: 7px;
+    color: #496454;
+    font-weight: 650;
+  }
+
+  body.admin-page #page-rapor #reportControls.report-controls-simple select,
+  body.admin-page #page-rapor #reportControls.report-controls-simple input:not([type="hidden"]) {
+    border: 1px solid #cadbd0;
+    border-radius: 10px;
+    background: #fff;
+  }
+
+  body.admin-page #page-rapor #reportControls.report-controls-simple :is(select, input):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+
+  body.admin-page #page-rapor .report-year-details {
+    padding-top: 2px;
+    color: #496454;
+    font-size: 12px;
+  }
+
+  body.admin-page #page-rapor .report-year-details summary {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 7px 11px;
+    border: 1px solid #d5e4d9;
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 650;
+  }
+
+  body.admin-page #page-rapor .report-year-details[open] summary {
+    border-color: #8bb6a0;
+    background: #eff7f1;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .report-export-card {
+    position: relative;
+    overflow: hidden;
+    gap: 0;
+    border-radius: 15px;
+    box-shadow: 0 4px 16px rgb(25 67 48 / 4%);
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .report-export-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: #216454;
+    opacity: .75;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .report-export-card .report-format-label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 8px;
+    border: 1px solid #d5e6da;
+    border-radius: 7px;
+    background: #eff7f1;
+    color: #216454;
+    font-weight: 750;
+    letter-spacing: .05em;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .report-export-card button {
+    border-radius: 10px;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .report-action-feedback:empty,
+  body.admin-page #page-rapor #reportViewPrint .report-download-summary:empty {
+    display: none;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint .report-pdf-progress {
+    max-width: 860px;
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid #d5e4d9;
+    border-radius: 12px;
+    background: #f7faf7;
+  }
+
+  body.admin-page #page-rapor #reportViewPrint #reportPdfProgressBar {
+    accent-color: #216454;
+  }
+
+  @media (max-width: 640px) {
+    body.admin-page #page-rapor #reportControls.report-controls-simple {
+      padding: 12px;
+      gap: 12px;
+    }
+
+    body.admin-page #page-rapor #reportViewPrint .report-export-card {
+      padding: 18px 18px 18px 20px;
+    }
+  }
+
+  @media (max-width: 375px) {
+    body.admin-page #page-rapor #reportControls.report-controls-simple {
+      padding: 10px;
+    }
+  }
+}
