@@ -115,8 +115,38 @@ window.LearningGroups = (() => {
     const list = dialog.querySelector('.gm-transfer-student-list');
     const count = dialog.querySelector('[data-transfer-count]');
     const error = dialog.querySelector('[data-transfer-error]');
-    const updateCount = () => { count.textContent = String(list.querySelectorAll('[data-transfer-student]:checked').length); };
+    const targetSelect = dialog.querySelector('#gmTransferGradeTarget');
+    const submitButton = form.querySelector('[type="submit"]');
+    let submitting = false;
+    const chosenStudentIds = () => [...list.querySelectorAll('[data-transfer-student]:checked')]
+      .map(input => input.dataset.transferStudent).filter(id => studentMap.has(String(id)));
+    const refreshTargetChoices = () => {
+      const pickedIds = chosenStudentIds();
+      const previous = targetSelect.value;
+      const eligible = pickedIds.length
+        ? targets.filter(teacher => canMapTransferStudents(state, subject, grade, String(teacher.id), pickedIds))
+        : targets;
+      targetSelect.replaceChildren(
+        new Option('Pilih guru tujuan', ''),
+        ...eligible.map(teacher => new Option(teacher.nama_lengkap || teacher.nama || ('Guru ' + teacher.id), String(teacher.id)))
+      );
+      if (eligible.some(teacher => String(teacher.id) === previous)) {
+        targetSelect.value = previous;
+      } else if (previous) {
+        error.textContent = 'Pilihan guru tujuan direset karena tidak dapat memetakan semua kelas siswa yang dipilih.';
+      }
+      if (pickedIds.length && !eligible.length) {
+        error.textContent = 'Belum ada guru tujuan dengan kelompok yang cocok untuk semua kelas terpilih. Ubah pilihan murid atau rapikan kelompok tujuan terlebih dahulu.';
+      } else if (!pickedIds.length) {
+        error.textContent = '';
+      }
+    };
+    const updateCount = () => {
+      count.textContent = String(chosenStudentIds().length);
+      refreshTargetChoices();
+    };
     list.addEventListener('change', updateCount);
+    targetSelect.addEventListener('change', () => { error.textContent = ''; });
     dialog.querySelector('[data-transfer-all]').addEventListener('click', () => {
       list.querySelectorAll('[data-transfer-student]').forEach(input => { input.checked = true; });
       updateCount();
@@ -125,6 +155,7 @@ window.LearningGroups = (() => {
       list.querySelectorAll('[data-transfer-student]').forEach(input => { input.checked = false; });
       updateCount();
     });
+    refreshTargetChoices();
     return await new Promise(resolve => {
       let settled = false;
       const finish = value => {
@@ -136,13 +167,28 @@ window.LearningGroups = (() => {
       };
       dialog.querySelector('[data-transfer-cancel]').addEventListener('click', () => finish(null));
       dialog.addEventListener('cancel', event => { event.preventDefault(); finish(null); });
-      form.addEventListener('submit', event => {
+      form.addEventListener('submit', async event => {
         event.preventDefault();
-        const targetTeacherId = dialog.querySelector('#gmTransferGradeTarget').value;
-        const studentIds = [...list.querySelectorAll('[data-transfer-student]:checked')]
-          .map(input => input.dataset.transferStudent).filter(id => studentMap.has(String(id)));
-        if (!targetTeacherId) { error.textContent = 'Pilih guru tujuan terlebih dahulu.'; return; }
+        if (submitting) return;
+        const targetTeacherId = targetSelect.value;
+        const studentIds = chosenStudentIds();
+        if (!targetTeacherId) { error.textContent = 'Pilih guru tujuan yang cocok untuk kelas siswa terpilih.'; return; }
         if (!studentIds.length) { error.textContent = 'Pilih minimal satu murid yang akan dipindahkan.'; return; }
+        const chosenTeacher = targets.find(teacher => String(teacher.id) === String(targetTeacherId));
+        const selectedClasses = [...new Set(studentIds.map(id => studentMap.get(String(id))?.kelas).filter(Boolean))]
+          .sort((a, b) => String(a).localeCompare(String(b), 'id', { numeric: true }));
+        submitting = true;
+        submitButton.disabled = true;
+        const confirmed = await AdminNotice.confirm(
+          'Konfirmasi transfer ' + studentIds.length + ' murid tingkat ' + grade + ' dari ' + selectedClasses.length +
+          ' kelas ke ' + (chosenTeacher?.nama_lengkap || chosenTeacher?.nama || 'guru tujuan') +
+          '? Kelas asli siswa tidak berubah. Kelompok tujuan dipilih otomatis berdasarkan kelas. Periksa nama siswa sebelum melanjutkan.'
+        );
+        if (!confirmed) {
+          submitting = false;
+          submitButton.disabled = false;
+          return;
+        }
         finish({ targetTeacherId, studentIds });
       });
       dialog.showModal();
@@ -453,6 +499,39 @@ window.LearningGroups = (() => {
     const labelGrades = [...new Set(groupClassLabels(state, group, students).map(gradeFromClassName).filter(Boolean))];
     if (labelGrades.length === 1) return labelGrades[0];
     return gradeFromClassName(group.class_name);
+  }
+  function normalizeClassLabel(value) {
+    return String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('id');
+  }
+  function groupClassSuffix(group) {
+    const label = String(group.class_name || '').trim();
+    const slash = label.lastIndexOf('/');
+    return (slash >= 0 ? label.slice(slash + 1) : label).trim();
+  }
+  function canMapTransferStudents(state, subject, grade, targetTeacherId, studentIds) {
+    const students = new Map(state.students.map(student => [String(student.id), student]));
+    const targetGroups = state.groups.filter(group =>
+      group.active && String(group.teacher_id) === String(targetTeacherId) &&
+      gradeOfGroup(state, group, students) === String(grade));
+    if (!targetGroups.length) return false;
+    for (const studentId of studentIds) {
+      const student = students.get(String(studentId));
+      if (!student || gradeFromClassName(student.kelas) !== String(grade)) return false;
+      const studentClass = normalizeClassLabel(student.kelas);
+      const exactLabel = targetGroups.filter(group => normalizeClassLabel(groupClassSuffix(group)) === studentClass);
+      if (exactLabel.length === 1) continue;
+      if (exactLabel.length > 1) return false;
+      const exactRoster = targetGroups.filter(group =>
+        [...membersOf(state, group.id)].some(id => normalizeClassLabel(students.get(String(id))?.kelas) === studentClass));
+      if (exactRoster.length === 1) continue;
+      if (exactRoster.length > 1) return false;
+      const broad = targetGroups.filter(group => normalizeClassLabel(groupClassSuffix(group)) === 'kelas ' + grade);
+      if (broad.length === 1) continue;
+      if (broad.length > 1) return false;
+      if (targetGroups.length === 1) continue;
+      return false;
+    }
+    return true;
   }
 
   function renderGroups(subject) {
