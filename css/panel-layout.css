@@ -616,3 +616,76 @@
     }
   }
 }
+
+
+/* Penilaian Periodik: ringkasan dibuat seragam, tanpa panel induk dan tanpa kartu pertama berwarna hijau. */
+@media screen {
+  body.admin-page #page-penilaian .assessment-summary,
+  body.guru-page #page-penilaian .assessment-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div,
+  body.guru-page #page-penilaian .assessment-summary > div {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 15px 16px;
+    border: 1px solid #dce8df;
+    border-radius: 12px;
+    background: #f8fbf8;
+    color: #214638;
+    box-shadow: none;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child,
+  body.guru-page #page-penilaian .assessment-summary > div:first-child {
+    background: #f8fbf8;
+    color: #214638;
+    border-color: #dce8df;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div span,
+  body.guru-page #page-penilaian .assessment-summary > div span {
+    display: block;
+    color: #64786c;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.4;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div strong,
+  body.guru-page #page-penilaian .assessment-summary > div strong,
+  body.admin-page #page-penilaian .assessment-summary > div:first-child strong,
+  body.guru-page #page-penilaian .assessment-summary > div:first-child strong {
+    display: block;
+    margin-top: 8px;
+    color: #214638;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:last-of-type,
+  body.guru-page #page-penilaian .assessment-summary > div:last-of-type {
+    border-right: 1px solid #dce8df;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian .assessment-summary,
+    body.guru-page #page-penilaian .assessment-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div,
+    body.guru-page #page-penilaian .assessment-summary > div {
+      padding: 12px;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div strong,
+    body.guru-page #page-penilaian .assessment-summary > div strong {
+      font-size: 22px;
+    }
+  }
+}
