@@ -104,6 +104,7 @@
             if (!data) return;
             document.documentElement.style.setProperty('--brand-color', resolveThemeColor(data.theme_color));
             const logo = document.querySelector('img[alt="Logo SDIT"]');
+            if (logo) logo.onerror = () => { logo.onerror = null; logo.src = 'assets/school-logo.png'; };
             if (logo && data.logo_url) logo.src = String(data.logo_url).includes('FjF61ou.png') ? 'assets/school-logo.png' : data.logo_url;
             const title = document.querySelector('.bg-gradient-to-r h3');
             if (title && data.name) title.textContent = data.name;
@@ -129,19 +130,9 @@
             const { error } = email ? await supabase.auth.signInWithPassword({ email, password }) : { error: new Error('Akun tidak ditemukan') };
 
             if (!error) {
-                const { data: session, error: userError } = await supabase.auth.getUser();
-                if (userError || !session.user) throw new Error('Sesi belum tersedia. Silakan masuk kembali.');
-                const { data: access, error: accessError } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle();
-                if (accessError || !access || !['admin', 'koordinator', 'guru'].includes(access.role)) {
-                    errorDiv.textContent = 'Akun belum memiliki akses. Hubungi koordinator untuk pemetaan akun.';
-                    errorDiv.classList.remove('hidden');
-                    submitButton.disabled = false;
-                    submitText.textContent = 'Masuk ke Panel';
-                    return;
-                }
                 errorDiv.classList.add('hidden');
-                try { sessionStorage.setItem('gm_login_transition','1'); } catch (_) {}
-                window.location.href = access.role === 'guru' ? 'guru.html' : 'admin.html';
+                try { sessionStorage.setItem('gm_auth_provider', 'email'); } catch (_) {}
+                window.location.replace('auth-verify.html?provider=email');
             } else {
                 errorDiv.textContent = 'Email/username atau password salah.';
                 errorDiv.classList.remove('hidden');
@@ -173,7 +164,7 @@
             const params = new URLSearchParams(window.location.search);
             const oauthError = params.get('error_description') || params.get('error');
             if (oauthError) {
-                sessionStorage.removeItem('gm_google_login_pending');
+                sessionStorage.removeItem('gm_auth_provider');
                 showLoginError('Login Google belum berhasil. Silakan coba lagi atau masuk menggunakan email/username dan password.');
                 return;
             }
@@ -218,12 +209,12 @@
             googleErrorDiv.classList.add('hidden');
             googleLoginBtn.disabled = true;
             if (googleLoginText) googleLoginText.textContent = 'Menghubungkan ke Google...';
-            sessionStorage.setItem('gm_google_login_pending', '1');
+            try { sessionStorage.setItem('gm_auth_provider', 'google'); } catch (_) {}
             try {
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: new URL('login.html', window.location.origin).toString(),
+                        redirectTo: new URL('auth-verify.html?provider=google', window.location.origin).toString(),
                         queryParams: { prompt: 'select_account' }
                     }
                 });
