@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#216454">
+  <title>Memverifikasi Akun - Gemar Mengaji</title>
+  <link rel="icon" href="assets/school-logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/theme.css">
+  <style>
+    :root{color-scheme:light;--auth-green:#216454;--auth-deep:#123c33;--auth-gold:#d8bf88}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#183c32;background:radial-gradient(ellipse at 50% 35%,#204c42 0%,#10352e 52%,#071f1b 100%)}
+    body:before{content:"";position:fixed;inset:12px;border:1px solid #d8bf8833;border-radius:22px;pointer-events:none}
+    .verify-card{width:min(100%,420px);padding:34px 28px 28px;text-align:center;background:#fffefa;border:1px solid #d8bf8855;border-radius:24px;box-shadow:0 24px 80px #031b17a8}
+    .school-logo-wrap{width:82px;height:82px;margin:0 auto 18px;padding:8px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid #e4e9e3;box-shadow:0 4px 18px #123c3312}
+    #schoolLogo{display:block;width:100%;height:100%;object-fit:contain}
+    .eyebrow{margin:0 0 7px;font-size:11px;letter-spacing:.16em;font-weight:800;color:#668276}
+    h1{margin:0;color:#173f34;font-size:22px;line-height:1.3;font-weight:750}
+    #schoolName{margin:7px 0 0;color:#60766d;font-size:13px}
+    .status-icon{width:54px;height:54px;margin:27px auto 16px;display:grid;place-items:center;border-radius:50%;background:#eaf4ee;color:var(--auth-green)}
+    .status-icon svg{width:26px;height:26px}
+    .spinner{width:25px;height:25px;border:3px solid #c6dcd0;border-top-color:var(--auth-green);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #statusTitle{margin:0 0 8px;font-size:17px;font-weight:750;color:#23463b}
+    #statusMessage{margin:0 auto;color:#667970;font-size:13px;line-height:1.65;max-width:320px;overflow-wrap:anywhere}
+    .progress-track{height:4px;margin:24px 0 0;border-radius:99px;background:#e8eee9;overflow:hidden}
+    .progress-track span{display:block;width:35%;height:100%;border-radius:99px;background:linear-gradient(90deg,#216454,#8ebc9b);animation:progress 1.6s ease-in-out infinite}
+    @keyframes progress{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}
+    .actions{display:flex;justify-content:center;gap:10px;margin-top:22px}
+    .actions[hidden],#retryButton[hidden]{display:none}
+    button,a.action{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:11px;border:1px solid #d6e2da;background:#fff;color:#245142;font:inherit;font-size:13px;font-weight:700;text-decoration:none;cursor:pointer}
+    a.action.primary,button.primary{background:var(--auth-green);border-color:var(--auth-green);color:#fff}
+    .footnote{margin:24px 0 0;color:#9aa8a0;font-size:11px}
+    @media(max-width:420px){body{padding:18px}.verify-card{padding:28px 20px 22px;border-radius:20px}h1{font-size:20px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <main class="verify-card" aria-labelledby="pageTitle">
+    <div class="school-logo-wrap">
+      <img id="schoolLogo" src="assets/school-logo.png" alt="Logo SDIT Harapan Umat" width="66" height="66">
+    </div>
+    <p class="eyebrow">SDIT HARAPAN UMAT KARAWANG</p>
+    <h1 id="pageTitle">Memeriksa akses akun</h1>
+    <p id="schoolName">Gemar Mengaji</p>
+    <div id="statusIcon" class="status-icon" aria-hidden="true"><span class="spinner"></span></div>
+    <h2 id="statusTitle" aria-live="polite">Mohon tunggu sebentar</h2>
+    <p id="statusMessage" role="status" aria-live="polite">Kami sedang memastikan sesi login dan hak akses akun Anda.</p>
+    <div id="progressTrack" class="progress-track" aria-hidden="true"><span></span></div>
+    <div id="actions" class="actions" hidden>
+      <a class="action primary" href="login.html">Kembali ke halaman login</a>
+      <button id="retryButton" type="button" hidden>Coba lagi</button>
+    </div>
+    <p class="footnote">Gemar Mengaji · SDIT Harapan Umat Karawang</p>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const params = new URLSearchParams(location.search);
+      const provider = params.get('provider') || sessionStorage.getItem('gm_auth_provider') || 'email';
+      let finished = false;
+      let attempts = 0;
+      const allowedRoles = ['admin', 'koordinator', 'guru'];
+      const setStatus = (title, message, state = 'loading') => {
+        $('statusTitle').textContent = title;
+        $('statusMessage').textContent = message;
+        $('statusIcon').innerHTML = state === 'success'
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>'
+          : state === 'error'
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg>'
+            : '<span class="spinner"></span>';
+        $('statusIcon').style.background = state === 'error' ? '#fff0ee' : state === 'success' ? '#eaf4ee' : '#eaf4ee';
+        $('statusIcon').style.color = state === 'error' ? '#b9382e' : '#216454';
+        $('progressTrack').hidden = state !== 'loading';
+        $('actions').hidden = state === 'success';
+      };
+      const showError = (title, message) => {
+        finished = true;
+        setStatus(title, message, 'error');
+        $('retryButton').hidden = false;
+        $('retryButton').onclick = () => { location.reload(); };
+        $('actions').hidden = false;
+      };
+      const destinationFor = role => role === 'guru' ? 'guru.html' : 'admin.html';
+      async function applySchoolBrand() {
+        try {
+          const { data } = await supabase.from('school_profile').select('name,logo_url,theme_color').eq('id', 1).maybeSingle();
+          if (!data) return;
+          if (data.name) {
+            $('schoolName').textContent = data.name;
+            document.querySelector('.eyebrow').textContent = data.name.toLocaleUpperCase('id-ID');
+          }
+          if (data.logo_url && !String(data.logo_url).includes('FjF61ou.png')) {
+            $('schoolLogo').src = data.logo_url;
+          }
+          document.documentElement.style.setProperty('--brand-color', resolveThemeColor(data.theme_color));
+        } catch (error) {
+          console.warn('Profil sekolah belum dapat dimuat; memakai logo lokal.', error);
+        }
+      }
+      async function verifyAndContinue() {
+        if (finished) return;
+        attempts++;
+        try {
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
+          const session = sessionData?.session;
+          if (!session) {
+            if (attempts < 12) {
+              setStatus('Menunggu sesi login', 'Mengambil hasil autentikasi dari penyedia login…');
+              window.setTimeout(verifyAndContinue, 450);
+              return;
+            }
+            const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+            const detail = params.get('error_description') || params.get('error') || hashParams.get('error_description') || hashParams.get('error');
+            showError('Login belum selesai', detail
+              ? 'Proses login tidak berhasil diselesaikan. Kembali ke halaman login dan coba lagi.'
+              : 'Sesi login belum diterima. Pastikan alamat callback Supabase mengarah ke halaman ini, lalu coba login kembali.');
+            return;
+          }
+          const { data: userData, error: userError } = await supabase.auth.getUser();
+          if (userError || !userData?.user) throw userError || new Error('Identitas akun belum dapat dibaca.');
+          const user = userData.user;
+          if (provider === 'google') {
+            const linkedGoogle = Array.isArray(user.identities) && user.identities.some(identity => identity.provider === 'google');
+            if (!linkedGoogle) {
+              await supabase.auth.signOut({ scope: 'local' });
+              showError('Akun Google belum tertaut', 'Masuk dengan email/username dan kata sandi Gemar Mengaji, lalu buka Profil untuk menautkan akun Google.');
+              return;
+            }
+          }
+          const { data: access, error: accessError } = await supabase
+            .from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
+          if (accessError) throw accessError;
+          if (!access || !allowedRoles.includes(access.role)) {
+            await supabase.auth.signOut({ scope: 'local' });
+            showError('Akses akun belum tersedia', 'Akun berhasil dikenali, tetapi belum memiliki hak akses admin, koordinator, atau guru. Hubungi koordinator.');
+            return;
+          }
+          finished = true;
+          sessionStorage.removeItem('gm_auth_provider');
+          sessionStorage.setItem('gm_login_transition', '1');
+          setStatus('Verifikasi berhasil', 'Akun terverifikasi. Anda akan diarahkan ke panel yang sesuai.', 'success');
+          window.setTimeout(() => { location.replace(destinationFor(access.role)); }, 550);
+        } catch (error) {
+          console.error('Verifikasi login gagal:', error);
+          showError('Tidak dapat memverifikasi akun', 'Koneksi atau pemeriksaan akses bermasalah. Silakan coba lagi. Jika masalah berulang, hubungi koordinator.');
+        }
+      }
+      $('schoolLogo').addEventListener('error', () => {
+        if ($('schoolLogo').getAttribute('src') !== 'assets/school-logo.png') $('schoolLogo').src = 'assets/school-logo.png';
+      });
+      void applySchoolBrand();
+      void verifyAndContinue();
+    })();
+  </script>
+</body>
+</html>

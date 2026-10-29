@@ -130,3 +130,630 @@
     body.admin-page .section-heading > :is(.primary-action, .secondary-action) { width: 100%; }
   }
 }
+
+
+/* Identitas sekolah dan pusat pengaturan: selaraskan dengan tema hijau-putih. */
+@media screen {
+  body.admin-page #page-identitas {
+    --identity-ink: #214638;
+    --identity-muted: #64786c;
+    --identity-line: #d9e6dc;
+    --identity-paper: #ffffff;
+    color: var(--identity-ink);
+  }
+
+  body.admin-page #page-identitas .school-identity-header,
+  body.admin-page #page-identitas .school-identity-form,
+  body.admin-page #page-identitas .school-identity-aside {
+    min-width: 0;
+    border: 1px solid var(--identity-line);
+    border-radius: 16px;
+    background: var(--identity-paper);
+    box-shadow: 0 5px 18px rgb(25 67 48 / 4%);
+  }
+
+  body.admin-page #page-identitas .school-identity-header {
+    padding: clamp(16px, 2.2vw, 24px);
+  }
+
+  body.admin-page #page-identitas :is(h2, h3) {
+    color: var(--identity-ink);
+  }
+
+  body.admin-page #page-identitas .section-heading p:not(.section-kicker),
+  body.admin-page #page-identitas .school-identity-aside > p {
+    color: var(--identity-muted);
+  }
+
+  body.admin-page #page-identitas .school-identity-form,
+  body.admin-page #page-identitas .school-identity-aside {
+    padding: clamp(16px, 2.2vw, 24px);
+  }
+
+  body.admin-page #page-identitas .school-identity-form label {
+    color: #405d4d;
+    font-weight: 650;
+  }
+
+  body.admin-page #page-identitas .school-identity-form :is(input:not([type="color"]):not([type="file"]), textarea) {
+    border-color: #cbdcd1;
+    border-radius: 10px;
+    color: #214638;
+    background: #fff;
+  }
+
+  body.admin-page #page-identitas .school-identity-form :is(input, textarea):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+
+  body.admin-page #page-identitas #settingsPreview {
+    border: 1px solid #d9e6dc;
+    border-radius: 14px;
+    background: #f2f7f3 !important;
+    color: #214638 !important;
+  }
+
+  body.admin-page #page-identitas #settingsPreview :is(h3, p) {
+    color: #214638 !important;
+  }
+
+  body.admin-page #page-identitas #settingsPreview p {
+    opacity: .78;
+  }
+
+  body.admin-page #page-identitas #settingsColorPreview {
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgb(33 70 56 / 10%);
+  }
+
+  body.admin-page #page-pengaturan .settings-intro,
+  body.admin-page #page-pengaturan [data-settings-panel] > section {
+    min-width: 0;
+    border-color: var(--gm-border, #dce5dc);
+    border-radius: 16px;
+  }
+
+  body.admin-page #page-pengaturan .settings-hub-button {
+    min-width: 0;
+    text-align: left;
+    border: 1px solid #d9e6dc;
+    border-radius: 12px;
+    background: #fff;
+    color: #214638;
+    transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+  }
+
+  body.admin-page #page-pengaturan .settings-hub-button span {
+    color: #64786c;
+  }
+
+  body.admin-page #page-pengaturan .settings-hub-button:is(.active, [aria-pressed="true"]) {
+    border-color: #8bb6a0;
+    background: #f0f7f2;
+    box-shadow: inset 3px 0 0 #216454;
+  }
+
+  body.admin-page #page-pengaturan :is(input, select, textarea):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    body.admin-page #page-identitas .school-identity-grid {
+      gap: 14px;
+    }
+
+    body.admin-page #page-identitas .school-identity-form,
+    body.admin-page #page-identitas .school-identity-aside {
+      padding: 16px;
+    }
+
+    body.admin-page #page-pengaturan .settings-hub {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.admin-page #page-pengaturan .settings-hub-button {
+      transition: none;
+    }
+  }
+}
+
+
+/* Data Guru/Siswa: rapikan hirarki navigasi tanpa mengubah alur kerja. */
+@media screen {
+  body.admin-page #page-kelola .gm-local-nav { display:flex; flex-wrap:wrap; gap:8px; padding:5px; border:1px solid #d9e6dc; border-radius:13px; background:#f6faf7; }
+  body.admin-page #page-kelola .gm-local-nav-button { min-height:42px; padding:10px 16px; border:1px solid transparent; border-radius:9px; color:#496454; font-weight:650; transition:background .16s ease,border-color .16s ease,color .16s ease; }
+  body.admin-page #page-kelola .gm-local-nav-button.active,
+  body.admin-page #page-kelola .gm-local-nav-button[aria-pressed="true"] { border-color:#c6ddce; background:#fff; color:#216454; box-shadow:0 2px 5px rgb(25 67 48 / 5%); }
+  body.admin-page #page-kelola #kelolaDataSection { min-width:0; border-color:#dce7df; border-radius:16px; box-shadow:0 4px 18px rgb(25 67 48 / 4%); }
+  body.admin-page #page-kelola .manage-toolbar { min-width:0; }
+  body.admin-page #page-kelola .manage-toolbar > .section-heading { align-items:center; gap:12px; }
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs { display:flex; flex-wrap:wrap; gap:7px; padding:12px 16px; border-top:1px solid #e4ece6; border-bottom:1px solid #e4ece6; background:#f8fbf8; }
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs button { min-height:38px; border:1px solid #d8e5dc; border-radius:9px; padding:8px 12px; background:#fff; color:#496454; font-size:12px; font-weight:650; }
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs button.active,
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs button[aria-pressed="true"] { border-color:#8bb6a0; background:#edf6ef; color:#216454; }
+  body.admin-page #page-kelola .manage-search-row { align-items:end; gap:14px; padding:16px; }
+  body.admin-page #page-kelola .manage-search-row #manageRecordInfo { flex:0 0 auto; padding:8px 11px; border:1px solid #d9e6dc; border-radius:9px; background:#f6faf7; color:#496454; font-size:12px; font-weight:650; }
+  body.admin-page #page-kelola :is(input,select,textarea):focus-visible { outline:2px solid #35866a; outline-offset:2px; }
+  body.admin-page #page-kelola #manageDirectoryTable table thead { background:#f0f6f1; color:#315442; }
+  body.admin-page #page-kelola #manageDirectoryTable th { font-size:11px; letter-spacing:.025em; white-space:nowrap; }
+  body.admin-page #page-kelola #manageDirectoryTable td { vertical-align:middle; overflow-wrap:anywhere; }
+  body.admin-page #page-kelola #teacherEnrollment { border-color:#d9e6dc; border-radius:16px; box-shadow:0 4px 18px rgb(25 67 48 / 4%); }
+  body.admin-page #page-kelola #enrollmentFields { min-width:0; }
+  @media (max-width:640px) {
+    body.admin-page #page-kelola .gm-local-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    body.admin-page #page-kelola .gm-local-nav-button { min-width:0; padding:9px 10px; }
+    body.admin-page #page-kelola .manage-toolbar > .section-heading { align-items:stretch; flex-direction:column; }
+    body.admin-page #page-kelola .manage-toolbar > .section-heading .primary-action { width:100%; }
+    body.admin-page #page-kelola .manage-toolbar .manage-tabs { gap:6px; padding:10px 12px; }
+    body.admin-page #page-kelola .manage-toolbar .manage-tabs button { flex:1 1 auto; min-width:0; padding:8px 10px; }
+    body.admin-page #page-kelola .manage-search-row { align-items:stretch; flex-direction:column; padding:12px; }
+    body.admin-page #page-kelola .manage-search-row #manageRecordInfo { align-self:flex-start; }
+  }
+  @media (prefers-reduced-motion:reduce) { body.admin-page #page-kelola .gm-local-nav-button { transition:none; } }
+}
+
+
+/* Kelola Data: dekatkan judul dengan aksi utama, jangan renggang ke tepi kanan. */
+@media screen {
+  body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading {
+    justify-content: flex-start;
+    column-gap: 16px;
+  }
+  body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading > div {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading #manageAddBtn {
+    margin-left: 0;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading {
+      justify-content: flex-start;
+      gap: 10px;
+    }
+    body.admin-page #page-kelola #kelolaDataSection .manage-toolbar > .section-heading > div {
+      flex: 0 1 auto;
+    }
+  }
+}
+
+
+/* Rekap Absensi: samakan kartu filter dan laporan dengan tema hijau-putih. */
+@media screen {
+  body.admin-page #page-absensi {
+    --attendance-ink: #214638;
+    --attendance-muted: #64786c;
+    --attendance-line: #d9e6dc;
+    color: var(--attendance-ink);
+  }
+  body.admin-page #page-absensi > section {
+    min-width: 0;
+    border-color: var(--attendance-line);
+    border-radius: 16px;
+    box-shadow: 0 4px 18px rgb(25 67 48 / 4%);
+  }
+  body.admin-page #page-absensi > section:first-child {
+    padding: clamp(14px, 2vw, 24px);
+  }
+  body.admin-page #page-absensi > section:first-child h3,
+  body.admin-page #page-absensi #reportContainer h3,
+  body.admin-page #page-absensi > section:last-child h3 {
+    color: var(--attendance-ink);
+  }
+  body.admin-page #page-absensi :is(label, .field-label) {
+    color: #496454;
+  }
+  body.admin-page #page-absensi :is(select, input[type="date"], input[type="search"]) {
+    min-width: 0;
+    border-color: #cadbd0;
+    border-radius: 10px;
+    color: var(--attendance-ink);
+  }
+  body.admin-page #page-absensi :is(select, input):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+  body.admin-page #page-absensi #filterBtn {
+    min-height: 42px;
+    border-radius: 10px;
+    background: #216454;
+    box-shadow: none;
+  }
+  body.admin-page #page-absensi #filterBtn:hover {
+    background: #194f42;
+  }
+  body.admin-page #page-absensi #reportContainer {
+    overflow: hidden;
+    padding: clamp(14px, 2vw, 24px);
+  }
+  body.admin-page #page-absensi #reportContainer > div:first-child {
+    border-color: #e3ece5;
+  }
+  body.admin-page #page-absensi #reportContainer .bg-gradient-to-r {
+    border-color: #d9e6dc;
+    background: #f2f7f3;
+    box-shadow: none;
+  }
+  body.admin-page #page-absensi #reportContainer .bg-blue-600 {
+    background: #216454;
+  }
+  body.admin-page #page-absensi #reportContainer .report-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    color: var(--attendance-muted);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+  body.admin-page #page-absensi #reportContainer .overflow-x-auto,
+  body.admin-page #page-absensi > section:last-child .overflow-x-auto {
+    max-width: 100%;
+    border-color: var(--attendance-line);
+    border-radius: 12px;
+  }
+  body.admin-page #page-absensi #monthlyReportTable thead,
+  body.admin-page #page-absensi #attendanceLogTable thead {
+    background: #f0f6f1;
+    color: #315442;
+  }
+  body.admin-page #page-absensi :is(#btn-print, #btn-download) {
+    min-height: 40px;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+  body.admin-page #page-absensi #btn-print {
+    background: #216454;
+  }
+  body.admin-page #page-absensi #btn-print:hover {
+    background: #194f42;
+  }
+  body.admin-page #page-absensi #btn-download {
+    background: #476d59;
+  }
+  body.admin-page #page-absensi #btn-download:hover {
+    background: #365944;
+  }
+  body.admin-page #page-absensi .attendance-log-date {
+    display: grid;
+    gap: 6px;
+    max-width: 300px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-absensi > section,
+    body.admin-page #page-absensi #reportContainer {
+      border-radius: 14px;
+    }
+    body.admin-page #page-absensi #reportContainer > div:first-child {
+      align-items: stretch;
+    }
+    body.admin-page #page-absensi #reportContainer .flex.gap-2\.5 {
+      align-self: stretch;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    body.admin-page #page-absensi #reportContainer .flex.gap-2\.5 button {
+      flex: 1 1 130px;
+      justify-content: center;
+    }
+    body.admin-page #page-absensi #reportContainer .report-legend {
+      gap: 6px 10px;
+    }
+    body.admin-page #page-absensi .attendance-log-date {
+      max-width: none;
+    }
+  }
+}
+
+
+/* Penilaian Periodik: perjelas filter, ringkasan, dan aksi penyimpanan. */
+@media screen {
+  body.admin-page #page-penilaian {
+    --assessment-ink: #214638;
+    --assessment-muted: #64786c;
+    --assessment-line: #d9e6dc;
+    color: var(--assessment-ink);
+  }
+  body.admin-page #page-penilaian .assessment-context-card {
+    padding: clamp(14px, 2vw, 24px);
+    border: 1px solid var(--assessment-line);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 18px rgb(25 67 48 / 4%);
+  }
+  body.admin-page #page-penilaian .gm-assessment-heading {
+    margin-bottom: 16px;
+  }
+  body.admin-page #page-penilaian .gm-assessment-heading h2 {
+    margin: 0;
+    color: var(--assessment-ink);
+    letter-spacing: -.02em;
+  }
+  body.admin-page #page-penilaian #assessmentContextFields {
+    align-items: end;
+    gap: 14px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  body.admin-page #page-penilaian .field-label {
+    min-width: 0;
+    gap: 7px;
+    color: #496454;
+    font-weight: 650;
+  }
+  body.admin-page #page-penilaian :is(input, select, textarea) {
+    min-width: 0;
+    border-color: #cadbd0;
+    border-radius: 10px;
+  }
+  body.admin-page #page-penilaian :is(input, select, textarea):focus-visible {
+    outline: 2px solid #35866a;
+    outline-offset: 2px;
+    border-color: #35866a;
+  }
+  body.admin-page #page-penilaian #assessmentLoad {
+    min-height: 42px;
+    border-radius: 10px;
+    background: #216454;
+    box-shadow: none;
+  }
+  body.admin-page #page-penilaian #assessmentLoad:hover {
+    background: #194f42;
+  }
+  body.admin-page #page-penilaian .assessment-filter-memory {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div {
+    min-width: 0;
+    border: 1px solid #dce8df;
+    border-radius: 12px;
+    background: #f8fbf8;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div strong {
+    color: var(--assessment-ink);
+  }
+  body.admin-page #page-penilaian .gm-assessment-progress {
+    border-color: #d9e6dc;
+    border-radius: 12px;
+    background: #f7faf7;
+  }
+  body.admin-page #page-penilaian .gm-assessment-progress-track {
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e3ece5;
+  }
+  body.admin-page #page-penilaian #assessmentProgressFill {
+    border-radius: inherit;
+    background: #216454;
+  }
+  body.admin-page #page-penilaian .assessment-work-toolbar {
+    border-color: #d9e6dc;
+    border-radius: 14px;
+    background: #fff;
+  }
+  body.admin-page #page-penilaian .assessment-quick-actions {
+    align-items: center;
+    gap: 8px;
+  }
+  body.admin-page #page-penilaian .assessment-save-all-bottom {
+    border-color: #d9e6dc;
+    border-radius: 14px;
+    background: #f7faf7;
+  }
+  body.admin-page #page-penilaian :is(#assessmentSaveAll, #assessmentMobileSave) {
+    border-radius: 10px;
+    background: #216454;
+  }
+  body.admin-page #page-penilaian :is(#assessmentSaveAll, #assessmentMobileSave):hover {
+    background: #194f42;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian .assessment-context-card {
+      padding: 14px 12px;
+      border-radius: 14px;
+    }
+    body.admin-page #page-penilaian #assessmentContextFields {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    body.admin-page #page-penilaian .assessment-filter-memory > button {
+      flex: 1 1 130px;
+    }
+    body.admin-page #page-penilaian .assessment-quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
+}
+
+
+/* Penilaian Periodik: hilangkan bingkai luar pada ringkasan agar KPI tidak tampak sebagai card di dalam card. */
+@media screen {
+  body.admin-page #page-penilaian .assessment-summary {
+    gap: 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div {
+    min-width: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--assessment-line);
+    border-radius: 12px;
+    background: #f8fbf8;
+    box-shadow: none;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child {
+    background: #216454;
+    color: #fff;
+    border-color: #216454;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+    color: #fff;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:last-of-type {
+    border-right: 1px solid var(--assessment-line);
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian .assessment-summary {
+      gap: 8px;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div {
+      padding: 13px;
+    }
+  }
+}
+
+
+/* Penilaian Periodik: ringkasan dibuat seragam, tanpa panel induk dan tanpa kartu pertama berwarna hijau. */
+@media screen {
+  body.admin-page #page-penilaian .assessment-summary,
+  body.guru-page #page-penilaian .assessment-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div,
+  body.guru-page #page-penilaian .assessment-summary > div {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 15px 16px;
+    border: 1px solid #dce8df;
+    border-radius: 12px;
+    background: #f8fbf8;
+    color: #214638;
+    box-shadow: none;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:first-child,
+  body.guru-page #page-penilaian .assessment-summary > div:first-child {
+    background: #f8fbf8;
+    color: #214638;
+    border-color: #dce8df;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div span,
+  body.guru-page #page-penilaian .assessment-summary > div span {
+    display: block;
+    color: #64786c;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.4;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div strong,
+  body.guru-page #page-penilaian .assessment-summary > div strong,
+  body.admin-page #page-penilaian .assessment-summary > div:first-child strong,
+  body.guru-page #page-penilaian .assessment-summary > div:first-child strong {
+    display: block;
+    margin-top: 8px;
+    color: #214638;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:last-of-type,
+  body.guru-page #page-penilaian .assessment-summary > div:last-of-type {
+    border-right: 1px solid #dce8df;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian .assessment-summary,
+    body.guru-page #page-penilaian .assessment-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div,
+    body.guru-page #page-penilaian .assessment-summary > div {
+      padding: 12px;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div strong,
+    body.guru-page #page-penilaian .assessment-summary > div strong {
+      font-size: 22px;
+    }
+  }
+}
+
+
+/* FINAL OVERRIDE: Penilaian Periodik — ringkasan empat indikator sejajar dan setara. */
+@media screen {
+  body.admin-page #page-penilaian section.assessment-summary,
+  body.admin-page #page-penilaian .assessment-summary {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    margin-block: 14px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div,
+  body.admin-page #page-penilaian .assessment-summary > div:first-child,
+  body.admin-page #page-penilaian .assessment-summary > div:nth-child(n) {
+    display: block !important;
+    grid-column: auto !important;
+    min-width: 0 !important;
+    padding: 14px 15px !important;
+    border: 1px solid #dce8df !important;
+    border-radius: 12px !important;
+    background: #f8fbf8 !important;
+    color: #214638 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div span {
+    display: block !important;
+    margin: 0 !important;
+    color: #64786c !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.4 !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div strong,
+  body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+    display: block !important;
+    margin-top: 8px !important;
+    color: #214638 !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:last-child {
+    border-right: 1px solid #dce8df !important;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian section.assessment-summary,
+    body.admin-page #page-penilaian .assessment-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div,
+    body.admin-page #page-penilaian .assessment-summary > div:first-child {
+      padding: 12px !important;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div strong,
+    body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+      font-size: 22px !important;
+    }
+  }
+}

@@ -290,3 +290,54 @@ body.admin-page #page-profil .gm-profile-help-note strong { color: var(--brand-c
 @media (prefers-reduced-motion: reduce) {
     body.admin-page #page-profil * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+
+/* Accessibility and compact-screen refinement for Profile settings. */
+body.admin-page #page-profil :is(button, a, input, select, summary) {
+    scroll-margin-block: 12px;
+}
+body.admin-page #page-profil :is(button, .gm-profile-auth-secondary, .profile-photo-actions label, .profile-push-actions button) {
+    min-height: 44px;
+}
+body.admin-page #page-profil :is(button, a, input, select, summary):focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--brand-color, #216454) 72%, white);
+    outline-offset: 3px;
+}
+body.admin-page #page-profil :is(input, select) {
+    min-height: 44px;
+    max-width: 100%;
+}
+body.admin-page #page-profil .gm-profile-card,
+body.admin-page #page-profil .gm-profile-setting-row,
+body.admin-page #page-profil .gm-profile-email-panel,
+body.admin-page #page-profil .profile-push-card {
+    overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+    body.admin-page #page-profil .gm-profile-setting-form,
+    body.admin-page #page-profil .gm-profile-email-form {
+        gap: 12px;
+    }
+    body.admin-page #page-profil .gm-profile-setting-form > button,
+    body.admin-page #page-profil .gm-profile-email-form .profile-actions-row button,
+    body.admin-page #page-profil .profile-push-actions button {
+        min-height: 44px;
+    }
+}
+@media (max-width: 760px) and (orientation: landscape) {
+    body.admin-page #page-profil.gm-profile-redesign {
+        gap: 12px;
+    }
+    body.admin-page #page-profil .gm-profile-card {
+        padding: 13px;
+    }
+    body.admin-page #page-profil #profileTeacherCard {
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 10px;
+        padding: 11px;
+    }
+    body.admin-page #page-profil .profile-photo-preview {
+        width: 56px;
+        height: 56px;
+    }
+}

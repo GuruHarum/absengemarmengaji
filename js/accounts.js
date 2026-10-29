@@ -154,7 +154,10 @@ function gmApplyAccountLinkFilter() {
             return;
         const target = button.dataset.deleteAccount || button.dataset.deleteTarget;
         const kind = button.dataset.deleteKind || 'account';
-        if (!(await AdminNotice.confirm(`Hapus ${target}? Akun login di Supabase akan dihapus permanen. Jika target guru, data gurunya juga dihapus.`)))
+        const confirmationMessage = kind === 'teacher'
+            ? `Hapus data guru ${target}? Data guru dan akun login yang terkait akan dihapus permanen.`
+            : `Hapus akun login ${target}? Akun login akan dihapus permanen, tetapi data guru tetap dipertahankan.`;
+        if (!(await AdminNotice.confirm(confirmationMessage)))
             return;
         button.disabled = true;
         try {
