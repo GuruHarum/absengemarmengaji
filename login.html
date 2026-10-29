@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/responsive.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
-    <script src="js/google-oauth-popup.js?v=20261029-popup4"></script>
+    <script src="js/google-oauth-popup.js?v=20261029-popup5"></script>
     <style>
         .gm-login-success-screen {
             position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
@@ -257,44 +257,37 @@ body.login-page a:hover{color:#216454}
                     }
                 }));
 
-                // The popup validates identity and role in its own tab. Wait until the
-                // shared Supabase session is visible to this tab before navigating; otherwise
-                // the dashboard can start with no session and immediately run a second,
-                // confusing verification/redirect cycle.
+                // The popup validates the Google identity and role. Explicitly install
+                // its verified Supabase session in this tab instead of waiting for a
+                // cross-tab storage event that may never arrive on some browsers.
                 const role = popupResult.role;
                 if (!popupResult.userId || !['admin', 'koordinator', 'guru'].includes(role)) {
                     throw new Error('Google berhasil dibuka, tetapi hasil verifikasi akses tidak lengkap. Silakan coba kembali.');
                 }
 
-                let parentSessionReady = false;
-                let lastSessionError = null;
-                for (let attempt = 0; attempt < 32; attempt += 1) {
-                    try {
-                        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                        if (sessionError) throw sessionError;
-                        const parentUser = sessionData?.session?.user;
-                        if (parentUser?.id === popupResult.userId) {
-                            const { data: verifiedData, error: verifiedError } = await supabase.auth.getUser();
-                            if (!verifiedError && verifiedData?.user?.id === popupResult.userId) {
-                                parentSessionReady = true;
-                                break;
-                            }
-                            if (verifiedError) lastSessionError = verifiedError;
-                        } else if (parentUser && parentUser.id !== popupResult.userId) {
-                            throw new Error('Sesi akun berbeda terdeteksi. Muat ulang halaman login lalu coba kembali.');
-                        }
-                    } catch (sessionError) {
-                        lastSessionError = sessionError;
-                        if (/sesi akun berbeda/i.test(String(sessionError?.message || ''))) throw sessionError;
-                    }
-                    if (attempt < 31) await new Promise(resolve => setTimeout(resolve, 250));
-                }
-                if (!parentSessionReady) {
-                    throw new Error(lastSessionError?.message
-                        ? 'Google berhasil diverifikasi, tetapi sesi belum tersinkron ke halaman utama. Silakan coba login sekali lagi.'
-                        : 'Google berhasil diverifikasi, tetapi sesi belum siap. Periksa koneksi lalu coba kembali.');
+                const accessToken = popupResult.session?.access_token;
+                const refreshToken = popupResult.session?.refresh_token;
+                if (!accessToken || !refreshToken) {
+                    throw new Error('Google berhasil diverifikasi, tetapi sesi login tidak diterima. Muat ulang halaman lalu coba kembali.');
                 }
 
+                const { data: installedSession, error: installError } = await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken
+                });
+                if (installError) {
+                    throw new Error('Sesi Google belum dapat dipasang pada halaman utama. Silakan coba login kembali.');
+                }
+                if (installedSession?.session?.user?.id !== popupResult.userId) {
+                    try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {}
+                    throw new Error('Identitas sesi tidak cocok dengan akun yang diverifikasi. Silakan coba kembali.');
+                }
+
+                const { data: verifiedData, error: verifiedError } = await supabase.auth.getUser();
+                if (verifiedError || verifiedData?.user?.id !== popupResult.userId) {
+                    try { await supabase.auth.signOut({ scope: 'local' }); } catch (_) {}
+                    throw new Error('Sesi Google belum dapat diverifikasi di halaman utama. Silakan coba kembali.');
+                }
                 googleErrorDiv.classList.add('hidden');
                 const successScreen = document.getElementById('googleLoginSuccessScreen');
                 if (successScreen) {
