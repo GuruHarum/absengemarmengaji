@@ -31,8 +31,13 @@ window.AppAccess = (() => {
     async function getVerifiedUser() {
         // OAuth popup and dashboard are separate tabs. On a first Google login,
         // allow the shared Supabase session a short moment to become visible here.
-        const isLoginTransition = document.documentElement.classList.contains('gm-login-transition');
-        const attempts = isLoginTransition ? 12 : 1;
+        // The login page sets this sessionStorage flag before navigating here.
+        // Checking a CSS class was ineffective because no page adds that class.
+        let isLoginTransition = false;
+        try {
+            isLoginTransition = sessionStorage.getItem('gm_login_transition') === '1';
+        } catch (_) {}
+        const attempts = isLoginTransition ? 16 : 1;
         let lastError = null;
         for (let attempt = 0; attempt < attempts; attempt += 1) {
             try {
@@ -64,6 +69,7 @@ window.AppAccess = (() => {
         await loadTeacherProfile();
         if (teacher() && !profile.teacherName)
             throw new Error('Akun guru belum terhubung dengan data guru yang valid.');
+        try { sessionStorage.removeItem('gm_login_transition'); } catch (_) {}
         return profile;
     })();
 
@@ -111,6 +117,7 @@ window.AppAccess = (() => {
     }
 
     ready.catch(error => {
+        try { sessionStorage.removeItem('gm_login_transition'); } catch (_) {}
         profile = null;
         if (document.readyState === 'loading')
             document.addEventListener('DOMContentLoaded', () => deny(error), { once: true });
