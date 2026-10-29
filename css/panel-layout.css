@@ -261,3 +261,38 @@
     }
   }
 }
+
+
+/* Data Guru/Siswa: rapikan hirarki navigasi tanpa mengubah alur kerja. */
+@media screen {
+  body.admin-page #page-kelola .gm-local-nav { display:flex; flex-wrap:wrap; gap:8px; padding:5px; border:1px solid #d9e6dc; border-radius:13px; background:#f6faf7; }
+  body.admin-page #page-kelola .gm-local-nav-button { min-height:42px; padding:10px 16px; border:1px solid transparent; border-radius:9px; color:#496454; font-weight:650; transition:background .16s ease,border-color .16s ease,color .16s ease; }
+  body.admin-page #page-kelola .gm-local-nav-button.active,
+  body.admin-page #page-kelola .gm-local-nav-button[aria-pressed="true"] { border-color:#c6ddce; background:#fff; color:#216454; box-shadow:0 2px 5px rgb(25 67 48 / 5%); }
+  body.admin-page #page-kelola #kelolaDataSection { min-width:0; border-color:#dce7df; border-radius:16px; box-shadow:0 4px 18px rgb(25 67 48 / 4%); }
+  body.admin-page #page-kelola .manage-toolbar { min-width:0; }
+  body.admin-page #page-kelola .manage-toolbar > .section-heading { align-items:center; gap:12px; }
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs { display:flex; flex-wrap:wrap; gap:7px; padding:12px 16px; border-top:1px solid #e4ece6; border-bottom:1px solid #e4ece6; background:#f8fbf8; }
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs button { min-height:38px; border:1px solid #d8e5dc; border-radius:9px; padding:8px 12px; background:#fff; color:#496454; font-size:12px; font-weight:650; }
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs button.active,
+  body.admin-page #page-kelola .manage-toolbar .manage-tabs button[aria-pressed="true"] { border-color:#8bb6a0; background:#edf6ef; color:#216454; }
+  body.admin-page #page-kelola .manage-search-row { align-items:end; gap:14px; padding:16px; }
+  body.admin-page #page-kelola .manage-search-row #manageRecordInfo { flex:0 0 auto; padding:8px 11px; border:1px solid #d9e6dc; border-radius:9px; background:#f6faf7; color:#496454; font-size:12px; font-weight:650; }
+  body.admin-page #page-kelola :is(input,select,textarea):focus-visible { outline:2px solid #35866a; outline-offset:2px; }
+  body.admin-page #page-kelola #manageDirectoryTable table thead { background:#f0f6f1; color:#315442; }
+  body.admin-page #page-kelola #manageDirectoryTable th { font-size:11px; letter-spacing:.025em; white-space:nowrap; }
+  body.admin-page #page-kelola #manageDirectoryTable td { vertical-align:middle; overflow-wrap:anywhere; }
+  body.admin-page #page-kelola #teacherEnrollment { border-color:#d9e6dc; border-radius:16px; box-shadow:0 4px 18px rgb(25 67 48 / 4%); }
+  body.admin-page #page-kelola #enrollmentFields { min-width:0; }
+  @media (max-width:640px) {
+    body.admin-page #page-kelola .gm-local-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    body.admin-page #page-kelola .gm-local-nav-button { min-width:0; padding:9px 10px; }
+    body.admin-page #page-kelola .manage-toolbar > .section-heading { align-items:stretch; flex-direction:column; }
+    body.admin-page #page-kelola .manage-toolbar > .section-heading .primary-action { width:100%; }
+    body.admin-page #page-kelola .manage-toolbar .manage-tabs { gap:6px; padding:10px 12px; }
+    body.admin-page #page-kelola .manage-toolbar .manage-tabs button { flex:1 1 auto; min-width:0; padding:8px 10px; }
+    body.admin-page #page-kelola .manage-search-row { align-items:stretch; flex-direction:column; padding:12px; }
+    body.admin-page #page-kelola .manage-search-row #manageRecordInfo { align-self:flex-start; }
+  }
+  @media (prefers-reduced-motion:reduce) { body.admin-page #page-kelola .gm-local-nav-button { transition:none; } }
+}
