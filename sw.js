@@ -1,4 +1,4 @@
-const VERSION = 'redesign-panels-20261029f';
+const VERSION = 'redesign-panels-20261029g';
 const STATIC_CACHE = `gemar-static-${VERSION}`;
 const RUNTIME_CACHE = `gemar-runtime-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -25,7 +25,7 @@ const PRECACHE = [
   '/css/gm-presentation-responsive.css',
   '/css/rev51-responsive.css',
   '/css/rev54-panels.css',
-  '/css/panel-layout.css?v=20261029-panels5',
+  '/css/panel-layout.css?v=20261029-panels6',
   '/css/rapor-workspace.css?v=20261029-report-polish1',
   '/css/gm-data-navigation.css?v=20261023-archive-light3',
   '/js/pwa.js',
