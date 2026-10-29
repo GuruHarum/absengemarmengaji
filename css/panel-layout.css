@@ -689,3 +689,71 @@
     }
   }
 }
+
+
+/* FINAL OVERRIDE: Penilaian Periodik — ringkasan empat indikator sejajar dan setara. */
+@media screen {
+  body.admin-page #page-penilaian section.assessment-summary,
+  body.admin-page #page-penilaian .assessment-summary {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    margin-block: 14px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div,
+  body.admin-page #page-penilaian .assessment-summary > div:first-child,
+  body.admin-page #page-penilaian .assessment-summary > div:nth-child(n) {
+    display: block !important;
+    grid-column: auto !important;
+    min-width: 0 !important;
+    padding: 14px 15px !important;
+    border: 1px solid #dce8df !important;
+    border-radius: 12px !important;
+    background: #f8fbf8 !important;
+    color: #214638 !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div span {
+    display: block !important;
+    margin: 0 !important;
+    color: #64786c !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.4 !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div strong,
+  body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+    display: block !important;
+    margin-top: 8px !important;
+    color: #214638 !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+  }
+  body.admin-page #page-penilaian .assessment-summary > div:last-child {
+    border-right: 1px solid #dce8df !important;
+  }
+  @media (max-width: 640px) {
+    body.admin-page #page-penilaian section.assessment-summary,
+    body.admin-page #page-penilaian .assessment-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div,
+    body.admin-page #page-penilaian .assessment-summary > div:first-child {
+      padding: 12px !important;
+    }
+    body.admin-page #page-penilaian .assessment-summary > div strong,
+    body.admin-page #page-penilaian .assessment-summary > div:first-child strong {
+      font-size: 22px !important;
+    }
+  }
+}
