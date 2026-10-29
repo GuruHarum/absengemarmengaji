@@ -107,7 +107,7 @@ window.LearningGroups = (() => {
           '<span><button type="button" class="secondary-action" data-transfer-all>Pilih semua</button><button type="button" class="secondary-action" data-transfer-clear>Kosongkan</button></span></div>' +
         '<div class="assignment-student-options gm-member-picker gm-transfer-student-list">' + studentOptions + '</div>' +
         '<p class="assessment-feedback is-error" data-transfer-error role="alert"></p>' +
-        '<div class="confirm-actions"><button type="button" data-transfer-cancel class="secondary-action">Batal</button><button type="submit" class="primary-action">Transfer murid</button></div>' +
+        '<div class="confirm-actions"><button type="button" data-transfer-cancel class="secondary-action">Batal</button><button type="submit" class="primary-action">Transfer Murid</button></div>' +
       '</form>';
     document.body.append(dialog);
 
