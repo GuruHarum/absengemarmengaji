@@ -158,6 +158,105 @@ WITH CHECK (
     AND EXISTS (SELECT 1 FROM public.school_classes sc WHERE sc.id = attendance.class_id)
 );
 
+
+-- Resolusi nama guru tetap memakai teacher_id, termasuk bila nama guru duplikat.
+CREATE OR REPLACE FUNCTION app_private.teacher_name()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $
+    SELECT t.nama
+    FROM public.user_roles r
+    JOIN public.teachers t ON t.id::text = r.teacher_id
+    WHERE r.user_id = (SELECT auth.uid())
+      AND r.role = 'guru'
+    LIMIT 1;
+$;
+REVOKE ALL ON FUNCTION app_private.teacher_name() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_private.teacher_name() TO authenticated;
+
+-- Pemetaan akun dan cakupan kelas diturunkan dari relasi ID kelompok,
+-- bukan pencarian students."nama guru".
+CREATE OR REPLACE FUNCTION public.assign_school_account(
+    account_email text,
+    account_role text,
+    linked_teacher text DEFAULT NULL
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $
+DECLARE
+    target uuid;
+    teacher_label text;
+BEGIN
+    IF NOT app_private.is_manager() THEN
+        RAISE EXCEPTION 'Akses ditolak';
+    END IF;
+    IF account_role NOT IN ('admin','koordinator','guru') THEN
+        RAISE EXCEPTION 'Role tidak valid';
+    END IF;
+
+    SELECT id INTO target
+    FROM auth.users
+    WHERE lower(email) = lower(trim(account_email));
+    IF target IS NULL THEN
+        RAISE EXCEPTION 'Email belum terdaftar di Authentication';
+    END IF;
+
+    IF account_role = 'guru'
+       AND EXISTS (
+           SELECT 1 FROM public.user_roles
+           WHERE user_id = target AND role IN ('admin','koordinator')
+       )
+       AND (SELECT count(*) FROM public.user_roles WHERE role IN ('admin','koordinator')) <= 1 THEN
+        RAISE EXCEPTION 'Pengelola terakhir tidak dapat diubah menjadi guru';
+    END IF;
+
+    IF account_role = 'guru'
+       OR (account_role = 'koordinator' AND linked_teacher IS NOT NULL) THEN
+        SELECT nama INTO teacher_label
+        FROM public.teachers
+        WHERE id::text = linked_teacher;
+        IF teacher_label IS NULL THEN
+            RAISE EXCEPTION 'Pilih guru yang valid';
+        END IF;
+    END IF;
+
+    LOCK TABLE public.user_roles IN SHARE ROW EXCLUSIVE MODE;
+    INSERT INTO public.user_roles(user_id, role, teacher_id)
+    VALUES (
+        target,
+        account_role,
+        CASE WHEN account_role IN ('guru','koordinator') THEN linked_teacher ELSE NULL END
+    )
+    ON CONFLICT (user_id) DO UPDATE
+    SET role = EXCLUDED.role, teacher_id = EXCLUDED.teacher_id;
+
+    DELETE FROM public.teacher_class_access WHERE user_id = target;
+
+    IF account_role = 'guru'
+       OR (account_role = 'koordinator' AND linked_teacher IS NOT NULL) THEN
+        INSERT INTO public.teacher_class_access(user_id, class_name)
+        SELECT DISTINCT target, s.kelas
+        FROM public.students s
+        JOIN public.assessment_group_members m ON m.student_id = s.id::text
+        JOIN public.teaching_assignments a ON a.id = m.assignment_id
+        WHERE a.teacher_id = linked_teacher
+          AND a.subject = 'tahsin'
+          AND m.subject = 'tahsin'
+          AND s.kelas IS NOT NULL
+        ON CONFLICT DO NOTHING;
+    END IF;
+END;
+$;
+REVOKE ALL ON FUNCTION public.assign_school_account(text,text,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.assign_school_account(text,text,text) TO authenticated;
+
+
 COMMIT;
 
 -- Verifikasi setelah penerapan:
