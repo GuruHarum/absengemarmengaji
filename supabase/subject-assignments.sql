@@ -5,11 +5,13 @@ drop policy if exists public_roster on public.teachers;
 create policy public_roster on public.teachers for select to anon using (attendance_enabled);
 
 create or replace function app_private.teacher_name() returns text
-language sql stable security definer set search_path='' as $$
+language sql stable security definer set search_path='' as $
  select t.nama from public.user_roles r join public.teachers t on t.id::text=r.teacher_id
- where r.user_id=auth.uid() and r.role='guru' and t.attendance_enabled
- and (select count(*) from public.teachers same_name where same_name.nama=t.nama)=1;
-$$;
+ where r.user_id=(select auth.uid()) and r.role='guru'
+ limit 1;
+$;
+revoke all on function app_private.teacher_name() from public,anon;
+grant execute on function app_private.teacher_name() to authenticated;
 drop policy if exists teacher_read on public.teachers;
 create policy teacher_read on public.teachers for select to authenticated using (
  app_private.is_manager() or id::text=(select teacher_id from public.user_roles where user_id=auth.uid())
