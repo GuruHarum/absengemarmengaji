@@ -36,6 +36,15 @@ test('saved rows are immediately available for editing without waiting for realt
     assert.equal(ctx.isAttendanceRecorded('Siswa A', '2026-09-24'), false);
     assert.equal(ctx.isAttendanceRecorded('Siswa B', '2026-09-23'), false);
 });
+test('attendance status lookup uses student ID across teacher rename and duplicate names', () => {
+    const ctx = context();
+    ctx.cacheAttendanceRecord({ id: 1, date: '2026-09-23', teacher: 'Guru Lama', student: 'Ahmad', student_id: 101, status: 'hadir' });
+    ctx.cacheAttendanceRecord({ id: 2, date: '2026-09-23', teacher: 'Guru Baru', student: 'Ahmad', student_id: 202, status: 'izin' });
+    vm.runInContext("selectedTeacher = 'Guru Baru'", ctx);
+    assert.equal(ctx.getAttendanceRecord('Ahmad', '2026-09-23', 101).status, 'hadir');
+    assert.equal(ctx.getAttendanceRecord('Ahmad', '2026-09-23', 202).status, 'izin');
+    assert.equal(ctx.getAttendanceRecord('Ahmad', '2026-09-23', 303), undefined);
+});
 test('repeated save/realtime responses do not duplicate rows and changed keys are removed', () => {
     const ctx = context();
     const row = { id: 1, date: '2026-09-23', teacher: 'Guru A', student: 'Siswa A', status: 'hadir' };
