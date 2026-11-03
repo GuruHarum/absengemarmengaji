@@ -44,8 +44,8 @@ function buildAttendanceInsights(students, records, from, to, months = null, tod
             continue;
 
         const identity = student.id != null ? String(student.id) : legacyKey(row.teacher, row.class, row.student);
-        const teacherIdentity = row.teacher_id == null ? '' : String(row.teacher_id);
-        unique.set(JSON.stringify([date, identity, teacherIdentity]), { row, student });
+        // Satu siswa hanya dihitung sekali per hari, termasuk jika label/pengampu berubah.
+        unique.set(JSON.stringify([date, identity]), { row, student });
     }
 
     const statuses = { h: 'hadir', hadir: 'hadir', s: 'sakit', sakit: 'sakit', i: 'izin', izin: 'izin', a: 'alpha', alfa: 'alpha', alpha: 'alpha', '-': 'alpha' };
