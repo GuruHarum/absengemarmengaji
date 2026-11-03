@@ -466,4 +466,57 @@ WITH CHECK (
     )
 );
 
+
+-- Baca siswa guru diturunkan dari keanggotaan kelompok aktif berbasis ID.
+DROP POLICY IF EXISTS scoped_read ON public.students;
+CREATE POLICY scoped_read ON public.students
+FOR SELECT TO authenticated
+USING (
+    app_private.is_manager()
+    OR EXISTS (
+        SELECT 1
+        FROM public.assessment_group_members m
+        JOIN public.teaching_assignments a ON a.id = m.assignment_id
+        WHERE m.student_id = students.id::text
+          AND m.active
+          AND a.active
+          AND a.teacher_id = (
+              SELECT r.teacher_id
+              FROM public.user_roles r
+              WHERE r.user_id = (SELECT auth.uid())
+                AND r.role = 'guru'
+          )
+          AND a.academic_year_start = m.academic_year_start
+    )
+);
+
+-- Profil guru menggunakan ID, bukan nama yang dapat berubah.
+DROP POLICY IF EXISTS teacher_read ON public.teachers;
+CREATE POLICY teacher_read ON public.teachers
+FOR SELECT TO authenticated
+USING (
+    app_private.is_manager()
+    OR id::text = (
+        SELECT r.teacher_id FROM public.user_roles r
+        WHERE r.user_id = (SELECT auth.uid())
+    )
+);
+DROP POLICY IF EXISTS teacher_update ON public.teachers;
+CREATE POLICY teacher_update ON public.teachers
+FOR UPDATE TO authenticated
+USING (
+    app_private.is_manager()
+    OR id::text = (
+        SELECT r.teacher_id FROM public.user_roles r
+        WHERE r.user_id = (SELECT auth.uid())
+    )
+)
+WITH CHECK (
+    app_private.is_manager()
+    OR id::text = (
+        SELECT r.teacher_id FROM public.user_roles r
+        WHERE r.user_id = (SELECT auth.uid())
+    )
+);
+
 commit;
