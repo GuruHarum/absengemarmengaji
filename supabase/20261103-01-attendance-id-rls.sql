@@ -541,6 +541,120 @@ REVOKE ALL ON FUNCTION public.gm_sync_student_identity() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.gm_sync_student_identity() TO authenticated;
 
 
+-- Validasi penilaian periodik juga mengacu pada keanggotaan kelompok Tahsin
+-- dan teacher_id, bukan kesamaan nama guru pada master siswa.
+CREATE OR REPLACE FUNCTION app_private.can_assess(student_key text, teacher_key text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $fn$
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.students s
+        WHERE s.id::text = student_key
+          AND (
+              app_private.is_manager()
+              OR EXISTS (
+                  SELECT 1
+                  FROM public.assessment_group_members m
+                  JOIN public.teaching_assignments a ON a.id = m.assignment_id
+                  JOIN public.user_roles r ON r.user_id = (SELECT auth.uid())
+                  WHERE m.student_id = s.id::text
+                    AND m.active
+                    AND m.subject = 'tahsin'
+                    AND a.active
+                    AND a.subject = 'tahsin'
+                    AND a.teacher_id = teacher_key
+                    AND a.academic_year_start = m.academic_year_start
+                    AND r.role = 'guru'
+                    AND r.teacher_id = teacher_key
+                    AND app_private.owns_class(s.kelas)
+              )
+          )
+    );
+$fn$;
+REVOKE ALL ON FUNCTION app_private.can_assess(text,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION app_private.can_assess(text,text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION app_private.validate_periodic_assessment()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $fn$
+DECLARE
+    max_ayah integer;
+    student_row record;
+BEGIN
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION 'Login diperlukan untuk menyimpan penilaian';
+    END IF;
+    IF NOT app_private.can_assess(NEW.student_id, NEW.teacher_id) THEN
+        RAISE EXCEPTION 'Siswa bukan tanggung jawab guru yang dipilih';
+    END IF;
+
+    SELECT ayahs INTO max_ayah
+    FROM public.quran_surahs
+    WHERE number = NEW.tahfidz_surah;
+    IF max_ayah IS NULL OR NEW.tahfidz_ayah NOT BETWEEN 1 AND max_ayah THEN
+        RAISE EXCEPTION 'Ayat tidak sesuai dengan surat yang dipilih';
+    END IF;
+
+    IF TG_OP = 'INSERT' THEN
+        SELECT s."nama siswa" AS student_name,
+               s.kelas AS class_name,
+               t.nama AS teacher_name
+        INTO student_row
+        FROM public.students s
+        JOIN public.assessment_group_members m
+          ON m.student_id = s.id::text
+         AND m.active
+         AND m.subject = 'tahsin'
+         AND m.academic_year_start = NEW.academic_year_start
+        JOIN public.teaching_assignments a
+          ON a.id = m.assignment_id
+         AND a.active
+         AND a.subject = 'tahsin'
+         AND a.academic_year_start = m.academic_year_start
+         AND a.teacher_id = NEW.teacher_id
+        JOIN public.teachers t ON t.id::text = a.teacher_id
+        WHERE s.id::text = NEW.student_id;
+
+        IF student_row IS NULL THEN
+            RAISE EXCEPTION 'Relasi siswa dan guru Tahsin tidak ditemukan';
+        END IF;
+        NEW.student_name := student_row.student_name;
+        NEW.teacher_name := student_row.teacher_name;
+        NEW.class_name := student_row.class_name;
+        NEW.created_at := now();
+        NEW.created_by := auth.uid();
+        NEW.version := 1;
+    ELSE
+        IF (NEW.student_id, NEW.teacher_id, NEW.academic_year_start, NEW.period)
+           IS DISTINCT FROM
+           (OLD.student_id, OLD.teacher_id, OLD.academic_year_start, OLD.period) THEN
+            RAISE EXCEPTION 'Identitas penilaian tidak boleh diubah';
+        END IF;
+        -- Pertahankan snapshot nama/kelas penilaian yang sudah tersimpan.
+        NEW.student_name := OLD.student_name;
+        NEW.teacher_name := OLD.teacher_name;
+        NEW.class_name := OLD.class_name;
+        NEW.created_at := OLD.created_at;
+        NEW.created_by := OLD.created_by;
+        NEW.version := OLD.version + 1;
+    END IF;
+
+    NEW.updated_at := now();
+    NEW.updated_by := auth.uid();
+    RETURN NEW;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION app_private.validate_periodic_assessment() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION app_private.validate_periodic_assessment() TO authenticated;
+
+
 COMMIT;
 
 -- Verifikasi setelah penerapan:
