@@ -56,6 +56,31 @@ test('repeated save/realtime responses do not duplicate rows and changed keys ar
     assert.equal(ctx.isAttendanceRecorded('Siswa A', row.date), false);
     assert.equal(ctx.isAttendanceRecorded('Siswa A', '2026-09-24'), true);
 });
+test('duplicate attendance check uses student ID rather than mutable labels', async () => {
+    const ctx = context();
+    const filters = [];
+    let inserted = null;
+    const countQuery = {
+        eq(column, value) { filters.push([column, value]); return this; },
+        then(resolve, reject) { return Promise.resolve({ count: 0, error: null }).then(resolve, reject); }
+    };
+    const insertQuery = {
+        select() { return this; },
+        single: async () => ({ data: inserted, error: null })
+    };
+    ctx.supabase = {
+        from() {
+            return {
+                select() { return countQuery; },
+                insert(row) { inserted = row; return insertQuery; }
+            };
+        }
+    };
+    const record = { date: '2026-09-23', teacher: 'Guru Lama', student: 'Ahmad', student_id: 101, teacher_id: 42, class_id: 33, status: 'hadir' };
+    await ctx.saveAttendance(record);
+    assert.deepEqual(filters, [['date', '2026-09-23'], ['student_id', 101]]);
+    assert.equal(inserted.student_id, 101);
+});
 test('database edits/deletes reject missing rows and preserve server errors', async () => {
     const ctx = context();
     let response;
