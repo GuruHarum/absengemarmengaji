@@ -77,7 +77,7 @@ BEGIN
 
     RETURN teacher_key;
 END;
-$fn$;;
+$fn$;
 revoke all on function public.provision_teacher_account(uuid,uuid,text,text,text,boolean) from public,anon,authenticated;
 grant execute on function public.provision_teacher_account(uuid,uuid,text,text,text,boolean) to service_role;
 commit;
