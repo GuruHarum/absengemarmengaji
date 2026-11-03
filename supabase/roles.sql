@@ -514,4 +514,48 @@ WITH CHECK (
 );
 
 
+
+-- Perubahan master siswa oleh guru memakai relasi kelompok berbasis ID.
+DROP POLICY IF EXISTS scoped_update ON public.students;
+CREATE POLICY scoped_update ON public.students
+FOR UPDATE TO authenticated
+USING (
+    app_private.is_manager()
+    OR (
+        app_private.owns_class(kelas)
+        AND EXISTS (
+            SELECT 1
+            FROM public.assessment_group_members m
+            JOIN public.teaching_assignments a ON a.id = m.assignment_id
+            WHERE m.student_id = students.id::text
+              AND m.active
+              AND a.active
+              AND a.teacher_id = (
+                  SELECT r.teacher_id FROM public.user_roles r
+                  WHERE r.user_id = (SELECT auth.uid()) AND r.role = 'guru'
+              )
+              AND a.academic_year_start = m.academic_year_start
+        )
+    )
+)
+WITH CHECK (
+    app_private.is_manager()
+    OR (
+        app_private.owns_class(kelas)
+        AND EXISTS (
+            SELECT 1
+            FROM public.assessment_group_members m
+            JOIN public.teaching_assignments a ON a.id = m.assignment_id
+            WHERE m.student_id = students.id::text
+              AND m.active
+              AND a.active
+              AND a.teacher_id = (
+                  SELECT r.teacher_id FROM public.user_roles r
+                  WHERE r.user_id = (SELECT auth.uid()) AND r.role = 'guru'
+              )
+              AND a.academic_year_start = m.academic_year_start
+        )
+    )
+);
+
 commit;
