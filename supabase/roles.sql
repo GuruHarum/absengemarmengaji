@@ -307,7 +307,7 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $fn$
     SELECT EXISTS (
         SELECT 1
         FROM public.students s
@@ -339,7 +339,7 @@ AS $
           AND sc.normalized_name =
               lower(regexp_replace(trim(p_class_name), '[[:space:]]+', ' ', 'g'))
     );
-$;
+$fn$;
 REVOKE ALL ON FUNCTION app_private.valid_current_tahsin_attendance_ids(bigint,bigint,bigint,date,text,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app_private.valid_current_tahsin_attendance_ids(bigint,bigint,bigint,date,text,text) TO anon, authenticated;
 
@@ -370,14 +370,14 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $fn$
     SELECT t.nama
     FROM public.user_roles r
     JOIN public.teachers t ON t.id::text = r.teacher_id
     WHERE r.user_id = (SELECT auth.uid())
       AND r.role = 'guru'
     LIMIT 1;
-$;
+$fn$;
 REVOKE ALL ON FUNCTION app_private.teacher_name() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION app_private.teacher_name() TO authenticated;
 
@@ -392,7 +392,7 @@ RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $fn$
 DECLARE
     target uuid;
     teacher_label text;
@@ -456,7 +456,7 @@ BEGIN
         ON CONFLICT DO NOTHING;
     END IF;
 END;
-$;
+$fn$;
 REVOKE ALL ON FUNCTION public.assign_school_account(text,text,text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.assign_school_account(text,text,text) TO authenticated;
 
