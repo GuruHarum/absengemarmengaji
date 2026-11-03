@@ -71,13 +71,72 @@ function getStudents() {
 async function getStudentsUnshared() {
     if (window.AppAccess)
         await AppAccess.ready;
+    const yearKey = getPublicAcademicYearStart();
     if (!window.AppAccess) {
-        const yearKey = getPublicAcademicYearStart();
         const rows = await fetchAllRpcRows('gm_public_tahsin_students', { year_key: yearKey }, 500);
         window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), studentSource: 'gm_public_tahsin_students', yearKey, students: rows.length, build: 'roster20-pagination', paginated: true };
         return rows;
     }
-    return fetchAllRows(() => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'), 500);
+
+    const rows = await fetchAllRows(
+        () => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'),
+        500
+    );
+    if (!rows.length)
+        return rows;
+
+    // Ambil relasi pengampu dari ID kelompok Tahsin aktif, bukan dari teks
+    // students."nama guru". Nama hanya dipakai sebagai label yang ditampilkan.
+    const assignments = await fetchAllRows(
+        () => supabase.from('teaching_assignments')
+            .select('id,teacher_id')
+            .eq('subject', 'tahsin')
+            .eq('active', true)
+            .eq('academic_year_start', yearKey),
+        500
+    );
+    if (!assignments.length)
+        return rows;
+
+    const assignmentIds = assignments.map(item => item.id);
+    const members = await fetchAllRows(
+        () => supabase.from('assessment_group_members')
+            .select('student_id,assignment_id')
+            .eq('subject', 'tahsin')
+            .eq('active', true)
+            .eq('academic_year_start', yearKey)
+            .in('assignment_id', assignmentIds),
+        500
+    );
+    const teacherByAssignment = new Map(assignments.map(item => [String(item.id), String(item.teacher_id)]));
+    const teacherByStudent = new Map();
+    for (const member of members) {
+        const teacherId = teacherByAssignment.get(String(member.assignment_id));
+        if (!teacherId)
+            continue;
+        const studentId = String(member.student_id);
+        const existing = teacherByStudent.get(studentId);
+        if (existing && existing !== teacherId)
+            throw new Error('Satu siswa memiliki lebih dari satu kelompok Tahsin aktif. Hubungi koordinator.');
+        teacherByStudent.set(studentId, teacherId);
+    }
+
+    const teacherIds = [...new Set([...teacherByStudent.values()])];
+    const teacherRows = teacherIds.length
+        ? await fetchAllRows(() => supabase.from('teachers').select('id,nama').in('id', teacherIds), 500)
+        : [];
+    const teacherById = new Map(teacherRows.map(item => [String(item.id), item.nama]));
+    return rows.map(student => {
+        const teacherId = teacherByStudent.get(String(student.id));
+        if (!teacherId)
+            return student;
+        const currentName = teacherById.get(teacherId);
+        return {
+            ...student,
+            teacher_id: teacherId,
+            ...(currentName ? { 'nama guru': currentName } : {})
+        };
+    });
 }
 // Ambil absensi dengan filter server-side dan identitas ID. Tidak pernah
 // mengunduh seluruh riwayat sebagai fallback jika filter gagal.
