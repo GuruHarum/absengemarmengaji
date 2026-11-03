@@ -55,10 +55,12 @@ window.AppAccess = (() => {
             return query;
         if (table === 'teachers')
             return query.eq('id', profile.teacher_id);
+        // Relasi siswa dibatasi oleh RLS melalui ID kelompok Tahsin aktif.
+        // Jangan menambahkan filter nama di client: nama guru dapat berubah.
         if (table === 'students')
-            return query.eq('nama guru', profile.teacherName);
+            return query;
         if (table === 'attendance')
-            return query.eq('teacher', profile.teacherName);
+            return query.eq('teacher_id', String(profile.teacher_id));
         return query;
     }
 
