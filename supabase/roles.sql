@@ -378,7 +378,7 @@ AS $fn$
       AND r.role = 'guru'
     LIMIT 1;
 $fn$;
-REVOKE ALL ON FUNCTION app_private.teacher_name() FROM PUBLIC;
+REVOKE ALL ON FUNCTION app_private.teacher_name() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION app_private.teacher_name() TO authenticated;
 
 -- Pemetaan akun dan cakupan kelas diturunkan dari relasi ID kelompok,
