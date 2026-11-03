@@ -49,6 +49,16 @@ function getAttendanceRecord(studentName, date, studentId = null) {
         );
         if (byId)
             return byId;
+        // Fallback hanya untuk baris historis yang belum memiliki student_id.
+        const legacy = rows.find(item =>
+            (item.student_id == null || item.student_id === '') &&
+            String(item.date || item.tanggal || '').slice(0, 10) === checkDate &&
+            String(item.student || item.nama_siswa || '').trim().toLowerCase() === String(studentName || '').trim().toLowerCase() &&
+            String(item.teacher || item.nama_guru || '').trim().toLowerCase() === String(selectedTeacher || '').trim().toLowerCase()
+        );
+        if (legacy && typeof syncAttendanceIndex === 'function')
+            syncAttendanceIndex(legacy);
+        return legacy;
     }
     const key = `${checkDate}|${selectedTeacher}|${studentName}`;
     const indexedRecord = attendanceIndex.get(key);
