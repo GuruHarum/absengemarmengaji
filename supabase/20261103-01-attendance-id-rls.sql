@@ -622,7 +622,7 @@ BEGIN
         JOIN public.teachers t ON t.id::text = a.teacher_id
         WHERE s.id::text = NEW.student_id;
 
-        IF student_row IS NULL THEN
+        IF NOT FOUND THEN
             RAISE EXCEPTION 'Relasi siswa dan guru Tahsin tidak ditemukan';
         END IF;
         NEW.student_name := student_row.student_name;
