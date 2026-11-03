@@ -67,9 +67,32 @@ create policy history_read on public.subject_assessment_history for select to au
 
 create or replace function app_private.can_assess_subject(student_key text, year_key integer, subject_key text, teacher_key text)
 returns boolean language sql stable security definer set search_path='' as $$
- select exists(select 1 from public.teaching_assignments a join public.students s on s.kelas=a.class_name
- where s.id::text=student_key and a.active and a.academic_year_start=year_key and a.subject=subject_key and a.teacher_id=teacher_key
- and (app_private.is_manager() or exists(select 1 from public.user_roles r where r.user_id=auth.uid() and r.teacher_id=teacher_key and r.role='guru')));
+ select year_key between 2000 and 2200
+ and (app_private.is_manager() or exists(
+   select 1 from public.user_roles r
+   where r.user_id=(select auth.uid()) and r.role='guru' and r.teacher_id=teacher_key
+ ))
+ and exists(
+  select 1 from public.students s
+  join public.teachers t on t.id::text=teacher_key
+  where s.id::text=student_key and (
+   (subject_key='tahsin' and t.attendance_enabled is not false and exists(
+     select 1 from public.assessment_group_members m
+     join public.teaching_assignments a on a.id=m.assignment_id
+     where m.student_id=s.id::text and m.active and m.subject='tahsin'
+       and a.active and a.subject='tahsin' and a.teacher_id=teacher_key
+       and a.academic_year_start=year_key and m.academic_year_start=year_key
+   ))
+   or
+   (subject_key='tahfidz' and exists(
+     select 1 from public.assessment_group_members m
+     join public.teaching_assignments a on a.id=m.assignment_id
+     where m.student_id=s.id::text and m.active and m.subject='tahfidz'
+       and a.active and a.subject='tahfidz' and a.teacher_id=teacher_key
+       and a.academic_year_start=year_key and m.academic_year_start=year_key
+   ))
+  )
+ );
 $$;
 revoke all on function app_private.can_assess_subject(text,integer,text,text) from public, anon;
 grant execute on function app_private.can_assess_subject(text,integer,text,text) to authenticated;
