@@ -245,13 +245,23 @@ async function getPublicAttendanceIds(student, teacherName, date) {
     const studentId = Number(student?.id);
     if (!Number.isSafeInteger(studentId) || studentId <= 0)
         throw new Error('ID siswa tidak valid. Muat ulang daftar siswa.');
-    const matchedTeachers = (teachersData || []).filter(t => t.nama === teacherName && Number.isSafeInteger(Number(t.id)));
-    if (matchedTeachers.length !== 1)
-        throw new Error('Identitas guru tidak unik. Muat ulang halaman.');
+    // Gunakan teacher_id yang sudah disediakan roster/kelompok. Nama hanya fallback
+    // untuk data lama yang belum memiliki relasi ID.
+    const linkedTeacherId = Number(student?.teacher_id);
+    const linkedTeacher = (teachersData || []).find(t => Number(t.id) === linkedTeacherId);
+    let resolvedTeacherId;
+    if (Number.isSafeInteger(linkedTeacherId) && linkedTeacherId > 0 && linkedTeacher) {
+        resolvedTeacherId = linkedTeacherId;
+    } else {
+        const matchedTeachers = (teachersData || []).filter(t => t.nama === teacherName && Number.isSafeInteger(Number(t.id)));
+        if (matchedTeachers.length !== 1)
+            throw new Error('Identitas guru tidak ditemukan atau ambigu. Muat ulang halaman.');
+        resolvedTeacherId = Number(matchedTeachers[0].id);
+    }
     if (Number.isSafeInteger(Number(student.class_id)) && Number(student.class_id) > 0 &&
-        String(student.teacher_id) === String(matchedTeachers[0].id) &&
+        String(student.teacher_id) === String(resolvedTeacherId) &&
         Number(student.academic_year_start) === year) {
-        return {student_id:studentId,class_id:Number(student.class_id),teacher_id:Number(student.teacher_id)};
+        return {student_id:studentId,class_id:Number(student.class_id),teacher_id:resolvedTeacherId};
     }
     const cleanClass = value => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
     const className = cleanClass(student.kelas);
@@ -263,7 +273,7 @@ async function getPublicAttendanceIds(student, teacherName, date) {
     const matchingClasses = (classes || []).filter(c => cleanClass(c.class_name) === className);
     if (matchingClasses.length !== 1)
         throw new Error('Kelas tidak ditemukan atau ganda di master kelas. Hubungi koordinator.');
-    return { student_id: studentId, class_id: Number(matchingClasses[0].id), teacher_id: Number(matchedTeachers[0].id) };
+    return { student_id: studentId, class_id: Number(matchingClasses[0].id), teacher_id: resolvedTeacherId };
 }
 
 async function saveAttendance(record) {
