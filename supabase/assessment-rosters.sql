@@ -25,18 +25,32 @@ update public.teaching_assignments set roster_mode='members' where subject='tahf
 create or replace function app_private.can_assess_subject(student_key text, year_key integer, subject_key text, teacher_key text)
 returns boolean language sql stable security definer set search_path='' as $$
  select year_key between 2000 and 2200
- and (app_private.is_manager() or exists(select 1 from public.user_roles r where r.user_id=auth.uid() and r.role='guru' and r.teacher_id=teacher_key))
- and exists(select 1 from public.students s join public.teachers t on t.id::text=teacher_key
- where s.id::text=student_key and (
-  (subject_key='tahsin' and t.attendance_enabled and s."nama guru"=t.nama
-   and (select count(*) from public.teachers same_name where same_name.nama=t.nama)=1)
-  or (subject_key='tahfidz' and exists(select 1 from public.assessment_group_members m
-   join public.teaching_assignments a on a.id=m.assignment_id
-   where m.student_id=student_key and m.active and a.active and a.subject='tahfidz'
-    and a.teacher_id=teacher_key and a.academic_year_start=year_key and m.academic_year_start=year_key))
- ));
+ and (app_private.is_manager() or exists(
+   select 1 from public.user_roles r
+   where r.user_id=(select auth.uid()) and r.role='guru' and r.teacher_id=teacher_key
+ ))
+ and exists(
+  select 1 from public.students s
+  join public.teachers t on t.id::text=teacher_key
+  where s.id::text=student_key and (
+   (subject_key='tahsin' and t.attendance_enabled is not false and exists(
+     select 1 from public.assessment_group_members m
+     join public.teaching_assignments a on a.id=m.assignment_id
+     where m.student_id=s.id::text and m.active and m.subject='tahsin'
+       and a.active and a.subject='tahsin' and a.teacher_id=teacher_key
+       and a.academic_year_start=year_key and m.academic_year_start=year_key
+   ))
+   or
+   (subject_key='tahfidz' and exists(
+     select 1 from public.assessment_group_members m
+     join public.teaching_assignments a on a.id=m.assignment_id
+     where m.student_id=s.id::text and m.active and m.subject='tahfidz'
+       and a.active and a.subject='tahfidz' and a.teacher_id=teacher_key
+       and a.academic_year_start=year_key and m.academic_year_start=year_key
+   ))
+  )
+ );
 $$;
-
 revoke execute on function public.manage_teaching_assignment(text,uuid,text,text,text,integer) from public,anon,authenticated;
 create or replace function public.manage_tahfidz_group(action text, target_id uuid default null, teacher_key text default null,
  group_name text default null, year_key integer default null, student_keys text[] default null)
