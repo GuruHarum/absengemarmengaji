@@ -655,6 +655,67 @@ REVOKE ALL ON FUNCTION app_private.validate_periodic_assessment() FROM PUBLIC, a
 GRANT EXECUTE ON FUNCTION app_private.validate_periodic_assessment() TO authenticated;
 
 
+-- Rapor memakai teacher_id untuk label pengampu aktif dan tetap mempertahankan snapshot nilai.
+CREATE OR REPLACE FUNCTION app_private.report_payload(student_key text,yr integer,pr text) returns jsonb language plpgsql stable security definer set search_path='' AS $fn$
+declare a jsonb;b jsonb;pupil jsonb;config jsonb;refs jsonb;school jsonb;settings jsonb;ident jsonb;lvl text;issues jsonb:='[]';r record;officials jsonb;teachers jsonb;ts text;tf text;
+begin
+ select to_jsonb(t) into a from public.subject_assessments t where student_id=student_key and academic_year_start=yr and period=pr and subject='tahsin';
+ select to_jsonb(t) into b from public.subject_assessments t where student_id=student_key and academic_year_start=yr and period=pr and subject='tahfidz';
+ select jsonb_build_object('id',id::text,'name',coalesce(a->>'student_name',b->>'student_name',"nama siswa"),'class',coalesce(a->>'class_name',b->>'class_name',kelas)) into pupil from public.students where id::text=student_key;
+ if pupil is null then pupil:=jsonb_build_object('id',student_key,'name',coalesce(a->>'student_name',b->>'student_name'),'class',coalesce(a->>'class_name',b->>'class_name'));end if;
+ if a is null and b is null then
+  select jsonb_build_object('id',student_id,'name',student_name,'class',class_name) into ident from public.report_period_students where student_id=student_key and academic_year_start=yr and period=pr;
+  pupil:=coalesce(ident,pupil);
+ end if;
+ select jsonb_build_object('nis',nis,'nisn',nisn) into ident from public.student_identifiers where student_id::text=student_key;
+ pupil:=pupil||coalesce(ident,'{}');
+ select data into config from public.report_settings where id=1;
+ select data into refs from public.report_reference where id=1;
+ select to_jsonb(t) into school from public.school_profile t where id=1;
+ lvl:=substring(app_private.normalize_student_class(pupil->>'class') from '^([0-9]+)');
+ settings:=config->'curriculum'->(yr::text||'_'||pr||'_'||lvl);
+ settings:=coalesce(settings,'{}');
+
+ if a->>'class_name' is distinct from b->>'class_name' and a is not null and b is not null then issues:=issues||'"Snapshot kelas kedua pelajaran berbeda"'::jsonb;end if;
+ for r in select * from public.subject_assessments where student_id=student_key and academic_year_start=yr and period=pr loop
+  if r.needs_review then issues:=issues||to_jsonb(r.subject||' perlu verifikasi pengampu');end if;
+  begin perform app_private.validate_report_progress(r.scores,r.subject);exception when others then issues:=issues||to_jsonb(r.subject||': '||sqlerrm);end;
+ end loop;
+ if nullif(pupil->>'nis','') is null then issues:=issues||'"NIS belum tersedia"'::jsonb;end if;
+ if nullif(school->>'name','') is null or nullif(school->>'logo_url','') is null then issues:=issues||'"Profil atau logo sekolah belum lengkap"'::jsonb;end if;
+ select coalesce(issued_officials,snapshot->'officials') into officials from public.student_reports where student_id=student_key and academic_year_start=yr and period=pr;
+ officials:=coalesce(officials,config-'curriculum'-'overrides');
+ select coalesce(nullif(t.nama_lengkap,''),t.nama) into ts
+ from public.teaching_assignments a
+ join public.assessment_group_members m on m.assignment_id=a.id
+ join public.teachers t on t.id::text=a.teacher_id
+ where m.student_id=student_key and m.active and m.subject='tahsin'
+   and a.active and a.subject='tahsin'
+   and a.academic_year_start=yr and m.academic_year_start=yr
+ order by a.id limit 1;
+ select coalesce(nullif(t.nama_lengkap,''),t.nama) into tf from public.teaching_assignments a join public.assessment_group_members m on m.assignment_id=a.id join public.teachers t on t.id::text=a.teacher_id where m.student_id=student_key and m.active and a.active and a.subject='tahfidz' and a.academic_year_start=yr and m.academic_year_start=yr order by a.id limit 1;
+ teachers:=jsonb_build_object('tahsin',coalesce(a->>'teacher_name',ts,'Pengampu Belum Ditetapkan'),'tahfidz',coalesce(b->>'teacher_name',tf,'Pengampu Belum Ditetapkan'));
+ if nullif(officials->>'principal_name','') is null or nullif(officials->>'coordinator_name','') is null or nullif(officials->>'principal_niy','') is null or nullif(officials->>'coordinator_niy','') is null or nullif(officials->>'city','') is null then issues:=issues||'"Penandatangan/tempat rapor belum lengkap"'::jsonb;end if;
+ if settings->'tahsin_target' is null or settings->'tahfidz_target' is null or settings->>'tahsin_kkm' is null or settings->>'tahfidz_kkm' is null then issues:=issues||'"KKM/target periode dan tingkat belum diatur"'::jsonb;
+ else
+  begin
+   if settings->'tahsin_target' ? 'curriculum_mode' then
+    perform app_private.validate_curriculum_target(settings->'tahsin_target','tahsin');
+   else
+    perform app_private.validate_report_progress(settings->'tahsin_target','tahsin');
+   end if;
+   if settings->'tahfidz_target' ? 'curriculum_range' then
+    perform app_private.validate_curriculum_target(settings->'tahfidz_target','tahfidz');
+   else
+    perform app_private.validate_report_progress((settings->'tahfidz_target')||'{"tahfidz_aspect_confirmed":true}'::jsonb,'tahfidz');
+   end if;
+   if (settings->>'tahsin_kkm')::numeric not between 0 and 100 or (settings->>'tahfidz_kkm')::numeric not between 0 and 100 then raise exception 'KKM harus 0?100';end if;
+  exception when others then issues:=issues||to_jsonb('Pengaturan target: '||sqlerrm);end;
+ end if;
+ return jsonb_build_object('student',pupil,'year',yr,'period',pr,'tahsin',a,'tahfidz',b,'settings',settings,'officials',officials,'teachers',teachers,'score_checks',jsonb_build_object('tahsin',app_private.report_score_issues(coalesce(a->'scores','{}'),'tahsin'),'tahfidz',app_private.report_score_issues(coalesce(b->'scores','{}'),'tahfidz')),'school',school,'reference',refs,'issues',issues);
+END;
+$fn$;
+
 COMMIT;
 
 -- Verifikasi setelah penerapan:
