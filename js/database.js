@@ -277,7 +277,7 @@ async function getPublicAttendanceIds(student, teacherName, date) {
 }
 
 async function saveAttendance(record) {
-    const exists = await attendanceExists(record.date, record.teacher, record.student);
+    const exists = await attendanceExists(record.date, record.teacher, record.student, record.student_id);
     if (exists) {
         throw new Error("Absensi siswa sudah pernah disimpan.");
     }
@@ -488,16 +488,16 @@ async function getAttendanceByDate(date) {
         throw error;
     return data;
 }
-async function attendanceExists(date, teacher, student) {
-    const { count, error } = await supabase
+async function attendanceExists(date, teacher, student, studentId = null) {
+    let query = supabase
         .from("attendance")
-        .select("*", {
-        count: "exact",
-        head: true
-    })
-        .eq("date", date)
-        .eq("teacher", teacher)
-        .eq("student", student);
+        .select("*", { count: "exact", head: true })
+        .eq("date", date);
+    if (studentId != null && studentId !== '')
+        query = query.eq("student_id", studentId);
+    else
+        query = query.eq("teacher", teacher).eq("student", student);
+    const { count, error } = await query;
     if (error)
         throw error;
     return count > 0;
