@@ -35,26 +35,45 @@ function getMonthName(monthNumber) {
 function getDaysInMonth(year, month) {
     return new Date(year, month, 0).getDate();
 }
-function isAttendanceRecorded(studentName, date = null) {
-    return getAttendanceRecord(studentName, date) !== undefined;
+function isAttendanceRecorded(studentName, date = null, studentId = null) {
+    return getAttendanceRecord(studentName, date, studentId) !== undefined;
 }
-function getAttendanceRecord(studentName, date) {
+function getAttendanceRecord(studentName, date, studentId = null) {
     const checkDate = date || formatDateForStorage();
+    const rows = Array.isArray(attendanceData) ? attendanceData : [];
+    // ID siswa mengatasi perubahan nama guru dan siswa bernama sama.
+    if (studentId != null && studentId !== '') {
+        const byId = rows.find(item =>
+            String(item.date || item.tanggal || '').slice(0, 10) === checkDate &&
+            String(item.student_id) === String(studentId)
+        );
+        if (byId)
+            return byId;
+        // Fallback hanya untuk baris historis yang belum memiliki student_id.
+        const legacy = rows.find(item =>
+            (item.student_id == null || item.student_id === '') &&
+            String(item.date || item.tanggal || '').slice(0, 10) === checkDate &&
+            String(item.student || item.nama_siswa || '').trim().toLowerCase() === String(studentName || '').trim().toLowerCase() &&
+            String(item.teacher || item.nama_guru || '').trim().toLowerCase() === String(selectedTeacher || '').trim().toLowerCase()
+        );
+        if (legacy && typeof syncAttendanceIndex === 'function')
+            syncAttendanceIndex(legacy);
+        return legacy;
+    }
     const key = `${checkDate}|${selectedTeacher}|${studentName}`;
     const indexedRecord = attendanceIndex.get(key);
     if (indexedRecord)
         return indexedRecord;
     const normalizedStudent = String(studentName || '').trim().toLowerCase();
     const normalizedTeacher = String(selectedTeacher || '').trim().toLowerCase();
-    const record = (Array.isArray(attendanceData) ? attendanceData : []).find(item => {
+    const record = rows.find(item => {
         const itemDate = String(item.date || item.tanggal || '').slice(0, 10);
         const itemStudent = String(item.student || item.nama_siswa || '').trim().toLowerCase();
         const itemTeacher = String(item.teacher || item.nama_guru || '').trim().toLowerCase();
         return itemDate === checkDate && itemStudent === normalizedStudent && itemTeacher === normalizedTeacher;
     });
-    if (record && typeof syncAttendanceIndex === 'function') {
+    if (record && typeof syncAttendanceIndex === 'function')
         syncAttendanceIndex(record);
-    }
     return record;
 }
 function webLogoUrl(url) {

@@ -185,9 +185,16 @@ begin
  if nullif(school->>'name','') is null or nullif(school->>'logo_url','') is null then issues:=issues||'"Profil atau logo sekolah belum lengkap"'::jsonb;end if;
  select coalesce(issued_officials,snapshot->'officials') into officials from public.student_reports where student_id=student_key and academic_year_start=yr and period=pr;
  officials:=coalesce(officials,config-'curriculum'-'overrides');
- select coalesce(nullif(t.nama_lengkap,''),t.nama) into ts from public.teachers t join public.students s on s."nama guru"=t.nama where s.id::text=student_key and t.attendance_enabled limit 1;
+ select coalesce(nullif(t.nama_lengkap,''),t.nama) into ts
+ from public.teaching_assignments a
+ join public.assessment_group_members m on m.assignment_id=a.id
+ join public.teachers t on t.id::text=a.teacher_id
+ where m.student_id=student_key and m.active and m.subject='tahsin'
+   and a.active and a.subject='tahsin'
+   and a.academic_year_start=yr and m.academic_year_start=yr
+ order by a.id limit 1;
  select coalesce(nullif(t.nama_lengkap,''),t.nama) into tf from public.teaching_assignments a join public.assessment_group_members m on m.assignment_id=a.id join public.teachers t on t.id::text=a.teacher_id where m.student_id=student_key and m.active and a.active and a.subject='tahfidz' and a.academic_year_start=yr and m.academic_year_start=yr order by a.id limit 1;
- teachers:=jsonb_build_object('tahsin',coalesce(ts,a->>'teacher_name','Pengampu Belum Ditetapkan'),'tahfidz',coalesce(tf,b->>'teacher_name','Pengampu Belum Ditetapkan'));
+ teachers:=jsonb_build_object('tahsin',coalesce(a->>'teacher_name',ts,'Pengampu Belum Ditetapkan'),'tahfidz',coalesce(b->>'teacher_name',tf,'Pengampu Belum Ditetapkan'));
  if nullif(officials->>'principal_name','') is null or nullif(officials->>'coordinator_name','') is null or nullif(officials->>'principal_niy','') is null or nullif(officials->>'coordinator_niy','') is null or nullif(officials->>'city','') is null then issues:=issues||'"Penandatangan/tempat rapor belum lengkap"'::jsonb;end if;
  if settings->'tahsin_target' is null or settings->'tahfidz_target' is null or settings->>'tahsin_kkm' is null or settings->>'tahfidz_kkm' is null then issues:=issues||'"KKM/target periode dan tingkat belum diatur"'::jsonb;
  else

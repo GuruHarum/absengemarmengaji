@@ -222,7 +222,7 @@ async function renderStudents() {
     for (let i = 0; i < filteredStudents.length; i++) {
         const student = filteredStudents[i];
         const studentName = student['nama siswa'];
-        const recordedData = getAttendanceRecord(studentName, today);
+        const recordedData = getAttendanceRecord(studentName, today, student.id);
         const isRecorded = recordedData !== undefined;
         const normalizedRecordedStatus = isRecorded ? ({ h: 'hadir', s: 'sakit', i: 'izin', a: 'alpha', alfa: 'alpha', '-': 'alpha' }[String(recordedData.status || '').toLowerCase()] || String(recordedData.status || '').toLowerCase()) : '';
         html += `

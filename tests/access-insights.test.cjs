@@ -30,7 +30,7 @@ test('admin and coordinator can access every panel section', async () => {
         assert.equal(api.full(), true);
     }
 });
-test('teacher pages and master-data queries are restricted to the mapped teacher', async () => {
+test('teacher pages remain restricted and scoped queries use permanent IDs', async () => {
     const api = await access('guru');
     await api.ready;
     assert.equal(api.full(), false);
@@ -40,9 +40,9 @@ test('teacher pages and master-data queries are restricted to the mapped teacher
     for (const page of ['infografik', 'pengaturan', 'maintenance'])
         assert.equal(api.canPage(page), false);
     const query = { eq: (column, value) => [column, value] };
-    assert.deepEqual(api.scope(query, 'students'), ['nama guru', 'Guru A']);
+    assert.equal(api.scope(query, 'students'), query); // RLS scopes students through active group IDs.
     assert.deepEqual(api.scope(query, 'teachers'), ['id', '42']);
-    assert.deepEqual(api.scope(query, 'attendance'), ['teacher', 'Guru A']);
+    assert.deepEqual(api.scope(query, 'attendance'), ['teacher_id', '42']);
 });
 test('a coordinator retains manager access and also resolves the linked teacher', async () => {
     const api = await access('koordinator');
@@ -85,6 +85,26 @@ test('comparison separates duplicate names across teachers/classes and ignores o
     assert.equal(result.rows[0].rate, 1 / 30 * 100);
     assert.equal(result.rows[1].rate, 0);
 });
+
+test('attendance insights match permanent student IDs after teacher-name changes', () => {
+    const calculate = insight();
+    const students = [
+        { id: 101, teacher_id: 42, 'nama guru': 'Guru Baru', kelas: '1A', 'nama siswa': 'Ahmad' },
+        { id: 202, teacher_id: 43, 'nama guru': 'Guru Lain', kelas: '1B', 'nama siswa': 'Ahmad' }
+    ];
+    const result = calculate(students, [
+        // Label lama tidak boleh memutus hubungan ketika student_id masih sama.
+        { id: 1, date: '2026-09-01', student_id: 101, teacher_id: 42, teacher: 'Guru Lama', class: '1A', student: 'Ahmad', status: 'hadir' },
+        // Duplikat siswa/hari dengan label dan teacher_id berbeda tetap satu absensi.
+        { id: 3, date: '2026-09-01', student_id: 101, teacher_id: 99, teacher: 'Nama Pengampu Lama', class: '1A', student: 'Ahmad', status: 'hadir' },
+        { id: 2, date: '2026-09-01', student_id: 202, teacher_id: 43, teacher: 'Guru Lain', class: '1B', student: 'Ahmad', status: 'izin' }
+    ], '2026-09-01', '2026-09-30', null, '2026-09-30');
+    assert.equal(result.students, 2);
+    assert.equal(result.totals.recorded, 2);
+    assert.equal(result.rows.find(row => row.name === '1A').hadir, 1);
+    assert.equal(result.rows.find(row => row.name === '1B').izin, 1);
+});
+
 test('missing calendar days count as alpha including weekends; duplicate records count once', () => {
     const calculate = insight();
     const students = [

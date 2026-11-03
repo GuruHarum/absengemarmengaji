@@ -69,13 +69,39 @@ begin
   end if;
   if not manager then
    if tahfidz_value is not null then raise exception 'Hanya pengelola boleh mengatur Guru Tahfidz'; end if;
-   if pupil_id is not null and (pupil."nama guru" is distinct from app_private.teacher_name()
-         or not app_private.owns_class(pupil.kelas)) then
-    raise exception 'NIS di luar hak akses';
+   if pupil_id is not null and (
+      not exists(
+       select 1
+       from public.assessment_group_members m
+       join public.teaching_assignments a on a.id=m.assignment_id
+       where m.student_id=pupil.id::text
+         and m.active and m.subject='tahsin'
+         and a.active and a.subject='tahsin'
+         and m.academic_year_start=year_key
+         and a.academic_year_start=year_key
+         and a.teacher_id=(
+          select r.teacher_id from public.user_roles r
+          where r.user_id=auth.uid() and r.role='guru'
+         )
+      )
+      or not app_private.owns_class(pupil.kelas)
+   ) then
+    raise exception 'Siswa berada di luar kelompok atau kelas yang menjadi hak akses akun ini';
    end if;
-   if lower(coalesce(teacher_value,pupil."nama guru",''))<>lower(app_private.teacher_name())
-         or not app_private.owns_class(coalesce(class_value,pupil.kelas,'')) then
-    raise exception 'Guru atau kelas di luar hak akses';
+   if not app_private.owns_class(coalesce(class_value,pupil.kelas,'')) then
+    raise exception 'Kelas di luar hak akses';
+   end if;
+   if teacher_value is not null then
+    if app_private.import_teacher_name_key(teacher_value)
+         <> app_private.import_teacher_name_key(app_private.teacher_name())
+       and app_private.find_import_teacher(teacher_value) is distinct from (
+         select r.teacher_id from public.user_roles r
+         where r.user_id=auth.uid() and r.role='guru'
+       ) then
+     raise exception 'Guru di luar hak akses';
+    end if;
+   elsif pupil_id is null then
+    raise exception 'Guru Tahsin wajib dipilih untuk siswa baru';
    end if;
   end if;
 

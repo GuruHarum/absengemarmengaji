@@ -11,11 +11,20 @@ grant select on public.student_identifiers to authenticated;
 drop policy if exists identifiers_read on public.student_identifiers;
 create policy identifiers_read on public.student_identifiers for select to authenticated
  using (app_private.is_manager() or exists(
-  select 1 from public.students s
-  where s.id=student_id
-    and s."nama guru"=app_private.teacher_name()
+  select 1
+  from public.students s
+  join public.assessment_group_members m
+    on m.student_id=s.id::text and m.active and m.subject='tahsin'
+  join public.teaching_assignments a
+    on a.id=m.assignment_id and a.active and a.subject='tahsin'
+  where s.id=student_identifiers.student_id
+    and a.teacher_id=(
+      select r.teacher_id from public.user_roles r
+      where r.user_id=(select auth.uid()) and r.role='guru'
+    )
+    and a.academic_year_start=m.academic_year_start
     and app_private.owns_class(s.kelas)
- ));
+  ));
 
 -- Canonicalize labels used by the importer only.  The alias is deliberately
 -- conservative: it fixes the historical Umar Bin Khottob/Khattab split that
@@ -77,10 +86,25 @@ revoke all on function app_private.import_teacher_name_key(text) from public,ano
 grant execute on function app_private.import_teacher_name_key(text) to authenticated, service_role;
 
 create or replace function app_private.find_import_teacher(label text) returns text
-language plpgsql stable security definer set search_path='' as $$
-declare matches text[]; tahsin_matches text[]; normalized text:=app_private.import_teacher_name_key(label);
+language plpgsql stable security definer set search_path='' as $fn$
+declare
+ matches text[];
+ tahsin_matches text[];
+ normalized text:=app_private.import_teacher_name_key(label);
+ current_teacher_key text;
 begin
  if nullif(normalized,'') is null then return null; end if;
+ -- Akun guru boleh memakai nama tampilannya sendiri tanpa ambigu; ID akun
+ -- menjadi sumber kebenaran ketika ada guru lain dengan nama yang sama.
+ if auth.uid() is not null and not app_private.is_manager() then
+  select r.teacher_id into current_teacher_key
+  from public.user_roles r
+  where r.user_id=auth.uid() and r.role='guru';
+  if current_teacher_key is not null
+     and normalized=app_private.import_teacher_name_key(app_private.teacher_name()) then
+   return current_teacher_key;
+  end if;
+ end if;
  select array_agg(id::text order by id::text) into matches
  from public.teachers
  where app_private.import_teacher_name_key(nama)=normalized
@@ -95,7 +119,7 @@ begin
   raise exception 'Nama guru % ambigu, rapikan data guru terlebih dahulu',label;
  end if;
  return matches[1];
-end $$;
+end $fn$;
 revoke all on function app_private.find_import_teacher(text) from public,anon,authenticated;
 
 create or replace function app_private.import_teacher(label text, tahsin boolean) returns text

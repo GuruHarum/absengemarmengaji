@@ -1,35 +1,83 @@
 begin;
 grant select on public.user_roles to service_role;
-create or replace function public.provision_teacher_account(actor_id uuid, account_id uuid,
- linked_teacher text default null, teacher_label text default null, full_label text default null,
- show_attendance boolean default true)
-returns text language plpgsql security definer set search_path='' as $$
-declare teacher_key text; label text;
-begin
- if not exists(select 1 from public.user_roles where user_id=actor_id and role in ('admin','koordinator')) then
-  raise exception 'Hanya pengelola dapat membuat akun guru';
- end if;
- if not exists(select 1 from auth.users where id=account_id) then raise exception 'Akun Authentication tidak ditemukan'; end if;
- lock table public.teachers in share row exclusive mode;
- lock table public.user_roles in share row exclusive mode;
- if exists(select 1 from public.user_roles where user_id=account_id) then raise exception 'Akun sudah diberi akses'; end if;
- if linked_teacher is not null then
-  select nama into label from public.teachers where id::text=linked_teacher;
-  if label is null then raise exception 'Guru tidak ditemukan'; end if;
-  teacher_key := linked_teacher;
-  if exists(select 1 from public.user_roles where teacher_id=teacher_key) then raise exception 'Guru sudah memiliki akun. Gunakan pemetaan akun yang tersedia'; end if;
- else
-  label := trim(teacher_label);
-  if label is null or length(label) not between 1 and 80 or full_label is null or length(trim(full_label)) not between 1 and 160 then raise exception 'Nama guru dan nama lengkap wajib diisi'; end if;
-  if exists(select 1 from public.teachers where lower(trim(nama))=lower(label)) then raise exception 'Nama guru sudah ada. Pilih data guru yang sudah tersedia'; end if;
-  insert into public.teachers(nama,nama_lengkap,attendance_enabled) values(label,trim(full_label),coalesce(show_attendance,true)) returning id::text into teacher_key;
- end if;
- if (select count(*) from public.teachers where nama=label)<>1 then raise exception 'Nama guru duplikat. Rapikan master terlebih dahulu'; end if;
- insert into public.user_roles(user_id,role,teacher_id) values(account_id,'guru',teacher_key);
- insert into public.teacher_class_access(user_id,class_name)
- select distinct account_id,kelas from public.students where "nama guru"=label and kelas is not null;
- return teacher_key;
-end $$;
+CREATE OR REPLACE FUNCTION public.provision_teacher_account(
+    actor_id uuid,
+    account_id uuid,
+    linked_teacher text DEFAULT NULL,
+    teacher_label text DEFAULT NULL,
+    full_label text DEFAULT NULL,
+    show_attendance boolean DEFAULT true
+)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $fn$
+DECLARE
+    teacher_key text;
+    label text;
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.user_roles
+        WHERE user_id = actor_id AND role IN ('admin','koordinator')
+    ) THEN
+        RAISE EXCEPTION 'Hanya pengelola dapat membuat akun guru';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = account_id) THEN
+        RAISE EXCEPTION 'Akun Authentication tidak ditemukan';
+    END IF;
+
+    LOCK TABLE public.teachers IN SHARE ROW EXCLUSIVE MODE;
+    LOCK TABLE public.user_roles IN SHARE ROW EXCLUSIVE MODE;
+    IF EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = account_id) THEN
+        RAISE EXCEPTION 'Akun sudah diberi akses';
+    END IF;
+
+    IF linked_teacher IS NOT NULL THEN
+        SELECT nama INTO label
+        FROM public.teachers
+        WHERE id::text = linked_teacher;
+        IF label IS NULL THEN
+            RAISE EXCEPTION 'Guru tidak ditemukan';
+        END IF;
+        teacher_key := linked_teacher;
+        IF EXISTS (SELECT 1 FROM public.user_roles WHERE teacher_id = teacher_key) THEN
+            RAISE EXCEPTION 'Guru sudah memiliki akun. Gunakan pemetaan akun yang tersedia';
+        END IF;
+    ELSE
+        label := trim(teacher_label);
+        IF label IS NULL OR length(label) NOT BETWEEN 1 AND 80
+           OR full_label IS NULL OR length(trim(full_label)) NOT BETWEEN 1 AND 160 THEN
+            RAISE EXCEPTION 'Nama guru dan nama lengkap wajib diisi';
+        END IF;
+        IF EXISTS (
+            SELECT 1 FROM public.teachers
+            WHERE lower(trim(nama)) = lower(label)
+        ) THEN
+            RAISE EXCEPTION 'Nama guru sudah ada. Pilih data guru yang sudah tersedia';
+        END IF;
+        INSERT INTO public.teachers(nama,nama_lengkap,attendance_enabled)
+        VALUES(label,trim(full_label),coalesce(show_attendance,true))
+        RETURNING id::text INTO teacher_key;
+    END IF;
+
+    INSERT INTO public.user_roles(user_id,role,teacher_id)
+    VALUES(account_id,'guru',teacher_key);
+
+    INSERT INTO public.teacher_class_access(user_id,class_name)
+    SELECT DISTINCT account_id,s.kelas
+    FROM public.students s
+    JOIN public.assessment_group_members m ON m.student_id=s.id::text
+    JOIN public.teaching_assignments a ON a.id=m.assignment_id
+    WHERE a.teacher_id=teacher_key
+      AND a.subject='tahsin'
+      AND m.subject='tahsin'
+      AND s.kelas IS NOT NULL
+    ON CONFLICT DO NOTHING;
+
+    RETURN teacher_key;
+END;
+$fn$;
 revoke all on function public.provision_teacher_account(uuid,uuid,text,text,text,boolean) from public,anon,authenticated;
 grant execute on function public.provision_teacher_account(uuid,uuid,text,text,text,boolean) to service_role;
 commit;

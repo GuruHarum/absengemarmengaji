@@ -35,3 +35,9 @@ test('January maps to preceding school year',async()=>{
  const result=await resolve({id:629,kelas:'4 Muadz Bin Jabbal'},'Bu Wafi','2027-01-05');
  assert.equal(result.class_id,33);
 });
+
+test('existing teacher_id disambiguates duplicate teacher display names',async()=>{
+ const resolve=harness([{id:33,class_name:'4 Muadz Bin Jabbal',academic_year_start:2026}],[{id:46,nama:'Bu Wafi'},{id:47,nama:'Bu Wafi'}]);
+ const result=await resolve({id:629,kelas:'4 Muadz Bin Jabbal',teacher_id:47,class_id:33,academic_year_start:2026},'Bu Wafi','2026-09-27');
+ assert.deepEqual(JSON.parse(JSON.stringify(result)),{student_id:629,class_id:33,teacher_id:47});
+});

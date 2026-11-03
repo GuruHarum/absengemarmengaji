@@ -71,13 +71,72 @@ function getStudents() {
 async function getStudentsUnshared() {
     if (window.AppAccess)
         await AppAccess.ready;
+    const yearKey = getPublicAcademicYearStart();
     if (!window.AppAccess) {
-        const yearKey = getPublicAcademicYearStart();
         const rows = await fetchAllRpcRows('gm_public_tahsin_students', { year_key: yearKey }, 500);
         window.GM_PUBLIC_ROSTER_META = { ...(window.GM_PUBLIC_ROSTER_META || {}), studentSource: 'gm_public_tahsin_students', yearKey, students: rows.length, build: 'roster20-pagination', paginated: true };
         return rows;
     }
-    return fetchAllRows(() => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'), 500);
+
+    const rows = await fetchAllRows(
+        () => AppAccess.scope(supabase.from('students').select('*').order('kelas').order('nama siswa'), 'students'),
+        500
+    );
+    if (!rows.length)
+        return rows;
+
+    // Ambil relasi pengampu dari ID kelompok Tahsin aktif, bukan dari teks
+    // students."nama guru". Nama hanya dipakai sebagai label yang ditampilkan.
+    const assignments = await fetchAllRows(
+        () => supabase.from('teaching_assignments')
+            .select('id,teacher_id')
+            .eq('subject', 'tahsin')
+            .eq('active', true)
+            .eq('academic_year_start', yearKey),
+        500
+    );
+    if (!assignments.length)
+        return rows;
+
+    const assignmentIds = assignments.map(item => item.id);
+    const members = await fetchAllRows(
+        () => supabase.from('assessment_group_members')
+            .select('student_id,assignment_id')
+            .eq('subject', 'tahsin')
+            .eq('active', true)
+            .eq('academic_year_start', yearKey)
+            .in('assignment_id', assignmentIds),
+        500
+    );
+    const teacherByAssignment = new Map(assignments.map(item => [String(item.id), String(item.teacher_id)]));
+    const teacherByStudent = new Map();
+    for (const member of members) {
+        const teacherId = teacherByAssignment.get(String(member.assignment_id));
+        if (!teacherId)
+            continue;
+        const studentId = String(member.student_id);
+        const existing = teacherByStudent.get(studentId);
+        if (existing && existing !== teacherId)
+            throw new Error('Satu siswa memiliki lebih dari satu kelompok Tahsin aktif. Hubungi koordinator.');
+        teacherByStudent.set(studentId, teacherId);
+    }
+
+    const teacherIds = [...new Set([...teacherByStudent.values()])];
+    const teacherRows = teacherIds.length
+        ? await fetchAllRows(() => supabase.from('teachers').select('id,nama').in('id', teacherIds), 500)
+        : [];
+    const teacherById = new Map(teacherRows.map(item => [String(item.id), item.nama]));
+    return rows.map(student => {
+        const teacherId = teacherByStudent.get(String(student.id));
+        if (!teacherId)
+            return student;
+        const currentName = teacherById.get(teacherId);
+        return {
+            ...student,
+            teacher_id: teacherId,
+            ...(currentName ? { 'nama guru': currentName } : {})
+        };
+    });
 }
 // Ambil absensi dengan filter server-side dan identitas ID. Tidak pernah
 // mengunduh seluruh riwayat sebagai fallback jika filter gagal.
@@ -186,13 +245,23 @@ async function getPublicAttendanceIds(student, teacherName, date) {
     const studentId = Number(student?.id);
     if (!Number.isSafeInteger(studentId) || studentId <= 0)
         throw new Error('ID siswa tidak valid. Muat ulang daftar siswa.');
-    const matchedTeachers = (teachersData || []).filter(t => t.nama === teacherName && Number.isSafeInteger(Number(t.id)));
-    if (matchedTeachers.length !== 1)
-        throw new Error('Identitas guru tidak unik. Muat ulang halaman.');
+    // Gunakan teacher_id yang sudah disediakan roster/kelompok. Nama hanya fallback
+    // untuk data lama yang belum memiliki relasi ID.
+    const linkedTeacherId = Number(student?.teacher_id);
+    const linkedTeacher = (teachersData || []).find(t => Number(t.id) === linkedTeacherId);
+    let resolvedTeacherId;
+    if (Number.isSafeInteger(linkedTeacherId) && linkedTeacherId > 0 && linkedTeacher) {
+        resolvedTeacherId = linkedTeacherId;
+    } else {
+        const matchedTeachers = (teachersData || []).filter(t => t.nama === teacherName && Number.isSafeInteger(Number(t.id)));
+        if (matchedTeachers.length !== 1)
+            throw new Error('Identitas guru tidak ditemukan atau ambigu. Muat ulang halaman.');
+        resolvedTeacherId = Number(matchedTeachers[0].id);
+    }
     if (Number.isSafeInteger(Number(student.class_id)) && Number(student.class_id) > 0 &&
-        String(student.teacher_id) === String(matchedTeachers[0].id) &&
+        String(student.teacher_id) === String(resolvedTeacherId) &&
         Number(student.academic_year_start) === year) {
-        return {student_id:studentId,class_id:Number(student.class_id),teacher_id:Number(student.teacher_id)};
+        return {student_id:studentId,class_id:Number(student.class_id),teacher_id:resolvedTeacherId};
     }
     const cleanClass = value => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
     const className = cleanClass(student.kelas);
@@ -204,11 +273,11 @@ async function getPublicAttendanceIds(student, teacherName, date) {
     const matchingClasses = (classes || []).filter(c => cleanClass(c.class_name) === className);
     if (matchingClasses.length !== 1)
         throw new Error('Kelas tidak ditemukan atau ganda di master kelas. Hubungi koordinator.');
-    return { student_id: studentId, class_id: Number(matchingClasses[0].id), teacher_id: Number(matchedTeachers[0].id) };
+    return { student_id: studentId, class_id: Number(matchingClasses[0].id), teacher_id: resolvedTeacherId };
 }
 
 async function saveAttendance(record) {
-    const exists = await attendanceExists(record.date, record.teacher, record.student);
+    const exists = await attendanceExists(record.date, record.teacher, record.student, record.student_id);
     if (exists) {
         throw new Error("Absensi siswa sudah pernah disimpan.");
     }
@@ -419,16 +488,16 @@ async function getAttendanceByDate(date) {
         throw error;
     return data;
 }
-async function attendanceExists(date, teacher, student) {
-    const { count, error } = await supabase
+async function attendanceExists(date, teacher, student, studentId = null) {
+    let query = supabase
         .from("attendance")
-        .select("*", {
-        count: "exact",
-        head: true
-    })
-        .eq("date", date)
-        .eq("teacher", teacher)
-        .eq("student", student);
+        .select("*", { count: "exact", head: true })
+        .eq("date", date);
+    if (studentId != null && studentId !== '')
+        query = query.eq("student_id", studentId);
+    else
+        query = query.eq("teacher", teacher).eq("student", student);
+    const { count, error } = await query;
     if (error)
         throw error;
     return count > 0;
