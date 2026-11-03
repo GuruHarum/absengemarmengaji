@@ -187,46 +187,114 @@ create table if not exists public.periodic_assessments (
 );
 create index if not exists periodic_assessments_teacher_period on public.periodic_assessments(teacher_id, academic_year_start, period);
 
-create or replace function app_private.can_assess(student_key text, teacher_key text) returns boolean
-language sql stable security definer set search_path = '' as $$
- select exists (
-  select 1 from public.students s join public.teachers t on t.nama = s."nama guru"
-  where s.id::text = student_key and t.id::text = teacher_key
-  and (app_private.is_manager() or exists (
-   select 1 from public.user_roles r join public.teacher_class_access c on c.user_id = r.user_id
-   where r.user_id = (select auth.uid()) and r.role = 'guru' and r.teacher_id = teacher_key and c.class_name = s.kelas
-  ))
- );
-$$;
+CREATE OR REPLACE FUNCTION app_private.can_assess(student_key text, teacher_key text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $fn$
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.students s
+        WHERE s.id::text = student_key
+          AND (
+              app_private.is_manager()
+              OR EXISTS (
+                  SELECT 1
+                  FROM public.assessment_group_members m
+                  JOIN public.teaching_assignments a ON a.id = m.assignment_id
+                  JOIN public.user_roles r ON r.user_id = (SELECT auth.uid())
+                  WHERE m.student_id = s.id::text
+                    AND m.active
+                    AND m.subject = 'tahsin'
+                    AND a.active
+                    AND a.subject = 'tahsin'
+                    AND a.teacher_id = teacher_key
+                    AND a.academic_year_start = m.academic_year_start
+                    AND r.role = 'guru'
+                    AND r.teacher_id = teacher_key
+                    AND app_private.owns_class(s.kelas)
+              )
+          )
+    );
+$fn$;
 revoke all on function app_private.can_assess(text,text) from public, anon;
 grant execute on function app_private.can_assess(text,text) to authenticated;
 
-create or replace function app_private.validate_periodic_assessment() returns trigger
-language plpgsql security definer set search_path = '' as $$
-declare max_ayah integer; student_row record;
-begin
- if auth.uid() is null then raise exception 'Login diperlukan untuk menyimpan penilaian'; end if;
- if not app_private.can_assess(new.student_id, new.teacher_id) then raise exception 'Siswa bukan tanggung jawab guru yang dipilih'; end if;
- select ayahs into max_ayah from public.quran_surahs where number = new.tahfidz_surah;
- if max_ayah is null or new.tahfidz_ayah not between 1 and max_ayah then raise exception 'Ayat tidak sesuai dengan surat yang dipilih'; end if;
- if tg_op = 'INSERT' then
-  select s."nama siswa" as student_name, s.kelas as class_name, t.nama as teacher_name into student_row
-  from public.students s join public.teachers t on t.nama = s."nama guru"
-  where s.id::text = new.student_id and t.id::text = new.teacher_id;
-  new.student_name := student_row.student_name;
-  new.teacher_name := student_row.teacher_name;
-  new.class_name := student_row.class_name;
-  new.created_at := now(); new.created_by := auth.uid(); new.version := 1;
- else
-  if (new.student_id, new.teacher_id, new.academic_year_start, new.period) is distinct from (old.student_id, old.teacher_id, old.academic_year_start, old.period) then
-    raise exception 'Identitas penilaian tidak boleh diubah';
-  end if;
-  new.student_name := old.student_name; new.teacher_name := old.teacher_name; new.class_name := old.class_name;
-  new.created_at := old.created_at; new.created_by := old.created_by; new.version := old.version + 1;
- end if;
- new.updated_at := now(); new.updated_by := auth.uid();
- return new;
-end $$;
+CREATE OR REPLACE FUNCTION app_private.validate_periodic_assessment()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $fn$
+DECLARE
+    max_ayah integer;
+    student_row record;
+BEGIN
+    IF auth.uid() IS NULL THEN
+        RAISE EXCEPTION 'Login diperlukan untuk menyimpan penilaian';
+    END IF;
+    IF NOT app_private.can_assess(NEW.student_id, NEW.teacher_id) THEN
+        RAISE EXCEPTION 'Siswa bukan tanggung jawab guru yang dipilih';
+    END IF;
+
+    SELECT ayahs INTO max_ayah
+    FROM public.quran_surahs
+    WHERE number = NEW.tahfidz_surah;
+    IF max_ayah IS NULL OR NEW.tahfidz_ayah NOT BETWEEN 1 AND max_ayah THEN
+        RAISE EXCEPTION 'Ayat tidak sesuai dengan surat yang dipilih';
+    END IF;
+
+    IF TG_OP = 'INSERT' THEN
+        SELECT s."nama siswa" AS student_name,
+               s.kelas AS class_name,
+               t.nama AS teacher_name
+        INTO student_row
+        FROM public.students s
+        JOIN public.assessment_group_members m
+          ON m.student_id = s.id::text
+         AND m.active
+         AND m.subject = 'tahsin'
+         AND m.academic_year_start = NEW.academic_year_start
+        JOIN public.teaching_assignments a
+          ON a.id = m.assignment_id
+         AND a.active
+         AND a.subject = 'tahsin'
+         AND a.academic_year_start = m.academic_year_start
+         AND a.teacher_id = NEW.teacher_id
+        JOIN public.teachers t ON t.id::text = a.teacher_id
+        WHERE s.id::text = NEW.student_id;
+
+        IF student_row IS NULL THEN
+            RAISE EXCEPTION 'Relasi siswa dan guru Tahsin tidak ditemukan';
+        END IF;
+        NEW.student_name := student_row.student_name;
+        NEW.teacher_name := student_row.teacher_name;
+        NEW.class_name := student_row.class_name;
+        NEW.created_at := now();
+        NEW.created_by := auth.uid();
+        NEW.version := 1;
+    ELSE
+        IF (NEW.student_id, NEW.teacher_id, NEW.academic_year_start, NEW.period)
+           IS DISTINCT FROM
+           (OLD.student_id, OLD.teacher_id, OLD.academic_year_start, OLD.period) THEN
+            RAISE EXCEPTION 'Identitas penilaian tidak boleh diubah';
+        END IF;
+        -- Pertahankan snapshot nama/kelas penilaian yang sudah tersimpan.
+        NEW.student_name := OLD.student_name;
+        NEW.teacher_name := OLD.teacher_name;
+        NEW.class_name := OLD.class_name;
+        NEW.created_at := OLD.created_at;
+        NEW.created_by := OLD.created_by;
+        NEW.version := OLD.version + 1;
+    END IF;
+
+    NEW.updated_at := now();
+    NEW.updated_by := auth.uid();
+    RETURN NEW;
+END;
+$fn$;
 revoke all on function app_private.validate_periodic_assessment() from public, anon, authenticated;
 drop trigger if exists validate_periodic_assessment on public.periodic_assessments;
 create trigger validate_periodic_assessment before insert or update on public.periodic_assessments for each row execute function app_private.validate_periodic_assessment();
