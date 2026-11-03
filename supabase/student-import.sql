@@ -86,7 +86,7 @@ revoke all on function app_private.import_teacher_name_key(text) from public,ano
 grant execute on function app_private.import_teacher_name_key(text) to authenticated, service_role;
 
 create or replace function app_private.find_import_teacher(label text) returns text
-language plpgsql stable security definer set search_path='' as $
+language plpgsql stable security definer set search_path='' as $fn$
 declare
  matches text[];
  tahsin_matches text[];
@@ -119,7 +119,7 @@ begin
   raise exception 'Nama guru % ambigu, rapikan data guru terlebih dahulu',label;
  end if;
  return matches[1];
-end $$;
+end $fn$;
 revoke all on function app_private.find_import_teacher(text) from public,anon,authenticated;
 
 create or replace function app_private.import_teacher(label text, tahsin boolean) returns text
