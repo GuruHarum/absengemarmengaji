@@ -95,6 +95,8 @@ test('attendance insights match permanent student IDs after teacher-name changes
     const result = calculate(students, [
         // Label lama tidak boleh memutus hubungan ketika student_id masih sama.
         { id: 1, date: '2026-09-01', student_id: 101, teacher_id: 42, teacher: 'Guru Lama', class: '1A', student: 'Ahmad', status: 'hadir' },
+        // Duplikat siswa/hari dengan label dan teacher_id berbeda tetap satu absensi.
+        { id: 3, date: '2026-09-01', student_id: 101, teacher_id: 99, teacher: 'Nama Pengampu Lama', class: '1A', student: 'Ahmad', status: 'hadir' },
         { id: 2, date: '2026-09-01', student_id: 202, teacher_id: 43, teacher: 'Guru Lain', class: '1B', student: 'Ahmad', status: 'izin' }
     ], '2026-09-01', '2026-09-30', null, '2026-09-30');
     assert.equal(result.students, 2);
