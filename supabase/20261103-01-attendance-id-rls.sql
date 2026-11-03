@@ -112,8 +112,13 @@ USING (
 )
 WITH CHECK (
     app_private.is_manager()
-    OR (teacher_id = app_private.current_teacher_id()
-        AND app_private.owns_class(class))
+    OR (
+        teacher_id = app_private.current_teacher_id()
+        AND app_private.owns_class(class)
+        AND app_private.valid_tahsin_attendance_link(
+            student_id, teacher_id, class_id, date, student, class
+        )
+    )
 );
 
 CREATE POLICY scoped_delete ON public.attendance
@@ -125,9 +130,9 @@ USING (
 );
 
 
--- Validasi ID untuk UPDATE publik: guru boleh sudah berganti nama, tetapi
--- pasangan siswa-guru-kelas tetap harus berasal dari kelompok Tahsin aktif.
-CREATE OR REPLACE FUNCTION app_private.valid_current_tahsin_attendance_ids(
+-- Validasi relasi ID untuk UPDATE; membership historis tetap diakui meski
+-- kelompok sudah nonaktif, sehingga koreksi absensi lama tidak terputus.
+CREATE OR REPLACE FUNCTION app_private.valid_tahsin_attendance_link(
     p_student_id bigint,
     p_teacher_id bigint,
     p_class_id bigint,
@@ -145,36 +150,28 @@ AS $fn$
         SELECT 1
         FROM public.students s
         JOIN public.teachers t ON t.id = p_teacher_id
-        JOIN public.student_class_assignments sca
-          ON sca.student_id = s.id
-         AND sca.academic_year_start =
+        JOIN public.school_classes sc
+          ON sc.id = p_class_id
+         AND sc.academic_year_start =
              (EXTRACT(YEAR FROM p_date)::integer
               - CASE WHEN EXTRACT(MONTH FROM p_date)::integer < 7 THEN 1 ELSE 0 END)
-        JOIN public.school_classes sc
-          ON sc.id = sca.class_id
-         AND sc.academic_year_start = sca.academic_year_start
         JOIN public.assessment_group_members m
           ON m.student_id = s.id::text
-         AND m.active
          AND m.subject = 'tahsin'
-         AND m.academic_year_start = sca.academic_year_start
+         AND m.academic_year_start = sc.academic_year_start
         JOIN public.teaching_assignments a
           ON a.id = m.assignment_id
-         AND a.active
          AND a.subject = 'tahsin'
          AND a.academic_year_start = m.academic_year_start
          AND a.teacher_id = t.id::text
         WHERE s.id = p_student_id
-          AND t.attendance_enabled IS NOT FALSE
-          AND sc.id = p_class_id
           AND s."nama siswa" = p_student_name
-          AND s.kelas = p_class_name
           AND sc.normalized_name =
               lower(regexp_replace(trim(p_class_name), '[[:space:]]+', ' ', 'g'))
     );
 $fn$;
-REVOKE ALL ON FUNCTION app_private.valid_current_tahsin_attendance_ids(bigint,bigint,bigint,date,text,text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION app_private.valid_current_tahsin_attendance_ids(bigint,bigint,bigint,date,text,text) TO anon, authenticated;
+REVOKE ALL ON FUNCTION app_private.valid_tahsin_attendance_link(bigint,bigint,bigint,date,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION app_private.valid_tahsin_attendance_link(bigint,bigint,bigint,date,text,text) TO anon, authenticated;
 
 -- Orang tua tetap memilih nama di halaman publik. Trigger BEFORE INSERT yang
 -- sudah ada mengisi ID dari kelompok Tahsin aktif; policy memverifikasi ID itu.
@@ -205,7 +202,7 @@ WITH CHECK (
     AND NOT EXISTS (
         SELECT 1 FROM public.maintenance_settings WHERE enabled = true
     )
-    AND app_private.valid_current_tahsin_attendance_ids(
+    AND app_private.valid_tahsin_attendance_link(
         student_id, teacher_id, class_id, date, student, class
     )
 );
