@@ -11,11 +11,20 @@ grant select on public.student_identifiers to authenticated;
 drop policy if exists identifiers_read on public.student_identifiers;
 create policy identifiers_read on public.student_identifiers for select to authenticated
  using (app_private.is_manager() or exists(
-  select 1 from public.students s
-  where s.id=student_id
-    and s."nama guru"=app_private.teacher_name()
+  select 1
+  from public.students s
+  join public.assessment_group_members m
+    on m.student_id=s.id::text and m.active and m.subject='tahsin'
+  join public.teaching_assignments a
+    on a.id=m.assignment_id and a.active and a.subject='tahsin'
+  where s.id=student_identifiers.student_id
+    and a.teacher_id=(
+      select r.teacher_id from public.user_roles r
+      where r.user_id=(select auth.uid()) and r.role='guru'
+    )
+    and a.academic_year_start=m.academic_year_start
     and app_private.owns_class(s.kelas)
- ));
+  ));
 
 -- Canonicalize labels used by the importer only.  The alias is deliberately
 -- conservative: it fixes the historical Umar Bin Khottob/Khattab split that
