@@ -86,10 +86,25 @@ revoke all on function app_private.import_teacher_name_key(text) from public,ano
 grant execute on function app_private.import_teacher_name_key(text) to authenticated, service_role;
 
 create or replace function app_private.find_import_teacher(label text) returns text
-language plpgsql stable security definer set search_path='' as $$
-declare matches text[]; tahsin_matches text[]; normalized text:=app_private.import_teacher_name_key(label);
+language plpgsql stable security definer set search_path='' as $
+declare
+ matches text[];
+ tahsin_matches text[];
+ normalized text:=app_private.import_teacher_name_key(label);
+ current_teacher_key text;
 begin
  if nullif(normalized,'') is null then return null; end if;
+ -- Akun guru boleh memakai nama tampilannya sendiri tanpa ambigu; ID akun
+ -- menjadi sumber kebenaran ketika ada guru lain dengan nama yang sama.
+ if auth.uid() is not null and not app_private.is_manager() then
+  select r.teacher_id into current_teacher_key
+  from public.user_roles r
+  where r.user_id=auth.uid() and r.role='guru';
+  if current_teacher_key is not null
+     and normalized=app_private.import_teacher_name_key(app_private.teacher_name()) then
+   return current_teacher_key;
+  end if;
+ end if;
  select array_agg(id::text order by id::text) into matches
  from public.teachers
  where app_private.import_teacher_name_key(nama)=normalized
